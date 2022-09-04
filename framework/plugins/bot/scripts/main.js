@@ -7,7 +7,7 @@ var app = new Vue({
         env: env,
         botui: botui,
         botId: env.botSkillId,
-        route: env.home + env.appName + "/",
+        route: env.home + "bots/" + env.appName + "/",
         config: {
             async: true,
             crossDomain: true,
