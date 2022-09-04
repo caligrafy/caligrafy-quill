@@ -75,7 +75,7 @@ switch(strtolower($argv[1])) {
            $appKey = isset($keys['APP_KEY'])? $keys['APP_KEY'] : null;
            $apiKey = isset($keys['API_KEY'])? $keys['API_KEY'] : null;
 		   $file = '.env';
-		   $input = "APP_KEY=".$appKey."\n"."API_KEY=".$apiKey."\n"."APP_ROOT=".$appRoot. file_get_contents($file);
+		   $input = "APP_KEY=".$appKey."\n"."API_KEY=".$apiKey."\n"."APP_ROOT=".$appRoot."\n". file_get_contents($file);
 		   $vueInput = "VUE_APP_APP_KEY=".$appKey."\n"."VUE_APP_API_KEY=".$apiKey."\n";
 		   file_put_contents($file, $input);
 		   file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);
