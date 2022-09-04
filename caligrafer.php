@@ -23,7 +23,7 @@ if (!file_exists('.env')) {
 $dotenv = Dotenv\Dotenv::create(__DIR__);
 $dotenv->overload();
 
-$restricted = ['app', 'bot', 'css', 'facedetect', 'fonts', 'images', 'js', 'ml', 'resources', 'uploads'];
+$restricted = ['app', 'bot', '__bots__', 'css', 'facedetect', 'fonts', 'images', 'js', 'ml', 'resources', 'uploads'];
 
 Caligrafer::run();
 
@@ -65,6 +65,7 @@ switch(strtolower($argv[1])) {
         break;
 	case 'initialize':
 		try {
+		   $appRoot = basename(getcwd()); 
 		   print("\nInitialization will override any work that you have done in your application. 
 		   \nPress 'Return' to continue or CTRL Z to abort");
 		   $confirmation = readline();
@@ -74,7 +75,7 @@ switch(strtolower($argv[1])) {
            $appKey = isset($keys['APP_KEY'])? $keys['APP_KEY'] : null;
            $apiKey = isset($keys['API_KEY'])? $keys['API_KEY'] : null;
 		   $file = '.env';
-		   $input = "APP_KEY=".$appKey."\n"."API_KEY=".$apiKey."\n". file_get_contents($file);
+		   $input = "APP_KEY=".$appKey."\n"."API_KEY=".$apiKey."\n"."APP_ROOT=".$appRoot. file_get_contents($file);
 		   $vueInput = "VUE_APP_APP_KEY=".$appKey."\n"."VUE_APP_API_KEY=".$apiKey."\n";
 		   file_put_contents($file, $input);
 		   file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);
