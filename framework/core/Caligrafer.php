@@ -26,7 +26,6 @@ class Caligrafer {
   {
        self::init();
        self::autoload();
-       self::dispatch();
    }
    
     
@@ -86,15 +85,16 @@ class Caligrafer {
     {
         self::_require_all(CORE_PATH);
         self::_require_all(DB_PATH);
-        self::_require_all(APP_PATH);
-        self::_require_all(TEST_PATH);
     }
 
     /**
      * Dispatches the URL to the route
      */
-    private static function dispatch() 
+    public static function dispatch() 
     {   
+        self::_require_all(APP_PATH);
+        self::_require_all(TEST_PATH);
+
         // Load configuration files
         include CONFIG_PATH . "config.php";
         

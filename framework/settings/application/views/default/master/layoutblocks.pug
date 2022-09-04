@@ -1,0 +1,88 @@
+extends layout
+
+//- Headers with meta data
+block headers
+        title Caligrafy
+        meta(http-equiv="content-type", content="text/html; charset=UTF-8")
+        meta(name="viewport", content="width=device-width, initial-scale=1, maximum-scale=1")
+        meta(name='apple-mobile-web-app-capable', content='yes')
+        meta(name='apple-mobile-web-app-status-bar-style', content='black')/
+        if $metadata
+            include ../modules/metadata
+        link(rel='shortcut icon', href=scripts('favicon'), type='image/x-icon')
+        link(rel="stylesheet", type="text/css", href=scripts('css'))
+        link(rel="stylesheet", href=scripts('bootstrap_css'))
+		link(rel="stylesheet", type="text/css", href=scripts('animate'))
+        include ../modules/touchicons
+        if $social
+            link(rel="stylesheet", type="text/css", href=scripts('social_buttons_css'))
+        if $install
+            link(rel="stylesheet", type="text/css", href=scripts('add_to_home_css'))
+        block additional_css
+        if $google_analytics
+            script(async src="https://www.googletagmanager.com/gtag/js?id={$analytics_id}")
+            script.
+              window.dataLayer = window.dataLayer || [];
+              function gtag(){dataLayer.push(arguments);}
+              gtag('js', new Date());
+
+              gtag('config', '#{$analytics_id}');
+
+//- Default Navigation
+block navigation_default
+    header(class='color0')
+        nav(class='horizontal')
+            h1(class='large-text horizontal-center')
+                a(href='')
+                    span(class='semibold') Cali
+                    span grafy
+    
+//- Private Navigation
+block navigation_authorized
+    header(class='color0')
+        nav(class='horizontal')
+            ul(class='leftnavigation hidden-xs col-lg-1 col-md-2 col-sm-2')
+                li
+                
+            ul(id='menu_icon', class='leftnavigation menu visible-xs col-xs-1')
+                li(class='color1')
+                li(class='color1')
+                li(class='color1')
+            h1(class='large-text col-xs-10 col-lg-10 col-md-8 col-sm-8 horizontal-center')
+                a(href='')
+                        span(class='semibold') Cali
+                        span grafy
+                        
+            ul(class='rightnavigation hidden-xs col-lg-1 col-md-2 col-sm-2')
+                li
+                    a(class='horizontal-item btn btn-md btn-default', href="{$home}logout") Sign out
+            nav(id='vertical_menu' class='vertical hide')
+                ul(class='menulist color0')
+                    li(class='medium-text')
+                        a(class='vertical-item', href="{$home}logout") Sign out
+
+//- Content block that will get populated by page
+block content
+    
+
+//- Footer
+block footer
+    footer(class='color4')         
+        p(class='small-text semi-bold horizontal-center') Copyright &copy; #{copyright()}
+
+
+//- Client-side scripts that need to be included
+block scripts
+    script(src=scripts('bootstrap_jquery'))
+    script(src=scripts('bootstrap_script'))
+    block additional_preload_scripts
+    script(src=scripts('script'))
+    include ../modules/standalone
+    block additional_scripts
+    if $install
+        include ../modules/install
+    include ../modules/gestures
+    <!--[if lt IE 9] -->
+        <script src=<?php echo "'".scripts('fallback_html5shiv')."'"; ?>></script>
+        <script src=<?php echo "'".scripts('fallback_respond')."'"; ?>></script>
+    <!--<![endif]-->
