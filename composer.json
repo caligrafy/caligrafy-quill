@@ -20,7 +20,7 @@
         "stripe/stripe-php": "7.*",
         "coinbase/coinbase-commerce": "dev-master",
         "phpmailer/phpmailer": "6.*",
-        "phug/phug": "1.x-dev"
+        "phug/phug": "dev-master"
     },
     "config": {
         "allow-plugins": {
