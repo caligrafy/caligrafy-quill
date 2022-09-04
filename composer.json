@@ -1,7 +1,7 @@
 {
-    "name": "dory.azar/caligrafy",
-    "description": "PHP MVC framework",
-    "keywords": ["php", "framework", "mvc", "laravel", "light", "model", "view", "controller", "ai", "bot", "payment", "cryptocurrency"],
+    "name": "caligrafy/caligrafy-quill",
+    "description": "PHP + VueJS MVC framework",
+    "keywords": ["php", "vuejs", "framework", "mvc", "laravel", "light", "model", "view", "controller", "ai", "bot", "payment", "cryptocurrency"],
     "type": "framework",
     "license": "MIT",
     "authors": [
@@ -12,7 +12,7 @@
     ],
     "minimum-stability": "dev",
     "require": {
-        "php": ">=7.0",
+        "php": ">=7.2",
         "pug-php/pug": "dev-master",
         "vlucas/phpdotenv": "^3.3",
         "wixel/gump": "dev-master",
