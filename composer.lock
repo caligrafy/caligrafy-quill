@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "11c5b3b207c76f0f17087078038c3eb8",
+    "content-hash": "988faf6856030a34bbee23fcebf2deb6",
     "packages": [
         {
             "name": "claviska/simpleimage",
@@ -1725,12 +1725,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "2672bdc01c1971e3d8879ce153ec4c3621be5f07"
+                "reference": "3cb8e09aa38d34805fceae36ffc4903036ac121c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/2672bdc01c1971e3d8879ce153ec4c3621be5f07",
-                "reference": "2672bdc01c1971e3d8879ce153ec4c3621be5f07",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/3cb8e09aa38d34805fceae36ffc4903036ac121c",
+                "reference": "3cb8e09aa38d34805fceae36ffc4903036ac121c",
                 "shasum": ""
             },
             "require": {
@@ -1805,7 +1805,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-07-20T13:45:53+00:00"
+            "time": "2022-09-03T14:23:25+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
@@ -1964,7 +1964,7 @@
     "prefer-stable": false,
     "prefer-lowest": false,
     "platform": {
-        "php": ">=7.0"
+        "php": ">=7.2"
     },
     "platform-dev": [],
     "plugin-api-version": "2.3.0"
