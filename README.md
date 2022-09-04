@@ -1,5 +1,5 @@
 # Caligrafy - A Web Application Framework For Novice Developers
-![Caligrafy](https://github.com/DoryAzar/caligrafy/blob/master/public/images/resources/banner_white.png)
+![Caligrafy](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/caligrafy-vue2.png)
 
 ## What is Caligrafy
 
