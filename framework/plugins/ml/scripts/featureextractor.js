@@ -31,7 +31,7 @@ let classificationP;
 let listElement;
 let listItem;
 let message = 'waiting to train model';
-let appResources = env.home + 'public/' + env.request.uriComponents[0] + '/resources/models/';
+let appResources = env.home + 'public/' + env.appName + '/resources/models/';
 
 
 
