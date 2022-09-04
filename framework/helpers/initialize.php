@@ -29,7 +29,6 @@ define("FRAMEWORK_PATH", ROOT . "framework" . DS);
 define("PUBLIC_PATH", ROOT . "public" . DS);
 define("CONFIG_PATH", APP_PATH . "config" . DS);
 define("ROUTING_PATH", CONFIG_PATH . "routing" . DS);
-define("ROUTING_EXTENSION_PATH", CONFIG_PATH . "routing_extensions" . DS);
 define("CONTROLLER_PATH", APP_PATH . "controllers" . DS);
 define("MODEL_PATH", APP_PATH . "models" . DS);
 define("VIEW_PATH", APP_PATH . "views" . DS);

@@ -36,22 +36,26 @@ try {
 
     // ROUTING TO JAVASCRIPT APPS
     // Make sure you create a JS app or a Vue app in Caligrafer first
-    Route::get('/anything/{appName}', 'ClientController'); 
+    Route::get('/apps/{appName}', 'ClientController'); // you can specify any path as long as it ends with appName
 
     
-    // BOT ROUTES
-   
-    Route::get('/anypath/{appName}', 'ClientController');  // A botSkillId needs to be provided in the URL. For Example: ?botSkillId=62196ce3-0b22-4aea-b2f2-d39730c03797
-    Route::post('/{appName}/communicate', 'WatsonController@communicate');
-    Route::post('/{appName}/{appId}', 'WatsonController@connect');
-    Route::delete('/{appName}', 'WatsonController@end');   
+    // BOT PAGE ROUTES
+    Route::get('/bot/{appName}', 'ClientController');  // A botSkillId needs to be provided in the URL. For Example: ?botSkillId=62196ce3-0b22-4aea-b2f2-d39730c03797
+    
+    // BOT DATA ROUTES
+    // routes need to start with reserved path __bots__ 
+    Route::post('/__bots__/{appName}/communicate', 'WatsonController@communicate');
+    Route::post('/__bots__/{appName}/{appId}', 'WatsonController@connect');
+    Route::delete('/__bots__/{appName}', 'WatsonController@end');   
 
-    /*  ML Routes
+    /* ML Routes
+     *
      * If you don't specify an up, it will go to the face, body detector.
      * Specify an app as a URI Parameter ?app=<name of app>
+     * 
      * There are 3 possible apps: featureextractor, neuralnetwork and posedetector
     */
-    Route::get('/any/path/{appName}', 'ClientController'); 
+    Route::get('/ml/{appName}', 'ClientController'); 
     
 
     // MUST NOT BE REMOVED - Routes need to be run after being defined 
