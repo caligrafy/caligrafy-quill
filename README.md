@@ -18,6 +18,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + run `composer install` to get all the dependencies needed
 + run `php caligrafer.php initialize` from the terminal to initialize the framework
 + You are good to go!
++ You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. 
 + If the quick installation does not complete successfully, proceed with the manual installation
 
 ## Manual Installation
@@ -27,6 +28,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + run `composer install` to get all the dependencies needed
 + make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `sudo chmod -R 777 /public/uploads`
 + You are good to go!
++ You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. 
 
 > For more advanced installation, check the documentation [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started)
 

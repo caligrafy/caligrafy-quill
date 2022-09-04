@@ -84,7 +84,7 @@ switch(strtolower($argv[1])) {
 		   system('cp -r framework/settings/application ./application', $retValue);
 		   system('chmod -R 777 public/uploads');
 		   system('chmod -R 777 .git');
-		//    system('rm -R .git');
+		   system('rm -R .git');
 
 		   print("\n Application initialized successfully");
 		   print ("\n APP_KEY=".$appKey);
