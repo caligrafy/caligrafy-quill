@@ -1,3 +1,9 @@
+/********************************************************************************** 
+ * Machine Learning framework built on top of the tensor flow and the ML5.js library
+ * @author: Dory A.Azar
+ * @dependencies: ml5.js
+ **********************************************************************************/
+
 const MlCore = class MlCore {
 	
 	constructor(settings) 
