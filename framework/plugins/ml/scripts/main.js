@@ -26,56 +26,58 @@ var myMl = new MlCore();
  * Example of calling multiple callback methods
  */
 myMl.detect((myMl) => {
-	myMl.drawKeypoints(myMl);
-	myMl.drawSkeleton(myMl);
+
+	// Drawn Keypoints
+	 myMl.drawKeypoints(myMl);
+
+	// Draw Skeleton
+	 myMl.drawSkeleton(myMl);
+
+	// Draw Particular Features
+	// myMl.drawFeature(myMl, ['nose', 'rightEye'] );
+
+	// Callback function from main
+	//test(myMl)
+
+	//Handing over to P5 to draw
+	//setup()
 	
 });
 
-
-/*
- * Example of calling one method
- */
-
-//myMl.detect(myMl.drawFeature, ['nose', 'rightEye']);
 
 
 /*
  * Example of calling a method from main
  */
-//myMl.detect(test); 
-//
-//function test(ml) {
-//	console.log(ml.poses);
-//}
-//	
-
+function test(ml) {
+	console.log(ml);
+}
+	
 
 /*
  * Example using p5.js
  */
 
 	
-//function setup() {
-//	
-//	myMl.toP5(myMl);
-//	myMl.detect((myMl) => {
-//		clear();
-//		draw();
-//		//myMl.drawKeypoints(myMl);
-//	});
-//
-//}
-//
-//function draw() {
-//	if (myMl.poses && myMl.poses.length > 0) {
-//		let pose = myMl.poses[0].pose;
-//		let nose = pose['nose'];
-//		fill(255, 0,0);
-//		ellipse(nose.x, nose.y, 50);
-//	}
-//	
-//}
+function setup() {
+	
+	myMl.toP5(myMl);
+	myMl.detect((myMl) => {
+		clear();
+		draw();
+	});
 
+}
+
+function draw() {
+	if (myMl.poses && myMl.poses.length > 0) {
+		let pose = myMl.poses[0].pose;
+		let nose = pose['nose'];
+		fill(255, 0,0);
+		ellipse(nose.x, nose.y, 50);
+	}
+	
+}
 
 
 /* 
