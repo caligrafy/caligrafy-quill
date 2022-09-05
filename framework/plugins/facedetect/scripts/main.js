@@ -14,7 +14,7 @@ const app = Vue.createApp({
       
       // Load App method
       loadApp: function(app) {
-          this.detector.loadApp(app);
+        this.detector.loadApp(app);
       },
       
       continuousMethod: function(facedetector) {
@@ -67,7 +67,7 @@ const app = Vue.createApp({
               method: this.detector.recognize,
               models: {
                   labels: ['Flash'],
-                  sampleSize: 6
+                  sampleSize: 3
               },
               options: {
                 welcome: "Flash will be recognized if he is present",

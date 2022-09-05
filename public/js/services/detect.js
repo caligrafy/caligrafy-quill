@@ -4,51 +4,36 @@
  * @dependencies: face-api.js
  **********************************************************************************/
 
-var FaceDetector = class FaceDetector {
-    
+ var FaceDetector = class FaceDetector {
     
     constructor(media) {
         
+        // neural network models url
+        const MODEL_URL = env.app_resources + 'models';
+
         // load the faceapi models
-        this.load()
-        .then((loaded) => { 
+        Promise.all([
+            // face detection algorithms
+            faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), // SsdMobilenetv1Options
+
+            faceapi.nets.mtcnn.loadFromUri(MODEL_URL), // MtcnnOptions
+            faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), // TinyFaceDetectorOptions
+
+            // Models for landmarks, age/gender, recognition and expressions
+            faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
+            faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
+            faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
+            faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
+        ])
+        .then(() => { 
                 // when loaded start the stream
-                this.media = document.getElementById(media) || null; 
+                this.media = document.querySelector(`#${media}`) || null; 
                 if (this.media && this.media.tagName.toLowerCase() == 'video' && !this.media.src) {
                     this.startStream();
                 }
         })
         .catch((error) => { console.log(error); }); 
-    };
-    
-    /* 
-    * Promise that loads all the models
-    */
-    async load() {
-        // neural network models url
-        const MODEL_URL = env.app_resources + 'models';
-        
-        try {
-            var loaded = await Promise.all([
-                // face detection algorithms
-                faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), // SsdMobilenetv1Options
-
-                //faceapi.nets.mtcnn.loadFromUri(MODEL_URL), // MtcnnOptions
-                faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), // TinyFaceDetectorOptions
-
-                // Models for landmarks, age/gender, recognition and expressions
-                faceapi.nets.faceLandmark68Net.loadFromUri(MODEL_URL),
-                faceapi.nets.ageGenderNet.loadFromUri(MODEL_URL),
-                faceapi.nets.faceRecognitionNet.loadFromUri(MODEL_URL),
-                faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
-            ]);
-            
-        } catch(error) {
-            return Promise.reject(new Error(error));
-
-        }
-
-    };
+    }
     
     /* 
     * Method that starts streaming from computer cam 
@@ -416,7 +401,7 @@ var FaceDetector = class FaceDetector {
                 // iterate through all the model images in the folder (there are 6 right now and this number should be changed if more pics need to be added)
                 for (let i = 1; i <= sampleSize; i++) {
 
-                    url =  images.length > 0 ? images[i-1] : env.home + 'public/' + env.request.uri + `/recognition/${label}/${i}.png`;
+                    url =  images.length > 0 ? images[i-1] : env.home + 'public/' + env.appName + `/recognition/${label}/${i}.png`;
 
                     // fetch the images from the model
                     const img = await faceapi.fetchImage(url);
