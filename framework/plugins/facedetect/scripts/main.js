@@ -117,6 +117,7 @@ const app = Vue.createApp({
               method: this.detector.recognize,
               models: {
                   labels: ['Flash'],
+                  //   images: [],
                   sampleSize: 3
               },
               options: {

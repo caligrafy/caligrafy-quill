@@ -4,7 +4,7 @@
  * @dependencies: face-api.js
  **********************************************************************************/
 
- var FaceDetector = class FaceDetector {
+ class FaceDetector {
     
     constructor(media) {
         
@@ -102,7 +102,7 @@
         }
         
 
-        var button = document.createElement('button');
+        let button = document.createElement('button');
         button.innerHTML = app.name;
         button.id = 'app' + app.id;
         button.addEventListener('click', !app.custom ? this.detectFaces(app, this) : this.custom(app, this));
@@ -246,14 +246,14 @@
             detections.forEach((result, i) => {
 
                 // Get the most probable expression
-                var sorted = result.expressions ? result.expressions.asSortedArray() : null;
-                var expression = Array.isArray(sorted) ? sorted.filter(function(expr) {
+                let sorted = result.expressions ? result.expressions.asSortedArray() : null;
+                let expression = Array.isArray(sorted) ? sorted.filter(function(expr) {
                     return expr.probability > 0.9;
                 }) : null;
-                var expressionToDisplay = Array.isArray(expression) ? expression[0] ? expression[0].expression : 'neutral' : 'neutral';
+                let expressionToDisplay = Array.isArray(expression) ? expression[0] ? expression[0].expression : 'neutral' : 'neutral';
 
                 // Compose the array of results to display on the canva
-                var resultToDisplay = [];
+                let resultToDisplay = [];
                 if (options && options.expression) {
                     resultToDisplay.push("Expression: " + expressionToDisplay);
                 }
@@ -280,7 +280,7 @@
      clearDisplay() {
 
         // clear the ordered list
-        var messageElement = document.getElementById('message') || null;
+        let messageElement = document.getElementById('message') || null;
         if (messageElement) {
             messageElement.innerHTML = '';      
         }
@@ -296,13 +296,13 @@
      */
      display(message, output) {
          
-        var infobarElement = document.getElementById('infobar') || null;
+        let infobarElement = document.getElementById('infobar') || null;
         if (!document.getElementById('infobar')) {
             infobarElement = document.createElement('SECTION');
             infobarElement.id = 'infobar';
             
             // If the ids have been respected and the detector id is identified
-            var detectorElement = document.getElementById('detector') || null;
+            let detectorElement = document.getElementById('detector') || null;
             if (detectorElement) {
                 // place it before the detector section
                 detectorElement.parentNode.insertBefore(infobarElement, document.getElementById('detector'));
@@ -316,23 +316,23 @@
         if (!document.getElementById(output)) {
 
             // The message bar is an unordered list and list items can be accumulated in it
-            var messageElement = document.getElementById('message') || null;
+            let messageElement = document.getElementById('message') || null;
             if (!messageElement) {
                 messageElement = document.createElement('UL');
                 messageElement.id = 'message';
                 infobarElement.appendChild(messageElement);
             } else {
-                var separator = document.createElement('LI');
+                let separator = document.createElement('LI');
                 separator.innerHTML = "|";
                 messageElement.appendChild(separator);            
             }
-            var newStatus = document.createElement('LI');
+            let newStatus = document.createElement('LI');
             newStatus.id = output;
             messageElement.appendChild(newStatus);
         }
 
         // add message to the area
-        var outputElement = document.getElementById(output) || null;
+        let outputElement = document.getElementById(output) || null;
         outputElement.innerHTML = message;
 
     }
@@ -385,9 +385,9 @@
      * @output: return promise with face descriptors of the models to be recognized
      */
      loadRecognition(models = null) {
-         const labels = models.labels || [];
-         const images = models.images || [];
-         const sampleSize = models.sampleSize || 0;
+         let labels = models.labels || [];
+         let images = models.images || [];
+         let sampleSize = models.sampleSize || 0;
 
         // return a promise that loads all the images and fetches their descriptors
         return Promise.all(
@@ -396,12 +396,18 @@
             labels.map(async label => {
 
                 const descriptors = [];
-                var url;
+                let url;
 
                 // iterate through all the model images in the folder (there are 6 right now and this number should be changed if more pics need to be added)
                 for (let i = 1; i <= sampleSize; i++) {
 
-                    url =  images.length > 0 ? images[i-1] : env.home + 'public/' + env.appName + `/recognition/${label}/${i}.png`;
+                    if(images[0] && images[0].constructor === Array) {
+                        url =  images[key].length > 0 ? images[key][i-1] : env.home + 'public/' + env.appName + `/recognition/${label}/${i}.png`;
+                    } else {
+                        url =  images.length > 0 ? images[i-1] : env.home + 'public/' + env.appName + `/recognition/${label}/${i}.png`;
+                    }
+
+                    //url =  images.length > 0 ? images[i-1] : env.home + 'public/' + env.appName + `/recognition/${label}/${i}.png`;
 
                     // fetch the images from the model
                     const img = await faceapi.fetchImage(url);
@@ -449,7 +455,7 @@
      *
      */
      fetchImage(canvas, media) {
-        var context = canvas.getContext('2d');
+        let context = canvas.getContext('2d');
         context.drawImage(media, 0, 0, media.offsetWidth, media.offsetHeight)
         return canvas.toDataURL();
     }
