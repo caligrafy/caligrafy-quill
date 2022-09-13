@@ -36,9 +36,9 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + You are good to go!
 + You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. 
 
-
+<br />
 > For more advanced installation, check the documentation [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started)
-
+<br />
 
 ## New in Caligrafy
 + Caligrafy now supports Face Detection and Recognition using faceapi framework by Vincent Muhler
