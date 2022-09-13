@@ -13,18 +13,24 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + MySql > 5.6
 + curl, mbstring, openssl, mcrypt, gd, headers and redirect modules must be enabled in your servers
 
-## Quick Installation
-+ Pull the code from github
+## Installation
+
+### Quick Installation
++ Pull the code from github (You can either clone the repo or download the zip file)
++ It is recommended to place the repo at the Server Document Root level
 + run `composer install` to get all the dependencies needed
-+ run `php caligrafer.php initialize` from the terminal to initialize the framework
++ run `php caligrafer.php initialize` from the terminal to initialize the framework. Alternatively, you can also run `.bin/caligrafer initialize`
 + You are good to go!
-+ You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. 
++ You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. If caligrafy is not installed at the Server Document Root level, refer to the `Different Root Folder` section below.
 + If the quick installation does not complete successfully, proceed with the manual installation
 
-## Manual Installation
-+ Pull the code from github
-+ create a .env file by copying the example `cp .env.example .env`
-+ Change the values in .env file to match your local or production server settings
+### Manual Installation
++ Pull the code from github (You can either clone the repo or download the zip file)
++ It is recommended to place the repo at the Server Document Root level
++ Go to the downloaded repo and create a .env file by copying the example `cp .env.example .env`
++ Create an `APP_KEY` and an `API_KEY` in the .env file. You can use Caligrafer to generate API keys for you by running `php caligrafer.php generatekeys`
++ Add the following to the .env file if not present: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`. If caligrafy is not installed at the Server Document Root level, refer to the `Different Root Folder` section below.
++ Change the other values in .env file to match your local or production server settings
 + run `composer install` to get all the dependencies needed
 + make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `sudo chmod -R 777 /public/uploads`
 + You are good to go!
