@@ -31,7 +31,7 @@ class Model {
     {
         // connect to database
         $this->table = $table != null? $table : $this->table;
-        $this->__restricted = ['table', '__restricted'];
+        $this->__restricted = ['table', '__restricted', 'pivot'];
         foreach($dynamicArgs as $property => $value) {
             $this->$property = $value;
         }
@@ -59,7 +59,6 @@ class Model {
         
         //remove all undesired values from object: null and other non related attributes
         $inputArray = array_filter($inputArray, function($value, $key) { return $value != null && !in_array($key, $this->__restricted); }, ARRAY_FILTER_USE_BOTH);
-        
 
         // Format the value binder for PDO
         $binder = [];
@@ -196,7 +195,6 @@ class Model {
     public function hasOne($modelName, $joinedTableName, $foreignKey = null, $localKey = null, $functionName = null)
     {
         $functionName = $functionName?? debug_backtrace()[1]['function'];
-        $this->$functionName = null;
         $joinedTableName = strtolower($joinedTableName);
         $oneToOneModel = class_exists($modelName)? new $modelName($joinedTableName): null;
         $outcome = array();
@@ -206,11 +204,10 @@ class Model {
                 $foreignKey = $foreignKey? $this->table.".".$foreignKey : $this->table.".".strtolower($modelName)."_id";
                 $result = Database::execute('SELECT '.$joinedTableName.'.* FROM '.$this->table.' LEFT JOIN '.$oneToOneModel->table.' ON '.$localKey." = ".$foreignKey." WHERE ".$this->table.".id = ".$this->id);
                 $oneToOneModel = $oneToOneModel->arrayToModel(Database::toArray($result)[0]);
-                $this->$functionName = $oneToOneModel->id? $oneToOneModel : null ;
                 array_push($this->__restricted, $functionName);
 
             }
-        return $oneToOneModel;
+        return $oneToOneModel->id? $oneToOneModel : null ;
     }
     
    
@@ -239,7 +236,6 @@ class Model {
                     $newModel = new $modelName($joinedTableName);
                     $outcome[] = $newModel->arrayToModel($value);
                 }
-                $this->$functionName = $outcome;
                 array_push($this->__restricted, $functionName);
 
             }
@@ -272,7 +268,7 @@ class Model {
         $pivot = !$this->tableExists($table1.'_'.$table2)? $this->tableExists($table2.'_'.$table1)? $table2.'_'.$table1 : $table1.'_'.$table2 : $table1.'_'.$table2;
         $outcome = array();
         $pivotOutcome = array();
-        
+    
         
         // create the pivot table
         $result = Database::execute('CREATE TABLE IF NOT EXISTS '.$pivot.' (`id` INT(25) UNSIGNED NOT NULL AUTO_INCREMENT,`'.$fklocal.'` INT(25) NOT NULL, `'.$fkjoin.'` INT(25) NOT NULL, `created_at` DATETIME NOT NULL DEFAULT now(), `modified_at` DATETIME NOT NULL DEFAULT now() ON UPDATE now(), PRIMARY KEY (`id`), CONSTRAINT fk1 FOREIGN KEY (`'.$fklocal.'`) REFERENCES `'.$table1.'` (`'.$foreignKeyLocal.'`) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk2 FOREIGN KEY (`'.$fkjoin.'`) REFERENCES `'.$table2.'` (`'.$foreignKeyJoin.'`) ON UPDATE CASCADE ON DELETE CASCADE
@@ -281,28 +277,17 @@ class Model {
 
         $pivotModel = new Model($pivot);
 
-        // build the pivot model and associate to the caller object
-        $result = Database::execute('SELECT '.$table2.'.* FROM '.$table1.' LEFT JOIN '.$pivot.' ON '.$table1.'.'.$foreignKeyLocal.'='.$pivot.'.'.$fklocal.' LEFT JOIN '.$table2.' ON '.$table2.'.'.$foreignKeyJoin.'='.$pivot.'.'.$fkjoin.' WHERE '.$table1.'.'.$foreignKeyLocal.' = '.$this->$foreignKeyLocal);
-        $result = Database::toArray($result);
-        
-        // Get all the pivot results
-        $pivotResult = Database::execute('SELECT '.$pivot.'.* FROM '.$table1.' LEFT JOIN '.$pivot.' ON '.$table1.'.'.$foreignKeyLocal.'='.$pivot.'.'.$fklocal.' LEFT JOIN '.$table2.' ON '.$table2.'.'.$foreignKeyJoin.'='.$pivot.'.'.$fkjoin.' WHERE '.$table1.'.'.$foreignKeyLocal.' = '.$this->$foreignKeyLocal);
-        $pivotResult = Database::toArray($pivotResult);
 
-        
+        // build the pivot model and associate to the caller object
+        $result = Database::execute('SELECT '.$table2.'.* FROM '.$table1.' LEFT JOIN '.$pivot.' ON '.$table1.'.'.$foreignKeyLocal.'='.$pivot.'.'.$fklocal.' LEFT JOIN '.$table2.' ON '.$table2.'.'.$foreignKeyJoin.'='.$pivot.'.'.$fkjoin.' WHERE '.$table1.'.'.$foreignKeyLocal.' = '.$pivot.'.'.$foreignKeyLocal);
+        $result = Database::toArray($result);
+
+
         // Get the categories results
         foreach($result as $key => $value) {
             $newModel = new $modelName($joinedTableName);
             if (isset($value['id'])) {
                 $outcome[] = $newModel->arrayToModel($value);
-            }
-        }
-
-        // Get the categories results
-        foreach($pivotResult as $key => $value) {
-            $newModel = new $modelName($joinedTableName);
-            if (isset($value['id'])) {
-                $pivotOutcome[] = $newModel->arrayToModel($value);
             }
         }
         
@@ -311,19 +296,17 @@ class Model {
         $pivotModel->fklocal = $fklocal;
         $pivotModel->fkjoin = $fkjoin;
         
-        // create the function results
-        $this->$functionName = $outcome;
         
         // create a pivot attribute that saves all the pivot info in a model
         $this->pivot = $this->pivot?? new Model();
         $this->pivot->$joinedTableName = $pivotModel;
-        $this->pivot->$joinedTableName->all = $pivotOutcome;
+        $this->pivot->$joinedTableName->all = $result;
         $this->pivot->$joinedTableName->functionName = $functionName;
+
         
         // create restricted names to avoid having them transfer upon save
         array_push($this->pivot->$joinedTableName->__restricted, 'fklocal', 'fkjoin', 'all', 'functionName');
-        array_push($this->__restricted, $functionName, 'pivot');
-    
+        array_push($this->pivot->$joinedTableName->__restricted, $functionName);
         
         return $outcome;
     }
