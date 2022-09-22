@@ -496,6 +496,19 @@
         }
 
     }
+
+    /* 
+     * Method for clearing the canva
+     * @canvas: the canvas where the image will be drawn
+     *
+     */
+        clearCanva(canvas) {
+            if (canvas) {
+                // Clear the canva so that it doesn't accumulate drawing at every detection
+                canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+            }
+    
+        }
     
     
 }

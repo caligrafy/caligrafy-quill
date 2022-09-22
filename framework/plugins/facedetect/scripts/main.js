@@ -53,15 +53,15 @@ const app = Vue.createApp({
        *
        * Properties of every detection: detection.box, age, expression, gender, landmarks, descriptors
        *
-       * faceapi.draw.DrawFaceLandmarks(landmark, {settings})).draw(canva): function that draws the face landmark. Landmarks are attributes of the detections like age, gender etc.
+       * (new faceapi.draw.DrawFaceLandmarks(landmark, {settings})).draw(canva): function that draws the face landmark. Landmarks are attributes of the detections like age, gender etc.
                 * draw landmark settings : drawLines (boolean), drawPoints (boolean), lineWidth (number), lineColor (rgba(x, x, x, x)), pointSize(number), pointColor(rgba(x, x, x, x))
        * 
-       * faceapi.draw.DrawDetections(canva, detections): Draws the detections on the canva
+       * faceapi.draw.drawDetections(canva, detections): Draws the detections on the canva
        * 
-       * faceapi.draw.DrawTextField(Array of strings to display, anchor).draw(canva): Draws text on the canva around the detections
+       * (new faceapi.draw.DrawTextField(Array of strings to display, anchor)).draw(canva): Draws text on the canva around the detections
        *        * anchor: where the text should be placed at every detection. For example it could be: detection.detection.box.bottomLeft
        * 
-       * faceapi.draw.DrawBox(box, {settings}).draw(canva): draws a box around the face 
+       * (new faceapi.draw.DrawBox(box, {settings})).draw(canva): draws a box around the face 
        * 
        * faceapi.matchDimensions(canva, {width: media width, height: media height}): changes the dimensions of the canva to match the media
        * faceapi.resizeResults(detections, {width: media width, height: media height}): resizes the detections to fit within the video
