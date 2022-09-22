@@ -15,8 +15,6 @@
 
 namespace Caligrafy;
 
-use CoinbaseCommerce\ApiClient;
-use CoinbaseCommerce\Resources\Charge;
 
 class CryptoPayment {
 
@@ -32,18 +30,6 @@ class CryptoPayment {
 	* @property string the Coinbase url
 	*/
 	private $_coinbase_url;
-	
-	/**
-	* @var string the Coinbase API key
-	* @property string the Coinbase API key
-	*/
-	private $_coinbase_client_key;
-	
-	/**
-	* @var string the Coinbase API secret
-	* @property string the Coinbase API secret
-	*/
-	private $_coinbase_client_secret;
 	
 	/**
 	* @var string the Coinbase API Version 
@@ -62,15 +48,8 @@ class CryptoPayment {
 	public function __construct()
 	{
 		$this->_public_key = CRYPTO_PAY_KEY;
-        ApiClient::init($this->_public_key);
-		
-		if (COINBASE_API_KEY && COINBASE_API_SECRET && COINBASE_VERSION) {
-			$this->_coinbase_client_key = COINBASE_API_KEY;
-			$this->_coinbase_client_secret = COINBASE_API_SECRET;
-			$this->_coinbase_version  = COINBASE_VERSION;
-			$this->_coinbase_url = "https://api.coinbase.com";
-		}
-		
+		$this->_coinbase_url = "https://api.commerce.coinbase.com";
+		$this->_coinbase_version = "2018-03-22";
         return $this;
 
 	}
@@ -83,22 +62,22 @@ class CryptoPayment {
 
 	public function createTransaction($amount, $currency, $charge, $metadata = array(), $redirectUrl = '', $cancelUrl = '')
     {   
-        $currency = $currency?? 'USD';
-        $chargeObj = new Charge();
 
-        $chargeObj->name = $charge && isset($charge['name'])? $charge['name'] : '';
-        $chargeObj->description = $charge && isset($charge['description'])? $charge['description'] : '';
-        $chargeObj->logo_url = $charge && isset($charge['logo_url'])? $charge['logo_url'] : session('imagesUrl').'resources/logo.png';
-        $chargeObj->local_price = [
-            'amount' => $amount,
-            'currency' => $currency
-        ];
-        $chargeObj->pricing_type = 'fixed_price';
-        $chargeObj->redirect_url = $redirectUrl;
-        $chargeObj->cancel_url = $cancelUrl;
-        $chargeObj->metadata = $metadata;
-        $chargeObj->save();
-        return $chargeObj;
+		$body = array(
+			"name" => $charge && isset($charge['name'])? $charge['name'] : '',
+			"description" => $charge && isset($charge['description'])? $charge['description'] : '',
+			"logo_url" => $charge && isset($charge['logo_url'])? $charge['logo_url'] : session('imagesUrl').'resources/logo.png',
+			"local_price" => [
+				'amount' => $amount,
+				'currency' => $currency
+			],
+			"pricing_type" => "fixed_price",
+			"redirect_url" => $redirectUrl,
+			"cancel_url" => $cancelUrl,
+			"metadata" => $metadata
+		);
+
+		return $this->coinbaseRequest('/charges', 'POST', $body);
     
     }
     
@@ -111,10 +90,7 @@ class CryptoPayment {
 	 */
     public function cancelTransaction($id)
     {
-        $chargeObj = Charge::retrieve($id);
-        if ($chargeObj) {
-            $chargeObj->cancel();
-        }   
+		if ($id) return $this->coinbaseRequest("/charges/$id/cancel", 'POST');
     }
     
     /**
@@ -124,7 +100,7 @@ class CryptoPayment {
 	 */
     public function getCharges()
     {
-        return Charge::getAll();
+        return $this->coinbaseRequest("/charges", 'GET');
     }
     
     /**
@@ -136,7 +112,7 @@ class CryptoPayment {
     
     public function getCharge($chargeId)
     {
-        return Charge::retrieve($chargeId)?? null;
+        if ($chargeId) return $this->coinbaseRequest("/charges/$chargeId", 'GET');
     }
     
     
@@ -148,10 +124,10 @@ class CryptoPayment {
 	 */
     public function getChargeStatus($chargeId)
     {
-        $charge = Charge::retrieve($chargeId)?? null;
+        $charge = $this->getCharge($chargeId);
         $status = 'unknown';
-        if ($charge) {
-            $statuses = $charge->timeline?? array();
+        if ($charge && !empty($charge['data'])) {
+            $statuses = isset($charge['data']['timeline'])? $charge['data']['timeline']: array();
             $status = !empty($statuses)? $statuses[count($statuses)-1]['status'] : $status; 
             
         }
@@ -170,17 +146,12 @@ class CryptoPayment {
 	{
 		$url = $this->_coinbase_url.$requestPath;
 		$requestMethod = strtoupper($requestMethod)?? "GET";
-		$timestamp = time();
-		$body = $body? json_encode($body) : '';
-		$message = $timestamp.$requestMethod.$requestPath.$body;
-		$signature  = hash_hmac('SHA256', $message, $this->_coinbase_client_secret);
 		
 		$headers = array(
-				"Content-Type:application/json",
-				"CB-ACCESS-SIGN:".$signature,
-				"CB-ACCESS-TIMESTAMP:".$timestamp,
-				"CB-ACCESS-KEY:".$this->_coinbase_client_key,
-				"CB-VERSION:".$this->_coinbase_version
+				"Accept: application/json",
+				"Content-Type: application/json",
+				"X-CC-Api-Key: ".$this->_public_key,
+				"X-CC-Version: ".$this->_coinbase_version
 			);
 		$headers = $additionalHeaders? array_merge($headers, $additionalHeaders) : $headers;
 		
