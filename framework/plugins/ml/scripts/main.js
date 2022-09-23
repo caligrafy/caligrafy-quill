@@ -32,19 +32,22 @@ var myMl = new MlCore();
  * ROUTINE 2
  *
  * Detect function allows detection of body poses
- * @callback: mlpose offers several callback methods
- * 		- drawFeature(MlPose, Array features to draw)
- *		- drawKeypoints(MlPose): draws the keypoints detected on the entire body
- *		- drawSkeleton(MlPose): draws the lines for arms, shoulders, legs etc...
+ * @callback: myMl offers several callback methods
+ * 		- drawFeature(myMl, Array features to draw)
+ *		- drawKeypoints(myMl): draws the keypoints detected on the entire body
+ *		- drawSkeleton(myMl): draws the lines for arms, shoulders, legs etc...
  *		- any other custom method that takes MlBody object as a first argument
  * @args: several arguments can be appended to the callback if needed to be called directly from detect
- *		- The first argument is always the MlBody object
+ *		- The first argument is always the Ml Core object
+ *
+ * @return: The detect function returns pose detections
+ *      - myMl.poses
  */
 
 myMl.detect((myMl) => {
 
 
-	// Drawn Keypoints
+	// Draw Keypoints
 	 myMl.drawKeypoints(myMl);
 
 	// Draw Skeleton

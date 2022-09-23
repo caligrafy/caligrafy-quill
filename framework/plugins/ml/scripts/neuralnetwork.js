@@ -58,12 +58,12 @@ const trainingOptions = {
 }
   myMl.brain.train(trainingOptions, finishedTraining);
 
-// Step 5: use the trained model
+// Step 4 - Interim State to do something when training is finished. In this case, go directly to prediction/classification
 function finishedTraining(){
   classify();
 }
 
-// Step 6: make a classification
+// Step 5: make a classification/prediction
 function classify(){
   const input = {
     r: 0, 
@@ -73,7 +73,7 @@ function classify(){
     myMl.brain.classify(input, handleResults);
 }
 
-// Step 7: define a function to handle the results of your classification
+// Step 5 - Interim State to do something upon prediction completion
 function handleResults(error, results) {
     if(error){
       console.error(error);
