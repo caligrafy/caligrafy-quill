@@ -10,7 +10,27 @@
 
 var myMl = new MlCore();
 
+
+
+ /*
+ * ROUTINE 1
+ *
+ * Setup is the first routine to run when available
+ * If there is a desire to do custom drawing on the detections, a handoff to the P5 library takes place here
+ * 
+ */
+ function setup() {
+
+	// Hand-off to P5 to do custom drawing on top
+	myMl.toP5(myMl);
+
+}
+
+
+
 /*
+ * ROUTINE 2
+ *
  * Detect function allows detection of body poses
  * @callback: mlpose offers several callback methods
  * 		- drawFeature(MlPose, Array features to draw)
@@ -21,54 +41,27 @@ var myMl = new MlCore();
  *		- The first argument is always the MlBody object
  */
 
-
-/*
- * Example of calling multiple callback methods
- */
 myMl.detect((myMl) => {
+
 
 	// Drawn Keypoints
 	 myMl.drawKeypoints(myMl);
 
 	// Draw Skeleton
-	 myMl.drawSkeleton(myMl);
+	myMl.drawSkeleton(myMl);
 
 	// Draw Particular Features
 	// myMl.drawFeature(myMl, ['nose', 'rightEye'] );
 
-	// Callback function from main
-	//test(myMl)
-
-	//Handing over to P5 to draw
-	//setup()
 	
 });
 
-
-
 /*
- * Example of calling a method from main
+ * ROUTINE 3
+ *
+ * Draw function is called only if a hand-off to P5 has been initiative in the setup
+ * ONLY EXECUTES IF P5 IS CALLED IN THE SETUP
  */
-function test(ml) {
-	console.log(ml);
-}
-	
-
-/*
- * Example using p5.js
- */
-
-	
-function setup() {
-	
-	myMl.toP5(myMl);
-	myMl.detect((myMl) => {
-		clear();
-		draw();
-	});
-
-}
-
 function draw() {
 	if (myMl.poses && myMl.poses.length > 0) {
 		let pose = myMl.poses[0].pose;
@@ -78,6 +71,8 @@ function draw() {
 	}
 	
 }
+
+
 
 
 /* 

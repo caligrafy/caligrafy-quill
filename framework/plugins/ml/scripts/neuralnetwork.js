@@ -3,7 +3,7 @@
  * settings:
  * - brain: {...} defines the Neural Network settings
  * - type: either 'neuralnetwork' or 'featureextractor'. In this case we want to build a neural network
- * - options { inputs, outputs, debug, task}:  set debug to true to see the confidence visor. The task can either be classification or regression depending on whether the output is discreent or continuous
+ * - options { inputs, outputs, debug, task}:  set debug to true to see the confidence visor. The task can either be classification or regression depending on whether the output is discreet or continuous
  */
 
 var myMl = new MlCore({ brain: { type: 'neuralnetwork', options: { inputs: 3, outputs: 1, debug:true, task: 'classification'}}}); 
