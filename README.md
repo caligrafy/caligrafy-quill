@@ -156,7 +156,7 @@ This framework integrates seamlessly with Vue.js to combine the best of PHP with
 
 #### Basics
 
-In this section, we cover the basics of a PHP developer could quickly use VueJS. 
+In this section, we cover the basics so that a PHP developer could quickly use VueJS. 
 
 1. [Understanding the flow of information](https://github.com/caligrafy/caligrafy-quill/wiki/9.7-Understanding-the-flow-of-information)
 2. [Understanding structure](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.1-Understanding-the-structure)
