@@ -15,6 +15,7 @@ var myMl = new MlCore({ brain: { type: 'neuralnetwork', options: { inputs: 3, ou
  * - @addImage: adds sample image data for training the brain
  * - @train: trains the model and upon results automatically starts classifiying
  * - @classify: classifies the detections
+ * - @normalizeData: normalizes the data (to be used when continuous data and not discrete)
  * - @save: saves the model
  * - @load: loads the saved model
  * 
