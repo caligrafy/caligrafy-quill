@@ -154,23 +154,17 @@ Caligrafy is a modern MVC framework that leverages the powerful technologies tha
 This framework integrates seamlessly with Vue.js to combine the best of PHP with the best of JS.
 
 
-#### Basics
+#### Basics - Vue.js as a library
 
-In this section, we cover the basics so that a PHP developer could quickly use VueJS. 
+In this section, we cover the basics of Vue.js and we illustrate how it could be used quickly as a library.
 
 1. [Understanding the flow of information](https://github.com/caligrafy/caligrafy-quill/wiki/9.7-Understanding-the-flow-of-information)
 2. [Understanding structure](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.1-Understanding-the-structure)
 3. [Routes](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.2-Routes)
-3. [Requests](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.3-Requests)
-4. [Forms](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.4-Forms)
-5. [Validations](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.5-Validations)
-6. [Components](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.6-Components)
-
-#### For prototyping and learning purposes
-
-1. [Setting up Vue to be used as a library]()
-2. [Page and Data Routing]()
-3. [Application and Component Structure]()
+4. [Requests](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.3-Requests)
+5. [Forms](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.4-Forms)
+6. [Validations](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.5-Validations)
+7. [Components](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.6-Components)
 
 
 #### For large scale application purposes
