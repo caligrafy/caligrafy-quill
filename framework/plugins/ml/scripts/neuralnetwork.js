@@ -53,8 +53,8 @@ data.forEach(item => {
 
 // Step 4: train your neural network
 const trainingOptions = {
-  epochs: 32,
-  batchSize: 12
+  epochs: 10,
+  batchSize: 2
 }
   myMl.brain.train(trainingOptions, finishedTraining);
 
