@@ -47,7 +47,7 @@ const app = Vue.createApp({
         * facedetector.fetchImage(canvas, media): takes a canvas capture of the media and returns a blob data image (data url)
         * facedetector.display(message, output): displays a message in the infobar and gives it an ID as specified by the 'output' input
         * facedetector.clearDisplay(): clears the infobar display
-        * facedetector.clearCanva: clears the canva
+        * facedetector.clearCanva(canvas): clears the canva
         */
 
       /* FACEAPI methods and properties
