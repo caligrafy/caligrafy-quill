@@ -8,6 +8,20 @@
 
 var myMl = new MlCore({ brain: { type: 'neuralnetwork', options: { inputs: 3, outputs: 1, debug:true, task: 'classification'}}}); 
 
+/* 
+ * Neural Network Methods
+ * - @constructor: define the brain by specifying number of inputs, outputs, debug mode and the type of task
+ * - @addData: adds sample data for training the brain
+ * - @addImage: adds sample image data for training the brain
+ * - @train: trains the model and upon results automatically starts classifiying
+ * - @classify: classifies the detections
+ * - @save: saves the model
+ * - @load: loads the saved model
+ * 
+ */
+
+
+
 // Step 1: load data or create some data 
 const data = [
   {r:255, g:0, b:0, color:'red-ish'},

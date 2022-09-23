@@ -71,20 +71,3 @@ function draw() {
 	}
 	
 }
-
-
-
-
-/* 
- * Using Neural Networks to train recognizing body poses
- * Neural Network Methods
- * - @constructor: define the brain by specifying number of inputs, outputs, debug mode and the type of task
- * - @addData: adds sample data for training the brain
- * - @train: trains the model and upon results automatically starts classifiying
- * - @classify: classifies the detections
- *
- * FOR MORE INFORMATION ABOUT NEURAL NETWORKS, CHECK posedetector.js 
- *
- *
- */
-

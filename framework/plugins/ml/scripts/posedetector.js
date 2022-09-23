@@ -8,17 +8,21 @@
  * - brain: {...} defines the Neural Network settings
  */
 
-
+var myMl = new MlCore(); // { brain: { type: 'neuralnetwork', options: { inputs: 34, outputs: 2, debug:true, task: 'classification'}}}
 
 /* 
  * Using Neural Networks to train recognizing body poses
  * Neural Network Methods
  * - @constructor: define the brain by specifying number of inputs, outputs, debug mode and the type of task
  * - @addData: adds sample data for training the brain
+ * - @addImage: adds sample image data for training the brain
  * - @train: trains the model and upon results automatically starts classifiying
  * - @classify: classifies the detections
+ * - @save: saves the model
+ * - @load: loads the saved model
+ * 
  */
-var myMl = new MlCore(); // { brain: { type: 'neuralnetwork', options: { inputs: 34, outputs: 2, debug:true, task: 'classification'}}}
+
 
 let dataButton;
 let dataLabel;
