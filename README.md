@@ -1,7 +1,7 @@
 # Caligrafy - A Web Application Framework For Novice Developers
 ![Caligrafy](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/caligrafy-vue2.png)
 
-## What is Caligrafy Quill
+## What is Caligrafy
 
 Caligrafy is a new and modern MVC framework for PHP that was built from the ground up to provide easy and elegant ways for novice developers to build sophisticated and modern web applications. We've laid a solid foundation of security, social, e-commerce, analytics and machine learning features so that you focus your genius on your ideas. 
 
