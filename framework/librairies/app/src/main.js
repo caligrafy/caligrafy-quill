@@ -47,8 +47,7 @@ app.config.globalProperties.apiConfig = {
 	crossDomain: true,
 	headers: {
 		"Authorization": "Bearer " + app.config.globalProperties.config.apiKey,
-		'Content-Type': 'application/json',
-		'Set-Cookie': 'widget_session=caligrafy_app; SameSite=None; Secure'
+		'Content-Type': 'application/json'
 	}
 	
 };
