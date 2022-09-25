@@ -7,6 +7,14 @@ Caligrafy is a new and modern MVC framework for PHP that was built from the grou
 
 Caligrafy bridges the power of server-side languages like PHP with the sophistication of client-side languages like Javascript to expose you to how the most advanced Web capabilities are built.
 
+<br/>
+
+> #### ![](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/play.png) [Introduction to Caligrafy](https://youtu.be/zTqbWlTPrNQ)
+>
+> In this video we introduce you to the Caligrafy framework and to the different components that are used in it.
+
+<br/>
+
 
 ## Requirements
 + PHP > 7.2
