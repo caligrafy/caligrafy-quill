@@ -24,12 +24,16 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 ## Installation
 
 ### Quick Installation
+
 + Run the following code from the terminal to get the latest version of Caligrafy
+
     ```bash
     composer create-project -s dev caligrafy/caligrafy-quill
 
     ```
+
 + Run the following code in from the Caligrafy root folder to initialize the framework
+
     ```bash
 
     php caligrafer.php initialize
