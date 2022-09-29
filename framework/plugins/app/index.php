@@ -11,6 +11,7 @@
         <link rel="shortcut icon" href="<?php echo scripts('favicon'); ?>" type="image/x-icon" />
         <link rel="stylesheet" type="text/css" href="<?php echo scripts('css'); ?>" />
         <link rel="stylesheet" href="<?php echo scripts('bootstrap_css'); ?>" />
+        <link rel="stylesheet" href="<?php echo session('public').'css/theme.css';?>">
         
     </head>
     
