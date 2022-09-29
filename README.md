@@ -29,7 +29,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     ```bash
 
-    composer create-project -s dev caligrafy/caligrafy-quill <optionally specify a name. default: caligrafy-quill>
+    composer create-project -s dev caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
 
     ```
 
