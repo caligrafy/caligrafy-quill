@@ -24,13 +24,22 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 ## Installation
 
 ### Quick Installation
-+ Pull the code from github (You can either clone the repo or download the zip file)
-+ It is recommended to place the repo at the Server Document Root level
-+ run `composer install` to get all the dependencies needed
-+ run `php caligrafer.php initialize` from the terminal to initialize the framework. Alternatively, you can also run `.bin/caligrafer initialize`
-+ You are good to go!
-+ You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. If caligrafy is not installed at the Server Document Root level, refer to the `Different Root Folder` section below.
-+ If the quick installation does not complete successfully, proceed with the manual installation
++ Run the following code from the terminal to get the latest version of Caligrafy
+    ```bash
+    composer create-project -s dev caligrafy/caligrafy-quill
+
+    ```
++ Run the following code in from the Caligrafy root folder to initialize the framework
+    ```bash
+
+    php caligrafer.php initialize
+
+    #or
+
+    .bin/caligrafer initialize
+
+    ``` 
++ You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
 
 ### Manual Installation
 + Pull the code from github (You can either clone the repo or download the zip file)
@@ -42,6 +51,8 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + run `composer install` to get all the dependencies needed
 + make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `sudo chmod -R 777 /public/uploads`
 + You are good to go!
+
+### Testing the Installation
 + You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. 
 
 <br />
