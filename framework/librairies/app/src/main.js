@@ -2,6 +2,7 @@ import { createApp } from 'vue'
 import App from '@/App.vue'
 import { createRouter, createWebHistory } from 'vue-router'
 import '@/assets/css/styles.css'
+import '@/assets/css/theme.css'
 
 // Import Page Components
 import HomePage from '@/components/pages/HomePage.vue'
