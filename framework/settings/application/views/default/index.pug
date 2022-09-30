@@ -2,11 +2,59 @@ extends master/layoutblocks
 
 block content
     .spacer-2
-    div(class='content-section equally-spaced-1')
-        .spacer-2
+    .content-section.equally-spaced-1
+        .spacer-4
         if $authorized
-            h2 You are currently logged in.
+            h2.medium-text.horizontal-center.semibold You are currently logged in.
         else
-            h2 Welcome to Caligrafy
-        p Start from the ground up with this light MVC framework
-		
+            h2.medium-text.horizontal-center.semibold Welcome to Caligrafy
+        p.horizontal-center Start from the ground up with this light MVC framework
+		.spacer-2
+        .wrapper.bounded-large.content-section 
+            .col-sm-6.col-md-4
+                a(href="https://github.com/caligrafy/caligrafy-quill/wiki", target="_blank")
+                    .card.animated.zoomIn.color0.equally-spaced-1.dropshadow 
+                        h2.medium-text.semibold.textcolor5.reset-margin Docs and Cookbook
+                        .spacer-1 
+                        .wrapper.reset-margin
+                            p.textcolor5.default-text.block-with-text Learn the ins and outs of the Caligrafy Quill framework
+                        .spacer-4
+            .col-sm-6.col-md-4
+                a(href="https://youtube.com/playlist?list=PLsJG81fLk3_VWmXl9DnEldYY9ei4jTCjA", target="_blank")
+                    .card.animated.zoomIn.color0.equally-spaced-1.dropshadow 
+                        h2.medium-text.semibold.textcolor5.reset-margin Caligrafy Channel
+                        .spacer-1 
+                        .wrapper.reset-margin
+                            p.textcolor5.default-text.block-with-text Watch our video tutorials to learn how to build powerful and sophisticated features
+                        .spacer-4
+            .col-sm-6.col-md-4
+                a(href="https://www.udemy.com/courses/search/?src=ukw&q=caligrafy", target="_blank")
+                    .card.animated.zoomIn.color0.equally-spaced-1.dropshadow 
+                        h2.medium-text.semibold.textcolor5.reset-margin Caligrafy Academy
+                        .spacer-1 
+                        .wrapper.reset-margin
+                            p.textcolor5.default-text.block-with-text We offer detailed hands-on online courses that will progressively make you an expert in Caligrafy
+                        .spacer-4
+            .col-sm-6.col-md-4
+                a(href="")
+                    .card.animated.zoomIn.color0.equally-spaced-1.dropshadow 
+                        h2.medium-text.semibold.textcolor5.reset-margin Join Our Community
+                        .spacer-2
+                        .wrapper.reset-padding.reset-margin.horizontal-center
+                            .small-text
+                                a(href="https://caligrafy.slack.com/", target="_blank")
+                                    .btn.btn-primary.input-size-200 Join us on Slack 
+                                .spacer-1
+                                a(href="https://www.facebook.com/groups/caligrafy/", target="_blank")
+                                    .btn.btn-primary.input-size-200 Join our Facebook group
+            .col-sm-6.col-md-4
+                a(href="")
+                    .card.animated.zoomIn.color0.equally-spaced-1.dropshadow 
+                        h2.medium-text.semibold.textcolor5.reset-margin Keep Caligrafy Going...
+                        .spacer-1
+                        .wrapper.reset-margin
+                            p.textcolor5.default-text.block-with-text Your contributions can help us keep our commitments to the developer community.
+                            .spacer-1
+                            .horizontal-center.small-text
+                                a(href="https://github.com/sponsors/DoryAzar", target="_blank")
+                                    .btn.btn-primary.input-size-150 Sponsor us
