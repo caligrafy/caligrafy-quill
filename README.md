@@ -31,6 +31,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 >
 > In this video we introduce you to the Caligrafy framework and to the different components that are used in it.
 
+<br/>
 
 + Run the following code from the terminal to get the latest version of Caligrafy
 
