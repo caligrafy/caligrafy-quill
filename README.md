@@ -25,6 +25,8 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 ### Quick Installation
 
+<br/>
+
 > #### ![](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/play.png) [Installing Caligrafy](https://youtu.be/21Lazd38FfQ)
 >
 > In this video we introduce you to the Caligrafy framework and to the different components that are used in it.
