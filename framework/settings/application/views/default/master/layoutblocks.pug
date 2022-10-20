@@ -10,6 +10,7 @@ block headers
         if $metadata
             include ../modules/metadata
         link(rel='shortcut icon', href=scripts('favicon'), type='image/x-icon')
+        block additional_css
         link(rel="stylesheet", type="text/css", href=scripts('css'))
         link(rel="stylesheet", href=scripts('bootstrap_css'))
         link(rel="stylesheet", href="{$home}public/css/theme.css")
@@ -19,7 +20,6 @@ block headers
             link(rel="stylesheet", type="text/css", href=scripts('social_buttons_css'))
         if $install
             link(rel="stylesheet", type="text/css", href=scripts('add_to_home_css'))
-        block additional_css
         if $google_analytics
             script(async src="https://www.googletagmanager.com/gtag/js?id={$analytics_id}")
             script.

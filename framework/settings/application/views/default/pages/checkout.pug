@@ -13,5 +13,6 @@ block content
     .content-section.equally-spaced-1
         if $sessionId
             form.horizontal-center
-                button(id="checkout-button", data-secret="{$sessionId}", public-key="{$publicKey}") Check out
+                button(id="checkout-button", data-secret="{$sessionId}", public-key="{$publicKey}")
+                    .textcolor0 Check out
 
