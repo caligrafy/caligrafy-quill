@@ -39,12 +39,6 @@ class Payment {
 	private $_ach_client_id;
     
     /**
-	* @var string the Plaid public key
-	* @property string the Plaid public key
-	*/
-	private $_ach_public_key;
-    
-    /**
 	* @var string the Plaid secret 
 	* @property string the Plaid secret
 	*/
@@ -76,14 +70,16 @@ class Payment {
         
         if (strtolower(ACH_ACTIVATE) == 'true') {
             $this->_ach_client_id = ACH_CLIENT_ID;
-            $this->_ach_public_key = ACH_PUBLIC_KEY;
             if (strtolower(APP_ENV) == 'production') {
-                $this->_ach_url = "https://development.plaid.com";
+                $this->_ach_url = "https://production.plaid.com";
                 $this->_ach_secret = ACH_PRODUCTION_SECRET;
+            } else if (strtolower(APP_ENV) == 'development')  {
+                $this->_ach_url = "https://development.plaid.com";
+                $this->_ach_secret = ACH_DEVELOPMENT_SECRET;
             } else {
-                $this->_ach_url = "https://sandbox.plaid.com";
+				$this->_ach_url = "https://sandbox.plaid.com";
                 $this->_ach_secret = ACH_SANDBOX_SECRET;
-            }
+			}
         }
 
 		\Stripe\Stripe::setApiKey($this->_private_key);
@@ -147,8 +143,8 @@ class Payment {
 		$result = array('action_success' => false, 'error' => 'Transaction could not be completed');
 		$data = array('client_id' => $this->_ach_client_id,
                          'secret' => $this->_ach_secret,
-					  	 'client_name' => 'Paypost',
-					  	 'user' => ['client_user_id' => 'paypost'],
+					  	 'client_name' => 'Caligrafy',
+					  	 'user' => ['client_user_id' => 'caligrafy'.strtolower(APP_ENV)],
                          'products' => ['auth'],
 					  	 'country_codes' => ['US'],
 					 	 'language' => 'en');

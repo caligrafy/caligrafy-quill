@@ -1,5 +1,5 @@
 - $ach = strtolower($_ENV['ACH_ACTIVATE']) == 'true'? true : false;
-- $environment = strtolower($_ENV['APP_ENV']) != 'production'? 'sandbox' : 'development';
+- $environment = strtolower($_ENV['APP_ENV']);
 if $ach
     div(class="textcolor0 horizontal-center")
         form(id = "bank-form", button-label = "Pay from bank", method='POST', enctype="multipart/form-data")
