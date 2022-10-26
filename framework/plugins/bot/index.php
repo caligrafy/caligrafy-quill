@@ -11,8 +11,8 @@
         <link rel="shortcut icon" href="<?php echo scripts('favicon'); ?>" type="image/x-icon" />
         <link rel="stylesheet" href="<?php echo scripts('bootstrap_css'); ?>" />
         
-        <link rel="stylesheet" href="https://unpkg.com/botui/build/botui.min.css" />
-        <link rel="stylesheet" href="https://unpkg.com/botui/build/botui-theme-default.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/botui/build/botui.min.css" />
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/botui/build/botui-theme-default.css" />
         
     </head>
     
@@ -28,7 +28,7 @@
         <!-- Initialization scripts -->
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
         <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-        <script src="https://unpkg.com/botui/build/botui.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/botui/build/botui.js"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
         <script>loadEnvironment(`<?php echo $env; ?>`);</script>
         <script> 
