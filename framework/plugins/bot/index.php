@@ -10,9 +10,8 @@
         <!-- Stylesheet and head scripts go here -->
         <link rel="shortcut icon" href="<?php echo scripts('favicon'); ?>" type="image/x-icon" />
         <link rel="stylesheet" href="<?php echo scripts('bootstrap_css'); ?>" />
-        
-        <link rel="stylesheet" href="css/botui.min.css" />
-        <link rel="stylesheet" href="css/botui-theme-default.css" />
+        <link rel="stylesheet" href="<?php echo session('public').'css/botui.min.css';?>">
+        <link rel="stylesheet" href="<?php echo session('public').'css/botui-theme-default.css';?>">
         
     </head>
     
@@ -28,7 +27,7 @@
         <!-- Initialization scripts -->
         <script src="https://cdn.jsdelivr.net/npm/vue/dist/vue.js"></script>
         <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-        <script src="scripts/botui.js"></script>
+        <script src="<?php echo session('public').'js/services/botui.js';?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
         <script>loadEnvironment(`<?php echo $env; ?>`);</script>
         <script> 
