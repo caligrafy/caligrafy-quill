@@ -11,12 +11,12 @@ block additional_scripts
 block content
 	.spacer-4 
 	.content-section.equally-spaced-1
-			form(id="payment-form").horizontal-center
-				.form-row
-					#card-element
-					p(id="card-error", role="alert")
-					
-				button(id="submit", data-secret="{$clientSecret}", public-key="{$publicKey}")
-					#spinner.spinner.hidden
-					span(id="button-text").textcolor0.medium-text Pay
-				p.result-message.hidden Payment succeeded
+		form(id="payment-form").horizontal-center
+			.form-row
+				#card-element
+				p(id="card-error", role="alert")
+				
+			button(id="submit", data-secret="{$clientSecret}", public-key="{$publicKey}")
+				#spinner.spinner.hidden
+				span(id="button-text").textcolor0.medium-text Pay
+			p.result-message.hidden Payment succeeded
