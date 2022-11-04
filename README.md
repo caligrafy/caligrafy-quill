@@ -219,7 +219,7 @@ Caligrafy provides easy ways to include Artificial Intelligence and Machine Lear
 ## Learn through examples
 
 + Caligrafy is an outstanding framework for educational purposes. We constantly develop instructional video materials to illustrate the main features of the framework. Stay on the look for more video tutorials on our youtube channel.
-[Caligrafy Video Channel](https://www.youtube.com/channel/UCo0ZZbiHVGlF9lFWFpVhG8g)
+[Caligrafy Video Channel](https://www.youtube.com/playlist?list=PLsJG81fLk3_VWmXl9DnEldYY9ei4jTCjA)
 
 
 + Projects built using Caligrafy
