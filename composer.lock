@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/claviska/SimpleImage.git",
-                "reference": "abd15ced313c7b8041d7d73d8d2398b4f2510cf1"
+                "reference": "dc386e9a2b2799febe442b463cfc7cb4de0fd031"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/claviska/SimpleImage/zipball/abd15ced313c7b8041d7d73d8d2398b4f2510cf1",
-                "reference": "abd15ced313c7b8041d7d73d8d2398b4f2510cf1",
+                "url": "https://api.github.com/repos/claviska/SimpleImage/zipball/dc386e9a2b2799febe442b463cfc7cb4de0fd031",
+                "reference": "dc386e9a2b2799febe442b463cfc7cb4de0fd031",
                 "shasum": ""
             },
             "require": {
@@ -46,7 +46,7 @@
             "description": "A PHP class that makes working with images as simple as possible.",
             "support": {
                 "issues": "https://github.com/claviska/SimpleImage/issues",
-                "source": "https://github.com/claviska/SimpleImage/tree/3.7.0"
+                "source": "https://github.com/claviska/SimpleImage/tree/master"
             },
             "funding": [
                 {
@@ -54,7 +54,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2022-07-05T13:18:44+00:00"
+            "time": "2022-11-02T22:58:28+00:00"
         },
         {
             "name": "js-phpize/js-phpize",
@@ -787,16 +787,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v9.9.0-beta.1",
+            "version": "v9.9.0-beta.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "2ab11b47b05749768a2a41d99dbf1694a828af01"
+                "reference": "ee6776e01669e612babefb98b0944ea71703c658"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/2ab11b47b05749768a2a41d99dbf1694a828af01",
-                "reference": "2ab11b47b05749768a2a41d99dbf1694a828af01",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/ee6776e01669e612babefb98b0944ea71703c658",
+                "reference": "ee6776e01669e612babefb98b0944ea71703c658",
                 "shasum": ""
             },
             "require": {
@@ -842,9 +842,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v9.9.0-beta.1"
+                "source": "https://github.com/stripe/stripe-php/tree/v9.9.0-beta.2"
             },
-            "time": "2022-10-22T00:33:56+00:00"
+            "time": "2022-11-02T20:07:32+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -852,12 +852,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
-                "reference": "6fd1b9a79f6e3cf65f9e679b23af304cd9e010d4"
+                "reference": "5bbc823adecdae860bb64756d639ecfec17b050a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/6fd1b9a79f6e3cf65f9e679b23af304cd9e010d4",
-                "reference": "6fd1b9a79f6e3cf65f9e679b23af304cd9e010d4",
+                "url": "https://api.github.com/repos/symfony/polyfill-ctype/zipball/5bbc823adecdae860bb64756d639ecfec17b050a",
+                "reference": "5bbc823adecdae860bb64756d639ecfec17b050a",
                 "shasum": ""
             },
             "require": {
@@ -873,7 +873,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.26-dev"
+                    "dev-main": "1.27-dev"
                 },
                 "thanks": {
                     "name": "symfony/polyfill",
@@ -911,7 +911,7 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.26.0"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/main"
             },
             "funding": [
                 {
@@ -927,7 +927,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-05-24T11:49:31+00:00"
+            "time": "2022-11-03T14:55:06+00:00"
         },
         {
             "name": "symfony/polyfill-mbstring",
@@ -935,12 +935,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
-                "reference": "9344f9cb97f3b19424af1a21a3b0e75b0a7d8d7e"
+                "reference": "8ad114f6b39e2c98a8b0e3bd907732c207c2b534"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/9344f9cb97f3b19424af1a21a3b0e75b0a7d8d7e",
-                "reference": "9344f9cb97f3b19424af1a21a3b0e75b0a7d8d7e",
+                "url": "https://api.github.com/repos/symfony/polyfill-mbstring/zipball/8ad114f6b39e2c98a8b0e3bd907732c207c2b534",
+                "reference": "8ad114f6b39e2c98a8b0e3bd907732c207c2b534",
                 "shasum": ""
             },
             "require": {
@@ -956,7 +956,7 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-main": "1.26-dev"
+                    "dev-main": "1.27-dev"
                 },
                 "thanks": {
                     "name": "symfony/polyfill",
@@ -995,7 +995,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.26.0"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/main"
             },
             "funding": [
                 {
@@ -1011,7 +1011,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-05-24T11:49:31+00:00"
+            "time": "2022-11-03T14:55:06+00:00"
         },
         {
             "name": "symfony/var-dumper",
