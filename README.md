@@ -190,13 +190,14 @@ This framework integrates seamlessly with Vue.js to combine the best of PHP with
 
 In this section, we cover the basics of Vue.js and we illustrate how it could be used quickly as a library.
 
-1. [Understanding the flow of information](https://github.com/caligrafy/caligrafy-quill/wiki/9.7-Understanding-the-flow-of-information)
-2. [Understanding structure](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.1-Understanding-the-structure)
-3. [Routes](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.2-Routes)
-4. [Requests](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.3-Requests)
-5. [Forms](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.4-Forms)
-6. [Validations](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.5-Validations)
-7. [Components](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.6-Components)
+1. [Setting up Vue.js as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library)
+2. [Understanding the flow of information](https://github.com/caligrafy/caligrafy-quill/wiki/9.7-Understanding-the-flow-of-information)
+3. [Understanding structure](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.1-Understanding-the-structure)
+4. [Routes](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.2-Routes)
+5. [Requests](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.3-Requests)
+6. [Forms](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.4-Forms)
+7. [Validations](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.5-Validations)
+8. [Components](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.6-Components)
 
 
 #### For large scale application purposes
