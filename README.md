@@ -185,6 +185,13 @@ We have created a rigorous documentation to help you understand the basics of th
 Caligrafy is a modern MVC framework that leverages the powerful technologies that fuel each of the M (Model), the V (View) and the C (Controller). Vue.js is a modern and progressive Javascript framework that has been built from the  ground up just like Caligrafy. Vue.js empowers you to create powerful and sophisticated Views. 
 This framework integrates seamlessly with Vue.js to combine the best of PHP with the best of JS.
 
+<br/>
+
+> #### ![](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/play.png) [Integrating Caligrafy with VueJS](https://youtu.be/XpCpWezS4Pk)
+>
+> In this video, we show how VueJS can be used with Caligrafy in 2 different ways: 1) as a library to build simple web applications and 2) as a fully integrated front-end framework to build large-scale applications.
+
+<br/>
 
 #### Basics - Vue.js as a library
 
