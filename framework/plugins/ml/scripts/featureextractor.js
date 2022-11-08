@@ -8,7 +8,7 @@
  * - brain: {...} defines the brain settings (type and options)
  */
 
-var myMl = new MlCore({ brain: {type: 'featureextractor'}}); 
+var myMl = new MlCore({ brain: {type: 'featureextractor', options: { numLabels: 2, epochs: 20, batchSize: 0.4 }}}); 
 
 /* 
  * Using the Feature Extractor, objects can be classified
