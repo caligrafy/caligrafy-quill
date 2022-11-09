@@ -8,7 +8,7 @@
  * - brain: {...} defines the Neural Network settings
  */
 
-var myMl = new MlCore(); // { brain: { type: 'neuralnetwork', options: { inputs: 34, outputs: 2, debug:true, task: 'classification'}}}
+var myMl = new MlCore(); 
 
 /* 
  * Using Neural Networks to train recognizing body poses
