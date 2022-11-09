@@ -6,7 +6,7 @@
  * - options { inputs, outputs, debug, task}:  set debug to true to see the confidence visor. The task can either be classification or regression depending on whether the output is discreet or continuous
  */
 
-var myMl = new MlCore({ brain: { type: 'neuralnetwork', options: { inputs: 3, outputs: 1, debug:true, task: 'classification'}}}); 
+var myMl = new MlCore({ brain: { type: 'neuralnetwork', options: { inputs: 3, outputs: 1, debug:true, task: 'regression'}}}); 
 
 /* 
  * Neural Network Methods
@@ -28,6 +28,10 @@ const data = [
   {r:255, g:0, b:0, color:'red-ish'},
   {r:254, g:0, b:0, color:'red-ish'},
   {r:253, g:0, b:0, color:'red-ish'},
+  {r:180, g:0, b:20, color:'red-ish'},
+  {r:180, g:10, b:20, color:'red-ish'},
+  {r:50, g:30, b:70, color:'blue-ish'},
+  {r:10, g:50, b:180, color:'blue-ish'},
   {r:0, g:0, b:255, color:'blue-ish'},
   {r:0, g:0, b:254, color:'blue-ish'},
   {r:0, g:0, b:253, color:'blue-ish'}
@@ -49,11 +53,11 @@ data.forEach(item => {
 });
 
 // Step 3: normalize your data;
-//myMl.brain.normalizeData();
+myMl.brain.normalizeData();
 
 // Step 4: train your neural network
 const trainingOptions = {
-  epochs: 10,
+  epochs: 20,
   batchSize: 2
 }
   myMl.brain.train(trainingOptions, finishedTraining);
@@ -66,9 +70,9 @@ function finishedTraining(){
 // Step 5: make a classification/prediction
 function classify(){
   const input = {
-    r: 0, 
-    g: 0, 
-    b: 180
+    r: 10, 
+    g: 10, 
+    b: 1
   }
     myMl.brain.classify(input, handleResults);
 }
