@@ -19,7 +19,7 @@ const MlCore = class MlCore {
 		this.ctx = this.canvas? this.canvas.getContext('2d') : null;
 
 		// Load brain type
-		this.featureextractor = this.settings.brain.type == 'featureextractor'? ml5.featureExtractor('MobileNet')?? null : null; 
+		this.featureextractor = this.settings.brain.type == 'featureextractor'? ml5.featureExtractor('MobileNet', this.settings.brain.options)?? null : null; 
 
 		// Load filter properties
 		this.segmentationImage = document.getElementById('segmentationImage') || null;

@@ -6,6 +6,7 @@
  * - filter: set to true if you want to extract the body image from the background
  * - hideVideo: hides the video
  * - brain: {...} defines the brain settings (type and options)
+ * 			- options: numLabels, epochs, batchSize
  */
 
 var myMl = new MlCore({ brain: {type: 'featureextractor', options: { numLabels: 2, epochs: 20, batchSize: 0.4 }}}); 
