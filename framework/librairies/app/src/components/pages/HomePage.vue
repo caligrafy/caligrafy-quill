@@ -55,7 +55,7 @@ export default {
 						"id": 4,
 						"link": "https://www.udemy.com/courses/search/?src=ukw&q=caligrafy" ,
 						"title": "Caligrafy Academy",
-						"description": "We offer detailed hands-on online courses that will progressively make you an expert in Caligrafy"
+						"description": "We offer detailed hands-on online courses that will make you an expert in no time"
 					}
 				]
 		}
