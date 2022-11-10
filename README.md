@@ -74,13 +74,6 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 <br />
 
-## New in Caligrafy
-+ Caligrafy now supports Face Detection and Recognition using faceapi framework by Vincent Muhler
-+ Caligrafy now supports ChatBot Assistant using IBM Watson
-+ Caligrafy now supports ACH payments
-+ Caligrafy now supports API Authorization
-+ Caligrafy can now support VueJS a progressive Javascript framework that helps you build powerful user interfaces
-
 ## Why Caligrafy
 
 ### 1. Full-Stack Framework
