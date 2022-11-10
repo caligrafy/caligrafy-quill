@@ -224,32 +224,26 @@ Caligrafy provides easy ways to include Artificial Intelligence and Machine Lear
 2. [Face Detection and Recognition](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition)
 3. [Machine Learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning)
     
-## Learn through examples
-
-+ Caligrafy is an outstanding framework for educational purposes. We constantly develop instructional video materials to illustrate the main features of the framework. Stay on the look for more video tutorials on our youtube channel.
-[Caligrafy Video Channel](https://www.youtube.com/playlist?list=PLsJG81fLk3_VWmXl9DnEldYY9ei4jTCjA)
-
-
-+ Projects built using Caligrafy
-
-    + [Postcart](https://post-cart.com/Postcart/): Service that lets people sell stuff they own or make directly in a post from any social network
-
-    + [kickposter](https://kickposter.us/kickposter/):  Service that helps designers, makers, entrepreneurs and other creators fund their project ideas with the help of friends and family directly from a post on any social network
-    
-## Connecting with the Caligrafy Community
-There are several ways for the Caligrafy community to connect:
-+ **github:** You can always use github to stay up to date with the roadmap of Caligrafy, to post issues and to track when feature requests and issues are done
-+ **slack:** Joining our slack group is a great way to exchange with other members of the community, to get help on using the framework and to discuss any issues or features.
-[Join our slack community](https://join.slack.com/t/caligrafy/shared_invite/enQtNzI4MDY2OTA4MTgzLTI2NDc2NTVmMDNlMWQ5YWYxN2RjZTkwZjdiNjM5ZTg3NjQ2YWYyMzRmZDgzNWE0Nzc4YjQyODM2NDNkNjQ2OTU)
-+ **facebook Caligrafy Group:** Joining our Caligrafy group on facebook gives you more ways to interact with the community and to share success stories. 
-[Join our facebook group](https://www.facebook.com/groups/caligrafy/)
-
 ## Learn Caligrafy
 
-+ Caligrafy offers an online course that gives you all the basics that you need to create powerful applications with Caligrafy.
++ Caligrafy is an outstanding framework for educational purposes. We constantly develop instructional video materials to illustrate the main features of the framework. Stay on the look for more video tutorials on our youtube channel.
+[Caligrafy Channel](https://www.youtube.com/playlist?list=PLsJG81fLk3_VWmXl9DnEldYY9ei4jTCjA)
 
++ Caligrafy offers online courses that give you all the basics that you need to create powerful applications with Caligrafy.
+[Caligrafy Academy](https://www.udemy.com/courses/search/?src=ukw&q=caligrafy)
 
-    [![](https://caligrafy.com/public/images/resources/viewcourse.png)](https://www.udemy.com/caligrafy/)
+## Connecting with the Caligrafy Community
+
+There are several ways for the Caligrafy community to connect:
+
++ **github:** You can always use github to stay up to date with the roadmap of Caligrafy, to post issues and to track when feature requests and issues are done
+
++ **slack:** Joining our slack group is a great way to exchange with other members of the community, to get help on using the framework and to discuss any issues or features.
+
+[Join our slack community](https://join.slack.com/t/caligrafy/shared_invite/enQtNzI4MDY2OTA4MTgzLTI2NDc2NTVmMDNlMWQ5YWYxN2RjZTkwZjdiNjM5ZTg3NjQ2YWYyMzRmZDgzNWE0Nzc4YjQyODM2NDNkNjQ2OTU)
+
++ **facebook Caligrafy Group:** Joining our Caligrafy group on facebook gives you more ways to interact with the community and to share success stories. 
+[Join our facebook group](https://www.facebook.com/groups/caligrafy/)
 
 
 ## Need help getting started?
