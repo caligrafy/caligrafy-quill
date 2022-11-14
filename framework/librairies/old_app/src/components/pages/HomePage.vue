@@ -19,8 +19,8 @@
 </template>
 
 <script>
-import ShowMessage from '../global/ShowMessage.vue';
-import ShowGeneralCard from '../global/ShowGeneralCard.vue';
+import ShowMessage from '@/components/global/ShowMessage.vue';
+import ShowGeneralCard from '@/components/global/ShowGeneralCard.vue';
 
 export default {
     name: 'vue-home',

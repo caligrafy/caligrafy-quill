@@ -1,46 +1,30 @@
 import { createApp } from 'vue'
-import App from '@/App.vue'
-import { createRouter, createWebHistory } from 'vue-router'
+import App from './App.vue'
+import router from './router'
+
+// import Store State Management
+import store from './common/store'
+
+// import axios
+import axios from "axios"
+
 import '../../css/styles.css'
 import '../../css/theme.css'
 import '../../css/animate.css'
 
-// Import Page Components
-import HomePage from '@/components/pages/HomePage.vue'
 
-// import Store State Management
-import store from '@/common/store'
-
-// Integrate axios for http requests
-let axios = require('axios');
-
-
-// define the routes
-const routes = [
-	{ path: '/', component: HomePage, name: 'home' },
-
-];
-
-// initialize the router
-const router = createRouter ({
-	history: createWebHistory(),
-	routes: routes
-});
-
-
-// Instantiate the vue instance
-const app  = createApp(App);
+const app = createApp(App)
 
 // configure app
-app.config.productionTip = false;
+app.config.productionTip = false
 
 // integrate http request engine
-app.config.globalProperties.http = axios;
-app.config.globalProperties.axios = axios; /* for backward compatibility also can use axios */
+app.config.globalProperties.http = axios
+app.config.globalProperties.axios = axios /* for backward compatibility also can use axios */
 
 // app api configuration
 app.config.globalProperties.config = {
-	apiKey: process.env.VUE_APP_API_KEY,
+	apiKey: import.meta.env.VITE_VUE_APP_API_KEY,
 	apiRoute: '' /* specify api route here or in env file */
 };
 app.config.globalProperties.apiConfig = {
@@ -54,12 +38,7 @@ app.config.globalProperties.apiConfig = {
 	
 };
 
-// use router and store
-app.use(router);
-app.use(store);
+app.use(router)
+app.use(store)
 
-//  mount app
-app.mount('#app');
-
-
-
+app.mount('#app')

@@ -20,7 +20,7 @@ Ensures Single Page Application through the use of vue routers
 </template>
   
 <script>
-	import ShowNavigation from './components/global/ShowNavigation.vue';
+	import ShowNavigation from '@/components/global/ShowNavigation';
 	export default {
         name: 'App',
         components: {
