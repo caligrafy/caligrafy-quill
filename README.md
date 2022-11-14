@@ -52,7 +52,20 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
     .bin/caligrafer initialize
 
     ``` 
+
+    <br />
+
+    >
+    > Note that the Caligrafer Initialize command breaks all `git` links. 
+    > - If you would like to create a `git` repo for your application, it is recommended that you do so after you initialize it. 
+    > - If you are pulling an application built in Caligrafy from Github and you would like to preserve the `git` connection in order to pull updates regularly, it is recommended that you proceed with the manual installation instead.
+    >
+
+    <br />
+
 + You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
+
+
 
 ### Manual Installation
 + Pull the code from github (You can either clone the repo or download the zip file)
