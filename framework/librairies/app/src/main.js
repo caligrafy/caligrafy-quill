@@ -24,9 +24,10 @@ app.config.globalProperties.axios = axios /* for backward compatibility also can
 
 // app api configuration
 app.config.globalProperties.config = {
-	apiKey: import.meta.env.VITE_VUE_APP_API_KEY,
+	apiKey: import.meta.env.VITE_API_KEY,
 	apiRoute: '' /* specify api route here or in env file */
 };
+
 app.config.globalProperties.apiConfig = {
 	
 	async: true,

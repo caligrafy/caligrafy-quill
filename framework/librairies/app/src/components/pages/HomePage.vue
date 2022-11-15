@@ -34,7 +34,7 @@ export default {
 					{
 						"id": 1,
 						"link":"https://github.com/caligrafy/caligrafy-quill/wiki/9.8.2-Routing-for-Single-Page-Applications#mainjs",
-						"title": "main.js",
+						"title": "router/index.js",
 						"description": "It all starts in this file where you define the routes, styles, keys and other settings"
 
 					},
