@@ -104,7 +104,7 @@ switch(strtolower($argv[1])) {
 			print("\nVueJS project successfully created and all packages have been installed.
 					\n - You first need to go to the project folder by typing: 'cd public/".$argv[2]."'
 					\n Then,
-					\n - To run local server, type: 'npm run dev'
+					\n - To run local server, type: 'npm run dev' or 'npm run serve'
 					\n - To run a build, type: 'npm run build'  
 					\n\n");
 		} else {
