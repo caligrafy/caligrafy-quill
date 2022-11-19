@@ -279,7 +279,8 @@ class Model {
 
 
         // build the pivot model and associate to the caller object
-        $result = Database::execute('SELECT '.$table2.'.* FROM '.$table1.' LEFT JOIN '.$pivot.' ON '.$table1.'.'.$foreignKeyLocal.'='.$pivot.'.'.$fklocal.' LEFT JOIN '.$table2.' ON '.$table2.'.'.$foreignKeyJoin.'='.$pivot.'.'.$fkjoin.' WHERE '.$table1.'.'.$foreignKeyLocal.' = '.$pivot.'.'.$foreignKeyLocal);
+        // build the pivot model and associate to the caller object
+        $result = $this->id? Database::execute('SELECT '.$table2.'.* FROM '.$table1.' LEFT JOIN '.$pivot.' ON '.$table1.'.'.$foreignKeyLocal.'='.$pivot.'.'.$fklocal.' LEFT JOIN '.$table2.' ON '.$table2.'.'.$foreignKeyJoin.'='.$pivot.'.'.$fkjoin.' WHERE '.$table1.'.'.$foreignKeyLocal.' = '.$this->id) : []; //$pivot.'.'.$foreignKeyLocal
         $result = Database::toArray($result);
 
 
