@@ -19,8 +19,6 @@ session('scripts', array(  'favicon' => $_SESSION['imagesUrl'].getenv('FAVICON')
                    'bootstrap_css' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/css/bootstrap.min.css',
                    'bootstrap_script' => 'https://maxcdn.bootstrapcdn.com/bootstrap/3.3.7/js/bootstrap.min.js',
                    'bootstrap_jquery' => 'https://ajax.googleapis.com/ajax/libs/jquery/1.12.4/jquery.min.js',
-                   'fallback_html5shiv' => 'https://oss.maxcdn.com/html5shiv/3.7.3/html5shiv.min.js',
-                   'fallback_respond' => 'https://oss.maxcdn.com/respond/1.4.2/respond.min.js',
                    'lightbox_script' => "<script src='../js/lightbox/lightbox.js'></script><script>lightbox.option({'alwaysShowNavOnTouchDevices': true,'disableScrolling': true})</script>",
                    'add_to_home' => $_SESSION['public'].'js/addtohome/src/addtohomescreen.js',
                    'add_to_home_css' => $_SESSION['public'].'js/addtohome/style/addtohomescreen.css',
