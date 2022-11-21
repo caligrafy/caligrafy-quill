@@ -43,9 +43,5 @@
         <script src="<?php echo scripts('bootstrap_jquery'); ?>"></script>
         <script src="<?php echo scripts('bootstrap_script'); ?>"></script>
         
-        <!--[if lt IE 9] -->
-        <script src="<?php echo scripts('fallback_html5shiv'); ?>"></script>
-        <script src="<?php echo scripts('fallback_respond'); ?>"></script>
-        <!--<![endif]-->
     </body>
 </html>
