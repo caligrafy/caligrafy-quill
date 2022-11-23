@@ -74,8 +74,9 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + Create an `APP_KEY` and an `API_KEY` in the .env file. You can use Caligrafer to generate API keys for you by running `php caligrafer.php generatekeys` and adding the generated keys to the .env file
 + Add the following to the .env file if not present: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`. If caligrafy is not installed at the Server Document Root level, refer to the [Different Root Folder instructions](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#different-root-folder).
 + Change the other values in .env file to match your local or production server settings
-+ run `composer install` to get all the dependencies needed
-+ make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `sudo chmod -R 777 /public/uploads`
++ Run `composer install` to get all the dependencies needed
++ Initialize the application folder by running the following `cp -r framework/settings/application ./application`
++ Make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `sudo chmod -R 777 /public/uploads`
 + You are good to go!
 
 ### Testing the Installation
