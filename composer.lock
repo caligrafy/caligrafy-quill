@@ -58,16 +58,16 @@
         },
         {
             "name": "js-phpize/js-phpize",
-            "version": "2.8.5",
+            "version": "2.9.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/pug-php/js-phpize.git",
-                "reference": "ed1c37590ccb161a2512e00b315e0497d9747aac"
+                "reference": "cbf05dcde1c2c812c52ff9297fe8c36d6556b06e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/pug-php/js-phpize/zipball/ed1c37590ccb161a2512e00b315e0497d9747aac",
-                "reference": "ed1c37590ccb161a2512e00b315e0497d9747aac",
+                "url": "https://api.github.com/repos/pug-php/js-phpize/zipball/cbf05dcde1c2c812c52ff9297fe8c36d6556b06e",
+                "reference": "cbf05dcde1c2c812c52ff9297fe8c36d6556b06e",
                 "shasum": ""
             },
             "require": {
@@ -75,8 +75,7 @@
                 "php": ">=7.0"
             },
             "require-dev": {
-                "codeclimate/php-test-reporter": "dev-master",
-                "phpunit/phpunit": "^6.0 || ^7.0"
+                "phpunit/phpunit": "^6.5.14 || ^7.5.20 || ^8.5.31 || ^9.5.27"
             },
             "type": "library",
             "autoload": {
@@ -97,7 +96,7 @@
             "description": "Convert js-like syntax to standalone PHP code.",
             "support": {
                 "issues": "https://github.com/pug-php/js-phpize/issues",
-                "source": "https://github.com/pug-php/js-phpize/tree/2.8.5"
+                "source": "https://github.com/pug-php/js-phpize/tree/2.9.0"
             },
             "funding": [
                 {
@@ -113,7 +112,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-10-08T19:15:41+00:00"
+            "time": "2022-12-30T08:51:01+00:00"
         },
         {
             "name": "js-phpize/js-phpize-phug",
@@ -789,16 +788,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v10.3.0-beta.1",
+            "version": "v10.4.0-beta.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "d603b5be4a4893edfe43160d514d4b082f27f34d"
+                "reference": "c8b7a086c96664d54fb491d02122d68ea706e39a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/d603b5be4a4893edfe43160d514d4b082f27f34d",
-                "reference": "d603b5be4a4893edfe43160d514d4b082f27f34d",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/c8b7a086c96664d54fb491d02122d68ea706e39a",
+                "reference": "c8b7a086c96664d54fb491d02122d68ea706e39a",
                 "shasum": ""
             },
             "require": {
@@ -844,9 +843,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v10.3.0-beta.1"
+                "source": "https://github.com/stripe/stripe-php/tree/v10.4.0-beta.1"
             },
-            "time": "2022-12-16T00:05:55+00:00"
+            "time": "2022-12-22T23:29:28+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -1021,12 +1020,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "41526e12448d3d6c2f689d209e1902363c4b582e"
+                "reference": "7d8e7c3c67c77790425ebe33691419dada154e65"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/41526e12448d3d6c2f689d209e1902363c4b582e",
-                "reference": "41526e12448d3d6c2f689d209e1902363c4b582e",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/7d8e7c3c67c77790425ebe33691419dada154e65",
+                "reference": "7d8e7c3c67c77790425ebe33691419dada154e65",
                 "shasum": ""
             },
             "require": {
@@ -1101,7 +1100,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-12-14T15:52:41+00:00"
+            "time": "2022-12-22T17:53:58+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
