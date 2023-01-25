@@ -788,16 +788,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v10.4.0-beta.3",
+            "version": "v10.5.0-beta.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "f49b95df5042b9dfc51eaa221b3c893eb93fa79e"
+                "reference": "7a6edbae08b07d44c80930739254ae80f53d9227"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/f49b95df5042b9dfc51eaa221b3c893eb93fa79e",
-                "reference": "f49b95df5042b9dfc51eaa221b3c893eb93fa79e",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/7a6edbae08b07d44c80930739254ae80f53d9227",
+                "reference": "7a6edbae08b07d44c80930739254ae80f53d9227",
                 "shasum": ""
             },
             "require": {
@@ -843,9 +843,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v10.4.0-beta.3"
+                "source": "https://github.com/stripe/stripe-php/tree/v10.5.0-beta.1"
             },
-            "time": "2023-01-12T19:42:04+00:00"
+            "time": "2023-01-19T22:35:56+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -1020,12 +1020,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "7d8e7c3c67c77790425ebe33691419dada154e65"
+                "reference": "eb980457fa6899840fe1687e8627a03a7d8a3d52"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/7d8e7c3c67c77790425ebe33691419dada154e65",
-                "reference": "7d8e7c3c67c77790425ebe33691419dada154e65",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/eb980457fa6899840fe1687e8627a03a7d8a3d52",
+                "reference": "eb980457fa6899840fe1687e8627a03a7d8a3d52",
                 "shasum": ""
             },
             "require": {
@@ -1100,7 +1100,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2022-12-22T17:53:58+00:00"
+            "time": "2023-01-20T17:44:14+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
