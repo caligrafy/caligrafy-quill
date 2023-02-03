@@ -84,7 +84,7 @@ class Database {
 
         }
         if (self::$renderJson) {
-            return json_encode($jsonarray);
+            return json_encode($jsonarray, JSON_UNESCAPED_SLASHES);
         }
         else
         {

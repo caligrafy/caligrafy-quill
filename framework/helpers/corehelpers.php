@@ -813,7 +813,7 @@ function httpRequest($url, $method, $data, $headers, $username = null, $password
         
         if (strtoupper($method) == "POST" && !empty($data)) {
             curl_setopt_array($curl, array(
-                CURLOPT_POSTFIELDS => json_encode($data)
+                CURLOPT_POSTFIELDS => json_encode($data, JSON_UNESCAPED_SLASHES)
             ));
         }
         $response = curl_exec($curl);
