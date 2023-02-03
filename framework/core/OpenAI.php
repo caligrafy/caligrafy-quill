@@ -109,7 +109,7 @@ class OpenAI {
         return $this->prepareRequest($method, $additionalHeaders);  
     }
 
-    public function delegate($input = '', $command = SUMMARIZE, $parameters = array())
+    public function delegate($input = '', $outcome = '', $command = ANALYZE, $parameters = array())
     {
         // initialize variables
         $inputConstraints = '';
@@ -124,13 +124,10 @@ class OpenAI {
                 $input = $inputArray[0];
             } 
             
-            // If input constraints are given in the parameters, concatenate to input and remove them from parameters
-            if (!empty($parameters) && isset($parameters['constraints'])) {
-                $inputConstraints = "\n| ".implode(" | ", $parameters['constraints'])." | ";
-                unset($parameters['constraints']);
-            }
+            // If an outcome is given, concatenate to input and remove them from parameters
+            $outcome = is_array($outcome) && !empty($outcome)? "\n| ".implode(" | ", $outcome)." | " : "\n".$outcome;
 
-            return $this->converse(array_merge($parameters, ["prompt" => $command.$input.$inputConstraints, "suffix" => $suffix]));
+            return $this->converse(array_merge($parameters, ["prompt" => $command.$input.$outcome, "suffix" => $suffix]));
         }
         elseif ($this->type == 'image') {
             return $this->converse(array_merge($parameters, ["prompt" => $input]));
@@ -173,7 +170,7 @@ class OpenAI {
             // handle request
             if (!empty($response)) {
                 $output['api_success'] = true;
-                $output['response'] = $response;
+                $output['response'] = !empty($response['choices']) && !empty($response['choices'][0]) ? $response['choices'][0]['text'] : (!empty($response['data']) && !empty($response['data'][0]) ? $response['data'][0]['url'] : $response);
             }
         } 
 
