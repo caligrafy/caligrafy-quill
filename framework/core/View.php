@@ -34,7 +34,7 @@ class View {
         
         // If it's an api call then don't render the view
         if ($this->request->wantsJson() || $viewName == null) {
-            echo json_encode($viewData);
+            echo json_encode($viewData, JSON_UNESCAPED_SLASHES);
             exit;
         }
         // Otherwise render view
