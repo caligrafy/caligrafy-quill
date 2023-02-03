@@ -18,6 +18,7 @@ use \Exception as Exception;
 
 define("DAVINCI", "text-davinci-003");
 
+define ("CONVERSE", "");
 define ("SUMMARIZE", "Summarize the following:\n");
 define ("ANALYZE", "Analyze the following:\n");
 define ("CORRECT", "Fix the following:\n");
