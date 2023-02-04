@@ -1,0 +1,59 @@
+extends ../default/master/layoutblocks
+
+
+block content
+    - $userId = $user->id?? '';
+    form(id='user_new_form', method='POST', enctype="multipart/form-data")
+        if $put
+            =methodField('PUT')
+        =csrf()
+        div(class='bounded-xlarge')  
+            .spacer-4
+            div(class='wrapper width-max-600')
+                .spacer-2
+                .card(class="dropshadow animated zoomIn color0 horizontal-center equally-spaced-1")
+                    .horizontal-left.color0.maketransparent
+                        a.btn.btn-default.btn-sm(href="{$home}users") < back
+                        if $error
+                            include ../default/modules/messaging
+                        .spacer-2
+                        p.normal.medium-text.textcolor1 User Information
+                        .spacer-1
+                        .form-group
+                            label(for='username', class=isset($errors['username']) ? 'textcolor5 error' : 'textcolor5') * username
+                            if isset($errors['username'])
+                                p(class='error')= $errors['username']
+                            input(type='text', name='username', id='username' class='form-control input-default', value=$user->username?? '', required, placeholder='Enter a username', maxlength='100')
+                        .spacer-1
+
+                        .form-group
+                            label(for='passcode', class=isset($errors['passcode']) ? 'textcolor5 error' : 'textcolor5') #{!$put? '*': ''} password
+                            if isset($errors['passcode'])
+                                p(class='error')= $errors['passcode']
+                            input(type='password', name='passcode', id='passcode' class='form-control input-default', placeholder='Enter a password', maxlength='20', "#{!$put? 'required': ''}")
+                        .spacer-1      
+
+                        .form-group
+                            label(for='confirmpasscode', class=isset($errors['passcode']) ? 'textcolor5 error' : 'textcolor5') #{!$put? '*': ''} confirm password
+                            if isset($errors['passcode'])
+                                p(class='error')= $errors['passcode']
+                            input(type='password', name='confirmpasscode', id='confirmpasscode' class='form-control input-default', placeholder='Confirm your password', maxlength='20',  "#{!$put? 'required': ''}")
+                        .spacer-1   
+                        
+                        .form-group
+                            label(for='permissions', class=isset($errors['permissions']) ? 'textcolor5 error' : 'textcolor5') permissions
+                            if isset($errors['permissions'])
+                                p(class='error')= $errors['permissions']
+                            input(type='number', name='permissions', id='permissions' class='form-control input-default', value=$user->permissions?? '', placeholder='What permissions to give 0, 1, 2, 3', maxlength='1')
+                        .spacer-1
+
+                        .spacer-2
+
+                        input(class='btn btn-primary btn-md btn-block', type='submit' value='Save')
+                        .spacer-2
+    if $put
+        form(id='user_delete_form', method='POST', enctype="multipart/form-data")
+            =methodField('DELETE')
+            =csrf()
+            input(class='btn btn-link btn-md btn-block', type='submit', value="Delete user")
+    .spacer-4

@@ -1,0 +1,33 @@
+extends ../default/master/layoutblocks
+
+block content
+	.content-section
+		.spacer-2
+		.wrapper
+			.spacer-4
+			.card-unbounded.dropshadow.color0
+				h2.textcolor5.semibold.medium-text.reset-margin Team members
+				.spacer-1
+				table.table.table-hover
+					thead
+						th.fixedcol-xs.semibold Permission
+						th.fixedcol.semibold.hidden-sm.hidden-xs User Id
+						th.fixedcol.semibold Username
+						th.semibold.hidden-sm.hidden-xs Date
+					tbody
+						each $user in $users
+							tr
+								td.fixedcol-xs
+									a(href="{$home}users/{$user->id}/edit")
+										p
+											if $user->permissions > 0
+												span.label.label-success= $user->permissions
+											else
+												span.label.label-danger= $user->permissions
+								td.fixedcol.hidden-sm.hidden-xs
+									a(href="{$home}users/{$user->id}/edit") #{$user->id}
+								td.fixedcol
+									a(href="{$home}users/{$user->id}/edit") #{$user->username}
+								td.fixedcol.hidden-sm.hidden-xs
+									a(href="{$home}users/{$user->id}/edit") #{$user->modified_at}
+	.spacer-3

@@ -34,6 +34,14 @@ try {
     // Route::post('/login', 'AuthController@login');
     // Route::post('/register', 'AuthController@register');
 
+    // User Administration Routes - Uncomment only if AUTHENTICATION activated above
+	// Route::get('/admin', 'AdminController');
+	// Route::get('/users', 'AdminController');
+	// Route::get('/users/{id}/edit', 'AdminController@editUserForm');
+	// Route::put('/users/{id}/edit', 'AdminController@updateUser');
+	// Route::delete('/users/{id}/edit', 'AdminController@deleteUser');
+
+
     // ROUTING TO JAVASCRIPT APPS
     // Make sure you create a JS app or a Vue app in Caligrafer first
     Route::get('/apps/{appName}', 'ClientController'); // you can specify any path as long as it ends with appName
