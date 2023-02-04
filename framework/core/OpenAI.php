@@ -29,7 +29,7 @@ define ("PREDICT", "Predict based on the following:\n");
 define("DEFAULT_TEXT_PARAMETERS", array(    
     "model" => DAVINCI,   
     "temperature" => 0,
-    "max_tokens" => 200,
+    "max_tokens" => 1000,
     "top_p" => 1.0,
     "frequency_penalty" => 0.0,
     "presence_penalty"=> 0.0
@@ -47,7 +47,7 @@ define("TEXT", array(
 ));
 
 define("IMAGE", array(
-    "type" => "image",
+    "type" => "url",
     "endpoint" => "https://api.openai.com/v1/images/generations"
 ));
 
@@ -129,7 +129,8 @@ class OpenAI {
 
             return $this->converse(array_merge($parameters, ["prompt" => $command.$input.$outcome, "suffix" => $suffix]));
         }
-        elseif ($this->type == 'image') {
+        // if image
+        elseif ($this->type == 'url') {
             return $this->converse(array_merge($parameters, ["prompt" => $input]));
         }
             return "Delegation does not work for this model";
@@ -170,7 +171,8 @@ class OpenAI {
             // handle request
             if (!empty($response)) {
                 $output['api_success'] = true;
-                $output['response'] = !empty($response['choices']) && !empty($response['choices'][0]) ? $response['choices'][0]['text'] : (!empty($response['data']) && !empty($response['data'][0]) ? $response['data'][0]['url'] : $response);
+                $output['response'] = !empty($response['choices']) ? $response['choices'] : (!empty($response['data']) ? $response['data'] : $response);
+                $output['type'] = $this->type;
             }
         } 
 
