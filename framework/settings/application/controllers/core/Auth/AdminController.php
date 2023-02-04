@@ -5,7 +5,7 @@ class AdminController extends Controller {
 	
 	public function index()
 	{
-		guard('permissions', 2, '/notAuthorized');
+		guard('permissions', 0, '/notAuthorized');
 		$this->associate('User', 'users');
 		$users = $this->all(array('order' => 'order by modified_at DESC'));
 		return view('Auth/users', array('users' => $users, 'authorized' => authorized(), 'admin' => true));
@@ -15,7 +15,7 @@ class AdminController extends Controller {
 	// Edit user Form
 	public function editUserForm()
 	{
-		guard('permissions', 2, '/notAuthorized');
+		guard('permissions', 0, '/notAuthorized');
 		$this->associate('User', 'users');
 		$user = $this->find();
 		if (!$user) {
@@ -29,7 +29,7 @@ class AdminController extends Controller {
 	// Update User
 	public function updateUser()
 	{
-		guard('permissions', 2, '/notAuthorized');
+		guard('permissions', 0, '/notAuthorized');
 		$this->associate('User', 'users');
 		$user = $this->find();
 		
@@ -74,7 +74,7 @@ class AdminController extends Controller {
 	//Delete User
 	public function deleteUser()
 	{
-		guard('permissions', 2, '/notAuthorized');
+		guard('permissions', 0, '/notAuthorized');
         $this->associate('User', 'users');
 		$user = $this->find()?? null;
         $this->delete();
