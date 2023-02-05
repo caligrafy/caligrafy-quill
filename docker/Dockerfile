@@ -1,6 +1,5 @@
 ## Build Dev
 FROM php:7.2-apache as dev-php
-ENV SERVER_NAME Caligrafy-DEV
 RUN apt-get update && apt-get install -y \
     libpng-dev \
     libjpeg-dev \
@@ -13,5 +12,4 @@ RUN apt-get update && apt-get install -y \
 
 ## Build Prod
 FROM dev-php as prod-php
-ENV SERVER_NAME Caligrafy-PROD
 COPY ./public /var/www/html/

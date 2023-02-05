@@ -1,6 +1,7 @@
 version: '3.4'
 services:
   dev-box:
+    hostname: dev.caligrafy.com
     build:
       context: .
       dockerfile: ./docker/Dockerfile
@@ -40,6 +41,7 @@ services:
       - sqlpad
 
   prod-box:
+    hostname: prod.caligrafy.com
     build:
       context: .
       dockerfile: ./docker/Dockerfile
