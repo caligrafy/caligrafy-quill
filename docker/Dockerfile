@@ -1,5 +1,5 @@
 ## Build Dev
-FROM php:7.4-apache as dev-php
+FROM php:8.2.2-apache as dev-php
 RUN apt-get update && apt-get install -y \
         libfreetype6-dev \
         libjpeg-dev \
