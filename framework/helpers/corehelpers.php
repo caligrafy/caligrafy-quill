@@ -267,7 +267,10 @@ function loadConstantFromArray($array) {
     if (!is_array($array) || empty($array)) {
         $result = false;
     }
-    array_map(function($k, $v){ define($k, $v); }, array_keys($array), array_values($array));
+    array_map(function($k, $v){ 
+        if (!defined($k))
+            define($k, $v); 
+    }, array_keys($array), array_values($array));
     return $result;
 }
 

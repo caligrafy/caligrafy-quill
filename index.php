@@ -10,6 +10,8 @@
 
 use Caligrafy\Framework;
 
+//error_reporting(0);
+
 require_once "framework/core/Framework.php";
 
 // load external vendors
