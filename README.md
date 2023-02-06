@@ -78,8 +78,6 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
     * Username: `root`
     * Password: `root`
 
-* **IMPORTANT NOTE**: With Docker, you should no longer rely on .env for your environment files. All environment files need to be defined in the `docker-compose.yaml`
-
 ### Manual Installation
 + Pull the code from github (You can either clone the repo or download the zip file)
 + It is recommended to place the repo at the Server Document Root level

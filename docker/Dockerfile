@@ -31,12 +31,12 @@ FROM dev-php as prod-php
 WORKDIR /var/www/html/
 ENV COMPOSER_ALLOW_SUPERUSER 1
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
-RUN composer create-project -s dev caligrafy/caligrafy-quill
-RUN cd ./caligrafy-quill
-RUN ./caligrafy-quill/.bin/caligrafer initialize
-COPY composer.* .
+COPY ./composer.* ./
+COPY .htaccess ./
+COPY ./*.php ./
+COPY ./.env  ./
 RUN composer update
-COPY ./application ./application
+COPY ./application ./application/
 COPY ./public ./public/
-COPY ./framework ./framework
+COPY ./framework ./framework/
 RUN chmod -R 777 ./public/uploads
