@@ -24,7 +24,6 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
         mbstring \
         pdo_mysql \
         zip
-RUN touch .env
 
 ## Build Prod
 FROM dev-php as prod-php
@@ -34,9 +33,14 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 COPY ./composer.* ./
 COPY .htaccess ./
 COPY ./*.php ./
-COPY ./.env.example  ./.env
+COPY ./.env ./
+COPY ./framework ./framework/
+COPY ./public ./public/
 RUN composer install
+RUN php caligrafer.php initialize
+RUN rm -R ./application
+RUN rm -R ./public
 COPY ./application ./application/
 COPY ./public ./public/
-COPY ./framework ./framework/
 RUN chmod -R 777 ./public/uploads
+RUN cat ./.env

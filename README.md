@@ -70,9 +70,6 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 If you don't want to bother with having a PHP/Apache/MySQL server on your local machine, we recommend that you use Docker. 
 
 + Pull the code from github (You can either clone the repo or download the zip file)
-+ Go to the downloaded repo and create a .env file by copying the example `cp .env.example .env`
-+ Create an `APP_KEY` and an `API_KEY` in the .env file. You can use Caligrafer to generate API keys for you by running `php caligrafer.php generatekeys` and adding the generated keys to the .env file
-+ Add the following to the .env file if not present: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`.
 
 + Run `docker-compose up -d prod-box`
   * This command does not need any dependencies on your local system, all you need is docker and the files.
