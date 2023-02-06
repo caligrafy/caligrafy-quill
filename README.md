@@ -88,6 +88,15 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 <br />
 
+### Using Docker
+* If you prefer to use docker you have two commands you can use
+* `docker-compose up -d prod-box`
+  * This command does not need any dependencies on your local system, all you need is docker and the files.
+  * Once started, you can access the website locally via `http://localhost:8080`
+* `docker-compose up -d dev-box`
+  * This command will map your current working files to the docker container, which means you need to have your files locally setup correctly, including the vendor folder.
+  * This is useful for local developement but through docker.
+
 ## Why Caligrafy
 
 ### 1. Full-Stack Framework
