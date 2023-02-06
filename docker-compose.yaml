@@ -10,6 +10,7 @@ services:
       - ./:/var/www/html/
     environment: &dev_environment
       # App
+      APP_ROOT: ""
       APP_ENV: local
       APP_PROTOCOL: http
       APP_DEBUG: true
@@ -17,13 +18,13 @@ services:
       APP_LOCALE: en_US
       SERVER_TIMEZONE: America/New_York
       # DB
-      DB_ACTIVATE: true
+      DB_ACTIVATE: false
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_DATABASE: caligrafy
-      DB_USERNAME: db_user
-      DB_PASSWORD: QWqkVw9
+      DB_DATABASE: ""
+      DB_USERNAME: root
+      DB_PASSWORD: root
       # Mail
       MAIL_HOST: your-smtp-host
       MAIL_PORT: 587
@@ -36,12 +37,15 @@ services:
       PAY_PRIVATE_KEY_PRODUCTION: sk_live_1234
       # Others
       GOOGLE_ANALYTICS_ID: ""
+      WATSON_API_KEY: ""
+      CRYPTO_PAY_KEY: ""
+      FB_APP_ID: ""
+      OPEN_AI_KEY: ""
     ports:
       - "8080:80"
     depends_on:
       - mysql
-      - sqlpad
-
+      - phpmyadmin
   prod-box:
     hostname: prod.caligrafy.com
     build:
@@ -51,38 +55,29 @@ services:
     environment:
       <<: *dev_environment
       APP_ENV: production
+      APP_DEBUG: false
     ports:
       - "8080:80"
     depends_on:
       - mysql
-      - sqlpad
+      - phpmyadmin
+
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin:latest
+    restart: always
+    ports:
+      - "8077:80"
+    environment:
+      - PMA_HOST=mysql
+      - PMA_PORT=3306
+    depends_on:
+      - mysql
+
 
   mysql:
-    image: mysql:5.6.51
+    image: mysql:latest
     restart: always
     ports:
       - "3306:3306"
     environment:
-      MYSQL_ROOT_PASSWORD: bM88sPWk2NuMb2qe2tGT
-      MYSQL_DATABASE: caligrafy
-      MYSQL_USER: db_user
-      MYSQL_PASSWORD: QWqkVw9
-
-  sqlpad:
-    image: sqlpad/sqlpad
-    restart: always
-    ports:
-      - "3000:3000"
-    environment:
-      SQLPAD_ADMIN: admin
-      SQLPAD_ADMIN_PASSWORD: password
-      SQLPAD_CONNECTIONS__caligrafy__name: Caligrafy
-      SQLPAD_CONNECTIONS__caligrafy__driver: mysql
-      SQLPAD_CONNECTIONS__caligrafy__host: mysql
-      SQLPAD_CONNECTIONS__caligrafy__mysqlSsl: false
-      SQLPAD_CONNECTIONS__caligrafy__port: 3306
-      SQLPAD_CONNECTIONS__caligrafy__database: caligrafy
-      SQLPAD_CONNECTIONS__caligrafy__username: db_user
-      SQLPAD_CONNECTIONS__caligrafy__password: QWqkVw9
-    depends_on:
-      - mysql
+      MYSQL_ROOT_PASSWORD: root

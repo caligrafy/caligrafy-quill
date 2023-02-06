@@ -29,13 +29,14 @@ RUN touch .env
 ## Build Prod
 FROM dev-php as prod-php
 WORKDIR /var/www/html/
-COPY composer.* .
-COPY *.php .
-COPY .htaccess .
-COPY ./public ./public/
-COPY ./framework ./framework/
-COPY ./framework/settings/application ./application
 ENV COMPOSER_ALLOW_SUPERUSER 1
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+RUN composer create-project -s dev caligrafy/caligrafy-quill
+RUN cd ./caligrafy-quill
+RUN ./caligrafy-quill/.bin/caligrafer initialize
+COPY composer.* .
 RUN composer update
-RUN composer install
+COPY ./application ./application
+COPY ./public ./public/
+COPY ./framework ./framework
+RUN chmod -R 777 ./public/uploads
