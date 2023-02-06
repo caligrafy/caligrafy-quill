@@ -96,6 +96,10 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 * `docker-compose up -d dev-box`
   * This command will map your current working files to the docker container, which means you need to have your files locally setup correctly, including the vendor folder.
   * This is useful for local developement but through docker.
+* In both commands, you have a handy [SQLPad](https://getsqlpad.com/en/introduction/) instance added, accessible at `http://localhost:3000/`
+  * This is a web client for MySQL. IT will allow you easy access to your Database.
+    * Username: `admin`
+    * Password: `password`
 
 ## Why Caligrafy
 
