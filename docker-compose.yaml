@@ -7,7 +7,7 @@ services:
       dockerfile: ./docker/Dockerfile
       target: dev-php
     volumes:
-      - ./public:/var/www/html/
+      - ./:/var/www/html/
     environment: &dev_environment
       # App
       APP_ENV: local
@@ -34,6 +34,8 @@ services:
       PAY_PRIVATE_KEY_TEST: sk_test_1234
       PAY_PUBLIC_KEY_PRODUCTION: pk_live_1234
       PAY_PRIVATE_KEY_PRODUCTION: sk_live_1234
+      # Others
+      GOOGLE_ANALYTICS_ID: ""
     ports:
       - "8080:80"
     depends_on:
