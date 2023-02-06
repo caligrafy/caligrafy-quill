@@ -1,0 +1,88 @@
+version: '3.4'
+services:
+  dev-box:
+    hostname: dev.caligrafy.com
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      target: dev-php
+    volumes:
+      - ./:/var/www/html/
+    environment: &dev_environment
+      # App
+      APP_ENV: local
+      APP_PROTOCOL: http
+      APP_DEBUG: true
+      FAVICON: resources/favicon.ico
+      APP_LOCALE: en_US
+      SERVER_TIMEZONE: America/New_York
+      # DB
+      DB_ACTIVATE: false
+      DB_CONNECTION: mysql
+      DB_HOST: mysql
+      DB_PORT: 3306
+      DB_DATABASE: caligrafy
+      DB_USERNAME: db_user
+      DB_PASSWORD: QWqkVw9
+      # Mail
+      MAIL_HOST: your-smtp-host
+      MAIL_PORT: 587
+      MAIL_USERNAME: your-user-name
+      MAIL_PASSWORD: your-password
+      # Keys
+      PAY_PUBLIC_KEY_TEST: pk_test_1234
+      PAY_PRIVATE_KEY_TEST: sk_test_1234
+      PAY_PUBLIC_KEY_PRODUCTION: pk_live_1234
+      PAY_PRIVATE_KEY_PRODUCTION: sk_live_1234
+      # Others
+      GOOGLE_ANALYTICS_ID: ""
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+      - sqlpad
+
+  prod-box:
+    hostname: prod.caligrafy.com
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      target: prod-php
+    environment:
+      <<: *dev_environment
+      APP_ENV: production
+    ports:
+      - "8080:80"
+    depends_on:
+      - mysql
+      - sqlpad
+
+  mysql:
+    image: mysql:5.6.51
+    restart: always
+    ports:
+      - "3306:3306"
+    environment:
+      MYSQL_ROOT_PASSWORD: bM88sPWk2NuMb2qe2tGT
+      MYSQL_DATABASE: caligrafy
+      MYSQL_USER: db_user
+      MYSQL_PASSWORD: QWqkVw9
+
+  sqlpad:
+    image: sqlpad/sqlpad
+    restart: always
+    ports:
+      - "3000:3000"
+    environment:
+      SQLPAD_ADMIN: admin
+      SQLPAD_ADMIN_PASSWORD: password
+      SQLPAD_CONNECTIONS__caligrafy__name: Caligrafy
+      SQLPAD_CONNECTIONS__caligrafy__driver: mysql
+      SQLPAD_CONNECTIONS__caligrafy__host: mysql
+      SQLPAD_CONNECTIONS__caligrafy__mysqlSsl: false
+      SQLPAD_CONNECTIONS__caligrafy__port: 3306
+      SQLPAD_CONNECTIONS__caligrafy__database: caligrafy
+      SQLPAD_CONNECTIONS__caligrafy__username: db_user
+      SQLPAD_CONNECTIONS__caligrafy__password: QWqkVw9
+    depends_on:
+      - mysql
