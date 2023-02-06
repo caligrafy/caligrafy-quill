@@ -13,6 +13,8 @@ RUN apt-get update && apt-get install -y \
         libldap2-dev \
         zlib1g-dev \
     && rm -r /var/lib/apt/lists/*
+RUN cp /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/ && \
+    cp /etc/apache2/mods-available/headers.load /etc/apache2/mods-enabled/
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         bcmath \
