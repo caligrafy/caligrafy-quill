@@ -66,17 +66,27 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
 
 ### Using Docker
-* If you prefer to use docker you have two commands you can use
-* `docker-compose up -d prod-box`
+
+If you don't want to bother with having a PHP/Apache/MySQL server on your local machine, we recommend that you use Docker. 
+
++ Pull the code from github (You can either clone the repo or download the zip file)
++ Go to the downloaded repo and create a .env file by copying the example `cp .env.example .env`
++ Create an `APP_KEY` and an `API_KEY` in the .env file. You can use Caligrafer to generate API keys for you by running `php caligrafer.php generatekeys` and adding the generated keys to the .env file
++ Add the following to the .env file if not present: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`.
+
++ Run `docker-compose up -d prod-box`
   * This command does not need any dependencies on your local system, all you need is docker and the files.
   * Once started, you can access the website locally via `http://localhost:8080`
-* `docker-compose up -d dev-box`
+
+* Run `docker-compose up -d dev-box`
   * This command will map your current working files to the docker container, which means you need to have your files locally setup correctly, including the vendor folder.
   * This is useful for local development but through docker.
+
 * In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
   * This is a web client for MySQL. IT will allow you easy access to your Database.
     * Username: `root`
     * Password: `root`
+    
 
 ### Manual Installation
 + Pull the code from github (You can either clone the repo or download the zip file)

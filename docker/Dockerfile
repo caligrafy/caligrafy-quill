@@ -34,8 +34,8 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 COPY ./composer.* ./
 COPY .htaccess ./
 COPY ./*.php ./
-COPY ./.env  ./
-RUN composer update
+COPY ./.env.example  ./.env
+RUN composer install
 COPY ./application ./application/
 COPY ./public ./public/
 COPY ./framework ./framework/
