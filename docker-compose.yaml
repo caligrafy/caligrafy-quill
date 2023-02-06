@@ -21,9 +21,9 @@ services:
       DB_CONNECTION: mysql
       DB_HOST: mysql
       DB_PORT: 3306
-      DB_DATABASE: databasename
-      DB_USERNAME: root
-      DB_PASSWORD: dbpassword
+      DB_DATABASE: caligrafy
+      DB_USERNAME: db_user
+      DB_PASSWORD: QWqkVw9
       # Mail
       MAIL_HOST: your-smtp-host
       MAIL_PORT: 587
@@ -81,8 +81,8 @@ services:
       SQLPAD_CONNECTIONS__caligrafy__host: mysql
       SQLPAD_CONNECTIONS__caligrafy__mysqlSsl: false
       SQLPAD_CONNECTIONS__caligrafy__port: 3306
-      SQLPAD_CONNECTIONS__caligrafy__database: databasename
-      SQLPAD_CONNECTIONS__caligrafy__username: root
-      SQLPAD_CONNECTIONS__caligrafy__password: dbpassword
+      SQLPAD_CONNECTIONS__caligrafy__database: caligrafy
+      SQLPAD_CONNECTIONS__caligrafy__username: db_user
+      SQLPAD_CONNECTIONS__caligrafy__password: QWqkVw9
     depends_on:
       - mysql
