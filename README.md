@@ -65,7 +65,20 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 + You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
 
+### Using Docker
+* If you prefer to use docker you have two commands you can use
+* `docker-compose up -d prod-box`
+  * This command does not need any dependencies on your local system, all you need is docker and the files.
+  * Once started, you can access the website locally via `http://localhost:8080`
+* `docker-compose up -d dev-box`
+  * This command will map your current working files to the docker container, which means you need to have your files locally setup correctly, including the vendor folder.
+  * This is useful for local development but through docker.
+* In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
+  * This is a web client for MySQL. IT will allow you easy access to your Database.
+    * Username: `root`
+    * Password: `root`
 
+* **IMPORTANT NOTE**: With Docker, you should no longer rely on .env for your environment files. All environment files need to be defined in the `docker-compose.yaml`
 
 ### Manual Installation
 + Pull the code from github (You can either clone the repo or download the zip file)
@@ -88,18 +101,6 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 <br />
 
-### Using Docker
-* If you prefer to use docker you have two commands you can use
-* `docker-compose up -d prod-box`
-  * This command does not need any dependencies on your local system, all you need is docker and the files.
-  * Once started, you can access the website locally via `http://localhost:8080`
-* `docker-compose up -d dev-box`
-  * This command will map your current working files to the docker container, which means you need to have your files locally setup correctly, including the vendor folder.
-  * This is useful for local development but through docker.
-* In both commands, you have a handy [SQLPad](https://getsqlpad.com/en/introduction/) instance added, accessible at `http://localhost:3000/`
-  * This is a web client for MySQL. IT will allow you easy access to your Database.
-    * Username: `admin`
-    * Password: `password`
 
 ## Why Caligrafy
 
