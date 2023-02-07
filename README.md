@@ -69,31 +69,32 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 **If you have a local PHP server with composer:**
 
-    + Start with the `Quick installation`
++ Start with the `Quick installation`
 
-    + Run `docker-compose up -d dev-box`
++ Run `docker-compose up -d dev-box`
     * This command will map your current working files to the docker container, which means you need to have your files locally setup correctly, including the vendor folder.
     * This is useful for local development but through docker.
 
 
 **If you don't have a local PHP server with composer:**
 
-    + Pull the code from github (You can either clone the repo or download the zip file)
++ Pull the code from github (You can either clone the repo or download the zip file)
 
-    + Go to the downloaded repo and create a .env file by copying the example `cp .env.example .env`. You should be working with the `.env` file for defining environment variables beyond this point
++ Go to the downloaded repo and create a .env file by copying the example `cp .env.example .env`. You should be working with the `.env` file for defining environment variables beyond this point
 
-    + Initialize the application folder by running the following in the terminal `cp -r framework/settings/application ./application`
++ Initialize the application folder by running the following in the terminal `cp -r framework/settings/application ./application`
 
-    + Run `docker-compose up -d prod-box`
++ Run `docker-compose up -d prod-box`
     * This command does not need any dependencies on your local system, all you need is docker and the files.
+
     * Once started, you can access the website locally via `http://localhost:8080`
 
-    Note: You need to run the above command everytime, you make change in your code
+Note: You need to run the above command everytime, you make change in your code
 
 
 **Database provided in Docker**
 
-    + In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
++ In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
     * This is a web client for MySQL. IT will allow you easy access to your Database.
         * Username: `root`
         * Password: `root`
