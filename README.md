@@ -89,13 +89,14 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     * Once started, you can access the website locally via `http://localhost:8080`
 
-Note: You need to run the above command everytime, you make change in your code
++ **Note:** You need to run the above command everytime, you make change in your code
 
 
 **Database provided in Docker**
 
 + In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
-    * This is a web client for MySQL. IT will allow you easy access to your Database.
+
++ This is a web client for MySQL. It will allow you easy access to your Database.
         * Username: `root`
         * Password: `root`
     
