@@ -82,7 +82,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 + Go to the downloaded repo and create a .env file by copying the example `cp .env.example .env`. You should be working with the `.env` file for defining environment variables beyond this point
 
-+ Initialize the application folder by running the following in the terminal `cp -r framework/settings/application ./application`
++ If the `application` folder does not exit. Initialize it by running the following in the terminal `cp -r framework/settings/application ./application`
 
 + Run `docker-compose up -d prod-box`
     * This command does not need any dependencies on your local system, all you need is docker and the files.
