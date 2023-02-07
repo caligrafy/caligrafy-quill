@@ -33,14 +33,11 @@ RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local
 COPY ./composer.* ./
 COPY .htaccess ./
 COPY ./*.php ./
-COPY ./.env ./
 COPY ./framework ./framework/
 COPY ./public ./public/
+COPY ./.env ./
 RUN composer install
 RUN php caligrafer.php initialize
-RUN rm -R ./application
-RUN rm -R ./public
 COPY ./application ./application/
 COPY ./public ./public/
 RUN chmod -R 777 ./public/uploads
-RUN cat ./.env
