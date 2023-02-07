@@ -76,7 +76,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
     * This is useful for local development but through docker.
 
 
-**If you have don't have a local PHP server with composer:**
+**If you don't have a local PHP server with composer:**
 
     + Pull the code from github (You can either clone the repo or download the zip file)
 
