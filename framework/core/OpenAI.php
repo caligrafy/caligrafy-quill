@@ -25,6 +25,7 @@ define ("CORRECT", "Fix the following:\n");
 define ("CLASSIFY", "Classify the following:\n");
 define ("COMPLETE", "Complete the following:\n");
 define ("PREDICT", "Predict based on the following:\n");
+define ("RECOMMEND", "Recommend about the following:\n");
 
 define("DEFAULT_TEXT_PARAMETERS", array(    
     "model" => DAVINCI,   
