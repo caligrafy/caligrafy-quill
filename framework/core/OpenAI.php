@@ -128,7 +128,7 @@ class OpenAI {
             // If an outcome is given, concatenate to input and remove them from parameters
             $outcome = is_array($outcome) && !empty($outcome)? "\n| ".implode(" | ", $outcome)." | " : "\n".$outcome;
 
-            return $this->converse(array_merge($parameters, ["prompt" => $command.$input.$outcome, "suffix" => $suffix]));
+            return $this->converse(array_merge($parameters, ["prompt" => $command."\n".$input."\n".$outcome."\n", "suffix" => $suffix]));
         }
         // if image
         elseif ($this->type == 'url') {
