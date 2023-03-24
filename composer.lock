@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/claviska/SimpleImage.git",
-                "reference": "755615d786bf5565f67f45c21bc048e34c89990f"
+                "reference": "226d507cca0c8400d69bee7eb324158e3cbe246e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/claviska/SimpleImage/zipball/755615d786bf5565f67f45c21bc048e34c89990f",
-                "reference": "755615d786bf5565f67f45c21bc048e34c89990f",
+                "url": "https://api.github.com/repos/claviska/SimpleImage/zipball/226d507cca0c8400d69bee7eb324158e3cbe246e",
+                "reference": "226d507cca0c8400d69bee7eb324158e3cbe246e",
                 "shasum": ""
             },
             "require": {
@@ -50,7 +50,7 @@
             "description": "A PHP class that makes working with images as simple as possible.",
             "support": {
                 "issues": "https://github.com/claviska/SimpleImage/issues",
-                "source": "https://github.com/claviska/SimpleImage/tree/4.0.0"
+                "source": "https://github.com/claviska/SimpleImage/tree/4.0.2"
             },
             "funding": [
                 {
@@ -58,7 +58,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-02-27T16:37:07+00:00"
+            "time": "2023-03-20T15:27:20+00:00"
         },
         {
             "name": "js-phpize/js-phpize",
@@ -795,16 +795,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v10.11.0-beta.1",
+            "version": "v10.12.0-beta.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "39bc7b7af68c348c7ab12a3003108344589de461"
+                "reference": "2f2f237b61e04e705e4270bd668ae29612cf1cf8"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/39bc7b7af68c348c7ab12a3003108344589de461",
-                "reference": "39bc7b7af68c348c7ab12a3003108344589de461",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/2f2f237b61e04e705e4270bd668ae29612cf1cf8",
+                "reference": "2f2f237b61e04e705e4270bd668ae29612cf1cf8",
                 "shasum": ""
             },
             "require": {
@@ -850,9 +850,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v10.11.0-beta.1"
+                "source": "https://github.com/stripe/stripe-php/tree/v10.12.0-beta.1"
             },
-            "time": "2023-03-17T02:43:29+00:00"
+            "time": "2023-03-23T23:04:43+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
