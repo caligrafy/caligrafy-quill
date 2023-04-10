@@ -19,7 +19,7 @@ class AIController extends Controller {
         $command = isset($parameters['command'])? constant(strtoupper($parameters['command'])) : ANALYZE;
         $custom = $parameters['custom']?? array();
         $openai = new OpenAI($type);
-        return view('OpenAI/openai', array(
+        return view('AI/openai', array(
             'response' => $openai->delegate($input, $outcome, $command, $custom),
             'authorized' => authorized(),
             'parameters' => $parameters
