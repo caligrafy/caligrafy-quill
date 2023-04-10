@@ -1,0 +1,70 @@
+extends ../default/master/layoutblocks
+
+block content
+
+    .spacer-4
+
+    if !empty($response)
+        .card(class="horizontal-center color0 equally-spaced-1 dropshadow")
+            .horizontal-left
+                p(class="medium-text") Response
+                each $item in $response['response']
+                    p!= nl2br(str_replace('\n', "\n", $item[$response['type']]))
+    
+    form(id='ai_form', method='POST', enctype="multipart/form-data")
+        =csrf()
+        div(class='content-section bounded-xlarge')   
+            div(class='wrapper width-max-600')
+                .spacer-2
+                .card(class="dropshadow color0 horizontal-center equally-spaced-1")
+                    section(class='main-section horizontal-left color0 maketransparent')
+                        if $error
+                            include ../default/modules/messaging
+                        .spacer-2
+                        span(class='normal medium-text textcolor1') OpenAI
+                        .spacer-2
+                        .form-group
+                            label(for='type', class="textcolor5") * Type
+                            if isset($errors['type'])
+                                p(class="error")= $errors['type']
+                            select.form-control.btn-sm.btn-block(id="type", name="type")
+                                option(value="TEXT", selected=isset($parameters['type'])&&$parameters['type']=='TEXT') TEXT
+                                option(value="IMAGE", selected=isset($parameters['type'])&&$parameters['type']=='IMAGE') IMAGE
+                        
+                        .spacer-1  
+
+                        .form-group
+                            label(for='command', class="textcolor5") * Command
+                            if isset($errors['command'])
+                                p(class="error")= $errors['command']
+                            select.form-control.btn-sm.btn-block(id="command", name="command")
+                                option(value="ANALYZE", selected=isset($parameters['command'])&&$parameters['command']=='ANALYZE') ANALYZE
+                                option(value="SUMMARIZE", selected=isset($parameters['command'])&&$parameters['command']=='SUMMARIZE') SUMMARIZE
+                                option(value="COMPLETE", selected=isset($parameters['command'])&&$parameters['command']=='COMPLETE') COMPLETE
+                                option(value="CORRECT", selected=isset($parameters['command'])&&$parameters['command']=='CORRECT') CORRECT
+                                option(value="CLASSIFY", selected=isset($parameters['command'])&&$parameters['command']=='CLASSIFY') CLASSIFY
+                                option(value="CONVERSE", selected=isset($parameters['command'])&&$parameters['command']=='CONVERSE') CONVERSE
+                                option(value="PREDICT", selected=isset($parameters['command'])&&$parameters['command']=='PREDICT') PREDICT
+                                option(value="RECOMMEND", selected=isset($parameters['command'])&&$parameters['command']=='RECOMMEND') RECOMMEND
+
+                        .form-group
+                            label(for='input', class="textcolor5") * input
+                            if isset($errors['input'])
+                                p(class="error")= $errors['input']
+                            textarea(class="form-control", name="input", id="input", maxlength="4000", rows="10", placeholder="What would you like the machine to know?", required)= isset($parameters['input'])? $parameters['input'] : ''
+
+                        .spacer-2
+
+                        .form-group
+                            label(for='input', class="textcolor5") outcome
+                            if isset($errors['outcome'])
+                                p(class="error")= $errors['outcome']
+                            textarea(class="form-control", name="outcome", id="outcome", maxlength="4000", rows="10", placeholder="If need be, specify what you would like the machine to give you")= isset($parameters['outcome'])? $parameters['outcome'] : ''
+                        
+                        .spacer-2
+
+                        input(class='btn btn-primary btn-md btn-block', type='submit' value='Submit')
+                    
+                        .spacer-2
+
+        .spacer-3

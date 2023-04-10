@@ -41,6 +41,9 @@ try {
 	// Route::put('/users/{id}/edit', 'AdminController@updateUser');
 	// Route::delete('/users/{id}/edit', 'AdminController@deleteUser');
 
+    // GPT AI controller
+    // Route::get('/ai', 'AIController');
+    // Route::post('/ai', 'AIController@query');
 
     // ROUTING TO JAVASCRIPT APPS
     // Make sure you create a JS app or a Vue app in Caligrafer first
