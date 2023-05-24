@@ -50,7 +50,7 @@
             "description": "A PHP class that makes working with images as simple as possible.",
             "support": {
                 "issues": "https://github.com/claviska/SimpleImage/issues",
-                "source": "https://github.com/claviska/SimpleImage/tree/master"
+                "source": "https://github.com/claviska/SimpleImage/tree/4.0.4"
             },
             "funding": [
                 {
@@ -795,16 +795,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v10.14.0-beta.1",
+            "version": "v10.14.0-beta.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "17b2a36ef9434c9127aa330e07f8f6a5a9af4b78"
+                "reference": "ed76af5c755f585d02f0d90625942ad125472cb5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/17b2a36ef9434c9127aa330e07f8f6a5a9af4b78",
-                "reference": "17b2a36ef9434c9127aa330e07f8f6a5a9af4b78",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/ed76af5c755f585d02f0d90625942ad125472cb5",
+                "reference": "ed76af5c755f585d02f0d90625942ad125472cb5",
                 "shasum": ""
             },
             "require": {
@@ -850,9 +850,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v10.14.0-beta.1"
+                "source": "https://github.com/stripe/stripe-php/tree/v10.14.0-beta.2"
             },
-            "time": "2023-05-11T22:19:48+00:00"
+            "time": "2023-05-19T17:19:12+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
