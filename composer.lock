@@ -795,16 +795,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v10.15.0-beta.1",
+            "version": "v10.15.0-beta.2",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "2efe2fa9c8e085518905bb8a28b9e8be84f36bf0"
+                "reference": "70b23e2e554f08658ae7ba89ceb4b026c4cf89c9"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/2efe2fa9c8e085518905bb8a28b9e8be84f36bf0",
-                "reference": "2efe2fa9c8e085518905bb8a28b9e8be84f36bf0",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/70b23e2e554f08658ae7ba89ceb4b026c4cf89c9",
+                "reference": "70b23e2e554f08658ae7ba89ceb4b026c4cf89c9",
                 "shasum": ""
             },
             "require": {
@@ -850,9 +850,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v10.15.0-beta.1"
+                "source": "https://github.com/stripe/stripe-php/tree/v10.15.0-beta.2"
             },
-            "time": "2023-05-25T18:12:37+00:00"
+            "time": "2023-06-01T22:57:37+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
