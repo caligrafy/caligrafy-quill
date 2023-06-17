@@ -73,7 +73,10 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 + Run `docker-compose up -d dev-box`
     * This command will map your current working files to the docker container, which means you need to have your files locally setup correctly, including the vendor folder.
+
     * This is useful for local development but through docker.
+
+    * Once started, you can access the website locally via `http://localhost:8080`
 
 
 **If you don't have a local PHP server with composer:**
