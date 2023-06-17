@@ -112,7 +112,7 @@ switch(strtolower($argv[1])) {
 		}
 		break;
 
-    case 'bot' || 'ml' || 'facedetect' || 'app':
+	case (strtolower($argv[1]) == 'bot' || strtolower($argv[1]) == 'ml' || strtolower($argv[1]) == 'facedetect' || strtolower($argv[1]) == 'app'):
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {
 			system('cp -r framework/plugins/' . $argv[1] .' ./public/' . $argv[2], $retValue);
 			print("\n Project created in the public folder.\n Type cd public/".$argv[2]. " to access it anytime\n\n");
