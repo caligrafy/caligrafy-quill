@@ -1,0 +1,38 @@
+#!/bin/bash
+
+############
+# Usage
+# Pass a path to watch, a file filter, and a command to run when those files are updated
+#
+# Example:
+# watch.sh "node_modules/everest-*/src/templates" "*.handlebars" "ynpm compile-templates"
+############
+
+printf "\nMonitoring server changes in the application folder...\n\nPress CTRL-C at any point to exit \n\n"
+watch() {
+    WORKING_PATH=$(pwd)
+    DIR=$1
+    FILTER=$2
+    COMMAND=$3
+    chsum1=$(find -L $WORKING_PATH/$DIR -type f -name "$FILTER" -exec md5 {} \;)
+
+    while [[ true ]]
+    do
+        chsum2=$(find -L $WORKING_PATH/$DIR -type f -name "$FILTER" -exec md5 {} \;)
+        if [[ $chsum1 != $chsum2 ]] ; then
+            printf "\nChanges in your server code have been detected\n"
+            printf "\nPress 1 at anypoint if you would like to recompile the server code\n"
+            read -n 1 -p "" mainmenuinput
+            if [ "$mainmenuinput" = "1" ]; then
+            printf "\nRebuilding the application...\n"
+            $COMMAND
+            chsum1=$chsum2
+            elif [ "$mainmenuinput" = "2" ]; then
+            exit 0
+            fi
+        fi
+        sleep 2
+    done
+}
+
+watch "$@"

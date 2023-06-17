@@ -23,12 +23,13 @@ if (!file_exists('.env')) {
 $dotenv = Dotenv\Dotenv::create(__DIR__);
 $dotenv->overload();
 
-$restricted = ['app', 'bot', '__bots__', 'css', 'facedetect', 'fonts', 'images', 'js', 'ml', 'resources', 'uploads'];
+$restricted = ['app', 'bot', '__bots__', 'css', 'facedetect', 'fonts', 'images', 'js', 'ml', 'resources', 'uploads', 'server',  'run'];
 
 Caligrafer::run();
 
 $defaultMsg = "\n Available Functions: 
 				\n - initialize: Initializes and signs your project
+				\n - server <start | stop>: Runs a Caligrafy LAMP server locally on your machine (requires Docker)
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
 				\n - create <project_name>: scaffolds a Vue project
@@ -112,7 +113,7 @@ switch(strtolower($argv[1])) {
 		}
 		break;
 
-	case (strtolower($argv[1]) == 'bot' || strtolower($argv[1]) == 'ml' || strtolower($argv[1]) == 'facedetect' || strtolower($argv[1]) == 'app'):
+    case (strtolower($argv[1]) == 'bot' || strtolower($argv[1]) == 'ml' || strtolower($argv[1]) == 'facedetect' || strtolower($argv[1]) == 'app'):
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {
 			system('cp -r framework/plugins/' . $argv[1] .' ./public/' . $argv[2], $retValue);
 			print("\n Project created in the public folder.\n Type cd public/".$argv[2]. " to access it anytime\n\n");
@@ -120,6 +121,28 @@ switch(strtolower($argv[1])) {
 		} else {
 			print("\n The project could not be created. Please make sure you have node.js with npm installed and that the name does not conflict with existing public folders. \n\n");
 		}
+		break;
+
+
+	case 'server':
+		if (isset($argv[2]) && strtolower($argv[2] == 'start') && !in_array(strtolower($argv[2]), $restricted)) {
+			print("\nChecking if Docker is installed...\n\n");
+			$output = system('docker ps', $retValue);
+			if (!$output) die("\n Docker is needed in order for Caligrafy to run locally without a php server.\n Install Docker and try again.\n\n");
+			else {
+				print("\n\n Building the Caligrafy development server...\n\n");
+				$output = system('docker-compose up --build -d prod-box', $retValue);
+				if (!$output) die("\n\n We were not able to create a Docker container. Clear any Docker containers, images and volumes that are cached and try again. \n\n");
+				system("clear");
+				print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
+				system('bash ./.bin/watch "./application" "*.*" "docker-compose up --build -d prod-box"');
+			}
+		} else if (isset($argv[2]) && strtolower($argv[2] == 'stop')) {
+			system("docker-compose down") or die("\nCaligrafy server could not be found \n\n");
+		} else {
+			printf("\nUse `server start` to start the server or  `server stop` to stop it \n\n");
+		}
+
 		break;
 
     default:

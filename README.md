@@ -81,18 +81,27 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 **If you don't have a local PHP server with composer:**
 
-+ Pull the code from github (You can either clone the repo or download the zip file)
++ Caligrafer provides you with a plug-and-play LAMP server that you can run locally without any hassle
 
-+ Go to the downloaded repo and create a .env file by copying the example `cp .env.example .env`. You should be working with the `.env` file for defining environment variables beyond this point
++ Run the following code in from the Caligrafy root folder to start the Caligrafy server
 
-+ If the `application` folder does not exit. Initialize it by running the following in the terminal `cp -r framework/settings/application ./application`
+    ```bash
 
-+ Run `docker-compose up -d prod-box`
-    * This command does not need any dependencies on your local system, all you need is docker and the files.
+    php caligrafer.php server start
 
-    * Once started, you can access the website locally via `http://localhost:8080`
+    #or
 
-+ **Note:** You need to run the above command everytime, you make change in your code
+    .bin/caligrafer server start
+
+    ``` 
+
+    <br />
+
++ The server now monitors all changes on the server applicatiton side, that is any changes made inside the `application` folder only
+
++  Replace `start` with `stop` to stop the server at any point
+
++ Once started, you can access the website locally via `http://localhost:8080`
 
 
 **Database provided in Docker**
