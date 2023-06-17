@@ -95,9 +95,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     ``` 
 
-    <br />
-
-+ The server now monitors all changes on the server applicatiton side, that is any changes made inside the `application` folder only
++ The server now monitors all changes on the application server side, that is any changes made inside the `application` folder only
 
 +  Replace `start` with `stop` to stop the server at any point
 
