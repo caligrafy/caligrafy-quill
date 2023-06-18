@@ -18,7 +18,18 @@ fi
 printf "Checking PHP and composer..."
 php --version && composer --version
 if  [ $? -eq 0 ]; then
-    ./caligrafer.php $MODE $COMMAND
+    if [ -d "./vendor" ] && [ -f "./.env" ]; then
+        ./caligrafer.php $MODE $COMMAND
+    elif [ -d "./vendor" ] && [ $MODE != "server" ]; then
+        printf "\n\nCaligrafy needs to be initialized first\n\n"
+        ./caligrafer.php initialize
+        ./caligrafer.php $MODE $COMMAND
+    else
+        printf "\n\nIt seems that you have downloaded Caligrafy directly from Github.\nLet's get the dependencies first...\n\n"
+        composer install
+        ./caligrafer.php initialize
+        ./caligrafer.php $MODE $COMMAND
+    fi
 else
     ./.bin/server $COMMAND
 fi
