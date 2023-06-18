@@ -129,7 +129,7 @@ switch(strtolower($argv[1])) {
 			print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
 		} 
 		elseif (isset($argv[2]) && strtolower($argv[2]) == "stop") {
-			system('docker-compose down', $retValue);
+			system('docker-compose stop', $retValue);
 			print("\n\nCaligrafy Server stopped.\n\n");
 		}
 		else {

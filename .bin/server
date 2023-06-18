@@ -15,7 +15,7 @@ start() {
 }
 
 stop() {
-    docker-compose down
+    docker-compose stop
     if [ $? -eq 0 ]; then
         clear
         printf "\n\nCaligrafy Server stopped.\n\n"
