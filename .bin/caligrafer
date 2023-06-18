@@ -1,3 +1,24 @@
 #!/bin/bash
 
-./caligrafer.php $1 $2
+if [ "$1" ]; then
+    MODE="$(tr [A-Z] [a-z] <<< "$1")"
+else
+    # use random value to trigger help
+    MODE="help"
+fi
+if [ "$2" ]; then
+    COMMAND="$(tr [A-Z] [a-z] <<< "$2")"
+else
+    # use random value to trigger help
+    COMMAND="help"
+fi
+
+if [ $MODE = "server" ]; then
+    ./.bin/server $COMMAND
+else
+    ./caligrafer.php $MODE $COMMAND
+    if [ $? -ne 0 ]; then
+        printf "PHP is needed locally in order to benefit from all the features of Caligrafer"
+    fi
+fi
+

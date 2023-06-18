@@ -1,0 +1,84 @@
+#!/bin/bash
+
+
+start() {
+    printf "\n\n Building the Caligrafy development server...\n\n"
+    docker-compose up --build -d prod-box
+    if [ $? -eq 0 ]; then
+        clear
+        printf "\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n"
+        printf "\n\nMonitoring server changes in the application folder...\n\nPress CTRL-C at any point to exit \n\n"
+        watch "./application" "*.*" "docker-compose up --build -d prod-box"
+    else
+        printf "\nCaligrafy server could not be found \n\n"
+    fi
+}
+
+stop() {
+    docker-compose down
+    if [ $? -eq 0 ]; then
+        clear
+        printf "\n\nCaligrafy Server stopped.\n\n"
+    else
+        printf "\n\n We were not able to create a Docker container. Clear any Docker containers, images and volumes that are cached and try again. \n\n"
+    fi
+}
+
+watch() {
+    WORKING_PATH=$(pwd)
+    DIR=$1
+    FILTER=$2
+    COMMAND=$3
+    chsum1=$(find -L $WORKING_PATH/$DIR -type f -name "$FILTER" -exec md5 {} \;)
+
+    while [[ true ]]
+    do
+        chsum2=$(find -L $WORKING_PATH/$DIR -type f -name "$FILTER" -exec md5 {} \;)
+        if [[ $chsum1 != $chsum2 ]] ; then
+            printf "\nChanges in your server code have been detected\n"
+            printf "\nPress 1 at anypoint if you would like to recompile the server code\n"
+            read -n 1 -p "" mainmenuinput
+            if [ "$mainmenuinput" = "1" ]; then
+            printf "\nRebuilding the application...\n"
+            $COMMAND
+            chsum1=$chsum2
+            elif [ "$mainmenuinput" = "2" ]; then
+            exit 0
+            fi
+        fi
+        sleep 2
+    done
+}
+
+initialize() {
+    printf "\nInitializing Caligrafy...\n\n"
+    cat .env
+    if [ -f "./.env" ]; then
+        cp ./.env ./.env
+    else
+        cp ./framework/settings/.env.example ./.env
+    fi
+
+    if [ -d "./application" ]; then
+        printf "\nMaintaining application folder"
+    else
+        printf "\n Creating application folder... \n\n"
+        cp -r ./framework/settings/application ./application
+    fi
+}
+
+
+printf "\nChecking if Docker is installed...\n\n"
+docker ps
+if [ $? -eq 0 ]; then
+    if [ $1 == "start" ]; then
+        initialize
+        start
+    elif [  $1 == "stop" ]; then
+        stop
+    else
+        printf "\nUse 'server start' to start the server or  'server stop' to stop it \n\n"
+    fi
+else
+    printf "\n Docker is needed in order for Caligrafy to run locally without a php server.\n Install Docker and try again.\n\n"
+fi

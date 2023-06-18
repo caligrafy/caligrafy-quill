@@ -67,7 +67,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 ### Using Docker
 
-**If you have a local PHP server with composer:**
+**If you have PHP and Composer locally:**
 
 + Start with the `Quick installation`
 
@@ -79,7 +79,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
     * Once started, you can access the website locally via `http://localhost:8080`
 
 
-**If you don't have a local PHP server with composer:**
+**If you don't have PHP and Composer locally:**
 
 + Pull the code from github (You can either clone the repo or download the zip file)
 
@@ -87,12 +87,23 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 + If the `application` folder does not exit. Initialize it by running the following in the terminal `cp -r framework/settings/application ./application`
 
-+ Run `docker-compose up -d prod-box`
-    * This command does not need any dependencies on your local system, all you need is docker and the files.
++ Run the following code from the Caligrafy root folder to start the Caligrafy server
 
-    * Once started, you can access the website locally via `http://localhost:8080`
+    ```bash
 
-+ **Note:** You need to run the above command everytime, you make change in your code
+    bash .bin/caligrafer server start
+
+    #or
+
+    .bin/caligrafer server start
+
+    ``` 
+
++ This method is suitable for development and pre-production. 
+
++ Once started, you can access the website locally via `http://localhost:8080`
+
++ Run `server stop` instead of `server start` to stop the server at all time
 
 
 **Database provided in Docker**
