@@ -24,16 +24,25 @@ stop() {
     fi
 }
 
+checksum() {
+    if [[ $(type -t md5) != "" ]]; then
+       find -L $1 -type f -name "$2" -exec md5 {} \;
+    else
+       find -L $1 -type f -name "$2" -exec md5sum {} \; 
+    fi
+}
+
 watch() {
     WORKING_PATH=$(pwd)
     DIR=$1
     FILTER=$2
     COMMAND=$3
-    chsum1=$(find -L $WORKING_PATH/$DIR -type f -name "$FILTER" -exec md5 {} \;)
+
+    chsum1=$(checksum $WORKING_PATH/$DIR "$FILTER")
 
     while [[ true ]]
     do
-        chsum2=$(find -L $WORKING_PATH/$DIR -type f -name "$FILTER" -exec md5 {} \;)
+        chsum2=$(checksum $WORKING_PATH/$DIR "$FILTER")
         if [[ $chsum1 != $chsum2 ]] ; then
             printf "\nChanges in your server code have been detected\n"
             printf "\nPress 1 at anypoint if you would like to recompile the server code\n"
