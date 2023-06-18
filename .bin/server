@@ -52,6 +52,9 @@ watch() {
 
 initialize() {
     printf "\nInitializing Caligrafy...\n\n"
+    if [ -f "./.git" ]; then
+        chmod -R 777 .git
+        rm -R .git
     if [ -f "./.env" ]; then
         cp ./.env ./.env
     else
