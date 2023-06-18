@@ -77,11 +77,11 @@ Both of the following methods require Docker to be installed on your local machi
 
     ```bash
 
-    php caligrafer.php localserver start
+    php caligrafer.php server start
 
     #or
 
-    .bin/caligrafer localserver start
+    .bin/caligrafer server start
 
     ``` 
 
