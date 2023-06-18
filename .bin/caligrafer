@@ -30,7 +30,9 @@ if  [ $? -eq 0 ]; then
         printf "\n\nIt seems that you have downloaded Caligrafy directly from Github.\nLet's get the dependencies first...\n\n"
         composer install
         ./caligrafer.php initialize
-        ./caligrafer.php $MODE $COMMAND
+        if [ $MODE != "initialize" ]; then
+            ./caligrafer.php $MODE $COMMAND
+        fi
     fi
 else
     ./.bin/server $COMMAND
