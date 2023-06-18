@@ -67,11 +67,7 @@ switch(strtolower($argv[1])) {
 	case 'initialize':
 		try {
 		   $appRoot = basename(getcwd()); 
-		   print("\nInitialization will override any work that you have done in your application. 
-		   \nPress 'Return' to continue or CTRL Z to abort");
-		   $confirmation = readline();
-
-		   print("\n\n Preparing and signing the project for usage (We might need you to authenticate you) \n");
+		   print("\n\nPreparing and signing the project for usage (We might need you to authenticate you) \n");
            $keys = Caligrafer::generateKeys(); 
            $appKey = isset($keys['APP_KEY'])? $keys['APP_KEY'] : null;
            $apiKey = isset($keys['API_KEY'])? $keys['API_KEY'] : null;
@@ -80,13 +76,15 @@ switch(strtolower($argv[1])) {
 		   $vueInput = "VITE_APP_KEY=".$appKey."\n"."VITE_API_KEY=".$apiKey."\n";
 		   file_put_contents($file, $input);
 		   file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);
-		   
-		   system('rm -R ./application');
-		   system('cp -r framework/settings/application ./application', $retValue);
+		   if (!is_dir("./application")) {
+			system('cp -r framework/settings/application ./application', $retValue);
+		   }
 		   system('chmod -R 777 public/uploads');
-		   system('chmod -R 777 .git');
-		   system('rm -R .git');
 
+		   if (is_dir("./.git")) {
+			system('chmod -R 777 .git');
+			system('rm -R .git');
+		   }
 		   print("\n Application initialized successfully");
 		   print ("\n APP_KEY=".$appKey);
 		   print("\n API_KEY=".$apiKey);
