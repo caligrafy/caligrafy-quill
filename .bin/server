@@ -55,6 +55,7 @@ initialize() {
     if [ -f "./.git" ]; then
         chmod -R 777 .git
         rm -R .git
+    fi
     if [ -f "./.env" ]; then
         cp ./.env ./.env
     else
