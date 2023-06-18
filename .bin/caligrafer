@@ -11,7 +11,7 @@ if [ "$2" ]; then
     COMMAND="$(tr [A-Z] [a-z] <<< "$2")"
 else
     # use random value to trigger help
-    COMMAND="help"
+    COMMAND=""
 fi
 
 # Calling the right service based on PHP and Composer presence
@@ -20,7 +20,7 @@ php --version && composer --version
 if  [ $? -eq 0 ]; then
     if [ -d "./vendor" ] && [ -f "./.env" ]; then
         ./caligrafer.php $MODE $COMMAND
-    elif [ -d "./vendor" ] && [ $MODE != "server" ]; then
+    elif [ -d "./vendor" ]; then
         printf "\n\nCaligrafy needs to be initialized first\n\n"
         ./caligrafer.php initialize
         ./caligrafer.php $MODE $COMMAND

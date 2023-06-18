@@ -67,7 +67,7 @@ switch(strtolower($argv[1])) {
 	case 'initialize':
 		try {
 		   $appRoot = basename(getcwd()); 
-		   print("\n\nPreparing and signing the project for usage (We might need you to authenticate you) \n");
+		   print("\n\nPreparing and signing the project for usage... \n");
            $keys = Caligrafer::generateKeys(); 
            $appKey = isset($keys['APP_KEY'])? $keys['APP_KEY'] : null;
            $apiKey = isset($keys['API_KEY'])? $keys['API_KEY'] : null;
