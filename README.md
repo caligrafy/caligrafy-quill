@@ -83,10 +83,6 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 + Pull the code from github (You can either clone the repo or download the zip file)
 
-+ Go to the downloaded repo and create a .env file by copying the example `cp .env.example .env`. You should be working with the `.env` file for defining environment variables beyond this point
-
-+ If the `application` folder does not exit. Initialize it by running the following in the terminal `cp -r framework/settings/application ./application`
-
 + Run the following code from the Caligrafy root folder to start the Caligrafy server
 
     ```bash

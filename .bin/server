@@ -52,11 +52,11 @@ watch() {
 
 initialize() {
     printf "\nInitializing Caligrafy...\n\n"
-    cat .env
     if [ -f "./.env" ]; then
         cp ./.env ./.env
     else
-        cp ./framework/settings/.env.example ./.env
+        cp ./framework/settings/.env.docker ./.env
+        cp ./framework/settings/.env.vue ./framework/librairies/app/.env
     fi
 
     if [ -d "./application" ]; then

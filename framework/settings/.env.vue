@@ -1,0 +1,2 @@
+VITE_APP_KEY=CreateARandomVUeAPPKey
+VITE_API_KEY=CreateARandomVUeAPIKey
