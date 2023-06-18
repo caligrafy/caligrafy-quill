@@ -32,8 +32,8 @@ services:
       target: prod-php
     environment:
       <<: *dev_environment
-      APP_ENV: production
-      APP_DEBUG: false
+      APP_ENV: local
+      APP_DEBUG: true
     ports:
       - "8080:80"
     depends_on:
