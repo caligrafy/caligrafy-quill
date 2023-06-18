@@ -1,5 +1,6 @@
 #!/bin/bash
 
+# Preparing input
 if [ "$1" ]; then
     MODE="$(tr [A-Z] [a-z] <<< "$1")"
 else
@@ -13,12 +14,11 @@ else
     COMMAND="help"
 fi
 
-if [ $MODE = "server" ]; then
-    ./.bin/server $COMMAND
-else
+# Calling the right service based on PHP and Composer presence
+printf "Checking PHP and composer..."
+php --version && composer --version
+if  [ $? -eq 0 ]; then
     ./caligrafer.php $MODE $COMMAND
-    if [ $? -ne 0 ]; then
-        printf "PHP is needed locally in order to benefit from all the features of Caligrafer"
-    fi
+else
+    ./.bin/server $COMMAND
 fi
-
