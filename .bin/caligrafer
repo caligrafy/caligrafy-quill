@@ -18,7 +18,7 @@ fi
 printf "Checking PHP and composer..."
 php --version && composer --version
 if  [ $? -eq 0 ]; then
-    if [ -d "./vendor" ] && [ -f "./.env" ]; then
+    if [ -d "./vendor" ] && [ -f "./.env" ] &&  [ -d "./application" ]; then
         ./caligrafer.php $MODE $COMMAND
     elif [ -d "./vendor" ]; then
         printf "\n\nCaligrafy needs to be initialized first\n\n"
