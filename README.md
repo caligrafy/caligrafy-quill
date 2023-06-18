@@ -120,8 +120,8 @@ Both of the following methods require Docker to be installed on your local machi
 + In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
 
 + This is a web client for MySQL. It will allow you easy access to your Database.
-        + Username: `root`
-        + Password: `root`
+        ++ Username: `root`
+        ++ Password: `root`
     
 
 ### Manual Installation
