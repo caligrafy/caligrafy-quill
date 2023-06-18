@@ -67,19 +67,32 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 ### Using Docker
 
-**If you have PHP and Composer locally:**
+Both of the following methods require Docker to be installed on your local machine. With Docker, you no longer need to go through the hassle of having an Apache server installed locally to run PHP and MySQL.
+
+**If you have PHP and Composer installed:**
 
 + Start with the `Quick installation`
 
-+ Run `docker-compose up -d dev-box`
-    * This command will map your current working files to the docker container, which means you need to have your files locally setup correctly, including the vendor folder.
++ Run the following code from the Caligrafy root folder to start the Caligrafy server
 
-    * This is useful for local development but through docker.
+    ```bash
 
-    * Once started, you can access the website locally via `http://localhost:8080`
+    php caligrafer.php localserver start
+
+    #or
+
+    .bin/caligrafer localserver start
+
+    ``` 
+
++ This method is suitable for local development but through docker.
+
++ Once started, you can access the website locally via `http://localhost:8080`
+
++ Run `server stop` instead of `server start` to stop the server at all time
 
 
-**If you don't have PHP and Composer locally:**
+**If you don't have PHP and Composer installed:**
 
 + Pull the code from github (You can either clone the repo or download the zip file)
 

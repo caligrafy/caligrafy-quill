@@ -29,6 +29,7 @@ Caligrafer::run();
 
 $defaultMsg = "\n Available Functions: 
 				\n - initialize: Initializes and signs your project
+				\n - localserver <start | stop>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker)
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
 				\n - create <project_name>: scaffolds a Vue project
@@ -119,6 +120,20 @@ switch(strtolower($argv[1])) {
 			chdir("public/".$argv[2]);
 		} else {
 			print("\n The project could not be created. Please make sure you have node.js with npm installed and that the name does not conflict with existing public folders. \n\n");
+		}
+		break;
+
+	case 'localserver':
+		if (isset($argv[2]) && strtolower($argv[2]) == "start") {
+			system('docker-compose up --build -d dev-box', $retValue);
+			print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
+		} 
+		elseif (isset($argv[2]) && strtolower($argv[2]) == "stop") {
+			system('docker-compose down', $retValue);
+			print("\n\nCaligrafy Server stopped.\n\n");
+		}
+		else {
+			print("\n\n- 'localserver start' to start the server\n- 'localserver stop' to stop the server\n\n");
 		}
 		break;
 
