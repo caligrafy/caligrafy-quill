@@ -84,10 +84,10 @@ initialize() {
 printf "\nChecking if Docker is installed...\n\n"
 docker ps
 if [ $? -eq 0 ]; then
-    if [ $1 == "start" ]; then
+    if [[ $1 == "start" ]]; then
         initialize
         start
-    elif [  $1 == "stop" ]; then
+    elif [[  $1 == "stop" ]]; then
         stop
     else
         printf "\nUse 'server start' to start the server or  'server stop' to stop it \n\n"
