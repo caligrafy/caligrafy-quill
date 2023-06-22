@@ -21,7 +21,7 @@ use PHPMailer\PHPMailer\Exception as MailerException;
 use \Exception as Exception;
 
 
-class Mail {
+class Mail extends \stdClass {
     
     private $mailHost;
     private $mailPort;

@@ -17,7 +17,7 @@ namespace Caligrafy;
 use \Exception as Exception;
 
 
-class Watson {
+class Watson extends \stdClass {
 
     
     /**

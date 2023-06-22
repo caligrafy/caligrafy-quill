@@ -53,7 +53,7 @@ define("IMAGE", array(
 ));
 
 
-class OpenAI {
+class OpenAI extends \stdClass {
 
     /**
 	* @var string the OpenAI API Endpoint

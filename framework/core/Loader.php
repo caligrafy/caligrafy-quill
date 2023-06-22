@@ -17,7 +17,7 @@
 
 namespace Caligrafy;
 
-class Loader{
+class Loader extends \stdClass{
 
     // Load library classes
     public function library($lib){

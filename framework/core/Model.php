@@ -17,7 +17,7 @@
 namespace Caligrafy;
 use \Exception as Exception;
 
-class Model {
+class Model extends \stdClass {
     
     public $table;
     protected $__restricted;

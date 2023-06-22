@@ -16,7 +16,7 @@
 namespace Caligrafy;
 
 
-class CryptoPayment {
+class CryptoPayment extends \stdClass {
 
     
 	/**

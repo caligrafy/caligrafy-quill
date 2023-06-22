@@ -17,7 +17,7 @@
 namespace Caligrafy;
 use \Exception as Exception;
 
-class Caligrafer {
+class Caligrafer extends \stdClass {
     
   /**
    * Caligrafer main 

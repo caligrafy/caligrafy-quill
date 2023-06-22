@@ -3,7 +3,7 @@
 namespace Caligrafy;
 use \Exception as Exception;
 
-class Request  {
+class Request extends \stdClass {
     
     /**
      * @var array _request has all the headers information of the request

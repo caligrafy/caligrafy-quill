@@ -16,7 +16,7 @@
 
 namespace Caligrafy;
 
-class Controller
+class Controller extends \stdClass
 {
     protected $loader;
     protected $request;

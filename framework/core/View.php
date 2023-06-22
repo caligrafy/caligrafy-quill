@@ -18,7 +18,7 @@ namespace Caligrafy;
 
 use \Phug;
 
-class View {
+class View extends \stdClass {
     
     public $viewName;
     public $viewData;

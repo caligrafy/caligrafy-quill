@@ -15,7 +15,7 @@
 
 namespace Caligrafy;
 
-class Errors
+class Errors extends \stdClass
 {
     /**
      * @var array of error messages with codes

@@ -16,7 +16,7 @@
 
 namespace Caligrafy;
 
-class Auth {
+class Auth extends \stdClass {
     
 
     public static $api = false;

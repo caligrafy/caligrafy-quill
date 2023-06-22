@@ -16,7 +16,7 @@
 
 namespace Caligrafy;
 
-class Framework {
+class Framework extends \stdClass {
     
   /**
    * Framework main 
