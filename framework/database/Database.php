@@ -16,7 +16,7 @@ namespace Caligrafy;
 use PDO;
 use \Exception as Exception;
 
-class Database {
+class Database extends \stdClass {
     // DB Params
     private static $db_activate = DB_ACTIVATE;
     private static $db_adapter = DB_CONNECTION;
