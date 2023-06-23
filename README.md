@@ -67,6 +67,14 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 ### Using Docker
 
+<br/>
+
+> #### ![](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/play.png) [Installing Caligrafy using Docker](https://youtu.be/33TKktyxto4)
+>
+> In this video we show you how Caligrafy can be installed and run without setting up any development environment.
+
+<br/>
+
 Both of the following methods require Docker to be installed on your local machine. With Docker, you no longer need to go through the hassle of having an Apache server installed locally to run PHP and MySQL.
 
 + If you have PHP and Composer installed on your machine, it is prefererred that you start with the `Quick installation` first.
