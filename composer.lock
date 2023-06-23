@@ -795,16 +795,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v10.15.0",
+            "version": "v10.16.0-beta.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "d0e48cc85e1aa54cbff3644d1979a4a4c3fdd7bf"
+                "reference": "bcc9e903c3ad0d579bc183813ef4acf4343432d3"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/d0e48cc85e1aa54cbff3644d1979a4a4c3fdd7bf",
-                "reference": "d0e48cc85e1aa54cbff3644d1979a4a4c3fdd7bf",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/bcc9e903c3ad0d579bc183813ef4acf4343432d3",
+                "reference": "bcc9e903c3ad0d579bc183813ef4acf4343432d3",
                 "shasum": ""
             },
             "require": {
@@ -850,9 +850,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v10.15.0"
+                "source": "https://github.com/stripe/stripe-php/tree/v10.16.0-beta.1"
             },
-            "time": "2023-06-08T21:47:46+00:00"
+            "time": "2023-06-22T20:52:38+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -1023,37 +1023,31 @@
         },
         {
             "name": "symfony/var-dumper",
-            "version": "6.0.x-dev",
+            "version": "6.4.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "eb980457fa6899840fe1687e8627a03a7d8a3d52"
+                "reference": "4415fa3b61b7259aca2bf925ab97c03865072ac5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/eb980457fa6899840fe1687e8627a03a7d8a3d52",
-                "reference": "eb980457fa6899840fe1687e8627a03a7d8a3d52",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/4415fa3b61b7259aca2bf925ab97c03865072ac5",
+                "reference": "4415fa3b61b7259aca2bf925ab97c03865072ac5",
                 "shasum": ""
             },
             "require": {
-                "php": ">=8.0.2",
+                "php": ">=8.1",
                 "symfony/polyfill-mbstring": "~1.0"
             },
             "conflict": {
-                "phpunit/phpunit": "<5.4.3",
                 "symfony/console": "<5.4"
             },
             "require-dev": {
                 "ext-iconv": "*",
-                "symfony/console": "^5.4|^6.0",
-                "symfony/process": "^5.4|^6.0",
-                "symfony/uid": "^5.4|^6.0",
+                "symfony/console": "^5.4|^6.0|^7.0",
+                "symfony/process": "^5.4|^6.0|^7.0",
+                "symfony/uid": "^5.4|^6.0|^7.0",
                 "twig/twig": "^2.13|^3.0.4"
-            },
-            "suggest": {
-                "ext-iconv": "To convert non-UTF-8 strings to UTF-8 (or symfony/polyfill-iconv in case ext-iconv cannot be used).",
-                "ext-intl": "To show region name in time zone dump",
-                "symfony/console": "To use the ServerDumpCommand and/or the bin/var-dump-server script"
             },
             "bin": [
                 "Resources/bin/var-dump-server"
@@ -1091,7 +1085,7 @@
                 "dump"
             ],
             "support": {
-                "source": "https://github.com/symfony/var-dumper/tree/6.0"
+                "source": "https://github.com/symfony/var-dumper/tree/6.4"
             },
             "funding": [
                 {
@@ -1107,7 +1101,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-01-20T17:44:14+00:00"
+            "time": "2023-06-21T12:09:04+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
