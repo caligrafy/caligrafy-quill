@@ -6,6 +6,7 @@
     "serve": "vite",
     "build": "vite build",
     "preview": "vite preview",
+    "host": "vite --host",
     "lint": "eslint . --ext .vue,.js,.jsx,.cjs,.mjs --fix --ignore-path .gitignore"
   },
   "dependencies": {
