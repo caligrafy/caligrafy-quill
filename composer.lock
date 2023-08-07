@@ -795,16 +795,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v10.20.0-beta.2",
+            "version": "v10.21.0-beta.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "98815eba03f5a4a6f77ace91667be227d5ee70fe"
+                "reference": "52cf03587c23e16536cdea80c6e3499128754c66"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/98815eba03f5a4a6f77ace91667be227d5ee70fe",
-                "reference": "98815eba03f5a4a6f77ace91667be227d5ee70fe",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/52cf03587c23e16536cdea80c6e3499128754c66",
+                "reference": "52cf03587c23e16536cdea80c6e3499128754c66",
                 "shasum": ""
             },
             "require": {
@@ -850,9 +850,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v10.20.0-beta.2"
+                "source": "https://github.com/stripe/stripe-php/tree/v10.21.0-beta.1"
             },
-            "time": "2023-07-28T17:19:55+00:00"
+            "time": "2023-08-03T20:52:33+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -924,7 +924,7 @@
         },
         {
             "name": "symfony/polyfill-ctype",
-            "version": "dev-main",
+            "version": "1.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-ctype.git",
@@ -987,7 +987,7 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/main"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/1.x"
             },
             "funding": [
                 {
@@ -1007,7 +1007,7 @@
         },
         {
             "name": "symfony/polyfill-mbstring",
-            "version": "dev-main",
+            "version": "1.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-mbstring.git",
@@ -1071,7 +1071,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/main"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/1.x"
             },
             "funding": [
                 {
