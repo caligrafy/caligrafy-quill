@@ -27,6 +27,7 @@ define ("CLASSIFY", "Classify the following:\n");
 define ("COMPLETE", "Complete the following:\n");
 define ("PREDICT", "Predict based on the following:\n");
 define ("RECOMMEND", "Recommend about the following:\n");
+define ("CUSTOM",  "");
 
 define("DEFAULT_TEXT_PARAMETERS", array(    
     "model" => GPT3,   
