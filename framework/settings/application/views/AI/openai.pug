@@ -9,7 +9,14 @@ block content
             .horizontal-left
                 p(class="medium-text") Response
                 each $item in $response['response']
-                    p!= nl2br(str_replace('\n', "\n", $item[$response['type']]))
+                    if isset($item['message']['content'])
+                        p= $item['message']['content']
+                    else if isset($item['url'])
+                        p
+                            a(href=$item['url']) View generated image
+                    else if !empty($item['message'])
+                        p Sorry the AI could not generate a response what
+                        p= $item['message']
     
     form(id='ai_form', method='POST', enctype="multipart/form-data")
         =csrf()

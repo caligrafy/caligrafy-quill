@@ -17,8 +17,9 @@ namespace Caligrafy;
 use \Exception as Exception;
 
 define("DAVINCI", "text-davinci-003");
+define("GPT3", "gpt-3.5-turbo");
 
-define ("CONVERSE", "");
+define ("CONVERSE", "You are a helpful assistant:\n");
 define ("SUMMARIZE", "Summarize the following:\n");
 define ("ANALYZE", "Analyze the following:\n");
 define ("CORRECT", "Fix the following:\n");
@@ -28,7 +29,7 @@ define ("PREDICT", "Predict based on the following:\n");
 define ("RECOMMEND", "Recommend about the following:\n");
 
 define("DEFAULT_TEXT_PARAMETERS", array(    
-    "model" => DAVINCI,   
+    "model" => GPT3,   
     "temperature" => 0,
     "max_tokens" => 1000,
     "top_p" => 1.0,
@@ -44,7 +45,7 @@ define("DEFAULT_IMAGE_PARAMETERS", array(
 
 define("TEXT", array(
     "type" => "text",
-    "endpoint"=> "https://api.openai.com/v1/completions",
+    "endpoint"=> "https://api.openai.com/v1/chat/completions",
 ));
 
 define("IMAGE", array(
@@ -74,6 +75,13 @@ class OpenAI extends \stdClass {
 	* @property OpenAI model parameters
 	*/
 	public $parameters;
+
+
+    /**
+	* @var array conversation context
+	* @property OpenAI model context
+	*/
+	public $context;
 
     /**
 	* @var string the OpenAI file attachments necessary for fine-tuning models
@@ -110,7 +118,7 @@ class OpenAI extends \stdClass {
         return $this->prepareRequest($method, $additionalHeaders);  
     }
 
-    public function delegate($input = '', $outcome = '', $command = ANALYZE, $parameters = array())
+    public function delegate($input = '', $outcome = '', $command = ANALYZE,  $context  = array(), $parameters = array())
     {
         // initialize variables
         $inputConstraints = '';
@@ -128,7 +136,9 @@ class OpenAI extends \stdClass {
             // If an outcome is given, concatenate to input and remove them from parameters
             $outcome = is_array($outcome) && !empty($outcome)? "\n| ".implode(" | ", $outcome)." | " : "\n".$outcome;
 
-            return $this->converse(array_merge($parameters, ["prompt" => $command."\n".$input."\n".$outcome."\n", "suffix" => $suffix]));
+            return $this->converse(array_merge($parameters, ["messages" => array_merge($context, 
+                                                                                        array(["role" =>  "system", "content" => $command], ["role" => "user", "content" => $input."\n".$outcome."\n"])
+                                                                                        )]));
         }
         // if image
         elseif ($this->type == 'url') {
@@ -176,7 +186,6 @@ class OpenAI extends \stdClass {
                 $output['type'] = $this->type;
             }
         } 
-
         return $output;
     }
 
