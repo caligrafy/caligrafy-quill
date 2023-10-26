@@ -12,12 +12,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/claviska/SimpleImage.git",
-                "reference": "969de5e61810ef91f6f83c475b192c4841367dfa"
+                "reference": "587410cbbf43c03514b1acef4c9efd5210777ee2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/claviska/SimpleImage/zipball/969de5e61810ef91f6f83c475b192c4841367dfa",
-                "reference": "969de5e61810ef91f6f83c475b192c4841367dfa",
+                "url": "https://api.github.com/repos/claviska/SimpleImage/zipball/587410cbbf43c03514b1acef4c9efd5210777ee2",
+                "reference": "587410cbbf43c03514b1acef4c9efd5210777ee2",
                 "shasum": ""
             },
             "require": {
@@ -50,7 +50,7 @@
             "description": "A PHP class that makes working with images as simple as possible.",
             "support": {
                 "issues": "https://github.com/claviska/SimpleImage/issues",
-                "source": "https://github.com/claviska/SimpleImage/tree/4.0.6"
+                "source": "https://github.com/claviska/SimpleImage/tree/master"
             },
             "funding": [
                 {
@@ -58,7 +58,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2023-07-27T16:48:12+00:00"
+            "time": "2023-10-12T20:34:04+00:00"
         },
         {
             "name": "js-phpize/js-phpize",
@@ -1095,12 +1095,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "86cb4d6285f10aac12d120fbaa76dc02350ef085"
+                "reference": "44d76a06588621fe88a4c49ca398364c1be39080"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/86cb4d6285f10aac12d120fbaa76dc02350ef085",
-                "reference": "86cb4d6285f10aac12d120fbaa76dc02350ef085",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/44d76a06588621fe88a4c49ca398364c1be39080",
+                "reference": "44d76a06588621fe88a4c49ca398364c1be39080",
                 "shasum": ""
             },
             "require": {
@@ -1172,7 +1172,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2023-09-11T16:39:34+00:00"
+            "time": "2023-10-25T07:37:32+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
