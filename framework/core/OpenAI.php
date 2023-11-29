@@ -16,8 +16,11 @@
 namespace Caligrafy;
 use \Exception as Exception;
 
-define("DAVINCI", "text-davinci-003");
 define("GPT3", "gpt-3.5-turbo");
+define ("GPT4", "gpt-4");
+define ("GPT4-32", "gpt-4-32k");
+define ("GPT4-LATEST", "gpt-4-1106-preview");
+define ("GPT4-LATEST-VISION", "gpt-4-vision-preview");
 
 define ("CONVERSE", "You are a helpful assistant:\n");
 define ("SUMMARIZE", "Summarize the following:\n");
