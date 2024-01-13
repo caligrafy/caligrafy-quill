@@ -175,6 +175,18 @@ class Assistant extends \stdClass {
     }
 
     /**
+     * Delete Assistant
+     */
+    public function delete() {
+        if ($this->assistant_id)  {
+            $response = httpRequest($this->_openai_url.'/'.$this->assistant_id, 'DELETE', array(), $this->_headers);
+            if ($response['deleted'])
+                return true;
+        }
+        return $this;
+    }
+
+    /**
      * Start the contextual conversation (new thread)
      * There is no limit to the number of messages that can be added to the thread
      */
@@ -359,7 +371,16 @@ class Assistant extends \stdClass {
      */
     public function deleteAssistantFile($file_id) {
         $response = httpRequest($this->_assistant_file_url.'/'.$file_id, 'DELETE', array(), $this->_headers);
-        return $response['deleted']?? false;;
+        return $response['deleted']?? false;
+    }
+
+    /**
+     * Delete Assistant
+     */
+    public function deleteAssistant() {
+        if ($this->assistant_id)
+            $response = httpRequest($this->_openai_url.'/'.$this->assistant_id, 'DELETE', array(), $this->_headers);
+        return $response['deleted']?? false;
     }
 
 
