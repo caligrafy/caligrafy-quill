@@ -143,6 +143,7 @@ class Assistant extends \stdClass {
     {
         
         if (!empty($parameters)) {
+            $this->assistant_id = $parameters['assistant_id']?? '';
             $this->_model = $parameters['model']?? $this->_model;
             $this->tools = $parameters['tools']?? $this->tools;
             $this->name = $parameters['name']?? '';
@@ -152,6 +153,9 @@ class Assistant extends \stdClass {
             $this->file_ids = $this->uploadAssistantFiles($this->file_paths);
             $this->metadata = $parameters['metadata']?? array();
         }
+
+        // Preparing URL to identify new vs modify
+        $url = $this->assistant_id ? $this->_openai_url."/".$this->assistant_id : $this->_openai_url;
 
         // Preparing the headers
         $headers = array_merge($this->_headers, array(
@@ -169,7 +173,7 @@ class Assistant extends \stdClass {
             "metadata" => $this->metadata
         );
 
-        $response = httpRequest($this->_openai_url, 'POST', $body, $headers);
+        $response = httpRequest($url, 'POST', $body, $headers);
         $this->assistant_id = $response['id']?? '';
         return $this;
     }
