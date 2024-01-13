@@ -170,7 +170,6 @@ class Assistant extends \stdClass {
         );
 
         $response = httpRequest($this->_openai_url, 'POST', $body, $headers);
-        dump($response);
         $this->assistant_id = $response['id']?? '';
         return $this;
     }
