@@ -378,14 +378,5 @@ class Assistant extends \stdClass {
         return $response['deleted']?? false;
     }
 
-    /**
-     * Delete Assistant
-     */
-    public function deleteAssistant() {
-        if ($this->assistant_id)
-            $response = httpRequest($this->_openai_url.'/'.$this->assistant_id, 'DELETE', array(), $this->_headers);
-        return $response['deleted']?? false;
-    }
-
 
 }
