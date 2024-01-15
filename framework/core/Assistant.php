@@ -141,41 +141,80 @@ class Assistant extends \stdClass {
      */
     public function __construct($parameters = array())
     {
-        
-        if (!empty($parameters)) {
-            $this->assistant_id = $parameters['assistant_id']?? '';
-            $this->_model = $parameters['model']?? $this->_model;
-            $this->tools = $parameters['tools']?? $this->tools;
-            $this->name = $parameters['name']?? '';
-            $this->description = $parameters['description']?? '';
-            $this->instructions = $parameters['instructions']?? '';
-            $this->file_paths = $parameters['file_paths']?? array();
-            $this->file_ids = $this->uploadAssistantFiles($this->file_paths);
-            $this->metadata = $parameters['metadata']?? array();
-        }
 
-        // Preparing URL to identify new vs modify
-        $url = $this->assistant_id ? $this->_openai_url."/".$this->assistant_id : $this->_openai_url;
-
+        // Initialize variables
+        $url = $this->_openai_url;
+                
         // Preparing the headers
         $headers = array_merge($this->_headers, array(
             "Content-Type: application/json"
             )
         );
 
+        if (!empty($parameters)) {
+
+            // If there is an ID, change the $url and retrieve the assistant
+            if (isset($parameters['assistant_id'])) {
+                $this->assistant_id = $parameters['assistant_id'];
+                $url = $this->_openai_url."/".$this->assistant_id;
+                $this->retrieve();
+            }
+        
+            $this->_model = $parameters['model']?? $this->_model;
+            $this->tools = $parameters['tools']?? $this->tools;
+            $this->name = $parameters['name']?? $this->name;
+            $this->description = $parameters['description']?? $this->description;
+            $this->instructions = $parameters['instructions']?? $this->instructions;
+            $this->file_paths = $parameters['file_paths']?? $this->file_paths;
+            $this->file_ids = isset($parameters['file_paths']) ? $this->uploadAssistantFiles($this->file_paths) : $this->file_ids;
+            $this->metadata = $parameters['metadata']?? $this->metadata;
+        }
+
         $body = array(
             "model" => $this->_model,
-            "name" => $this->name,
-            "description" => $this->description,
-            "instructions" => $this->instructions,
-            "tools" => $this->tools,
-            "file_ids" => $this->file_ids,
-            "metadata" => $this->metadata
+            "name" => $this->name?? '',
+            "description" => $this->description?? '',
+            "instructions" => $this->instructions?? '',
+            "tools" => $this->tools?? [],
+            "file_ids" => $this->file_ids?? [],
+            "metadata" => $this->metadata??  ''
         );
 
         $response = httpRequest($url, 'POST', $body, $headers);
-        $this->assistant_id = $response['id']?? '';
+        $this->assistant_id = $response['id']?? $this->assistant_id;
         return $this;
+        
+    }
+
+    /**
+     * Retrieve existing Assistant
+     */
+    public function retrieve() {
+
+        // Initializing response
+        $assistant = [];
+        
+        // Preparing the headers
+        $headers = array_merge($this->_headers, array(
+            "Content-Type: application/json"
+            )
+        );
+
+
+        if ($this->assistant_id)
+            $assistant = httpRequest($this->_openai_url."/".$this->assistant_id, 'GET', array(), $headers);
+
+        $this->assistant_id = $assistant['id']?? $this->assistant_id;
+        $this->_model = $assistant['model']?? $this->_model;
+        $this->tools = $assistant['tools']?? $this->tools;
+        $this->name = $assistant['name']?? $this->name;
+        $this->description = $assistant['description']?? $this->description;
+        $this->instructions = $assistant['instructions']?? $this->instructions;
+        $this->file_ids = $assistant['file_ids']?? $this->file_ids;
+        $this->metadata = $assistant['metadata']?? $this->metadata;
+
+        return $this;
+
     }
 
     /**
@@ -199,7 +238,6 @@ class Assistant extends \stdClass {
         $this->thread_id = $response['id']?? null;
         return $this;
     }
-
 
     /**
      * 
@@ -289,7 +327,7 @@ class Assistant extends \stdClass {
      * 
      * Retrieve the assistant responses
      */
-    public function retrieve() 
+    public function retrieveResponse() 
     {
         $statuses = ["queued", "in_progress"];
         $response = [];
@@ -303,7 +341,7 @@ class Assistant extends \stdClass {
             sleep(2);
             $response = $this->thread_id && $this->run_id ? httpRequest($this->_thread_url.'/'.$this->thread_id.'/runs/'.$this->run_id, 'GET', array(), $this->_headers) : ''; 
             $this->status = $response['status'];
-            return $this->retrieve();
+            return $this->retrieveResponse();
         }
 
     }
@@ -377,6 +415,5 @@ class Assistant extends \stdClass {
         $response = httpRequest($this->_assistant_file_url.'/'.$file_id, 'DELETE', array(), $this->_headers);
         return $response['deleted']?? false;
     }
-
 
 }
