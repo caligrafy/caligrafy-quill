@@ -166,7 +166,7 @@ class Assistant extends \stdClass {
             $this->description = $parameters['description']?? $this->description;
             $this->instructions = $parameters['instructions']?? $this->instructions;
             $this->file_paths = $parameters['file_paths']?? $this->file_paths;
-            $this->file_ids = isset($parameters['file_paths']) ? $this->uploadAssistantFiles($this->file_paths) : $this->file_ids;
+            $this->file_ids = isset($parameters['file_paths']) ? $this->uploadAssistantFiles($this->file_paths) : ($parameters['file_ids']?? $this->file_ids);
             $this->metadata = $parameters['metadata']?? $this->metadata;
         }
 
