@@ -263,8 +263,10 @@ class Request extends \stdClass {
      */    
     private function checkCSRF()
     {
-        // if it's a form and not an API then check for CSRF
-        if(!$this->wantsJson()) {
+        $approved = explode(',', APPROVED_AGENTS);
+
+        //if it's a form and not an API then check for CSRF
+        if(!$this->wantsJson() && !in_array($this->userAgent, $approved )) {
             if (!isset($_POST['_token']) || (isset($_POST['_token']) && !hash_equals($_POST['_token'], $_SESSION['token']))) {
                 throw new Exception(Errors::get('3000'), 3000);
                 exit;
