@@ -29,6 +29,7 @@ Caligrafer::run();
 
 $defaultMsg = "\n Available Functions: 
 				\n - initialize: Initializes and signs your project
+				\n - run: Initializes the applications and prepares to be run locally
 				\n - server <start | stop>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker)
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
@@ -93,6 +94,36 @@ switch(strtolower($argv[1])) {
             print($e->getMessage());
         }
 		break;
+
+	case 'run':
+		try {
+			$appRoot = basename(getcwd()); 
+			print("\nThis will initialize the application so that it can run locally
+			\nPress 'Return' to continue or CTRL Z to abort");
+			$confirmation = readline();
+
+			print("\n\n Preparing and signing the application for usage (We might need to authenticate you) \n");
+			$keys = Caligrafer::generateKeys(); 
+			$appKey = isset($keys['APP_KEY'])? $keys['APP_KEY'] : null;
+			$apiKey = isset($keys['API_KEY'])? $keys['API_KEY'] : null;
+			$file = '.env';
+			$input = "APP_KEY=".$appKey."\n"."API_KEY=".$apiKey."\n"."APP_ROOT=".$appRoot."\n". file_get_contents($file);
+			$vueInput = "VITE_APP_KEY=".$appKey."\n"."VITE_API_KEY=".$apiKey."\n";
+			file_put_contents($file, $input);
+			file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);
+
+			system('chmod -R 777 public/uploads');
+
+			print("\n Application initialized successfully");
+			print ("\n APP_KEY=".$appKey);
+			print("\n API_KEY=".$apiKey);
+			print("\n\n");
+
+		} catch (Exception $e) {
+			print($e->getMessage());
+		}
+		break;
+
 	case 'create':
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {
 			system('cp -r framework/librairies/app ./public/'.$argv[2], $retValue);
