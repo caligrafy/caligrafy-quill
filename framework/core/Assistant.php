@@ -87,7 +87,7 @@ class Assistant extends \stdClass {
 	* @var array the OpenAI Assistant Tools
 	* @property tools OpenAI Assistant Tools
 	*/
-	public $tools = array(["type" => "retrieval"]);
+	public $tools = array(["type" => "file_search"]);
 
     /**
 	* @var array the OpenAI Assistant attached file ids
