@@ -19,7 +19,7 @@ use \Exception as Exception;
 define("ASSISTANT_GPT3", "gpt-3.5-turbo");
 define ("ASSISTANT_GPT4", "gpt-4");
 define ("ASSISTANT_GPT4_32", "gpt-4-32k");
-define ("ASSISTANT_GPT4_LATEST", "gpt-4-1106-preview");
+define ("ASSISTANT_GPT4_LATEST", "gpt-4-turbo-preview");
 define ("ASSISTANT_GPT4_LATEST_VISION", "gpt-4-vision-preview");
 
 
@@ -60,7 +60,7 @@ class Assistant extends \stdClass {
 	* @property headers OpenAI request headers
 	*/
 	private $_headers = array("Authorization: Bearer ".OPEN_AI_KEY,
-                              "OpenAI-Beta: assistants=v1");
+                              "OpenAI-Beta: assistants=v2");
 
     /**
 	* @var string the OpenAI Assistant Name
@@ -90,12 +90,18 @@ class Assistant extends \stdClass {
 	public $tools = array(["type" => "file_search"]);
 
     /**
+	* @var array the OpenAI Assistant Tools
+	* @property tools OpenAI Assistant Tools
+	*/
+	public $tool_resources = array("code_interpreter" => ["file_ids" => [] ]);
+
+    /**
 	* @var array the OpenAI Assistant attached file ids
 	* @property file_ids OpenAI Assistant attached file ids
 	*/
 	public $file_ids = [];
 
-        /**
+    /**
 	* @var array User entered file paths array
 	* @property file_paths User entered file paths array
 	*/
@@ -167,6 +173,7 @@ class Assistant extends \stdClass {
             $this->instructions = $parameters['instructions']?? $this->instructions;
             $this->file_paths = $parameters['file_paths']?? $this->file_paths;
             $this->file_ids = isset($parameters['file_paths']) ? $this->uploadAssistantFiles($this->file_paths) : ($parameters['file_ids']?? $this->file_ids);
+            $this->tool_resources = $this->file_ids? array("code_interpreter" => ["file_ids" => $this->file_ids ]) : $this->tool_resources;
             $this->metadata = $parameters['metadata']?? $this->metadata;
         }
 
@@ -176,8 +183,8 @@ class Assistant extends \stdClass {
             "description" => $this->description?? '',
             "instructions" => $this->instructions?? '',
             "tools" => $this->tools?? [],
-            "file_ids" => $this->file_ids?? [],
-            "metadata" => $this->metadata??  ''
+            "tool_resources" => $this->tool_resources,
+            "metadata" => $this->metadata?? null
         );
 
         $response = httpRequest($url, 'POST', $body, $headers);
@@ -257,7 +264,7 @@ class Assistant extends \stdClass {
      * 
      * Create a user message in the conversation
      */
-    public function createMessage($content, $file_ids = [], $metadata = [], $role = "user") {
+    public function createMessage($content, $file_ids = [], $metadata = null, $role = "user") {
 
         // Preparing the headers
         $headers = array_merge($this->_headers, array(
@@ -268,7 +275,7 @@ class Assistant extends \stdClass {
         $body = array(
             "role" => $role,
             "content" => $content,
-            "file_ids" => $file_ids,
+            "attachments" => [],
             "metadata" => $metadata
         );
 
@@ -294,7 +301,7 @@ class Assistant extends \stdClass {
      * Run the assistant in the thread
      */
 
-    public function run($additional_instructions = '', $instructions = null, $tools = [], $model = '', $metadata = [])
+    public function run($additional_instructions = '', $instructions = null, $tools = [], $model = '', $metadata = null)
     {
         // Preparing the headers
         $headers = array_merge($this->_headers, array(
