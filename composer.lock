@@ -1022,12 +1022,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "c045b1e7c3500ddff41ea1924124fc5e549c0774"
+                "reference": "be16ed8fa69d9596707fcb2382ea0f71c0825b10"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/c045b1e7c3500ddff41ea1924124fc5e549c0774",
-                "reference": "c045b1e7c3500ddff41ea1924124fc5e549c0774",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/be16ed8fa69d9596707fcb2382ea0f71c0825b10",
+                "reference": "be16ed8fa69d9596707fcb2382ea0f71c0825b10",
                 "shasum": ""
             },
             "require": {
@@ -1097,7 +1097,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-03-22T07:01:02+00:00"
+            "time": "2024-04-18T09:32:20+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
@@ -1182,12 +1182,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Wixel/GUMP.git",
-                "reference": "6ce1114cfbb301d2ab3ddf6846b92100ccf048e2"
+                "reference": "f2d73de0377986f3f97f0d1564b5e532562bbad0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Wixel/GUMP/zipball/6ce1114cfbb301d2ab3ddf6846b92100ccf048e2",
-                "reference": "6ce1114cfbb301d2ab3ddf6846b92100ccf048e2",
+                "url": "https://api.github.com/repos/Wixel/GUMP/zipball/f2d73de0377986f3f97f0d1564b5e532562bbad0",
+                "reference": "f2d73de0377986f3f97f0d1564b5e532562bbad0",
                 "shasum": ""
             },
             "require": {
@@ -1239,9 +1239,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Wixel/GUMP/issues",
-                "source": "https://github.com/Wixel/GUMP/tree/master"
+                "source": "https://github.com/Wixel/GUMP/tree/v2.1.0"
             },
-            "time": "2023-03-02T13:40:45+00:00"
+            "time": "2024-04-29T14:43:48+00:00"
         }
     ],
     "packages-dev": [],
