@@ -17,9 +17,11 @@ namespace Caligrafy;
 use \Exception as Exception;
 
 define("GPT3", "gpt-3.5-turbo");
-define ("GPT4", "gpt-4");
+define ("GPT4", "gpt-4-turbo");
+define ("GPT4O", "gpt-4o");
+define ("GPT4OMINI", "gpt-4o mini");
 define ("GPT4-32", "gpt-4-32k");
-define ("GPT4_LATEST", "gpt-4-1106-preview");
+define ("GPT4_LATEST", "gpt-4o");
 define ("GPT4_LATEST_VISION", "gpt-4-vision-preview");
 
 define ("CONVERSE", "You are a helpful assistant:\n");
