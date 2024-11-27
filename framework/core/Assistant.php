@@ -18,8 +18,10 @@ use \Exception as Exception;
 
 define("ASSISTANT_GPT3", "gpt-3.5-turbo");
 define ("ASSISTANT_GPT4", "gpt-4");
+define ("ASSISTANT_GPT4O", "gpt-4o");
+define ("ASSISTANT_GPT4OMINI", "gpt-4o mini");
 define ("ASSISTANT_GPT4_32", "gpt-4-32k");
-define ("ASSISTANT_GPT4_LATEST", "gpt-4-turbo-preview");
+define ("ASSISTANT_GPT4_LATEST", "gpt-4o");
 define ("ASSISTANT_GPT4_LATEST_VISION", "gpt-4-vision-preview");
 
 
