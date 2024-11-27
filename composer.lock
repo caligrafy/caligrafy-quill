@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "56444e4ccbb2782e6715ae154c9d527f",
+    "content-hash": "f4c896b5e3f94602a3ba70fd4bbef5e9",
     "packages": [
         {
             "name": "claviska/simpleimage",
@@ -417,7 +417,7 @@
         },
         {
             "name": "phpmailer/phpmailer",
-            "version": "v6.9.3",
+            "version": "dev-master",
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPMailer/PHPMailer.git",
@@ -456,6 +456,7 @@
                 "symfony/polyfill-mbstring": "To support UTF-8 if the Mbstring PHP extension is not enabled (^1.2)",
                 "thenetworg/oauth2-azure": "Needed for Microsoft XOAUTH2 authentication"
             },
+            "default-branch": true,
             "type": "library",
             "autoload": {
                 "psr-4": {
@@ -1399,6 +1400,7 @@
     "minimum-stability": "dev",
     "stability-flags": {
         "claviska/simpleimage": 20,
+        "phpmailer/phpmailer": 20,
         "phug/phug": 20,
         "pug-php/pug": 20,
         "vlucas/phpdotenv": 20,

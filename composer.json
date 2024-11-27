@@ -18,7 +18,7 @@
         "wixel/gump": "dev-master",
         "claviska/simpleimage": "dev-master",
         "stripe/stripe-php": "16.*",
-        "phpmailer/phpmailer": "6.*",
+        "phpmailer/phpmailer": "dev-master",
         "phug/phug": "dev-master"
     },
     "config": {
