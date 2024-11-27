@@ -18,7 +18,7 @@ require_once "framework/core/Framework.php";
 require_once 'vendor/autoload.php';
        
 // load environment variables
-$dotenv = Dotenv\Dotenv::create(__DIR__);
+$dotenv = Dotenv\Dotenv::createUnsafeMutable(__DIR__);
 $dotenv->load();
 
 Framework::run();

@@ -20,7 +20,7 @@ require_once 'vendor/autoload.php';
 if (!file_exists('.env')) {
 	system("cp framework/settings/.env.example .env");
 }
-$dotenv = Dotenv\Dotenv::create(__DIR__);
+$dotenv = Dotenv\Dotenv::createUnsafeMutable(__DIR__);
 $dotenv->overload();
 
 $restricted = ['app', 'bot', '__bots__', 'css', 'facedetect', 'fonts', 'images', 'js', 'ml', 'resources', 'uploads'];

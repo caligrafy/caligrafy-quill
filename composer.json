@@ -14,7 +14,7 @@
     "require": {
         "php": ">=7.2",
         "pug-php/pug": "dev-master",
-        "vlucas/phpdotenv": "^3.3",
+        "vlucas/phpdotenv": "dev-master",
         "wixel/gump": "dev-master",
         "claviska/simpleimage": "dev-master",
         "stripe/stripe-php": "16.*",
