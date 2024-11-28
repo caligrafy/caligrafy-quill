@@ -21,7 +21,7 @@ if (!file_exists('.env')) {
 	system("cp framework/settings/.env.example .env");
 }
 $dotenv = Dotenv\Dotenv::createUnsafeMutable(__DIR__);
-$dotenv->overload();
+$dotenv->load();
 
 $restricted = ['app', 'bot', '__bots__', 'css', 'facedetect', 'fonts', 'images', 'js', 'ml', 'resources', 'uploads'];
 
