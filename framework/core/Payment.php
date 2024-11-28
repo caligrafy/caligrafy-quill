@@ -30,7 +30,13 @@ class Payment extends \stdClass {
 	* @property string Stripe private_key
 	*/
 	private $_private_key;
-    
+
+  	/**
+	* @var object Stripe instance
+	* @property object Stripe instance
+	*/
+	private $_stripe;
+  
 
 	/**
 	 * Constructs the Payment Controller to initiate the Stripe api
@@ -49,9 +55,8 @@ class Payment extends \stdClass {
             $this->_private_key = PAY_PRIVATE_KEY_TEST;
         }
 
-		\Stripe\Stripe::setApiKey($this->_private_key);
+		$this->_stripe = new \Stripe\StripeClient($this->_private_key);
         return $this;
-
 	}
 
 	/**
@@ -75,7 +80,9 @@ class Payment extends \stdClass {
 		try {
           
           if ($card) {
-              $token = is_array($card)? $this->createStripeToken($card) : $card;
+
+              $token = is_array($card)? $this->_stripe->tokens->create($card) : $card;
+			  $emails = isset($receipt_email)? ['receipt_email' => $receipt_email] : array();
               
               if (isset($token)) {
 				$input = array(
@@ -83,11 +90,11 @@ class Payment extends \stdClass {
                 "currency" => $currency,
                 "source" => $token,
                 "metadata" => $metadata,
-                "description" => $description,
-                "receipt_email" => $receipt_email
+                "description" => $description
                 );
+				$input = !empty($emails)? array_merge($input, $emails) : $input;
 				$input = !empty($transfer)? array_merge($input, $transfer) : $input;
-                $outcome = \Stripe\Charge::create($input);
+                $outcome = $this->_stripe->charges->create($input);
                 $result = $outcome && $outcome->id?  array('action_success' => true, 'data' => array('confirmation' => $outcome->id)) : $result;
               }
           }
@@ -115,6 +122,7 @@ class Payment extends \stdClass {
 	public function createPaymentIntent($amount, $currency, $metadata = array(), $receipt_email = null, $description = '', $transfer = array() ) 
 	{
 		$result = array('action_success' => false, 'error' => 'Transaction could not be completed');
+		$emails = isset($receipt_email)? ['receipt_email' => $receipt_email] : array();
 		try {
 			
 			$input = array(
@@ -122,11 +130,11 @@ class Payment extends \stdClass {
 		  		'currency' => $currency,
 		  		// Verify your integration in this guide by including this parameter
 				'metadata' => strtolower(APP_ENV) == 'production'? $metadata : array_merge($metadata, ['integration_check' => 'accept_a_payment']),
-				'description' => $description,
-                'receipt_email' => $receipt_email
+				'description' => $description
 			);
+			$input = !empty($emails)? array_merge($input, $emails) : $input;
 			$input = !empty($transfer)? array_merge($input, $transfer) : $input;
-			$intent = \Stripe\PaymentIntent::create($input);
+			$intent = $this->_stripe->paymentIntents->create($input);
 			
             $result = $intent?  array('action_success' => true, 'data' => $intent) : $result;
 			
@@ -149,7 +157,7 @@ class Payment extends \stdClass {
 		try {
 			$intent = null;
 			if (isset($intentId)) {
-				$intent = \Stripe\PaymentIntent::retrieve(
+				$intent = $this->_stripe->paymentIntents->retrieve(
 					$intentId,
 					[]
 				);	
@@ -208,7 +216,7 @@ class Payment extends \stdClass {
 			
 			$parameters = array_merge($parameters, $payment_intent_data);
 			
-			$checkout = \Stripe\Checkout\Session::create($parameters, $vendor);
+			$checkout = $this->_stripe->checkout->sessions->create($parameters, $vendor);
 			
 			$result = $checkout? array('action_success' => true, 'data' => $checkout) : $result;
 			
@@ -235,7 +243,7 @@ class Payment extends \stdClass {
 		
 		try {
 			
-			$session = \Stripe\Checkout\Session::retrieve($sessionId);
+			$session = $this->_stripe->checkout->sessions->retrieve($sessionId);
 			if ($session) {
 				$result = array('action_success' => true, 'data' => $session);
 			}
@@ -268,7 +276,7 @@ class Payment extends \stdClass {
 			$capabilities = !empty($capabilities)? $capabilities : array('card_payments' => [ 'requested' => $cardRequired,],
  								'transfers' => ['requested' => true,]);
 			$input = array_merge($email, $country, array('type' => $type, 'capabilities' => $capabilities), $accountInformation);
-			$account = \Stripe\Account::create($input);
+			$account = $this->_stripe->accounts->create($input);
 			$result = $account? array('action_success' => true, 'data' => $account) : $result;
 		} catch(Exception $e) {
 			$result['error'] = $e->getMessage();
@@ -292,7 +300,7 @@ class Payment extends \stdClass {
 		$result = array('action_success' => false, 'error' => 'Account Link could not be created');
 		try {
 			$input = array('account' => $accountId, 'refresh_url' => $refreshUrl, 'return_url' => $returnUrl, 'type' => $type);
-			$account_links = \Stripe\AccountLink::create($input);
+			$account_links = $this->_stripe->accountLinks->create($input);
 			$result = $account_links? array('action_success' => true, 'data' => $account_links) : $result;
 		} catch(Exception $e) {
 			$result['error'] = $e->getMessage();
@@ -310,7 +318,7 @@ class Payment extends \stdClass {
 	{
 		$result = array('action_success' => false, 'error' => 'Account Link could not be created');
 		try {
-			$account_links = \Stripe\Account::createLoginLink($accountId);
+			$account_links = $this->_stripe->accounts->createLoginLink($accountId);
 			$result = $account_links? array('action_success' => true, 'data' => $account_links) : $result;
 		} catch(Exception $e) {
 			$result['error'] = $e->getMessage();
@@ -327,7 +335,7 @@ class Payment extends \stdClass {
 	{
 		$result = array('action_success' => false, 'error' => 'Account could not be updated');
 		try {
-			$account = \Stripe\Account::update($accountId, $updates);
+			$account = $this->_stripe->accounts->update($accountId, $updates);
 			$result = $account? array('action_success' => true, 'data' => $account) : $result;
 		} catch(Exception $e) {
 			$result['error'] = $e->getMessage();
@@ -342,7 +350,7 @@ class Payment extends \stdClass {
 	{
 		$result = array('action_success' => false, 'error' => 'Account could not be found');
 		try {
-			$account = \Stripe\Account::retrieve($accountId, []);
+			$account = $this->_stripe->accounts->retrieve($accountId, []);
 			$result = $account && !isset($account['error'])? array('action_success' => true, 'data' => $account) : $result;
 		} catch(Exception $e) {
 			$result['error'] = $e->getMessage();
@@ -352,7 +360,7 @@ class Payment extends \stdClass {
     
     private function createStripeToken($card)
     {
-        return \Stripe\Token::create($card);
+        return $this->_stripe->tokens->create($card);
     }
 
 	/**
