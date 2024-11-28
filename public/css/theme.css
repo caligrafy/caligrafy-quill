@@ -27,6 +27,36 @@ body {
     padding: 12px;
 }
 
+.btn-icon {
+  background: #000;
+  color: #ffffff;
+  /*font-family: Arial, sans-serif;*/
+  border-radius: 4px 4px 4px 4px;
+  border: 0;
+  padding: 10px 0;
+  font-size: 1em;
+  /*font-weight: 600;*/
+  cursor: pointer;
+  transition: all 0.2s ease;
+  box-shadow: 0px 4px 5.5px 0px rgba(0, 0, 0, 0.07);
+  width: 100%;
+  max-width: 260px;
+  height: 50px;
+  text-align: center;
+}
+.btn-icon:hover {
+  filter: contrast(115%);
+}
+.btn-icon:disabled {
+  opacity: 0.5;
+  cursor: default;
+}
+
+.adjust-btn-text {
+  display: inline-block;
+  margin-left: 10px;
+}
+
 .menu-btn-sm {
     font-size: 1em;
     height: 2em;
@@ -46,7 +76,7 @@ body {
 .primary { 
     background-color: #000;
 }
-.btn-primary {
+.btn-primary, .btn-primary:active, .btn-primary:visited {
     background-color: #000; 
     border-color: #000;
 }
@@ -55,8 +85,8 @@ body {
     border-color: #535150;
 }
 .btn-secondary { 
-    background-color: #2148b1; 
-    border-color: #2148b1;
+    background-color: #ffffff; 
+    border-color: #000000;
 }
 
 .btn-payment {
@@ -137,6 +167,3 @@ body {
     font-size: 80px;
   }
 }
-
-
-

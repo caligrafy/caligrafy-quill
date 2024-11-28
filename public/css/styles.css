@@ -235,6 +235,10 @@ section.section-bar {
   max-width: 600px;
 }
 
+.width-max-800 {
+  max-width: 800px;
+}
+
 .height-fixed {
   min-height:250px;
   height: 400px;
