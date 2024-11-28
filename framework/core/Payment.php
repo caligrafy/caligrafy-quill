@@ -189,7 +189,9 @@ class Payment extends \stdClass {
 	public function createCheckout($amount = 1000, $currency = 'usd', $quantity = 1, $productData = array(), $successUrl = '', $cancelUrl = '', $customerEmail = null, $locale = null, $paymentType = ['card'], $payment_intent_data = array(), $vendor = array())
 	{
 		$result = array('action_success' => false, 'error' => 'Transaction could not be completed');
-		
+		$locales = isset($locale)? ['locale' => $locale] : array();
+		$emails = isset($customerEmail)? ['customer_email' => $customerEmail] : array();
+
 		try {
 			
 			// Initial parameters area
@@ -203,10 +205,12 @@ class Payment extends \stdClass {
     				],
     				'quantity' => $quantity,
   				]],
-				'customer_email' => $customerEmail,
-				'locale' => $locale,
   				'mode' => 'payment'
 			]; 
+
+			// Append to input when needed
+			$parameters = !empty($locales)? array_merge($input, $locales) : $parameters;
+			$parameters = !empty($emails)? array_merge($input, $emails) : $parameters;
 			
 			// If success URL specified, then add to parameters
 			if (isset($successUrl) && trim($successUrl) != '') { $parameters = array_merge($parameters, ['success_url' => $successUrl]); }
@@ -373,5 +377,3 @@ class Payment extends \stdClass {
 	}
 
 }
-
-?>
