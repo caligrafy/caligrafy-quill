@@ -374,10 +374,10 @@
             },
             "type": "composer-plugin",
             "extra": {
+                "class": "NodejsPhpFallback\\ComposerPlugin",
                 "branch-alias": {
                     "dev-master": "2.x-dev"
-                },
-                "class": "NodejsPhpFallback\\ComposerPlugin"
+                }
             },
             "autoload": {
                 "psr-4": {
@@ -860,16 +860,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v16.4.0-beta.1",
+            "version": "v16.4.0-beta.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "fd3d54b289a27979d63e17862dfbede56cc231d4"
+                "reference": "32e66aca6c3d620a6418e065511d1076ae403079"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/fd3d54b289a27979d63e17862dfbede56cc231d4",
-                "reference": "fd3d54b289a27979d63e17862dfbede56cc231d4",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/32e66aca6c3d620a6418e065511d1076ae403079",
+                "reference": "32e66aca6c3d620a6418e065511d1076ae403079",
                 "shasum": ""
             },
             "require": {
@@ -913,9 +913,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v16.4.0-beta.1"
+                "source": "https://github.com/stripe/stripe-php/tree/v16.4.0-beta.3"
             },
-            "time": "2024-11-21T21:11:40+00:00"
+            "time": "2024-12-12T22:56:55+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
@@ -944,8 +944,8 @@
             "type": "library",
             "extra": {
                 "thanks": {
-                    "name": "symfony/polyfill",
-                    "url": "https://github.com/symfony/polyfill"
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
                 }
             },
             "autoload": {
@@ -1024,8 +1024,8 @@
             "type": "library",
             "extra": {
                 "thanks": {
-                    "name": "symfony/polyfill",
-                    "url": "https://github.com/symfony/polyfill"
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
                 }
             },
             "autoload": {
@@ -1099,8 +1099,8 @@
             "type": "library",
             "extra": {
                 "thanks": {
-                    "name": "symfony/polyfill",
-                    "url": "https://github.com/symfony/polyfill"
+                    "url": "https://github.com/symfony/polyfill",
+                    "name": "symfony/polyfill"
                 }
             },
             "autoload": {
@@ -1161,16 +1161,16 @@
         },
         {
             "name": "symfony/var-dumper",
-            "version": "7.2.x-dev",
+            "version": "7.3.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "c6a22929407dec8765d6e2b6ff85b800b245879c"
+                "reference": "ee43df6370a35da55d191bf2e066cf8c89f9a7d0"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/c6a22929407dec8765d6e2b6ff85b800b245879c",
-                "reference": "c6a22929407dec8765d6e2b6ff85b800b245879c",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/ee43df6370a35da55d191bf2e066cf8c89f9a7d0",
+                "reference": "ee43df6370a35da55d191bf2e066cf8c89f9a7d0",
                 "shasum": ""
             },
             "require": {
@@ -1224,7 +1224,7 @@
                 "dump"
             ],
             "support": {
-                "source": "https://github.com/symfony/var-dumper/tree/7.2"
+                "source": "https://github.com/symfony/var-dumper/tree/7.3"
             },
             "funding": [
                 {
@@ -1240,7 +1240,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-11-08T15:48:14+00:00"
+            "time": "2024-12-14T16:08:18+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
