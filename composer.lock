@@ -674,8 +674,8 @@
             "type": "library",
             "extra": {
                 "branch-alias": {
-                    "dev-master": "1.x-dev",
-                    "dev-facade": "0.4.x-dev"
+                    "dev-facade": "0.4.x-dev",
+                    "dev-master": "1.x-dev"
                 }
             },
             "autoload": {
@@ -860,16 +860,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v16.4.0-beta.3",
+            "version": "v16.5.0-beta.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "32e66aca6c3d620a6418e065511d1076ae403079"
+                "reference": "99912a3afdc5cbaabac3465bb8bc04fd037da78d"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/32e66aca6c3d620a6418e065511d1076ae403079",
-                "reference": "32e66aca6c3d620a6418e065511d1076ae403079",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/99912a3afdc5cbaabac3465bb8bc04fd037da78d",
+                "reference": "99912a3afdc5cbaabac3465bb8bc04fd037da78d",
                 "shasum": ""
             },
             "require": {
@@ -913,9 +913,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v16.4.0-beta.3"
+                "source": "https://github.com/stripe/stripe-php/tree/v16.5.0-beta.1"
             },
-            "time": "2024-12-12T22:56:55+00:00"
+            "time": "2024-12-20T18:08:17+00:00"
         },
         {
             "name": "symfony/polyfill-ctype",
