@@ -71,6 +71,9 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 + You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
 
+**Testing the Installation**
++ You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. 
+
 <br />
 
 ### Using Docker
@@ -103,18 +106,17 @@ This method requires Docker to be installed on your local machine. With Docker, 
 
 + Add/Modify the following to the .env file if not accurate: `APP_ROOT=''` (leave blank)
 
-+ Once started, you can access the website locally via `http://localhost:8080`
-
 + Run `server stop` instead of `server start` to stop the server at all time
 
+**Testing the Installation**
++ Once started, you can access the website locally via `http://localhost:8080`
 
-**Database provided in Docker**
-
+**Testing the Database provided in Docker**
 + In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
-
 + This is a web client for MySQL. It will allow you easy access to your Database.
      - Username: `root`
      - Password: `root`
+    
     
 
 ### Manual Installation
