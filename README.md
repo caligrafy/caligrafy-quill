@@ -23,6 +23,8 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + Git and Composer
 + curl, mbstring, openssl, mcrypt, gd, bcmath, ext-intl, headers and redirect modules must be enabled in your servers
 
+<br/>
+
 ## Installation
 
 ### Quick Installation (MAMP/LAMP/XAMP)
@@ -67,7 +69,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     <br />
 
-+ Add/Modify the following to the .env file if not accurate: APP_ROOT=<caligrafy root folder. default: caligrafy-quill>
++ Add/Modify the following to the .env file if not accurate: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`
 
 + You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
 
@@ -101,7 +103,7 @@ This method requires Docker to be installed on your local machine. With Docker, 
 
     ``` 
 
-+ Add/Modify the following to the .env file if not accurate: APP_ROOT='' (leave blank)
++ Add/Modify the following to the .env file if not accurate: `APP_ROOT=''` (leave blank)
 
 + Once started, you can access the website locally via `http://localhost:8080`
 
