@@ -43,7 +43,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     ```
 
-+ Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill?tab=readme-ov-file#using-docker) 
++ Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill?tab=readme-ov-file#using-docker) 
 
 + Run the following code in from the Caligrafy root folder to initialize the framework
 
