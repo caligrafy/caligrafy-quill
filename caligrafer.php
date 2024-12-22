@@ -66,7 +66,7 @@ switch(strtolower($argv[1])) {
         break;
 	case 'initialize':
 		try {
-		   $appRoot = basename(getcwd()); 
+		   $appRoot = isset($argv[2])? "" : basename(getcwd()); 
 		   print("\n\nPreparing and signing the project for usage... \n");
            $keys = Caligrafer::generateKeys(); 
            $appKey = isset($keys['APP_KEY'])? $keys['APP_KEY'] : null;
@@ -123,19 +123,25 @@ switch(strtolower($argv[1])) {
 		break;
 
 	case 'server':
-		if (isset($argv[2]) && strtolower($argv[2]) == "start") {
-			system('docker-compose up --build -d dev-box', $retValue);
-			print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
-		} 
-		elseif (isset($argv[2]) && strtolower($argv[2]) == "stop") {
-			system('docker-compose stop', $retValue);
-			print("\n\nCaligrafy Server stopped.\n\n");
+		if (isset($argv[3])) {
+			if (isset($argv[2]) && strtolower($argv[2]) == "start") {
+				system('docker-compose up --build -d dev-box', $retValue);
+				if ($retValue) {
+					print(" You don't have a server running.\n Start your local apache server if you have one. \n If not, check the Caligrafy documentation to run docker. \n\n");
+				} else {
+					print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
+				}
+			} 
+			elseif (isset($argv[2]) && strtolower($argv[2]) == "stop") {
+				system('docker-compose stop', $retValue);
+				print("\n\nCaligrafy Server stopped.\n\n");
+			}
 		}
 		else {
-			print("\n\n- 'localserver start' to start the server\n- 'localserver stop' to stop the server\n\n");
+			print("\n\nYou are using a local Apache server.\nYou need to turn it off using LAMP/MAMP interface or the apache command line.\n\n");
 		}
 		break;
-
+		
     default:
         print($defaultMsg);
 }

@@ -15,23 +15,32 @@ else
 fi
 
 # Calling the right service based on PHP and Composer presence
+
+printf "Checking if server is running..."
+if pgrep -x "httpd" > /dev/null; then
+    SERVER=""
+else
+    SERVER="off"
+fi
+
 printf "Checking PHP and composer..."
 php --version && composer --version
 if  [ $? -eq 0 ]; then
     if [ -d "./vendor" ] && [ -f "./.env" ] &&  [ -d "./application" ]; then
-        ./caligrafer.php $MODE $COMMAND
+        ./caligrafer.php $MODE $COMMAND $SERVER
     elif [ -d "./vendor" ]; then
         printf "\n\nCaligrafy needs to be initialized first\n\n"
-        ./caligrafer.php initialize
+        ./caligrafer.php initialize $SERVER
         if [ $MODE != "initialize" ]; then
-            ./caligrafer.php $MODE $COMMAND
+            ./caligrafer.php $MODE $COMMAND $SERVER
         fi
     else
         printf "\n\nIt seems that you have downloaded Caligrafy directly from Github.\nLet's get the dependencies first...\n\n"
         composer install
-        ./caligrafer.php initialize
+        ./caligrafer.php initialize $SERVER
+
         if [ $MODE != "initialize" ]; then
-            ./caligrafer.php $MODE $COMMAND
+            ./caligrafer.php $MODE $COMMAND $SERVER
         fi
     fi
 else
