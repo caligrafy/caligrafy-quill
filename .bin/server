@@ -8,7 +8,8 @@ start() {
         clear
         printf "\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n"
         printf "\n\nMonitoring server changes in the application folder...\n\nPress CTRL-C at any point to exit \n\n"
-        watch "./application" "*.*" "docker-compose up --build -d prod-box"
+        #watch "./application" "*.*" "docker-compose up --build -d prod-box"
+        watch "" "*.*" "docker-compose up --build -d prod-box"
     else
         printf "\nCaligrafy server could not be found \n\n"
     fi
