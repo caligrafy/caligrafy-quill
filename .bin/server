@@ -6,7 +6,7 @@ start() {
     docker-compose up --build -d prod-box
     if [ $? -eq 0 ]; then
         clear
-        printf "\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n"
+        printf "\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080/caligrafy-quill \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n"
         printf "\n\nMonitoring server changes in the application folder...\n\nPress CTRL-C at any point to exit \n\n"
         #watch "./application" "*.*" "docker-compose up --build -d prod-box"
         watch "" "*.*" "docker-compose up --build -d prod-box"

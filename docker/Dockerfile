@@ -27,7 +27,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 
 ## Build Prod
 FROM dev-php AS prod-php
-WORKDIR /var/www/html/caligrafy-server
+WORKDIR /var/www/html/caligrafy-quill
 ENV COMPOSER_ALLOW_SUPERUSER=1
 RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
 COPY ./composer.* ./
