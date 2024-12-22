@@ -29,8 +29,6 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 ### Quick Installation (MAMP/LAMP/XAMP)
 
-<br/>
-
 > #### ![](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/play.png) [Installing Caligrafy](https://youtu.be/21Lazd38FfQ)
 >
 > In this video we introduce you to the Caligrafy framework and to the different components that are used in it.
@@ -73,9 +71,9 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 + You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
 
-### Using Docker
+<br />
 
-<br/>
+### Using Docker
 
 > #### ![](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/play.png) [Installing Caligrafy using Docker](https://youtu.be/33TKktyxto4)
 >
