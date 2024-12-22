@@ -45,11 +45,11 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     ```bash
 
-    php caligrafer.php initialize
+    php caligrafer.php server start
 
     #or
 
-    .bin/caligrafer initialize
+    .bin/caligrafer server start
 
     ``` 
 
@@ -75,9 +75,9 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 <br/>
 
-Both of the following methods require Docker to be installed on your local machine. With Docker, you no longer need to go through the hassle of having an Apache server installed locally to run PHP and MySQL.
+This method requires Docker to be installed on your local machine. With Docker, you no longer need to go through the hassle of having an Apache server installed locally to run PHP and MySQL.
 
-+ If you have PHP and Composer installed on your machine, it is prefererred that you start with the `Quick installation` first.
++ If you have PHP and Composer installed on your machine, check the `Quick installation`.
 
 + If you don't have Composer then pull the code from github (You can either clone the repo or download the zip file)
 
