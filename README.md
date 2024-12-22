@@ -19,11 +19,13 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 ## Requirements
 + PHP > 7.2
 + MySql > 5.6
-+ curl, mbstring, openssl, mcrypt, gd, headers and redirect modules must be enabled in your servers
++ A Apache/MySql/PHP server already installed locally OR Docker
++ Git and Composer
++ curl, mbstring, openssl, mcrypt, gd, bcmath, ext-intl, headers and redirect modules must be enabled in your servers
 
 ## Installation
 
-### Quick Installation
+### Quick Installation (MAMP/LAMP/XAMP)
 
 <br/>
 
@@ -40,6 +42,8 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
     composer create-project -s dev caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
 
     ```
+
++ Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill?tab=readme-ov-file#using-docker) 
 
 + Run the following code in from the Caligrafy root folder to initialize the framework
 
@@ -63,6 +67,8 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     <br />
 
++ Add/Modify the following to the .env file if not accurate: APP_ROOT=<caligrafy root folder. default: caligrafy-quill>
+
 + You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
 
 ### Using Docker
@@ -81,6 +87,8 @@ This method requires Docker to be installed on your local machine. With Docker, 
 
 + If you don't have Composer then pull the code from github (You can either clone the repo or download the zip file)
 
++ Make sure Docker is installed and is running on your machine
+
 + Run the following code from the Caligrafy root folder to start the Caligrafy server
 
     ```bash
@@ -92,6 +100,8 @@ This method requires Docker to be installed on your local machine. With Docker, 
     .bin/caligrafer server start
 
     ``` 
+
++ Add/Modify the following to the .env file if not accurate: APP_ROOT='' (leave blank)
 
 + Once started, you can access the website locally via `http://localhost:8080`
 
