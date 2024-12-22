@@ -137,7 +137,7 @@ switch(strtolower($argv[1])) {
 				print("\n\nCaligrafy Server stopped.\n\n");
 			}
 		}
-		else {
+		elseif (isset($argv[2]) && strtolower($argv[2]) == "stop") {
 			print("\n\nYou are using a local Apache server.\nYou need to turn it off using LAMP/MAMP interface or the apache command line.\n\n");
 		}
 		break;
