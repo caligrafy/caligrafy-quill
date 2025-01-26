@@ -1440,16 +1440,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v16.5.0-beta.1",
+            "version": "v16.5.0-beta.3",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "99912a3afdc5cbaabac3465bb8bc04fd037da78d"
+                "reference": "b792b5903f3c5e6d85c860a382e1d0db83372e0a"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/99912a3afdc5cbaabac3465bb8bc04fd037da78d",
-                "reference": "99912a3afdc5cbaabac3465bb8bc04fd037da78d",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/b792b5903f3c5e6d85c860a382e1d0db83372e0a",
+                "reference": "b792b5903f3c5e6d85c860a382e1d0db83372e0a",
                 "shasum": ""
             },
             "require": {
@@ -1493,9 +1493,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v16.5.0-beta.1"
+                "source": "https://github.com/stripe/stripe-php/tree/v16.5.0-beta.3"
             },
-            "time": "2024-12-20T18:08:17+00:00"
+            "time": "2025-01-23T21:25:33+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -1814,16 +1814,17 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "ee43df6370a35da55d191bf2e066cf8c89f9a7d0"
+                "reference": "9b59e65b4b07c04d4a33f209ec9347352ca7b0e7"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/ee43df6370a35da55d191bf2e066cf8c89f9a7d0",
-                "reference": "ee43df6370a35da55d191bf2e066cf8c89f9a7d0",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/9b59e65b4b07c04d4a33f209ec9347352ca7b0e7",
+                "reference": "9b59e65b4b07c04d4a33f209ec9347352ca7b0e7",
                 "shasum": ""
             },
             "require": {
                 "php": ">=8.2",
+                "symfony/deprecation-contracts": "^2.5|^3",
                 "symfony/polyfill-mbstring": "~1.0"
             },
             "conflict": {
@@ -1889,7 +1890,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-12-14T16:08:18+00:00"
+            "time": "2025-01-19T13:07:55+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
