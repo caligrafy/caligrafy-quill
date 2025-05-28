@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "0237aee04a6d7a5423e8741e42af9117",
+    "content-hash": "a39db0aaf88e0ed1bd8118d01a8535c7",
     "packages": [
         {
             "name": "claviska/simpleimage",
@@ -66,12 +66,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/GrahamCampbell/Result-Type.git",
-                "reference": "3ba905c11371512af9d9bdd27d99b782216b6945"
+                "reference": "bdd52c41913b414f4ca7dcb34482babcd0e9bd58"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/GrahamCampbell/Result-Type/zipball/3ba905c11371512af9d9bdd27d99b782216b6945",
-                "reference": "3ba905c11371512af9d9bdd27d99b782216b6945",
+                "url": "https://api.github.com/repos/GrahamCampbell/Result-Type/zipball/bdd52c41913b414f4ca7dcb34482babcd0e9bd58",
+                "reference": "bdd52c41913b414f4ca7dcb34482babcd0e9bd58",
                 "shasum": ""
             },
             "require": {
@@ -79,7 +79,7 @@
                 "phpoption/phpoption": "^1.9.3"
             },
             "require-dev": {
-                "phpunit/phpunit": "^8.5.39 || ^9.6.20 || ^10.5.28"
+                "phpunit/phpunit": "^8.5.41 || ^9.6.22 || ^10.5.45 || ^11.5.7"
             },
             "default-branch": true,
             "type": "library",
@@ -109,7 +109,7 @@
             ],
             "support": {
                 "issues": "https://github.com/GrahamCampbell/Result-Type/issues",
-                "source": "https://github.com/GrahamCampbell/Result-Type/tree/v1.1.3"
+                "source": "https://github.com/GrahamCampbell/Result-Type/tree/1.1"
             },
             "funding": [
                 {
@@ -121,7 +121,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-07-20T21:45:45+00:00"
+            "time": "2025-03-02T21:31:24+00:00"
         },
         {
             "name": "guzzlehttp/guzzle",
@@ -129,12 +129,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/guzzle.git",
-                "reference": "d281ed313b989f213357e3be1a179f02196ac99b"
+                "reference": "7b2f29fe81dc4da0ca0ea7d42107a0845946ea77"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/d281ed313b989f213357e3be1a179f02196ac99b",
-                "reference": "d281ed313b989f213357e3be1a179f02196ac99b",
+                "url": "https://api.github.com/repos/guzzle/guzzle/zipball/7b2f29fe81dc4da0ca0ea7d42107a0845946ea77",
+                "reference": "7b2f29fe81dc4da0ca0ea7d42107a0845946ea77",
                 "shasum": ""
             },
             "require": {
@@ -232,7 +232,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/guzzle/issues",
-                "source": "https://github.com/guzzle/guzzle/tree/7.9.2"
+                "source": "https://github.com/guzzle/guzzle/tree/7.9.3"
             },
             "funding": [
                 {
@@ -248,20 +248,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-07-24T11:22:20+00:00"
+            "time": "2025-03-27T13:37:11+00:00"
         },
         {
             "name": "guzzlehttp/promises",
-            "version": "2.0.x-dev",
+            "version": "2.2.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/promises.git",
-                "reference": "f9c436286ab2892c7db7be8c8da4ef61ccf7b455"
+                "reference": "7c69f28996b0a6920945dd20b3857e499d9ca96c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/promises/zipball/f9c436286ab2892c7db7be8c8da4ef61ccf7b455",
-                "reference": "f9c436286ab2892c7db7be8c8da4ef61ccf7b455",
+                "url": "https://api.github.com/repos/guzzle/promises/zipball/7c69f28996b0a6920945dd20b3857e499d9ca96c",
+                "reference": "7c69f28996b0a6920945dd20b3857e499d9ca96c",
                 "shasum": ""
             },
             "require": {
@@ -316,7 +316,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/promises/issues",
-                "source": "https://github.com/guzzle/promises/tree/2.0.4"
+                "source": "https://github.com/guzzle/promises/tree/2.2.0"
             },
             "funding": [
                 {
@@ -332,7 +332,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-10-17T10:06:22+00:00"
+            "time": "2025-03-27T13:27:01+00:00"
         },
         {
             "name": "guzzlehttp/psr7",
@@ -340,12 +340,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/guzzle/psr7.git",
-                "reference": "a70f5c95fb43bc83f07c9c948baa0dc1829bf201"
+                "reference": "c2270caaabe631b3b44c85f99e5a04bbb8060d16"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/guzzle/psr7/zipball/a70f5c95fb43bc83f07c9c948baa0dc1829bf201",
-                "reference": "a70f5c95fb43bc83f07c9c948baa0dc1829bf201",
+                "url": "https://api.github.com/repos/guzzle/psr7/zipball/c2270caaabe631b3b44c85f99e5a04bbb8060d16",
+                "reference": "c2270caaabe631b3b44c85f99e5a04bbb8060d16",
                 "shasum": ""
             },
             "require": {
@@ -433,7 +433,7 @@
             ],
             "support": {
                 "issues": "https://github.com/guzzle/psr7/issues",
-                "source": "https://github.com/guzzle/psr7/tree/2.7.0"
+                "source": "https://github.com/guzzle/psr7/tree/2.7.1"
             },
             "funding": [
                 {
@@ -449,7 +449,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-07-18T11:15:46+00:00"
+            "time": "2025-03-27T12:30:47+00:00"
         },
         {
             "name": "js-phpize/js-phpize",
@@ -683,12 +683,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/lucianotonet/groq-php.git",
-                "reference": "c36c5a471d4caf0cec642887371203c6339d9738"
+                "reference": "74b51b12ad4294405f4eb00983d8c69cbe584b3c"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/lucianotonet/groq-php/zipball/c36c5a471d4caf0cec642887371203c6339d9738",
-                "reference": "c36c5a471d4caf0cec642887371203c6339d9738",
+                "url": "https://api.github.com/repos/lucianotonet/groq-php/zipball/74b51b12ad4294405f4eb00983d8c69cbe584b3c",
+                "reference": "74b51b12ad4294405f4eb00983d8c69cbe584b3c",
                 "shasum": ""
             },
             "require": {
@@ -716,12 +716,12 @@
                     "email": "tonetlds@gmail.com"
                 }
             ],
-            "description": "PHP library to access Groq REST API",
+            "description": "A powerful PHP library for seamless integration with the GroqCloud API",
             "support": {
                 "issues": "https://github.com/lucianotonet/groq-php/issues",
-                "source": "https://github.com/lucianotonet/groq-php/tree/v0.0.10"
+                "source": "https://github.com/lucianotonet/groq-php/tree/v1.2.0"
             },
-            "time": "2024-10-29T21:45:23+00:00"
+            "time": "2025-05-25T19:58:15+00:00"
         },
         {
             "name": "nodejs-php-fallback/nodejs-php-fallback",
@@ -795,12 +795,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/PHPMailer/PHPMailer.git",
-                "reference": "2f5c94fe7493efc213f643c23b1b1c249d40f47e"
+                "reference": "bf74d75a1fde6beaa34a0ddae2ec5fce0f72a144"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/PHPMailer/PHPMailer/zipball/2f5c94fe7493efc213f643c23b1b1c249d40f47e",
-                "reference": "2f5c94fe7493efc213f643c23b1b1c249d40f47e",
+                "url": "https://api.github.com/repos/PHPMailer/PHPMailer/zipball/bf74d75a1fde6beaa34a0ddae2ec5fce0f72a144",
+                "reference": "bf74d75a1fde6beaa34a0ddae2ec5fce0f72a144",
                 "shasum": ""
             },
             "require": {
@@ -861,7 +861,7 @@
             "description": "PHPMailer is a full-featured email creation and transfer class for PHP",
             "support": {
                 "issues": "https://github.com/PHPMailer/PHPMailer/issues",
-                "source": "https://github.com/PHPMailer/PHPMailer/tree/v6.9.3"
+                "source": "https://github.com/PHPMailer/PHPMailer/tree/v6.10.0"
             },
             "funding": [
                 {
@@ -869,7 +869,7 @@
                     "type": "github"
                 }
             ],
-            "time": "2024-11-24T18:04:13+00:00"
+            "time": "2025-04-24T15:19:31+00:00"
         },
         {
             "name": "phpoption/phpoption",
@@ -949,25 +949,24 @@
         },
         {
             "name": "phug/js-transformer-filter",
-            "version": "1.2.0",
+            "version": "1.3.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phug-php/js-transformer-filter.git",
-                "reference": "dbadf07950ee552471905001266cdae7793868a8"
+                "reference": "2c5462cbc6c2a29500e1f5c77ee011b5dc6bc4f2"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/phug-php/js-transformer-filter/zipball/dbadf07950ee552471905001266cdae7793868a8",
-                "reference": "dbadf07950ee552471905001266cdae7793868a8",
+                "url": "https://api.github.com/repos/phug-php/js-transformer-filter/zipball/2c5462cbc6c2a29500e1f5c77ee011b5dc6bc4f2",
+                "reference": "2c5462cbc6c2a29500e1f5c77ee011b5dc6bc4f2",
                 "shasum": ""
             },
             "require": {
                 "js-transformer/js-transformer": "^1.0",
-                "phug/phug": "^0.1.8 || ^0.2.0 || ^0.3.0 || ^1.0"
+                "phug/phug": "^1.9.0 || ^2.0"
             },
             "require-dev": {
-                "phpunit/phpunit": "^4 || ^5",
-                "phug/dev-tool": "^0.1.11"
+                "phpunit/phpunit": "^4 || ^5"
             },
             "type": "library",
             "extra": {
@@ -991,13 +990,27 @@
             ],
             "support": {
                 "issues": "https://github.com/phug-php/js-transformer-filter/issues",
-                "source": "https://github.com/phug-php/js-transformer-filter/tree/master"
+                "source": "https://github.com/phug-php/js-transformer-filter/tree/1.3.0"
             },
-            "time": "2019-10-05T16:02:15+00:00"
+            "funding": [
+                {
+                    "url": "https://github.com/kylekatarnls",
+                    "type": "github"
+                },
+                {
+                    "url": "https://opencollective.com/pug-php",
+                    "type": "open_collective"
+                },
+                {
+                    "url": "https://tidelift.com/funding/github/packagist/pug-php/pug",
+                    "type": "tidelift"
+                }
+            ],
+            "time": "2025-03-08T11:58:44+00:00"
         },
         {
             "name": "phug/phug",
-            "version": "dev-master",
+            "version": "1.13.0",
             "source": {
                 "type": "git",
                 "url": "https://github.com/phug-php/phug.git",
@@ -1041,7 +1054,6 @@
                 "pug-php/pug-filter-coffee-script": "^1.3.1",
                 "squizlabs/php_codesniffer": "^3.7.2"
             },
-            "default-branch": true,
             "bin": [
                 "phug"
             ],
@@ -1440,16 +1452,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v16.5.0-beta.3",
+            "version": "v16.7.0-beta.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "b792b5903f3c5e6d85c860a382e1d0db83372e0a"
+                "reference": "a845d4e4e68fcb8f5a9def0ad737f5f2fa67271b"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/b792b5903f3c5e6d85c860a382e1d0db83372e0a",
-                "reference": "b792b5903f3c5e6d85c860a382e1d0db83372e0a",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/a845d4e4e68fcb8f5a9def0ad737f5f2fa67271b",
+                "reference": "a845d4e4e68fcb8f5a9def0ad737f5f2fa67271b",
                 "shasum": ""
             },
             "require": {
@@ -1459,7 +1471,7 @@
                 "php": ">=5.6.0"
             },
             "require-dev": {
-                "friendsofphp/php-cs-fixer": "3.5.0",
+                "friendsofphp/php-cs-fixer": "3.72.0",
                 "phpstan/phpstan": "^1.2",
                 "phpunit/phpunit": "^5.7 || ^9.0"
             },
@@ -1493,9 +1505,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v16.5.0-beta.3"
+                "source": "https://github.com/stripe/stripe-php/tree/v16.7.0-beta.1"
             },
-            "time": "2025-01-23T21:25:33+00:00"
+            "time": "2025-03-18T20:36:14+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
@@ -1547,7 +1559,7 @@
             "description": "A generic function and convention to trigger deprecation notices",
             "homepage": "https://symfony.com",
             "support": {
-                "source": "https://github.com/symfony/deprecation-contracts/tree/main"
+                "source": "https://github.com/symfony/deprecation-contracts/tree/v3.6.0"
             },
             "funding": [
                 {
@@ -1627,7 +1639,7 @@
                 "portable"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.31.0"
+                "source": "https://github.com/symfony/polyfill-ctype/tree/v1.32.0"
             },
             "funding": [
                 {
@@ -1709,7 +1721,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-mbstring/tree/1.x"
+                "source": "https://github.com/symfony/polyfill-mbstring/tree/v1.32.0"
             },
             "funding": [
                 {
@@ -1733,12 +1745,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/polyfill-php80.git",
-                "reference": "60328e362d4c2c802a54fcbf04f9d3fb892b4cf8"
+                "reference": "0cc9dd0f17f61d8131e7df6b84bd344899fe2608"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/60328e362d4c2c802a54fcbf04f9d3fb892b4cf8",
-                "reference": "60328e362d4c2c802a54fcbf04f9d3fb892b4cf8",
+                "url": "https://api.github.com/repos/symfony/polyfill-php80/zipball/0cc9dd0f17f61d8131e7df6b84bd344899fe2608",
+                "reference": "0cc9dd0f17f61d8131e7df6b84bd344899fe2608",
                 "shasum": ""
             },
             "require": {
@@ -1790,7 +1802,7 @@
                 "shim"
             ],
             "support": {
-                "source": "https://github.com/symfony/polyfill-php80/tree/v1.31.0"
+                "source": "https://github.com/symfony/polyfill-php80/tree/v1.32.0"
             },
             "funding": [
                 {
@@ -1806,20 +1818,20 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-09-09T11:45:10+00:00"
+            "time": "2025-01-02T08:10:11+00:00"
         },
         {
             "name": "symfony/var-dumper",
-            "version": "7.3.x-dev",
+            "version": "7.4.x-dev",
             "source": {
                 "type": "git",
                 "url": "https://github.com/symfony/var-dumper.git",
-                "reference": "9b59e65b4b07c04d4a33f209ec9347352ca7b0e7"
+                "reference": "548f6760c54197b1084e1e5c71f6d9d523f2f78e"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/9b59e65b4b07c04d4a33f209ec9347352ca7b0e7",
-                "reference": "9b59e65b4b07c04d4a33f209ec9347352ca7b0e7",
+                "url": "https://api.github.com/repos/symfony/var-dumper/zipball/548f6760c54197b1084e1e5c71f6d9d523f2f78e",
+                "reference": "548f6760c54197b1084e1e5c71f6d9d523f2f78e",
                 "shasum": ""
             },
             "require": {
@@ -1874,7 +1886,7 @@
                 "dump"
             ],
             "support": {
-                "source": "https://github.com/symfony/var-dumper/tree/7.3"
+                "source": "https://github.com/symfony/var-dumper/tree/v7.3.0-RC1"
             },
             "funding": [
                 {
@@ -1890,7 +1902,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2025-01-19T13:07:55+00:00"
+            "time": "2025-04-27T18:39:23+00:00"
         },
         {
             "name": "vlucas/phpdotenv",
@@ -1898,12 +1910,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/vlucas/phpdotenv.git",
-                "reference": "a59a13791077fe3d44f90e7133eb68e7d22eaff2"
+                "reference": "24ac4c74f91ee2c193fa1aaa5c249cb0822809af"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/a59a13791077fe3d44f90e7133eb68e7d22eaff2",
-                "reference": "a59a13791077fe3d44f90e7133eb68e7d22eaff2",
+                "url": "https://api.github.com/repos/vlucas/phpdotenv/zipball/24ac4c74f91ee2c193fa1aaa5c249cb0822809af",
+                "reference": "24ac4c74f91ee2c193fa1aaa5c249cb0822809af",
                 "shasum": ""
             },
             "require": {
@@ -1963,7 +1975,7 @@
             ],
             "support": {
                 "issues": "https://github.com/vlucas/phpdotenv/issues",
-                "source": "https://github.com/vlucas/phpdotenv/tree/v5.6.1"
+                "source": "https://github.com/vlucas/phpdotenv/tree/v5.6.2"
             },
             "funding": [
                 {
@@ -1975,7 +1987,7 @@
                     "type": "tidelift"
                 }
             ],
-            "time": "2024-07-20T21:52:34+00:00"
+            "time": "2025-04-30T23:37:27+00:00"
         },
         {
             "name": "wixel/gump",
@@ -1983,12 +1995,12 @@
             "source": {
                 "type": "git",
                 "url": "https://github.com/Wixel/GUMP.git",
-                "reference": "e973b9106e41016e9378ee201cefe520e8f8547d"
+                "reference": "887582c0e776c959517bd01644c9b5c1c6c43ea5"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/Wixel/GUMP/zipball/e973b9106e41016e9378ee201cefe520e8f8547d",
-                "reference": "e973b9106e41016e9378ee201cefe520e8f8547d",
+                "url": "https://api.github.com/repos/Wixel/GUMP/zipball/887582c0e776c959517bd01644c9b5c1c6c43ea5",
+                "reference": "887582c0e776c959517bd01644c9b5c1c6c43ea5",
                 "shasum": ""
             },
             "require": {
@@ -2032,7 +2044,6 @@
                 }
             ],
             "description": "A fast, extensible & stand-alone PHP input validation class that allows you to validate any data.",
-            "homepage": "https://wixelhq.com/",
             "keywords": [
                 "validate",
                 "validation",
@@ -2040,9 +2051,9 @@
             ],
             "support": {
                 "issues": "https://github.com/Wixel/GUMP/issues",
-                "source": "https://github.com/Wixel/GUMP/tree/master"
+                "source": "https://github.com/Wixel/GUMP/tree/v2.2.0"
             },
-            "time": "2024-04-29T14:50:52+00:00"
+            "time": "2025-02-09T11:33:22+00:00"
         }
     ],
     "packages-dev": [],
@@ -2052,7 +2063,6 @@
         "claviska/simpleimage": 20,
         "lucianotonet/groq-php": 20,
         "phpmailer/phpmailer": 20,
-        "phug/phug": 20,
         "pug-php/pug": 20,
         "vlucas/phpdotenv": 20,
         "wixel/gump": 20

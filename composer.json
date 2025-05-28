@@ -19,7 +19,7 @@
         "claviska/simpleimage": "dev-master",
         "stripe/stripe-php": "16.*",
         "phpmailer/phpmailer": "dev-master",
-        "phug/phug": "dev-master",
+        "phug/phug": "^1.13",
         "lucianotonet/groq-php": "dev-main"
     },
     "config": {
