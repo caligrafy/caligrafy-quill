@@ -17,7 +17,7 @@
         "vlucas/phpdotenv": "dev-master",
         "wixel/gump": "dev-master",
         "claviska/simpleimage": "dev-master",
-        "stripe/stripe-php": "16.*",
+        "stripe/stripe-php": "17.*",
         "phpmailer/phpmailer": "dev-master",
         "phug/phug": "^1.13",
         "lucianotonet/groq-php": "dev-main"

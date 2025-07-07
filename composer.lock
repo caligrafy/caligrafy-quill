@@ -4,7 +4,7 @@
         "Read more about it at https://getcomposer.org/doc/01-basic-usage.md#installing-dependencies",
         "This file is @generated automatically"
     ],
-    "content-hash": "a39db0aaf88e0ed1bd8118d01a8535c7",
+    "content-hash": "9490e50b030c4b9fc13a200441cf155c",
     "packages": [
         {
             "name": "claviska/simpleimage",
@@ -1452,16 +1452,16 @@
         },
         {
             "name": "stripe/stripe-php",
-            "version": "v16.7.0-beta.1",
+            "version": "v17.5.0-beta.1",
             "source": {
                 "type": "git",
                 "url": "https://github.com/stripe/stripe-php.git",
-                "reference": "a845d4e4e68fcb8f5a9def0ad737f5f2fa67271b"
+                "reference": "2e42f28bc9d82a4dfcbb83010e1ceb4aed0918fe"
             },
             "dist": {
                 "type": "zip",
-                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/a845d4e4e68fcb8f5a9def0ad737f5f2fa67271b",
-                "reference": "a845d4e4e68fcb8f5a9def0ad737f5f2fa67271b",
+                "url": "https://api.github.com/repos/stripe/stripe-php/zipball/2e42f28bc9d82a4dfcbb83010e1ceb4aed0918fe",
+                "reference": "2e42f28bc9d82a4dfcbb83010e1ceb4aed0918fe",
                 "shasum": ""
             },
             "require": {
@@ -1505,9 +1505,9 @@
             ],
             "support": {
                 "issues": "https://github.com/stripe/stripe-php/issues",
-                "source": "https://github.com/stripe/stripe-php/tree/v16.7.0-beta.1"
+                "source": "https://github.com/stripe/stripe-php/tree/v17.5.0-beta.1"
             },
-            "time": "2025-03-18T20:36:14+00:00"
+            "time": "2025-07-01T20:36:26+00:00"
         },
         {
             "name": "symfony/deprecation-contracts",
