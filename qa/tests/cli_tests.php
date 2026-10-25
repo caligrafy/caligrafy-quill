@@ -45,6 +45,12 @@ class Qa_tag extends Model {
     public function books() { return $this->belongsToMany('Qa_book', 'qa_books'); }
 }
 class Qa_reader extends Model { public $id; public $name; }
+class Qa_book_with_helpers extends Qa_book { public $errors = []; public $isNew = false; public $label = ''; }
+class Qa_long_named_category extends Model {
+    public $id; public $name;
+    public function subcategories() { return $this->belongsToMany('Qa_long_named_subcategory', 'qa_product_subcategories_long'); }
+}
+class Qa_long_named_subcategory extends Model { public $id; public $name; }
 
 function book($id) { return (new Qa_book('qa_books'))->find($id); }
 
@@ -67,6 +73,16 @@ qa_test('create() writes 0 and false, and null keeps the column default', functi
     qa_equals('0', (string)$b->stock);
     qa_equals('0', (string)$b->featured);
     qa_equals('n/a', $b->note, 'null must be skipped so the DB default applies');
+});
+
+qa_test('helper properties that are not columns are ignored by save()', function () {
+    $b = new Qa_book_with_helpers('qa_books');
+    $b->title = 'Helpers';
+    $saved = $b->save();
+    qa_equals('Helpers', $saved->title);
+    $saved->errors = ['x'];
+    $saved->title = 'Helpers 2';
+    qa_equals('Helpers 2', $saved->save()->title);
 });
 
 qa_test('save() on a model loaded from the DB updates without wiping other columns', function () {
@@ -154,6 +170,16 @@ qa_test('a second pivot in the same database is created (unique FK names) with S
     $readers = $b->attach('qa_readers', 2);
     qa_equals(1, count($readers));
     qa_equals('Bob', $readers[0]->name);
+});
+
+qa_test('pivot constraint names stay within the 64-character MySQL limit', function () {
+    Database::execute('CREATE TABLE qa_product_categories_long (id INT UNSIGNED NOT NULL AUTO_INCREMENT, name VARCHAR(20), PRIMARY KEY (id))');
+    Database::execute('CREATE TABLE qa_product_subcategories_long (id INT UNSIGNED NOT NULL AUTO_INCREMENT, name VARCHAR(20), PRIMARY KEY (id))');
+    Database::execute("INSERT INTO qa_product_categories_long (name) VALUES ('c')");
+    Database::execute("INSERT INTO qa_product_subcategories_long (name) VALUES ('s')");
+    $c = (new Qa_long_named_category('qa_product_categories_long'))->find(1);
+    $c->subcategories();
+    qa_equals(1, count($c->attach('qa_product_subcategories_long', 1)));
 });
 
 qa_test('the pivot is shared from the other side of the relationship', function () {
@@ -297,6 +323,7 @@ qa_test('OpenAI::command() only resolves the documented commands', function () {
     qa_equals(SUMMARIZE, OpenAI::command('summarize'));
     qa_equals(ANALYZE, OpenAI::command('ANALYZE'));
     qa_equals(null, OpenAI::command('APP_KEY'));
+    qa_equals('', OpenAI::command('custom'), 'CUSTOM is valid (empty system prompt)');
     qa_equals(null, OpenAI::command('DB_PASSWORD'));
     qa_equals(TEXT, OpenAI::type('text'));
     qa_equals(IMAGE, OpenAI::type('image'));

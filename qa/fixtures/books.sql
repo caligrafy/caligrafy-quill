@@ -1,4 +1,7 @@
--- Wiki schema (4. Models) with uniquely named constraints
+-- Wiki schema (4. Models) with uniquely named constraints. QA fixture: reset on every run
+DROP TABLE IF EXISTS books;
+DROP TABLE IF EXISTS publishers;
+
 CREATE TABLE IF NOT EXISTS publishers (
     id INT(25) UNSIGNED NOT NULL AUTO_INCREMENT,
     publishername varchar(255) NOT NULL,

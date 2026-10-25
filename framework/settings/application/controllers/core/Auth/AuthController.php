@@ -80,6 +80,10 @@ class AuthController extends Controller {
         $this->associate('User', 'users');
         $parameters = $this->request->parameters;
         $user = $this->model->findByUsername($parameters['username']?? '');
+        if (!$user) {
+            // same work as a real check so that response times do not reveal which usernames exist
+            password_verify((string)($parameters['passcode']?? ''), '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG');
+        }
         if ($user && $user->verifyPassword($parameters['passcode']?? '')) {
 
             // upgrade passcodes stored by older versions (reversible encryption) to a password hash

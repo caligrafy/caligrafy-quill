@@ -27,6 +27,10 @@ if [ "$FIRST" = 1 ] && [ "$SECOND" = 1 ] && [ "$KEY1" = "$KEY2" ] && [ -d applic
 else
     ko "caligrafer initialize re-run" "APP_KEY lines: $FIRST then $SECOND; key kept: $([ "$KEY1" = "$KEY2" ] && echo yes || echo no)"
 fi
+php caligrafer.php initialize off >/dev/null 2>&1
+ROOTS=$(grep -c '^APP_ROOT=' .env); ROOTV=$(grep '^APP_ROOT=' .env)
+if [ "$ROOTS" = 1 ] && [ "$ROOTV" = "APP_ROOT=" ]; then ok "caligrafer initialize updates APP_ROOT (root install argument)"
+else ko "caligrafer initialize APP_ROOT" "$ROOTS line(s): $ROOTV"; fi
 cd "$ROOT"
 
 # --- scaffolded client apps ----------------------------------------------------------------

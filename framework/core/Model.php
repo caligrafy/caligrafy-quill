@@ -178,11 +178,36 @@ class Model extends \stdClass {
     {
         $inputArray = !is_array($inputs)? json_decode(json_encode($inputs), true) : $inputs;
         $inputArray = is_array($inputArray)? $inputArray : array();
-        $inputArray = array_filter($inputArray, function($value, $key) { return $value !== null && !in_array($key, $this->__restricted, true); }, ARRAY_FILTER_USE_BOTH);
+        // only the columns of the table are written: helper properties of a model (ex: public $errors = []) are ignored
+        $columns = $this->tableColumns();
+        $inputArray = array_filter($inputArray, function($value, $key) use ($columns) { 
+            return $value !== null && !in_array($key, $this->__restricted, true) && (empty($columns) || in_array($key, $columns, true)); 
+        }, ARRAY_FILTER_USE_BOTH);
         return array_map(function($value) { 
             if (is_bool($value)) return (int)$value;
             return is_array($value) || is_object($value)? json_encode($value) : $value; 
         }, $inputArray);
+    }
+
+    /**
+     * Returns the column names of the associated table (cached per table for the request), or an empty array
+     * when they cannot be read
+     */
+    protected function tableColumns()
+    {
+        static $cache = array();
+        if (!$this->table) {
+            return array();
+        }
+        if (!isset($cache[$this->table])) {
+            try {
+                $rows = Database::toArray(Database::execute('SHOW COLUMNS FROM `'.str_replace('`', '', $this->table).'`'));
+                $cache[$this->table] = array_map(function($row) { return $row['Field']; }, $rows);
+            } catch (Exception $e) {
+                $cache[$this->table] = array();
+            }
+        }
+        return $cache[$this->table];
     }
 
     /**
@@ -300,7 +325,7 @@ class Model extends \stdClass {
         // and the constraint names are unique per pivot (MySQL requires unique constraint names per database)
         $typeLocal = $this->columnType($table1, $foreignKeyLocal);
         $typeJoin = $this->columnType($table2, $foreignKeyJoin);
-        Database::execute('CREATE TABLE IF NOT EXISTS '.$pivot.' (`id` INT(25) UNSIGNED NOT NULL AUTO_INCREMENT,`'.$fklocal.'` '.$typeLocal.' NOT NULL, `'.$fkjoin.'` '.$typeJoin.' NOT NULL, `created_at` DATETIME NOT NULL DEFAULT now(), `modified_at` DATETIME NOT NULL DEFAULT now() ON UPDATE now(), PRIMARY KEY (`id`), CONSTRAINT `fk_'.$pivot.'_'.$fklocal.'` FOREIGN KEY (`'.$fklocal.'`) REFERENCES `'.$table1.'` (`'.$foreignKeyLocal.'`) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT `fk_'.$pivot.'_'.$fkjoin.'` FOREIGN KEY (`'.$fkjoin.'`) REFERENCES `'.$table2.'` (`'.$foreignKeyJoin.'`) ON UPDATE CASCADE ON DELETE CASCADE
+        Database::execute('CREATE TABLE IF NOT EXISTS '.$pivot.' (`id` INT(25) UNSIGNED NOT NULL AUTO_INCREMENT,`'.$fklocal.'` '.$typeLocal.' NOT NULL, `'.$fkjoin.'` '.$typeJoin.' NOT NULL, `created_at` DATETIME NOT NULL DEFAULT now(), `modified_at` DATETIME NOT NULL DEFAULT now() ON UPDATE now(), PRIMARY KEY (`id`), CONSTRAINT `'.$this->constraintName($pivot, $fklocal).'` FOREIGN KEY (`'.$fklocal.'`) REFERENCES `'.$table1.'` (`'.$foreignKeyLocal.'`) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT `'.$this->constraintName($pivot, $fkjoin).'` FOREIGN KEY (`'.$fkjoin.'`) REFERENCES `'.$table2.'` (`'.$foreignKeyJoin.'`) ON UPDATE CASCADE ON DELETE CASCADE
         ) ENGINE = InnoDB DEFAULT CHARSET = utf8;');
 
 
@@ -417,7 +442,7 @@ class Model extends \stdClass {
     
     /**
      * Returns the SQL type of a column (ex: 'int unsigned') so that foreign keys can match it
-     * Falls back to INT(25) UNSIGNED when the column cannot be inspected
+     * Falls back to INT(25) (the previous default) when the column cannot be inspected
      */
     protected function columnType($table, $column)
     {
@@ -428,7 +453,16 @@ class Model extends \stdClass {
                 return strtoupper($type);
             }
         } catch (Exception $e) {}
-        return 'INT(25) UNSIGNED';
+        return 'INT(25)';
+    }
+
+    /**
+     * Builds a foreign key constraint name that is unique and fits the 64 characters MySQL allows
+     */
+    protected function constraintName($pivot, $column)
+    {
+        $name = 'fk_'.$pivot.'_'.$column;
+        return strlen($name) <= 64? $name : 'fk_'.substr($pivot, 0, 40).'_'.substr(md5($pivot.'_'.$column), 0, 16);
     }
 
     /**

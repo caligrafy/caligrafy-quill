@@ -113,7 +113,10 @@ qa_section('Sensitive files are not served');
 foreach (['/.env', '/.git/HEAD', '/composer.json', '/composer.lock', '/caligrafer.php', '/docker-compose.yaml',
           '/application/config/routing/web.php', '/framework/core/Model.php', '/framework/settings/.env.example',
           '/vendor/autoload.php', '/qa/fixtures/outside/marker.php', '/claude-plugin/README.md',
-          '/application/models/Auth/create_db.sql', '/.claude/settings.json'] as $path) {
+          '/application/models/Auth/create_db.sql', '/.claude/settings.json',
+          // case variants: macOS/Windows filesystems resolve them to the real files
+          '/Composer.json', '/Caligrafer.php', '/Framework/core/Model.php', '/VENDOR/autoload.php',
+          '/application/models/Auth/create_db.SQL', '/.ENV'] as $path) {
     qa_test("GET $path is denied", function () use ($guest, $path, $APP_KEY) {
         $r = $guest->get($path);
         qa_assert(in_array($r['status'], [403, 404]), "status {$r['status']}");

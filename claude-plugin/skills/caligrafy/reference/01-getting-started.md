@@ -193,7 +193,7 @@ Only the `index.php` front controller and the `public` folder are meant to be re
 
 A second `.htaccess` in `public/uploads` prevents any script that ends up in the uploads folder from being executed or downloaded.
 
-Keep these files when you deploy, and make sure that your virtual host allows them with `AllowOverride All`. You can check your server with `curl -I http://<your-host>/.env`: the answer must be `403` or `404`.
+Keep these files when you deploy. They only use `mod_rewrite`, so your virtual host needs `mod_rewrite` enabled and `AllowOverride FileInfo` (or `All`). The rules are case-insensitive, which matters on macOS and Windows file systems. You can check your server with `curl -I http://<your-host>/.env`: the answer must be `403` or `404`.
 
 If you serve Caligrafy with **nginx**, `.htaccess` files are ignored and you need equivalent rules, for example:
 ```

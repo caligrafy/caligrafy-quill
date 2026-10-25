@@ -102,6 +102,20 @@ echo "== HTTP tests"
 php qa/tests/http_tests.php || STATUS=1
 
 echo
+echo "== Hosts that only allow 'AllowOverride FileInfo' (mod_rewrite, no AuthConfig/Options)"
+$COMPOSE exec -T web sh -c "sed -i 's/AllowOverride All/AllowOverride FileInfo/' /etc/apache2/conf-enabled/docker-php.conf && apachectl -k graceful" >/dev/null 2>&1
+sleep 2
+printf '<?php echo "EXEC" . "UTED";' > public/uploads/qa_probe.php
+for check in "/helloworld 200" "/ 200" "/public/css/styles.css 200" "/.env 403" "/composer.json 403" "/Composer.json 403" "/public/uploads/qa_probe.php 403" "/public/uploads/qa_probe.PHP 403"; do
+    set -- $check
+    CODE=$(curl -s -o /dev/null -w '%{http_code}' "$QA_BASE$1")
+    if [ "$CODE" = "$2" ]; then echo "  PASS $1 -> $CODE"; else echo "  FAIL $1 -> $CODE (expected $2)"; STATUS=1; fi
+done
+rm -f public/uploads/qa_probe.php
+$COMPOSE exec -T web sh -c "sed -i 's/AllowOverride FileInfo/AllowOverride All/' /etc/apache2/conf-enabled/docker-php.conf && apachectl -k graceful" >/dev/null 2>&1
+sleep 2
+
+echo
 echo "== Tooling tests"
 sh qa/tests/tooling_tests.sh || STATUS=1
 

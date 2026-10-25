@@ -15,24 +15,17 @@
 
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^(application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules)(/|$) - [F,L]
+    RewriteRule ^(application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules)(/|$) - [NC,F,L]
 
     RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule ^(caligrafer\.php|composer\.(json|lock)|docker-compose\.ya?ml|package(-lock)?\.json)$ - [F,L]
+    RewriteRule ^(caligrafer\.php|composer\.(json|lock)|docker-compose\.ya?ml|package(-lock)?\.json)$ - [NC,F,L]
 
     RewriteCond %{REQUEST_FILENAME} -f
-    RewriteRule \.(sql|log|bak|ini|sh|env)$ - [F,L]
+    RewriteRule \.(sql|log|bak|ini|sh|env)$ - [NC,F,L]
 
     # Handle Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^(.+)$ index.php?uri=$1 [L,QSA]
     
-</IfModule>
-
-# Defense in depth when mod_rewrite rules are not applied: never serve dotfiles such as .env
-<IfModule mod_authz_core.c>
-    <FilesMatch "^\.">
-        Require all denied
-    </FilesMatch>
 </IfModule>

@@ -15,11 +15,11 @@ class AIController extends Controller {
         $parameters = $this->request->parameters;
 
         // type and command come from the form: only the documented names are accepted (never an arbitrary constant)
-        $type = OpenAI::type($parameters['type']?? 'TEXT');
-        $command = OpenAI::command($parameters['command']?? 'ANALYZE');
+        $type = OpenAI::type(!empty($parameters['type'])? $parameters['type'] : 'TEXT');
+        $command = OpenAI::command(!empty($parameters['command'])? $parameters['command'] : 'ANALYZE');
         $errors = array();
-        if (!$type) { $errors['type'] = 'Invalid type. Use TEXT or IMAGE'; }
-        if (!$command) { $errors['command'] = 'Invalid command. Use one of: ' . implode(', ', OpenAI::COMMANDS); }
+        if ($type === null) { $errors['type'] = 'Invalid type. Use TEXT or IMAGE'; }
+        if ($command === null) { $errors['command'] = 'Invalid command. Use one of: ' . implode(', ', OpenAI::COMMANDS); }
         if (!empty($errors)) {
             return view('AI/openai', array(
                 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right',

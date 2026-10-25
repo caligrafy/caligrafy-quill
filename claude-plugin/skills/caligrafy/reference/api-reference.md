@@ -139,7 +139,7 @@ detach($joinedTableName, $id)
 arrayToModel($array): Model         // new static($this->table) hydrated with the array
 toArray(): array
 tableExists($tablename): bool
-// protected helpers: prepareInputs($inputs), quoteIdentifier($name), columnType($table, $column)
+// protected helpers: prepareInputs($inputs) (non-null values of real columns), tableColumns(), quoteIdentifier($name), columnType($table, $column), constraintName($pivot, $column)
 ```
 Relationship key defaults (from source):
 - `hasOne('Account','accounts')` on `User` (table `users`): `SELECT accounts.* FROM users LEFT JOIN accounts ON accounts.id = users.account_id WHERE users.id = <this id>` (FK `<lowercase model>_id` lives on **this** table; `$foreignKey` overrides that column, `$localKey` overrides `accounts.id`).
@@ -195,7 +195,7 @@ api($viewData = array())               // = new View(null, $viewData)
 If `$viewName` is null **or** the request `wantsJson()`, the View echoes `json_encode($viewData, JSON_UNESCAPED_SLASHES)` and calls `exit`. A route therefore serves HTML to browsers and JSON to API clients with the same `view()` call. Set the HTTP status with `http_response_code($code)` before `api()`.
 
 ## Server protection (`.htaccess`)
-Root `.htaccess`: front controller (`index.php?uri=$1` for non-existing files) and 403 for existing dotfiles, `application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules`, `caligrafer.php`, `composer.(json|lock)`, `docker-compose.y(a)ml`, `package(-lock).json`, `*.sql|log|bak|ini|sh|env`; `FilesMatch "^\."` denial as a fallback. `public/uploads/.htaccess`: denies scripts and turns the PHP engine off.
+Root `.htaccess` (mod_rewrite only, `AllowOverride FileInfo`): front controller (`index.php?uri=$1` for non-existing files) and 403 (case-insensitive) for existing dotfiles, `application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules`, `caligrafer.php`, `composer.(json|lock)`, `docker-compose.y(a)ml`, `package(-lock).json`, `*.sql|log|bak|ini|sh|env`. `public/uploads/.htaccess`: mod_rewrite `[NC,F]` for script extensions.
 
 ## Auth module templates (`framework/settings/application`, copied to `application/` by initialize)
 - `models/Auth/User.php`: `findByUsername($username)`, `User::hashPassword($password)`, `verifyPassword($password)` (hash, or legacy `encryptDecrypt` value), `needsRehash()`.

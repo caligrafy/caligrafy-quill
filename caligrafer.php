@@ -85,9 +85,8 @@ switch(strtolower($argv[1])) {
 		       $current = preg_replace('/^(APP_KEY|API_KEY)=.*\R?/m', '', $current);
 		       $input = "APP_KEY=".$appKey."\n"."API_KEY=".$apiKey."\n". $current;
 		   }
-		   if (!preg_match('/^APP_ROOT=/m', $input)) {
-		       $input = "APP_ROOT=".$appRoot."\n".$input;
-		   }
+		   // APP_ROOT always reflects the current folder (or the root-install argument)
+		   $input = "APP_ROOT=".$appRoot."\n".preg_replace('/^APP_ROOT=.*\R?/m', '', $input);
 		   $vueInput = "VITE_APP_KEY=".$appKey."\n"."VITE_API_KEY=".$apiKey."\n";
 		   file_put_contents($file, $input);
 		   file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);
