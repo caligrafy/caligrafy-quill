@@ -29,22 +29,29 @@ class BookController extends Controller {
 ```
 ## Request Properties
 ```php
-    public $method; // retrieves the request method
+    public $method; // retrieves the request method (a POST with a _method field reports PUT or DELETE)
     public $uri; // retrieves the URI
     public $fullUri; // retrieves the the full URI including the query parameters
+    public $uriComponents; // retrieves an array of the URI segments
+    public $host; // retrieves the Host header
+    public $authorization; // retrieves the Authorization header (Bearer API key for API calls)
+    public $accept; // retrieves the Accept header
     public $userAgent; // retrieves the User Agent of the request
     public $cookie; // retrieves the Cookie headers
     public $currentRoute; // retrieves the current route 
-    public $fetch; // retrieves an array of all the parameters fetched from the request and the URI
-    public $parameters; // retrieves an object model of all the request parameters
+    public $currentBind; // retrieves an array of the route variables and, for GET requests, the query parameters
+    public $fetch; // retrieves an object of all the parameters fetched from the request and the URI
+    public $parameters; // retrieves an array of all the request parameters (the body for POST/PUT/DELETE, the query for GET)
 ```
 
 ## Request Methods
 ```php
-   public function fetch($argument); //returns the value of a specific parameter
-   public function files($HTMLFileName); //returns an array of all the uploaded files through a FORM
-   public function wantsJson(); //returns true if the request is an API call
-   public function parameters(); //returns an array of all the request parameters
+   public function fetch($argument); //returns the value of a route variable or query parameter by name, or by position when $argument is an integer (1 for the first). Returns '' when not found
+   public function files($HTMLFileName); //returns the uploaded file array ($_FILES entry) of a FORM input
+   public function wantsJson(); //returns true if the request is an API call (Accept contains application/json and not text/html)
+   public function parameters(); //returns an array of all the request parameters (form fields or JSON body)
 ```
+
+> **Example:** for the route `Route::put('books/{id}', 'BookController@update')` and a request `PUT /books/3` with the JSON body `{"title": "Dune"}`, `$this->request->fetch('id')` returns `'3'` and `$this->request->parameters()` returns `['title' => 'Dune']`.
 
 >[Next Section: Learn about Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models)

@@ -162,6 +162,40 @@ qa_test('the pivot is shared from the other side of the relationship', function 
 });
 
 // ---------------------------------------------------------------------------
+qa_section('Validation (documented behavior of Controller::check/validate/filter)');
+
+qa_test('check() with rules returns true or an array of messages keyed by field', function () {
+    $c = new Caligrafy\Controller();
+    qa_equals(true, $c->check(['username' => 'bob42'], ['username' => 'required|alpha_numeric']));
+    $errors = $c->check(['username' => 'bob 42!'], ['username' => 'required|alpha_numeric']);
+    qa_assert(is_array($errors) && isset($errors['username']), json_encode($errors));
+});
+
+qa_test('check() with rules and filters returns the filtered data on success', function () {
+    $c = new Caligrafy\Controller();
+    $out = $c->check(['username' => '  bob42  '], ['username' => 'required|alpha_numeric'], ['username' => 'trim']);
+    qa_equals(['username' => 'bob42'], $out);
+});
+
+qa_test('validate() and filter()', function () {
+    $c = new Caligrafy\Controller();
+    qa_equals(true, $c->validate(['n' => '5'], ['n' => 'integer|min_numeric,1']));
+    qa_assert(is_array($c->validate(['n' => '0'], ['n' => 'integer|min_numeric,1'])));
+    qa_equals(['e' => 'a@b.co'], $c->filter(['e' => ' A@B.CO '], ['e' => 'trim|lower_case']));
+});
+
+qa_test('an empty optional field skips its rules (only required checks emptiness)', function () {
+    $c = new Caligrafy\Controller();
+    qa_equals(true, $c->check(['passcode' => ''], ['passcode' => 'min_len,8|max_len,72']));
+});
+
+qa_test('GUMP::is_valid() with custom messages returns true or readable messages', function () {
+    qa_equals(true, GUMP::is_valid(['u' => 'x'], ['u' => 'required']));
+    $r = GUMP::is_valid(['u' => ''], ['u' => 'required'], ['u' => ['required' => 'Username is required']]);
+    qa_assert(is_array($r) && strpos(implode(' ', $r), 'Username is required') !== false, json_encode($r));
+});
+
+// ---------------------------------------------------------------------------
 qa_section('Database connection');
 
 qa_test('DB_PORT is used in the DSN', function () {
@@ -243,6 +277,12 @@ qa_test('uploadFile() accepts allowed extensions and a custom allow-list', funct
     qa_assert(!isAllowedUpload('x.php', ['php']), 'php-like extensions are never allowed');
 });
 
+qa_test('APP_DEBUG=false turns the SMTP debug output off', function () {
+    $code = 'define("APP_DEBUG", "%s"); require "qa/tests/bootstrap.php"; $m = new Caligrafy\Mail(); $p = new ReflectionProperty($m, "mailer"); $p->setAccessible(true); echo $p->getValue($m)->SMTPDebug;';
+    qa_equals('0', trim(shell_exec('php -r ' . escapeshellarg(sprintf($code, 'false')) . ' 2>/dev/null')));
+    qa_equals('1', trim(shell_exec('php -r ' . escapeshellarg(sprintf($code, 'true')) . ' 2>/dev/null')));
+});
+
 // ---------------------------------------------------------------------------
 qa_section('OpenAI');
 
@@ -288,6 +328,67 @@ qa_test('other commands still send system + user messages', function () {
     qa_equals(SUMMARIZE, $body['messages'][0]['content']);
     qa_contains('one line', $body['messages'][1]['content']);
 });
+
+// ---------------------------------------------------------------------------
+qa_section('OpenAI Assistant (mock OpenAI server)');
+
+$mock = proc_open('php -S 127.0.0.1:8766 qa/fixtures/openai_mock.php', [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $mockPipes);
+usleep(600000);
+
+function qa_assistant($threadId)
+{
+    $ref = new ReflectionClass('Caligrafy\Assistant');
+    $a = $ref->newInstanceWithoutConstructor();
+    $url = $ref->getProperty('_thread_url');
+    $url->setAccessible(true);
+    $url->setValue($a, 'http://127.0.0.1:8766/v1/threads');
+    $a->assistant_id = 'asst_qa';
+    $a->thread_id = $threadId;
+    return $a;
+}
+
+function qa_mock_requests()
+{
+    $log = sys_get_temp_dir() . '/qa_openai_mock.log';
+    $lines = file_exists($log)? array_filter(explode("\n", file_get_contents($log))) : [];
+    return array_map(function ($l) { return json_decode($l, true); }, $lines);
+}
+
+qa_test('run() without overrides only sends the assistant id (keeps its model and tools)', function () {
+    @unlink(sys_get_temp_dir() . '/qa_openai_mock.log');
+    $a = qa_assistant('thread_qa')->run();
+    qa_equals('run_qa', $a->run_id);
+    $runs = array_values(array_filter(qa_mock_requests(), function ($r) { return substr($r['uri'], -5) === '/runs'; }));
+    qa_equals(['assistant_id' => 'asst_qa'], json_decode($runs[0]['body'], true));
+});
+
+qa_test('run() sends the overrides that are given', function () {
+    @unlink(sys_get_temp_dir() . '/qa_openai_mock.log');
+    qa_assistant('thread_qa')->run('Be brief', null, [['type' => 'code_interpreter']], 'gpt-4o-mini');
+    $runs = array_values(array_filter(qa_mock_requests(), function ($r) { return substr($r['uri'], -5) === '/runs'; }));
+    $body = json_decode($runs[0]['body'], true);
+    qa_equals('gpt-4o-mini', $body['model']);
+    qa_equals('Be brief', $body['additional_instructions']);
+    qa_equals([['type' => 'code_interpreter']], $body['tools']);
+    qa_assert(!isset($body['instructions']), 'instructions not given');
+});
+
+qa_test('retrieveResponse() returns the message once the run completes', function () {
+    $a = qa_assistant('thread_qa')->run()->retrieveResponse(10, 0);
+    qa_equals('completed', $a->status);
+    qa_equals('msg_qa', $a->messages[0]['id']);
+});
+
+qa_test('retrieveResponse() gives up after the timeout', function () {
+    $start = microtime(true);
+    $a = qa_assistant('thread_stuck')->run()->retrieveResponse(2, 1);
+    $elapsed = microtime(true) - $start;
+    qa_equals('in_progress', $a->status);
+    qa_equals([], $a->messages);
+    qa_assert($elapsed >= 2 && $elapsed < 6, "took $elapsed s");
+});
+
+proc_terminate($mock);
 
 proc_terminate($echo);
 

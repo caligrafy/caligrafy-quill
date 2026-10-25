@@ -17,7 +17,7 @@
     > + [Routing with parameters](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#parameterroute)
     > + [Controller Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#controllerroute)
     > + [HTML Form Methods](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#htmlformmethods)
-    
+
 3. [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)
     > + [Accessing the Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request#accessrequest)
     > + [Request Properties](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request#requestproperties)
@@ -59,6 +59,10 @@
 11. [Stripe & Cryptocurrency Payment](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment)
 12. [Metadata & Rich Cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards)
 13. [Search Referencing and Analytics](https://github.com/caligrafy/caligrafy-quill/wiki/9.4-Search-Referencing-and-Analytics)
+14. [Security and Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading)
+    > + [Production checklist](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#checklist)
+    > + [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading)
+    > + [Behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes)
 
 ## Caligrafy and VueJS
 
@@ -88,3 +92,11 @@
 4. [OpenAI: ChatGPT, GPTs, DALL.E](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E)
 5. [OpenAI: Assistants](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.5-Open-AI:-Assistants)
 6. [Open Source Agents (llama, Mistral, etc.](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.))
+
+## Caligrafy and Claude
+
+1. [Claude Code Plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
+    > + [What the plugin gives Claude](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin#whatyouget)
+    > + [Installing the plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin#install)
+    > + [Commands](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin#commands)
+    > + [The caligrafy-reviewer agent](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin#reviewer)

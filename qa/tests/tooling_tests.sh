@@ -66,6 +66,11 @@ if command -v claude >/dev/null 2>&1; then
 else
     echo "  SKIP claude plugin validate (claude CLI not installed)"
 fi
+if [ -n "${QA_WIKI:-}" ]; then
+    OUT=$(python3 claude-plugin/scripts/sync-wiki.py "$QA_WIKI" --check 2>&1) && ok "plugin wiki mirrors are up to date with $QA_WIKI" || ko "plugin wiki mirrors are stale" "$OUT"
+else
+    echo "  SKIP plugin wiki mirror check (set QA_WIKI=<wiki clone>)"
+fi
 OUT=$(sh -n claude-plugin/scripts/php-lint.sh 2>&1) && ok "php-lint hook script syntax" || ko "php-lint hook" "$OUT"
 echo '{"tool_input":{"file_path":"'"$ROOT"'/qa/fixtures/outside/marker.php"}}' | sh claude-plugin/scripts/php-lint.sh >/dev/null 2>&1 && ok "php-lint hook passes a valid file" || ko "php-lint hook rejects a valid file"
 printf '<?php echo ;\n' > "$TMP/broken.php"

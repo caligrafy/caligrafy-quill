@@ -4,8 +4,8 @@
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
 > **Verified against framework source (see gotchas.md):**
-> - `Model::search()` inlines keywords into SQL (injection risk) - use a bound `Database::execute()` query in a model method (gotchas G2).
-> - `create()/update()` silently drop null, 0, false and '' values (gotchas G7). `all()` condition must include the `WHERE` keyword and is raw SQL (G8).
+> - `create()/update()/save()` keep `0`, `''` and `false` and skip only `null`; `search()` binds the keywords; `all()` clauses are raw SQL (include the keywords) and accept `'bindings'` for `?` placeholders (gotchas G7, G2, G8). Projects on an older framework still have the old behavior.
+> - FK constraint names must be unique per database and FK columns must match the parent id type (G10).
 
 This framework is agnostic and does not engage in creating databases and database tables. The database for your application should be created using the language of your choice. This framework uses a PDO adapter to interface with your database tables. We recommend using MySQL given its tight integration with PHP but other databases can be used at your own discretion.
 
@@ -27,6 +27,8 @@ DB_USERNAME=your-db-username
 DB_PASSWORD=your-db-password
 
 ```
+
+> `DB_PORT` is added to the connection unless `DB_HOST` already contains a `;port=` setting. With Docker, use `DB_HOST=mysql` and `DB_PORT=3306` (the port inside the Docker network).
 
 ## Relational Databases
 Creating databases and database tables is achieved through the database language that you normally use. This framework does not dictate how your database should be created. The examples in this documentation are all using MySQL. MySQL is the SQL language that we recommend using.
@@ -63,11 +65,11 @@ CREATE TABLE IF NOT EXISTS books (
     publisher_id INT(25) UNSIGNED NOT NULL, 
     created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP, 
     PRIMARY KEY (id), 
-    CONSTRAINT fk1 FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON UPDATE CASCADE ON DELETE CASCADE
+    CONSTRAINT fk_books_publisher FOREIGN KEY (publisher_id) REFERENCES publishers(id) ON UPDATE CASCADE ON DELETE CASCADE
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8;
 ```
++ Foreign key constraint names must be unique in the whole database (`fk_<table>_<column>` is a good habit), and a foreign key column must have exactly the same type as the `id` it references (`INT(25) UNSIGNED` here).
 + `Many-to-Many` relationships that require creating a pivot table in relational databases **DO NOT** need to be created in the database. The framework will automatically do that upon the definition of the relationship in the model.
-
 > Learn more about creating MySQL relational databases [here](https://www.mysql.com/)
 
 ## Model Fundamentals
@@ -133,13 +135,14 @@ public $table; // retrieves the table name associated with the model
 public function associate($table); // returns the Model with a database table associated to it
 
 /* CRUD methods */
-public function all($args = null); // Returns all unless an array of condition, order and limit are specified to complete the query
-public function find($id); // returns a Model of the specific entry if available
-public function search(String $scope, Array $keywords); // searches a table column (scope) for a collection of keywords (array)
-public function create($input); // takes an array of values or an object and adds an entry to the respective table in the database
-public function update($inputs, $id); // updates an entry in the database with the new values from array or Model
+public function all($args = array()); // Returns all the records. $args can complete the query with raw SQL clauses: 'condition', 'order', 'limit' and 'bindings' (see below)
+public function find($id); // returns a Model of the specific entry if available, otherwise null
+public function search($scope, $keywords); // returns the records where one of the columns listed in $scope (comma separated) is LIKE $keywords. % and _ are wildcards
+public function create($input); // takes an array of values or an object and adds an entry to the respective table in the database. Returns the created Model
+public function update($inputs, $id); // updates an entry in the database with the new values from array or Model. Returns the updated Model
 public function delete($id); // deletes a specific entry from the database
 public function save(); // saves a the model into the database. If the model has an id defined then it will update otherwise it will create a new entry in the table
+public function toArray(); // returns the model as an array
 
 /* Relationships definition */
 
@@ -153,6 +156,44 @@ public function belongsTo($modelName, $joinedTableName, $foreignKey = null, $loc
 // Many-to-Many relationship in both directions
 public function belongsToMany($modelName, $joinedTableName, $foreignKeyLocal = null, $foreignKeyJoin = null)
 
+```
+
+#### Values that are saved
+`create()`, `update()` and `save()` send every property of the Model (or key of the array) that is **not `null`**. `0`, `''` and `false` are saved (`false` is saved as `0`). A property left to `null` is not sent, so the column keeps its current value or its default value.
+
+#### Queries with `all()`
+The clauses given to `all()` are added to the SQL query as they are, so they must contain their SQL keywords. Never concatenate user input in them: use `?` placeholders and give the values in `bindings`.
+```php
+$this->all(array(
+    'condition' => 'WHERE author = ? AND created_at > ?',
+    'order' => 'ORDER BY title',
+    'limit' => 'LIMIT 10',
+    'bindings' => array($author, '2024-01-01')
+));
+```
+
+#### Searching with `search()`
+```php
+$this->search('title,author', 'Dune%'); // title or author starting with "Dune"
+$this->search('title', '%' . $keyword . '%'); // title containing $keyword
+```
+The keywords are sent as a bound parameter, so quotes in user input are harmless. The column names must be made of letters, digits and underscores, otherwise an exception is thrown.
+
+#### Custom queries
+For anything more specific, write a method in the Model that uses the `Database` class with bound parameters:
+```php
+use Caligrafy\Database;
+use Caligrafy\Model;
+
+class Book extends Model {
+    // properties ...
+
+    public function findByIsbn($isbn)
+    {
+        $rows = Database::toArray(Database::execute('SELECT * FROM ' . $this->table . ' WHERE isbn = ? LIMIT 1', [$isbn]));
+        return !empty($rows[0])? $this->arrayToModel($rows[0]) : null;
+    }
+}
 ```
 
 >[Next Section: Learn about Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships)

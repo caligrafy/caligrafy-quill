@@ -9,7 +9,7 @@ argument-hint: "<app|create|bot|facedetect|ml> <name>"
 
 Arguments: `$ARGUMENTS` = `<type> <name>`. Types: `app` (Vue 3 as a library, default), `create` (Vite SPA with vue-router + vuex, needs Node >= 16 and runs `npm install`), `bot`, `facedetect`, `ml`.
 
-Read first: [09.7.2-vue-routes.md](../caligrafy/reference/09.7.2-vue-routes.md), [gotchas.md](../caligrafy/reference/gotchas.md) G1, G15, G16, G22, G27, and the page for the type
+Read first: [09.7.2-vue-routes.md](../caligrafy/reference/09.7.2-vue-routes.md), [gotchas.md](../caligrafy/reference/gotchas.md) G1, G15, G16, G22, G27, G35, G36, and the page for the type
 (09.7.x for `app`, 09.8.x for `create`, 09.9.1 bot, 09.9.2 facedetect, 09.9.3 ml).
 
 ## Steps

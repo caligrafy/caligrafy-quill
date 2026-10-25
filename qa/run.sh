@@ -68,6 +68,8 @@ file_put_contents($f, $s);
 '
 cp -r framework/plugins/app public/qaapp
 printf '<?php echo "QA-SECOND-PAGE";\n' > public/qaapp/second.php
+cp qa/fixtures/docs/components.php public/qaapp/components.php
+cp qa/fixtures/docs/components.js public/qaapp/scripts/components.js
 cp -r framework/plugins/bot public/qabot
 
 # --- stack --------------------------------------------------------------------------------
