@@ -1,0 +1,13 @@
+{
+  "extraKnownMarketplaces": {
+    "caligrafy": {
+      "source": {
+        "source": "directory",
+        "path": "./"
+      }
+    }
+  },
+  "enabledPlugins": {
+    "caligrafy-quill@caligrafy": true
+  }
+}

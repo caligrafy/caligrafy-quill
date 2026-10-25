@@ -15,6 +15,63 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 <br/>
 
+## 🎉 New release: Claude + Caligrafy Quill
+
+Caligrafy Quill now ships with its own **[Claude Code](https://code.claude.com) plugin**. Open a Quill project in Claude Code and Claude knows the framework inside out: routes, controllers, models, relationships, validation, Pug views, the REST API, authentication, payments, Vue apps, bots, FaceDetect, machine learning and the OpenAI/Groq integrations.
+
+**What the `caligrafy-quill` plugin gives Claude**
+
++ **The complete Caligrafy documentation**: every page of the [wiki](https://github.com/caligrafy/caligrafy-quill/wiki), bundled with the plugin
++ **A source-verified API reference**: the exact signatures of `Controller`, `Model`, `Request`, `Route`, `Auth`, `Database`, the helpers and the AI/payment classes
++ **Known gotchas**: framework behaviors and documentation errata checked against the source (API headers vs. CSRF, safe queries, Docker `.env` settings, port clashes and more)
++ **Scaffolding and tooling commands**:
+    + `/caligrafy-quill:new-resource` - SQL script, Model, Controller and REST routes for a new entity
+    + `/caligrafy-quill:new-app` - Vue, SPA, bot, face detection or machine learning client apps, with their routes
+    + `/caligrafy-quill:server` - start/stop the Docker server after checking ports and `.env`
+    + `/caligrafy-quill:db` - run your `create_db.sql` scripts in the MySQL container
++ **A `caligrafy-reviewer` agent** that reviews your Caligrafy code, and a hook that runs `php -l` on every PHP file Claude edits
+
+### Get the plugin
+
+**Automatic (recommended)**: create or clone a Quill project, open it in Claude Code and accept the "trust this folder" prompt. The project's `.claude/settings.json` registers the plugin's marketplace and enables it for you.
+
+```bash
+composer create-project -s dev caligrafy/caligrafy-quill my-app   # or: git clone https://github.com/caligrafy/caligrafy-quill.git my-app
+cd my-app
+claude
+```
+
+**Manual**: in any Claude Code session
+
+```
+/plugin marketplace add caligrafy/caligrafy-quill
+/plugin install caligrafy-quill@caligrafy
+```
+
+or from your terminal
+
+```bash
+claude plugin marketplace add caligrafy/caligrafy-quill
+claude plugin install caligrafy-quill@caligrafy
+```
+
+On Claude Code 2.1.275 or later you can also install in one step: `/plugin install caligrafy-quill --marketplace caligrafy/caligrafy-quill`.
+
+### Try it
+
+```
+/caligrafy-quill:server start
+/caligrafy-quill:new-resource Book title:string author:string publisher:fk
+/caligrafy-quill:db application/models/Book/create_db.sql
+/caligrafy-quill:new-app facedetect faceauth
+> Add login with the Caligrafy authentication module and protect /books with guard()
+> Review my BookController with the caligrafy-reviewer agent
+```
+
+The plugin lives in [`claude-plugin/`](claude-plugin/). See its [README](claude-plugin/README.md) for details.
+
+<br/>
+
 
 ## Requirements
 + PHP > 7.2

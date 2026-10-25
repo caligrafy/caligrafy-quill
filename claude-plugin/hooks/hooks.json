@@ -1,0 +1,17 @@
+{
+  "description": "Caligrafy Quill: syntax-check PHP files after Claude edits them",
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Write|Edit|MultiEdit",
+        "hooks": [
+          {
+            "type": "command",
+            "command": "\"${CLAUDE_PLUGIN_ROOT}/scripts/php-lint.sh\"",
+            "timeout": 30
+          }
+        ]
+      }
+    ]
+  }
+}
