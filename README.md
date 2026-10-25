@@ -77,7 +77,7 @@ The plugin lives in [`claude-plugin/`](claude-plugin/). See its [README](claude-
 
 This release hardens Caligrafy Quill: server files such as `.env` are no longer reachable from a browser, uploads cannot run scripts, client apps are protected against path traversal and script injection, queries are bound, and the authentication module hashes passwords. It also fixes many-to-many pivots with `UNSIGNED` ids, `DB_PORT`, Stripe checkout options, the OpenAI `COMPLETE` command and Assistant runs.
 
-**Existing projects:** updating the framework does not update the copies in your `application` folder. Follow [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading) and review the [behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes).
+**New projects** created or cloned with this release get all the fixes automatically. **Existing projects:** updating the framework does not update the copies in your `application` folder. Follow [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading) and review the [behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes).
 
 <br/>
 
