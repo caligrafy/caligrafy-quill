@@ -209,8 +209,7 @@ class Payment extends \stdClass {
 			]; 
 
 			// Append to input when needed
-			$parameters = !empty($locales)? array_merge($input, $locales) : $parameters;
-			$parameters = !empty($emails)? array_merge($input, $emails) : $parameters;
+			$parameters = array_merge($parameters, $locales, $emails);
 			
 			// If success URL specified, then add to parameters
 			if (isset($successUrl) && trim($successUrl) != '') { $parameters = array_merge($parameters, ['success_url' => $successUrl]); }

@@ -30,14 +30,14 @@ block content
                             label(for='passcode', class=isset($errors['passcode']) ? 'textcolor5 error' : 'textcolor5') #{!$put? '*': ''} password
                             if isset($errors['passcode'])
                                 p(class='error')= $errors['passcode']
-                            input(type='password', name='passcode', id='passcode' class='form-control input-default', placeholder='Enter a password', maxlength='20', "#{!$put? 'required': ''}")
+                            input(type='password', name='passcode', id='passcode' class='form-control input-default', placeholder='Enter a password', maxlength='72', "#{!$put? 'required': ''}")
                         .spacer-1      
 
                         .form-group
                             label(for='confirmpasscode', class=isset($errors['passcode']) ? 'textcolor5 error' : 'textcolor5') #{!$put? '*': ''} confirm password
                             if isset($errors['passcode'])
                                 p(class='error')= $errors['passcode']
-                            input(type='password', name='confirmpasscode', id='confirmpasscode' class='form-control input-default', placeholder='Confirm your password', maxlength='20',  "#{!$put? 'required': ''}")
+                            input(type='password', name='confirmpasscode', id='confirmpasscode' class='form-control input-default', placeholder='Confirm your password', maxlength='72',  "#{!$put? 'required': ''}")
                         .spacer-1   
                         
                         .form-group

@@ -2,10 +2,17 @@
 use Caligrafy\Controller;
 
 class AdminController extends Controller {
+
+	/*
+	 * Minimum value of users.permissions needed to manage users.
+	 * New users are created with permissions 0, so promote your first administrator in the database:
+	 * UPDATE users SET permissions = 1 WHERE username = '<your username>';
+	 */
+	const ADMIN_PERMISSION = 1;
 	
 	public function index()
 	{
-		guard('permissions', 0, '/notAuthorized');
+		guard('permissions', self::ADMIN_PERMISSION);
 		$this->associate('User', 'users');
 		$users = $this->all(array('order' => 'order by modified_at DESC'));
 		return view('Auth/users', array('users' => $users, 'authorized' => authorized(), 'admin' => true));
@@ -15,7 +22,7 @@ class AdminController extends Controller {
 	// Edit user Form
 	public function editUserForm()
 	{
-		guard('permissions', 0, '/notAuthorized');
+		guard('permissions', self::ADMIN_PERMISSION);
 		$this->associate('User', 'users');
 		$user = $this->find();
 		if (!$user) {
@@ -29,7 +36,7 @@ class AdminController extends Controller {
 	// Update User
 	public function updateUser()
 	{
-		guard('permissions', 0, '/notAuthorized');
+		guard('permissions', self::ADMIN_PERMISSION);
 		$this->associate('User', 'users');
 		$user = $this->find();
 		
@@ -39,46 +46,45 @@ class AdminController extends Controller {
 		}
 		
 		$parameters = $this->request->parameters;
-        $userInput = (Object)$parameters;
+        $userInput = (Object)array('id' => $user->id, 'username' => $parameters['username']?? $user->username, 'permissions' => $parameters['permissions']?? $user->permissions);
             
 		// Input validation
-		$validate = $this->validator->check($parameters, array('username' => 'required|alpha_numeric|max_len, 100',
-												   'passcode' => 'alpha_numeric|max_len,20',
-												   'confirmpasscode' => 'alpha_numeric|max_len,20',
-												   'permissions' => 'numeric|max_len,1'
+		$validate = $this->validator->check($parameters, array('username' => 'required|alpha_numeric|max_len,100',
+												   'passcode' => 'min_len,8|max_len,72',
+												   'confirmpasscode' => 'max_len,72',
+												   'permissions' => 'integer|min_numeric,0|max_numeric,255'
 												  ));
 		
 		//confirm password
-        if ($parameters['passcode'] != $parameters['confirmpasscode']) {
-            return view('Auth/manageusers', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.', 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput));
-            exit;
+        if (($parameters['passcode']?? '') !== ($parameters['confirmpasscode']?? '')) {
+            return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.', 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput, 'authorized' => authorized(), 'admin' => true));
         }
 		
         
 		// invalid inputs
 		if ($validate !== true) {
-			return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoooops, something went wrong', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => $validate, 'user' => $userInput));
-			exit;
+			return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoooops, something went wrong', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => $validate, 'user' => $userInput, 'authorized' => authorized(), 'admin' => true));
 		}
 
         $user->username = $parameters['username']?? $user->username;
-        $user->passcode = $parameters['passcode']? encryptDecrypt('encrypt', $parameters['passcode']) : $user->passcode;
-		$user->permissions = $parameters['permissions']?? $user->permissions;
-		$user->modified_at = date(now());
+        $user->passcode = !empty($parameters['passcode'])? User::hashPassword($parameters['passcode']) : $user->passcode;
+		$user->permissions = isset($parameters['permissions']) && $parameters['permissions'] !== ''? (int)$parameters['permissions'] : $user->permissions;
+		$user->modified_at = now();
         $this->save($user);
 
         redirect('/users');
+        exit;
 		
 	}
 	
 	//Delete User
 	public function deleteUser()
 	{
-		guard('permissions', 0, '/notAuthorized');
+		guard('permissions', self::ADMIN_PERMISSION);
         $this->associate('User', 'users');
-		$user = $this->find()?? null;
         $this->delete();
         redirect('/users');
+        exit;
 	}
 	
 	

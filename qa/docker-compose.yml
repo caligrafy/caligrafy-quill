@@ -1,0 +1,29 @@
+# Isolated stack for the Caligrafy Quill QA suite (qa/run.sh).
+# Uses its own project name and ports so it never clashes with a running Quill dev server.
+name: quillqa
+services:
+  web:
+    build:
+      context: ..
+      dockerfile: ./docker/Dockerfile
+      target: dev-php
+    volumes:
+      - ../:/var/www/html/
+    ports:
+      - "${QA_WEB_PORT:-8090}:80"
+    depends_on:
+      mysql:
+        condition: service_healthy
+
+  mysql:
+    image: mysql:8.4
+    environment:
+      MYSQL_ROOT_PASSWORD: root
+      MYSQL_DATABASE: quillqa
+    ports:
+      - "${QA_DB_PORT:-3316}:3306"
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-h", "127.0.0.1", "-uroot", "-proot"]
+      interval: 3s
+      timeout: 3s
+      retries: 40

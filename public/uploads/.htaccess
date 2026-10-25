@@ -1,0 +1,12 @@
+# Uploaded files are data, never code: scripts dropped here are not executed nor served
+<IfModule mod_authz_core.c>
+    <FilesMatch "(?i)\.(php\d*|phtml|pht|phar|phps|cgi|pl|py|sh|asp|aspx|jsp|shtml|htaccess|htpasswd)$">
+        Require all denied
+    </FilesMatch>
+</IfModule>
+<IfModule mod_php.c>
+    php_flag engine off
+</IfModule>
+<IfModule mod_php7.c>
+    php_flag engine off
+</IfModule>

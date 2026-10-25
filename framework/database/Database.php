@@ -37,11 +37,28 @@ class Database extends \stdClass {
     {
         self::$connection = null;
         if (strtolower(self::$db_activate) == 'true') {
-            self::$connection = new PDO(self::$db_adapter.':host='. self::$host .';dbname='. self::$db_name, self::$username, self::$password);
+            $port = defined('DB_PORT')? DB_PORT : null;
+            self::$connection = new PDO(self::dsn(self::$db_adapter, self::$host, self::$db_name, $port), self::$username, self::$password);
             self::$connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
             self::$connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
         }
         return self::$connection;
+    }
+
+
+    /**
+     * Builds the PDO DSN from the DB_* settings
+     * DB_PORT is added unless DB_HOST already carries a ';port=' (older workaround)
+     * @return string the DSN
+     */
+    public static function dsn($adapter, $host, $dbName, $port = null)
+    {
+        $dsn = $adapter . ':host=' . trim((string)$host);
+        $port = trim((string)$port);
+        if ($port !== '' && stripos((string)$host, 'port=') === false) {
+            $dsn .= ';port=' . $port;
+        }
+        return $dsn . ';dbname=' . $dbName;
     }
 
 

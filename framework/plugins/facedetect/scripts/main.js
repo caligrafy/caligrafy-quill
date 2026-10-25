@@ -1,4 +1,5 @@
-var detector = new FaceDetector('detection');
+// markRaw keeps Vue 3 from wrapping the detector (canvases, media streams, face-api models) in a reactive proxy
+var detector = Vue.markRaw(new FaceDetector('detection'));
 
 const app = Vue.createApp({
   el: '#app',

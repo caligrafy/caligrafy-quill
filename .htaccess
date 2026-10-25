@@ -6,9 +6,33 @@
     RewriteEngine On
 
     #RewriteBase /mvc
+
+    # Never serve server-side files: dotfiles (.env, .git, .claude...), the server-side folders and the tooling files.
+    # Only existing files and folders are denied, so routes that happen to use these names keep working.
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule (^|/)\.(?!well-known(/|$)) - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} -f [OR]
+    RewriteCond %{REQUEST_FILENAME} -d
+    RewriteRule ^(application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules)(/|$) - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule ^(caligrafer\.php|composer\.(json|lock)|docker-compose\.ya?ml|package(-lock)?\.json)$ - [F,L]
+
+    RewriteCond %{REQUEST_FILENAME} -f
+    RewriteRule \.(sql|log|bak|ini|sh|env)$ - [F,L]
+
     # Handle Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^(.+)$ index.php?uri=$1 [L,QSA]
     
+</IfModule>
+
+# Defense in depth when mod_rewrite rules are not applied: never serve dotfiles such as .env
+<IfModule mod_authz_core.c>
+    <FilesMatch "^\.">
+        Require all denied
+    </FilesMatch>
 </IfModule>

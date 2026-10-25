@@ -19,8 +19,9 @@ use \Exception as Exception;
 define("GPT3", "gpt-3.5-turbo");
 define ("GPT4", "gpt-4-turbo");
 define ("GPT4O", "gpt-4o");
-define ("GPT4OMINI", "gpt-4o mini");
-define ("GPT4-32", "gpt-4-32k");
+define ("GPT4OMINI", "gpt-4o-mini");
+define ("GPT4-32", "gpt-4-32k"); // kept for backward compatibility: only reachable with constant("GPT4-32")
+define ("GPT4_32", "gpt-4-32k");
 define ("GPT4_LATEST", "gpt-4o");
 define ("GPT4_LATEST_VISION", "gpt-4-vision-preview");
 
@@ -61,6 +62,35 @@ define("IMAGE", array(
 
 
 class OpenAI extends \stdClass {
+
+    /**
+     * Commands that delegate() accepts, by name (case insensitive)
+     */
+    const COMMANDS = array('CONVERSE', 'SUMMARIZE', 'ANALYZE', 'CORRECT', 'CLASSIFY', 'COMPLETE', 'PREDICT', 'RECOMMEND', 'CUSTOM');
+
+    /**
+     * Model types that the constructor accepts, by name (case insensitive)
+     */
+    const TYPES = array('TEXT', 'IMAGE');
+
+    /**
+     * Resolves a command name (ex: 'summarize' from a form) to its prompt. Returns null for anything else,
+     * so that user input can never select another constant (such as APP_KEY or DB_PASSWORD)
+     */
+    public static function command($name)
+    {
+        $name = strtoupper(trim((string)$name));
+        return in_array($name, self::COMMANDS, true)? constant($name) : null;
+    }
+
+    /**
+     * Resolves a model type name ('text' or 'image') to its configuration. Returns null for anything else
+     */
+    public static function type($name)
+    {
+        $name = strtoupper(trim((string)$name));
+        return in_array($name, self::TYPES, true)? constant($name) : null;
+    }
 
     /**
 	* @var string the OpenAI API Endpoint
@@ -126,17 +156,11 @@ class OpenAI extends \stdClass {
 
     public function delegate($input = '', $outcome = '', $command = ANALYZE,  $context  = array(), $parameters = array())
     {
-        // initialize variables
-        $inputConstraints = '';
-        $suffix = '';
-
         if ($this->type == 'text') {
            
-            // If there is insertion needed then divide input into input and suffix
-            $inputArray = $input? explode("[insert]", $input) : array();
-            if (!empty($inputArray) && $command == COMPLETE) {
-                $suffix = implode("", array_slice($inputArray, 1));
-                $input = $inputArray[0];
+            // COMPLETE with an [insert] marker: ask for the text that goes at the marker, keeping the text after it
+            if ($command == COMPLETE && strpos((string)$input, "[insert]") !== false) {
+                $command = COMPLETE . "Write only the text that replaces [insert] so that it fits between the text before and after it.\n";
             } 
             
             // If an outcome is given, concatenate to input and remove them from parameters

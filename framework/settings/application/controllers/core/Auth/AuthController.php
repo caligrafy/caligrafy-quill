@@ -9,18 +9,18 @@ class AuthController extends Controller {
     {
         if (!authorized()) {
             return view('Auth/login');
-            exit;
         }
         redirect('/home');
+        exit;
     }
     
     public function registerForm()
     {
         if (authorized()) {
             redirect('/home');
+            exit;
         }
         return view('Auth/register');
-        exit;       
     }
     
     
@@ -28,10 +28,9 @@ class AuthController extends Controller {
     {
         if (authorized()) {
             return view('default/index', array('authorized' => authorized()));   
-            exit;
         }
         redirect('/login');
-
+        exit;
     }
     
     /*
@@ -41,37 +40,34 @@ class AuthController extends Controller {
     {
         $this->associate('User', 'users');
         $parameters = $this->request->parameters;
-        $validate = $this->validator->check($parameters, array('username' => 'required|alpha_numeric|max_len, 100',
-                                                               'passcode' => 'required|alpha_numeric|max_len,20',
-                                                               'confirmpasscode' => 'required|alpha_numeric|max_len,20'
+        $validate = $this->validator->check($parameters, array('username' => 'required|alpha_numeric|max_len,100',
+                                                               'passcode' => 'required|min_len,8|max_len,72',
+                                                               'confirmpasscode' => 'required|max_len,72'
                                                               ));
-        $user = $this->search('username', $parameters['username']);
-        $userInput = (Object)$parameters;
+        $userInput = (Object)array('username' => $parameters['username']?? '');
    
         
         //confirm password
-        if ($parameters['passcode'] != $parameters['confirmpasscode']) {
+        if (($parameters['passcode']?? '') !== ($parameters['confirmpasscode']?? '')) {
             return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.', 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput));
-            exit;
         }
         
         // invalid inputs
         if ($validate !== true) {
             return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => $validate, 'user' => $userInput ));
-            exit;
         }
         
-        //check if user exists
-        if ($user && !empty($user[0])) {
+        //check if user exists (exact match, bound query)
+        if ($this->model->findByUsername($parameters['username'])) {
             return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'You are already registered', 'errors' => ['username' => 'The username already exists in the system'], 'user' => $userInput));
-            exit;            
         }
         
         $user = new User();
         $user->username = $parameters['username'];
-        $user->passcode = encryptDecrypt('encrypt', $parameters['passcode']);
+        $user->passcode = User::hashPassword($parameters['passcode']);
         $this->save($user);
         redirect('/login');
+        exit;
 
     }
     
@@ -83,17 +79,21 @@ class AuthController extends Controller {
     {
         $this->associate('User', 'users');
         $parameters = $this->request->parameters;
-        $user = $this->search('username', $parameters['username']);
-        if($user && !empty($user[0]) && isset($user[0]->id)) {
-            $pass = encryptDecrypt('decrypt', $user[0]->passcode);
-            if ( $pass == $parameters['passcode']) {
-                authorize($user[0]);
-                redirect('/home');
-                exit;
+        $user = $this->model->findByUsername($parameters['username']?? '');
+        if ($user && $user->verifyPassword($parameters['passcode']?? '')) {
+
+            // upgrade passcodes stored by older versions (reversible encryption) to a password hash
+            if ($user->needsRehash()) {
+                $user->passcode = User::hashPassword($parameters['passcode']);
+                $this->save($user, $user->id);
+                $user = $this->model->find($user->id);
             }
+
+            authorize($user);
+            redirect('/home');
+            exit;
         } 
         return view('/Auth/login', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'Invalid credentials' ));
-        exit;
     }
     
     /*
@@ -111,7 +111,6 @@ class AuthController extends Controller {
 	public function notAuthorized()
 	{
 		return view('/Auth/login', array('error' => true, 'status'=>'danger', 'message_header' => 'Restricted Page','message' => 'You have not been granted permission to access this page'));
-		exit;
 	}
     
     

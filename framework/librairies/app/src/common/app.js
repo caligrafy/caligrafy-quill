@@ -5,12 +5,12 @@
  */
 
 // Make axios accessible across the components
-let axios = require('axios');
+import axios from 'axios';
 
 // API configuration of the PHP back-end that was created for this course
 export const config = {
-	apiKey: process.env.VUE_APP_API_KEY,
-	apiRoute: process.env.VUE_APP_API_ROUTE
+	apiKey: import.meta.env.VITE_API_KEY,
+	apiRoute: import.meta.env.VITE_API_ROUTE?? ''
 	
 };
 
@@ -21,8 +21,8 @@ export const apiConfig = {
 	crossDomain: true,
 	headers: {
 		"Authorization": "Bearer " + config.apiKey,
-		'Content-Type': 'application/json',
-		'Set-Cookie': 'widget_session=caligrafy_app; SameSite=None; Secure'
+		'Accept': 'application/json',
+		'Content-Type': 'application/json'
 	}
 	
 };

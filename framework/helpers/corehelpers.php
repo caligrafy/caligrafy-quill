@@ -126,7 +126,7 @@ function clearFromSession($session_variable)
  */	
 function scripts($key, $value = null)
 {
-    if ($value) {
+    if ($value !== null) {
         $_SESSION['scripts'][$key] = $value;
     }
     return $_SESSION['scripts'][$key]?? null;
@@ -139,7 +139,7 @@ function scripts($key, $value = null)
  */	
 function copyright($value = null)
 {
-    if ($value) {
+    if ($value !== null) {
         $_SESSION['copyright'] = $value;
     }
     return $_SESSION['copyright']?? '';
@@ -152,7 +152,7 @@ function copyright($value = null)
  */	
 function keywords($value = null)
 {
-    if ($value) {
+    if ($value !== null) {
         $_SESSION['keywords'] = $value;
     }
     return $_SESSION['keywords']?? '';
@@ -165,8 +165,8 @@ function keywords($value = null)
  */	
 function metadata($pairs = array())
 {
-    foreach ($pairs as $key => $value) {
-        if ($value) {
+    foreach ((array)$pairs as $key => $value) {
+        if ($value !== null) {
             $_SESSION['metadata'][$key] = $value;
         }   
     }
@@ -180,7 +180,7 @@ function metadata($pairs = array())
  */	
 function session($key, $value = null)
 {
-    if ($value) {
+    if ($value !== null) {
         $_SESSION[$key] = $value;
     }
     return $_SESSION[$key]?? null;
@@ -321,40 +321,64 @@ function getGlobalInformation($superGlobal = 'session')
 
 
 /**
+ * Default list of file extensions accepted by uploadFile()
+ * Executable or scriptable types (php, phtml, phar, cgi, js, html, svg...) are never accepted
+ */
+define('DEFAULT_UPLOAD_EXTENSIONS', array(
+    'jpg', 'jpeg', 'png', 'gif', 'webp', 'bmp', 'ico', 'heic',
+    'pdf', 'txt', 'csv', 'md', 'rtf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'odt', 'ods', 'odp',
+    'mp3', 'wav', 'ogg', 'm4a', 'mp4', 'mov', 'webm', 'avi',
+    'zip', 'json'
+));
+
+/**
+ * Checks if a file name has an extension that can safely be uploaded
+ * @param string $filename the original file name
+ * @param array $allowedExtensions the allowed extensions. Defaults to DEFAULT_UPLOAD_EXTENSIONS
+ * @return boolean true if the extension is allowed
+ */
+function isAllowedUpload($filename, $allowedExtensions = null)
+{
+    $extension = strtolower(pathinfo((string)$filename, PATHINFO_EXTENSION));
+    $allowed = array_map('strtolower', $allowedExtensions?? DEFAULT_UPLOAD_EXTENSIONS);
+    $neverAllowed = '/^(php\d*|phtml|pht|phar|phps|cgi|pl|py|sh|asp|aspx|jsp|htaccess|htpasswd|ini|svg|svgz|html?|xhtml|js|mjs|exe|bat)$/';
+    return $extension !== '' && in_array($extension, $allowed, true) && !preg_match($neverAllowed, $extension);
+}
+
+/**
  * Uploads a file from a form into the server
- * @param array $picture defines the picture attributes array
- * @return string the resulting public URL of the uploaded file
+ * @param array $picture defines the file attributes array (an entry of $_FILES)
+ * @param array $allowedExtensions the allowed extensions. Defaults to DEFAULT_UPLOAD_EXTENSIONS
+ * @return string the resulting public URL of the uploaded file, or '' if the file was refused or could not be moved
  * @author Dory A.Azar 
  * @version 1.0
  */
 
-function uploadFile($picture)
+function uploadFile($picture, $allowedExtensions = null)
 {
 	$resultUrl = '';
 
-    if (empty($picture) || (isset($picture['error']) && $picture['error'] != 0 )) {
+    if (empty($picture) || !isset($picture['name'], $picture['tmp_name']) || (isset($picture['error']) && $picture['error'] != 0 )) {
         return $resultUrl;
-        exit;
     }
     
-    // get the extension of the picture
-    $extension = isset($picture['name'])? pathinfo($picture['name'])['extension']: '';
+    // refuse executable or unknown extensions
+    if (!isAllowedUpload($picture['name'], $allowedExtensions)) {
+        return $resultUrl;
+    }
 
-    // if an extension is valid
-    if (isset($extension)) {
+    //generate a new filename 
+    $extension = strtolower(pathinfo($picture['name'], PATHINFO_EXTENSION));
+    $newfilename = generateToken(12).".".$extension;
 
-        //generate a new filename 
-        $newfilename = generateToken(12).".".$extension;
+    // specify the new document location
+    $permanentLocation = UPLOAD_PATH.$newfilename;
 
-        // specify the new document location
-        $permanentLocation = UPLOAD_PATH.$newfilename;
+    // proceed with the move and if successful return the public url to it
+    if (move_uploaded_file($picture['tmp_name'], $permanentLocation)) {
+        $resultUrl = $_SESSION['uploadsUrl'].$newfilename;
+    }
 
-        // proceed with the move and if successful return the public url to it
-        if (move_uploaded_file($picture['tmp_name'], $permanentLocation)) {
-            $resultUrl = $_SESSION['uploadsUrl'].$newfilename;
-        };
-
-    }       
 	return $resultUrl;
 }
 
@@ -369,12 +393,12 @@ function uploadFile($picture)
 function deleteFile($url) 
 {
     $path = parse_url($url, PHP_URL_PATH);
-    $filename = basename($path);
-    if(!$filename) {
+    $filename = basename((string)$path);
+    // never delete hidden files such as .htaccess or .gitignore
+    if(!$filename || $filename[0] === '.' || !is_file(UPLOAD_PATH.$filename)) {
         return false;
     }
-    unlink(UPLOAD_PATH.$filename);
-    return true;
+    return unlink(UPLOAD_PATH.$filename);
 }
 
 
@@ -500,7 +524,8 @@ function startWith($haystack, $needle) {
  */
 
 function endWith($haystack, $needle) {
-    return substr($haystack, -1, strlen($needle)) === $needle;
+    $length = strlen($needle);
+    return $length === 0 || substr($haystack, -$length) === $needle;
 }
 
 /**
@@ -853,7 +878,7 @@ function httpRequest($url, $method, $data, $headers, $username = null, $password
             ));
         }
         
-        if (strtoupper($method) == "POST" && !empty($data)) {
+        if (strtoupper($method) != "GET" && !empty($data)) {
             curl_setopt_array($curl, array(
                 CURLOPT_POSTFIELDS => json_encode($data, JSON_UNESCAPED_SLASHES)
             ));
