@@ -79,7 +79,7 @@ files($fileAttribute): array  // $_FILES[$fileAttribute] ?? []
 wantsJson(): bool           // true when Accept contains application/json AND not text/html
 authorizeApiRequest(): bool
 ```
-CSRF (`checkCSRF`, run for POST/PUT/DELETE whenever a Request is built): skipped when `wantsJson()` is true or the User-Agent is listed in `APPROVED_AGENTS` (comma separated, no spaces). Otherwise `$_POST['_token']` must equal `$_SESSION['token']`, else `[ERROR 3000] Security Error - Cross Site Forgery`. The token is read from `$_POST` only (form-encoded or multipart), never from a JSON body.
+CSRF (`checkCSRF`, run for POST/PUT/DELETE whenever a Request is built): skipped when `wantsJson()` is true or the User-Agent is listed in `APPROVED_AGENTS` (comma separated; entries are trimmed and empty entries ignored). Otherwise `$_POST['_token']` must equal `$_SESSION['token']`, else `[ERROR 3000] Security Error - Cross Site Forgery`. The token is read from `$_POST` only (form-encoded or multipart), never from a JSON body.
 
 ## Controller (`Caligrafy\Controller`)
 
@@ -123,33 +123,35 @@ protected $__restricted;            // ['table', '__restricted', 'pivot'] + rela
 
 __construct($table = null)
 associate($table): Model
-create($inputs): ?Model             // array or object; drops keys whose value == null (null, 0, false, ''); INSERT with bound values; returns find(lastInsertId)
-update($inputs, $id): ?Model        // same filtering; UPDATE ... WHERE id = <id inlined>; returns find($id)
+create($inputs): ?Model             // array or object; skips null values and restricted keys only (0, '', false -> 0 are saved); column names validated; INSERT with bound values; returns find(lastInsertId)
+update($inputs, $id): ?Model        // same preparation; UPDATE ... WHERE id = ? (bound), skipped when the record does not exist or nothing is left to save; returns find($id)
 delete($id)                         // DELETE ... WHERE id = ? (bound)
 find($id): ?Model                   // SELECT * ... WHERE id = ? (bound)
-all($args = array()): Model[]       // 'SELECT * FROM table' . ' '.$args['condition'].' ' . ' '.$args['order'].' ' . ' '.$args['limit'].' '  (raw SQL, not bound)
-search($scope, $keywords): Model[]  // $scope = 'col1,col2'; WHERE `col` LIKE '<keywords inlined>' OR ...  (NOT bound - see gotchas)
+all($args = array()): Model[]       // 'SELECT * FROM table' . ' '.$args['condition'].' ' . ' '.$args['order'].' ' . ' '.$args['limit'].' '  (raw clauses) executed with $args['bindings'] (array) for ? placeholders
+search($scope, $keywords): Model[]  // $scope = 'col1,col2' (each must match [A-Za-z0-9_], else Exception 2001); WHERE `col1` LIKE ? OR `col2` LIKE ?  (keywords bound; % and _ are wildcards)
 save()                              // $this->id ? update($this, $this->id) : create($this)
 hasOne($modelName, $joinedTableName, $foreignKey = null, $localKey = null, $functionName = null): ?Model
-hasMany($modelName, $joinedTableName, $foreignKey = null, $localKey = null, $functionName = null): Model[]
+hasMany($modelName, $joinedTableName, $foreignKey = null, $localKey = null, $functionName = null): Model[]   // ids bound
 belongsTo($modelName, $joinedTableName, $foreignKey = null, $localKey = null): Model[]   // calls hasMany()
 belongsToMany($modelName, $joinedTableName, $foreignKeyLocal = null, $foreignKeyJoin = null, $functionName = null): Model[]
-attach($joinedTableName, $id)       // many-to-many: add pivot row, returns the relationship method's result
+attach($joinedTableName, $id)       // many-to-many: add pivot row (call the relationship method first), returns the relationship method's result
 detach($joinedTableName, $id)
 arrayToModel($array): Model         // new static($this->table) hydrated with the array
 toArray(): array
 tableExists($tablename): bool
+// protected helpers: prepareInputs($inputs) (non-null values of real columns), tableColumns(), quoteIdentifier($name), columnType($table, $column), constraintName($pivot, $column)
 ```
 Relationship key defaults (from source):
 - `hasOne('Account','accounts')` on `User` (table `users`): `SELECT accounts.* FROM users LEFT JOIN accounts ON accounts.id = users.account_id WHERE users.id = <this id>` (FK `<lowercase model>_id` lives on **this** table; `$foreignKey` overrides that column, `$localKey` overrides `accounts.id`).
 - `hasMany('Account','accounts')` on `User`: `SELECT * FROM accounts WHERE user_id = <this id>` (FK `<lowercase this class>_id` on the **joined** table; `$foreignKey` overrides it; `$localKey` names a property of this model to use instead of `id`).
-- `belongsToMany('Account','accounts')` on `User`: pivot table `users_accounts` (or the existing `accounts_users`), columns `user_id`, `account_id`, auto-created with `CREATE TABLE IF NOT EXISTS`; also sets `$this->pivot->accounts` (`->all` holds the joined rows).
+- `belongsToMany('Account','accounts')` on `User`: pivot table `users_accounts` (or the existing `accounts_users`), columns `user_id`, `account_id` typed like the referenced ids (`columnType()` reads `SHOW COLUMNS`), constraints `fk_<pivot>_<column>`, auto-created with `CREATE TABLE IF NOT EXISTS`; also sets `$this->pivot->accounts` (`->all` holds the joined rows).
 - Relationship methods must be called on a loaded model (`$user = $this->find(1); $user->accounts();`). The calling method name is pushed into `__restricted` so it is not saved as a column.
 
 ## Database (`Caligrafy\Database`)
 
 ```php
-Database::connect(): ?PDO                 // only when DB_ACTIVATE == 'true'; DSN "DB_CONNECTION:host=DB_HOST;dbname=DB_DATABASE" (DB_PORT is NOT used)
+Database::connect(): ?PDO                 // only when DB_ACTIVATE == 'true'; DSN from Database::dsn()
+Database::dsn($adapter, $host, $dbName, $port = null): string   // "mysql:host=H;port=P;dbname=D"; port omitted when empty or when $host already contains "port="
 Database::execute($query, $args = array()): array   // prepare + execute with bound $args; returns array of associative arrays
 Database::toArray($result): array
 Database::lastInsertId()
@@ -192,6 +194,16 @@ api($viewData = array())               // = new View(null, $viewData)
 ```
 If `$viewName` is null **or** the request `wantsJson()`, the View echoes `json_encode($viewData, JSON_UNESCAPED_SLASHES)` and calls `exit`. A route therefore serves HTML to browsers and JSON to API clients with the same `view()` call. Set the HTTP status with `http_response_code($code)` before `api()`.
 
+## Server protection (`.htaccess`)
+Root `.htaccess` (mod_rewrite only, `AllowOverride FileInfo`): front controller (`index.php?uri=$1` for non-existing files) and 403 (case-insensitive) for existing dotfiles, `application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules`, `caligrafer.php`, `composer.(json|lock)`, `docker-compose.y(a)ml`, `package(-lock).json`, `*.sql|log|bak|ini|sh|env`. `public/uploads/.htaccess`: mod_rewrite `[NC,F]` for script extensions.
+
+## Auth module templates (`framework/settings/application`, copied to `application/` by initialize)
+- `models/Auth/User.php`: `findByUsername($username)`, `User::hashPassword($password)`, `verifyPassword($password)` (hash, or legacy `encryptDecrypt` value), `needsRehash()`.
+- `controllers/core/Auth/AuthController.php`: `index, registerForm, home, register, login, logout, notAuthorized`; login upgrades legacy passcodes. Passwords 8-72 chars, alphanumeric unique usernames.
+- `controllers/core/Auth/AdminController.php`: `ADMIN_PERMISSION = 1`; `index, editUserForm, updateUser, deleteUser` all `guard('permissions', 1)`.
+- `models/Auth/create_db.sql`: `CREATE TABLE IF NOT EXISTS users` (passcode varchar(255), unique username).
+- `controllers/core/AI/ClientController.php` + `views/Client/app.pug`: client apps (G15, G35). `controllers/core/AI/AIController.php`: OpenAI example using `OpenAI::type()`/`command()`.
+
 ## Global helpers (`framework/helpers/corehelpers.php`)
 
 ```php
@@ -199,11 +211,11 @@ If `$viewName` is null **or** the request `wantsJson()`, the View echoes `json_e
 generateKey($size = 32)                       // base64 random bytes (APP_KEY format)
 generateToken($size = 12)                     // hex string of 2*$size chars
 encryptDecrypt($action, $data, $key = APP_KEY) // 'encrypt' | 'decrypt', AES-256-CBC
-// session & globals (setters ignore falsy values)
+// session & globals (setters store any non-null value, including 0, '' and false; null = read)
 isSessionExpired($time = SESSION_EXPIRATION_TIME)   // constant not defined by default; pass $time
 saveInSession($input_data, $session_variable); clearFromSession($session_variable)
 session($key, $value = null); scripts($key, $value = null); copyright($value = null); keywords($value = null)
-metadata($pairs = array())                    // merges truthy pairs into $_SESSION['metadata'], returns it
+metadata($pairs = array())                    // merges non-null pairs into $_SESSION['metadata'], returns it
 terminateSession($url); getGlobalInformation($superGlobal = 'session')   // 'post' | 'get' | 'files' | default session
 // views / requests / routing
 view($viewName, $viewData = array()); api($viewData = array()); request(); connect(); currentRoute(); currentBind()
@@ -211,13 +223,15 @@ redirect($url)                                // header('Location: '.session('ho
 methodField($method); csrf()                  // echo hidden inputs _method / _token (use as `=methodField('PUT')`, `=csrf()` in pug)
 import($filename)                             // require_once LIB_PATH or HELPER_PATH file
 // files
-uploadFile($file): string                     // moves an uploaded $_FILES entry to public/uploads/<random>.<ext>, returns its public URL ('' on failure)
-deleteFile($url): bool                        // unlink public/uploads/<basename>
+uploadFile($file, $allowedExtensions = null): string   // moves an uploaded $_FILES entry to public/uploads/<random>.<ext> when isAllowedUpload(); returns its public URL ('' when refused or on failure)
+isAllowedUpload($filename, $allowedExtensions = null): bool  // extension in $allowedExtensions ?? DEFAULT_UPLOAD_EXTENSIONS and never php*/phtml/phar/cgi/pl/py/sh/asp/jsp/htaccess/ini/svg/html/js/exe/bat
+DEFAULT_UPLOAD_EXTENSIONS                     // jpg jpeg png gif webp bmp ico heic pdf txt csv md rtf doc docx xls xlsx ppt pptx odt ods odp mp3 wav ogg m4a mp4 mov webm avi zip json
+deleteFile($url): bool                        // unlink public/uploads/<basename>; refuses hidden files (.htaccess, .gitignore)
 imageCanva()                                  // new \claviska\SimpleImage()
 // strings & arrays
 findKey($array, $keySearch): bool; recursive_filter(&$array, $allowed); loadConstantFromArray($array)
 isJson($string); sanitize($string) /* htmlentities */; parsePath($path); sanitizePath($path)
-startWith($haystack, $needle): bool; endWith($haystack, $needle): bool /* compares the LAST CHARACTER only */
+startWith($haystack, $needle): bool; endWith($haystack, $needle): bool
 singularize($word) /* drops the last char */; rearrange($arr) /* re-index multi-file $_FILES */
 arraySort($array, $attribute, $sort = SORT_DESC); bindRouteToVar($route, $uri); parseRoute($path)
 // time
@@ -226,7 +240,7 @@ getRelativeTime($datetime, $depth = 1); now() /* 'Y-m-d H:i:s' */
 authorize($user); authorized(); unauthorize(); user()
 guard($permissionAttribute, $acceptedPermission, $loginUrl = '/login', $notAuthorized = '/notAuthorized'); logout($redirectUrl = '/')
 // http / mail
-httpRequest($url, $method, $data, $headers, $username = null, $password = null)   // cURL; body (json_encode) sent ONLY for POST; returns json_decode(..., true)
+httpRequest($url, $method, $data, $headers, $username = null, $password = null)   // cURL; body (json_encode) sent for every method except GET when $data is not empty; returns json_decode(..., true)
 httpFile($url, $filepath, $headers, $username = null, $password = null, $purpose = 'assistants')
 sendMail($recipients, $emailContent, $from)   // ['email'=>..,'name'=>..], ['subject'=>..,'body'=>html], ['email'=>..,'name'=>..]; SMTP from MAIL_* env
 associate($controller, $modelname, $table)
@@ -255,7 +269,7 @@ cancelTransaction($id); getCharges(); getCharge($chargeId); getChargeStatus($cha
 coinbaseRequest($requestPath, $requestMethod, $body = null, $additionalHeaders = null)
 ```
 
-## Mail (`Caligrafy\Mail`) - PHPMailer over SMTP with `MAIL_HOST`, `MAIL_PORT` (465 => ssl, else tls), `MAIL_USERNAME`, `MAIL_PASSWORD`; `sendMail()` returns bool.
+## Mail (`Caligrafy\Mail`) - PHPMailer over SMTP with `MAIL_HOST`, `MAIL_PORT` (465 => ssl, else tls), `MAIL_USERNAME`, `MAIL_PASSWORD`; `sendMail()` returns bool. SMTP debug output only when `APP_DEBUG` parses as true (`filter_var(..., FILTER_VALIDATE_BOOLEAN)`).
 
 ## OpenAI (`Caligrafy\OpenAI`, key `OPEN_AI_KEY`)
 ```php
@@ -263,17 +277,19 @@ new OpenAI($mode = TEXT)          // TEXT (chat completions) or IMAGE (images/ge
 delegate($input = '', $outcome = '', $command = ANALYZE, $context = array(), $parameters = array())
 converse($parameters = array(), $attachments = array(), $method = 'POST', $additionalHeaders = array())
 // returns ['api_success' => bool, 'response' => choices|data|raw, 'type' => 'text'|'url']
+OpenAI::command($name): ?string   // allow-list: 'summarize' -> SUMMARIZE ... (OpenAI::COMMANDS), anything else -> null
+OpenAI::type($name): ?array       // 'text' -> TEXT, 'image' -> IMAGE (OpenAI::TYPES), anything else -> null
 ```
-Commands (system prompts): `CONVERSE, SUMMARIZE, ANALYZE, CORRECT, CLASSIFY, COMPLETE` (`[insert]` marker), `PREDICT, RECOMMEND, CUSTOM`.
-Model constants: `GPT3` (gpt-3.5-turbo, the default), `GPT4`, `GPT4O`, `GPT4_LATEST` (gpt-4o), `GPT4_LATEST_VISION`. Text defaults: temperature 0, max_tokens 1000. Image defaults: n 1, size 1024x1024.
+Commands (system prompts): `CONVERSE, SUMMARIZE, ANALYZE, CORRECT, CLASSIFY, COMPLETE` (with an `[insert]` marker the whole text is sent and the prompt asks for the replacement), `PREDICT, RECOMMEND, CUSTOM` (empty system prompt: put yours first in `$context`). Messages sent: `$context` + system command + user input/outcome.
+Model constants: `GPT3` (gpt-3.5-turbo, the default), `GPT4`, `GPT4O`, `GPT4OMINI` (gpt-4o-mini), `GPT4_32`, `GPT4_LATEST` (gpt-4o), `GPT4_LATEST_VISION`. Text defaults: temperature 0, max_tokens 1000. Image defaults: n 1, size 1024x1024.
 
 ## Assistant (`Caligrafy\Assistant`, OpenAI Assistants API, key `OPEN_AI_KEY`)
 ```php
 new Assistant($parameters = array())   // name, description, instructions, metadata, model, tools, file_paths, file_ids, assistant_id
 retrieve(); delete(); start(); end()
 createMessage($content, $file_ids = [], $metadata = null, $role = "user")
-run($additional_instructions = '', $instructions = null, $tools = [], $model = '', $metadata = null)
-retrieveResponse()                     // polls every 2s while queued/in_progress, appends latest message to ->messages
+run($additional_instructions = '', $instructions = null, $tools = [], $model = '', $metadata = null)   // only non-empty overrides are sent
+retrieveResponse($timeout = 120, $interval = 2)   // polls while queued/in_progress (max $timeout s), then appends the latest message to ->messages
 listMessages(); uploadAssistantFiles($specified_paths = []); deleteAssistantFile($file_id)
 // props: assistant_id, name, description, instructions, tools, file_ids, file_paths, metadata, thread_id, run_id, status, messages
 ```
@@ -303,6 +319,7 @@ getContextVariable($variable); getConversation(); getLastExchange(); getResponse
 | 1001 | Invalid Controller or Action | class/method name typo, file outside `application/`, duplicate class name |
 | 1002 | Invalid library | `import()` of a missing file |
 | 1004 | Access Denied | JSON request to a controller route without `Auth::activateAPI()` or without a valid `Authorization: Bearer <API_KEY>` |
+| 2001 | Database Security Error | invalid column name given to `search()` or a Model write |
 | 2003 | Database Query Error | `DB_ACTIVATE` not `true`, bad credentials/host, or SQL that fails to prepare |
 | 3000 | Cross Site Forgery | form POST/PUT/DELETE without `_token`, or a non-JSON fetch/axios call |
 | 4000/4001 | Mail errors | |
@@ -313,7 +330,7 @@ Errors are caught in `web.php` and echoed as plain text (HTTP 200 unless somethi
 | Command | Effect (from caligrafer.php) |
 | - | - |
 | (none) | help text |
-| `initialize` | prepends `APP_KEY`, `API_KEY`, `APP_ROOT` to `.env` (creates `.env` from `framework/settings/.env.example` first if missing), writes `framework/librairies/app/.env` (`VITE_APP_KEY`, `VITE_API_KEY`), copies `framework/settings/application` to `./application` if absent, `chmod -R 777 public/uploads`, **deletes `.git`**. `APP_ROOT` = folder name, or empty when a 2nd argument is passed (`.bin/caligrafer` passes `off` when no local httpd runs, i.e. Docker) |
+| `initialize` | keeps existing `APP_KEY`/`API_KEY` or prepends new ones, adds `APP_ROOT` if missing (creates `.env` from `framework/settings/.env.example` first if missing), writes `framework/librairies/app/.env` (`VITE_APP_KEY`, `VITE_API_KEY`), copies `framework/settings/application` to `./application` if absent, `chmod -R 777 public/uploads`, **deletes `.git`**. `APP_ROOT` = folder name, or empty when a 2nd argument is passed (`.bin/caligrafer` passes `off` when no local httpd runs, i.e. Docker) |
 | `generatekeys` | prints a new `APP_KEY`/`API_KEY` pair |
 | `generateapikey` | prints an extra API key for the current `APP_KEY` |
 | `create <name>` | copies `framework/librairies/app` (Vue 3 + Vite + vue-router + vuex SPA) to `public/<name>` and runs `npm install` |

@@ -4,8 +4,8 @@
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
 > **Verified against framework source (see gotchas.md):**
-> - The custom-message method is `$this->validator->is_valid(...)` (GUMP), not `is_value`.
 > - `check()` returns an ARRAY both on success with filters (the filtered data) and on failure (errors). Prefer `filter()` then `validate()` (gotchas G6).
+> - Rules other than `required` are skipped for empty values (verified by the QA suite).
 
 Data validation is key to the success of any application. This framework provides a tight integration with GUMP - a third party library that makes data validation easy and painless.
 
@@ -21,12 +21,12 @@ GUMP provides two powerful features that are the cornerstones for keeping the da
 There are 3 controller methods that could help validate inputs that we suggest using.
 
 ```php
-   
+
    public function validate($inputArray, $ruleArray); 
-   // This methods validates the input array based on a set of rules and returns true or errors
-   
-   public function $this->validator->is_value($inputArrray, $ruleArray, $customMessageArray); 
-   // This method validates the input array and uses custom error messages
+   // This methods validates the input array based on a set of rules and returns true or an array of error messages keyed by field
+
+   GUMP::is_valid($inputArray, $ruleArray, $customMessageArray); // also callable as $this->validator->is_valid(...)
+   // This method validates the input array and uses custom error messages. It returns true or an array of readable (HTML) error messages
 
    public function check(Array $inputArray, Array validation_rules, Array filtering_rules); 
    // This method combines both validation and filtering (more on this later)
@@ -77,7 +77,7 @@ use Caligrafy\Controller;
 class UserController extends Controller {
     public function read()
     {
- 
+
        /* Validate the inputs using the check the inputs according to the described rules 
         * @param array inputArray is the array of inputs
         * @param array field => rule
@@ -98,7 +98,7 @@ class UserController extends Controller {
       $result = $this->validator->is_valid($inputArray, 
                 array(
                     'username' => 'required|alpha_numeric',
-	            'password' => 'required|max_len,100|min_len,6')
+	            'password' => 'required|max_len,100|min_len,6'
                 ),
                 array(
                     'username' => ['required' => 'Username is required']
@@ -187,15 +187,25 @@ The check method accepts 3 arrays:
 2) validation array
 3) filtering array.
 
-+ When both arrays are provided, the `check` function filters and validates at once. If the validation succeeds, it returns an array of the filtered fields. If the validation fails, it returns an array of the erroneous fields with their respective error messages.
++ When both arrays are provided, the `check` function filters and validates at once. If the validation succeeds, it returns an array of the filtered fields. If the validation fails, it returns an array of the erroneous fields with their respective error messages. **Both outcomes are arrays**, so `$result !== true` cannot tell them apart in this mode. When you need both, filter first and then validate:
+```php
+$data = $this->filter($inputArray, array('username' => 'trim|sanitize_string'));
+$result = $this->validate($data, array('username' => 'required|alpha_numeric'));
+if ($result !== true) {
+    return api(array('errors' => $result)); // $result is ['username' => 'error message']
+}
+// $data holds the clean values
+```
 + When the validation array is given but not the filtering array, the method performs a validation as described earlier.
 + When the filtering array is given but not the validation array, the method performs a filter as described earlier.
+
++ Rules other than `required` are skipped when a field is empty: `'passcode' => 'min_len,8'` accepts an empty passcode. Add `required` when the field is mandatory.
 
 > GUMP provides more elaborate features to create custom validations and filters. 
 > For more details, consult the GUMP library documentation [here](https://github.com/Wixel/GUMP/blob/master/README.md)
 
 ## File Validation
-If your application requires uploading files, you might want to validate the files before accepting that.
+If your application requires uploading files, you might want to validate the files before accepting that. The `uploadFile()` helper also refuses any extension that is not in its allow-list (images, documents, audio, video, `zip` and `json` by default, never scripts). Learn more about [helpers](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#helpers).
 Using the same `check` method, you can use the built-in rules to perform this validation.
 ```php
 use Caligrafy\Controller;
@@ -207,6 +217,11 @@ class UserController extends Controller {
        $result = $this->check($_FILES, array(
 	'image' => 'required_file|extension,png;jpg')
        );
+
+       // Then move the file to public/uploads
+       if ($result === true) {
+           $url = uploadFile($this->request->files('image'), array('png', 'jpg'));
+       }
     }
 }
 ```

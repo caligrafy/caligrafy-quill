@@ -13,20 +13,39 @@ class AIController extends Controller {
     public function query()
     {
         $parameters = $this->request->parameters;
-        $type = $parameters['type']? constant(strtoupper($parameters['type'])) : TEXT;
+
+        // type and command come from the form: only the documented names are accepted (never an arbitrary constant)
+        $type = OpenAI::type(!empty($parameters['type'])? $parameters['type'] : 'TEXT');
+        $command = OpenAI::command(!empty($parameters['command'])? $parameters['command'] : 'ANALYZE');
+        $errors = array();
+        if ($type === null) { $errors['type'] = 'Invalid type. Use TEXT or IMAGE'; }
+        if ($command === null) { $errors['command'] = 'Invalid command. Use one of: ' . implode(', ', OpenAI::COMMANDS); }
+        if (!empty($errors)) {
+            return view('AI/openai', array(
+                'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right',
+                'message' => implode('. ', $errors), 'errors' => $errors,
+                'authorized' => authorized(), 'parameters' => $parameters
+            ));
+        }
+
         $input = $parameters['input']?? '';
         $outcome = $parameters['outcome']?? '';
-        $command = isset($parameters['command'])? constant(strtoupper($parameters['command'])) : ANALYZE;
-        $custom = $parameters['custom']?? array();
-        $context = $parameters['context']?? array();
+
+        // optional conversation memory: a list of ['role' => 'user'|'assistant', 'content' => '...']
+        $context = array();
+        foreach ((array)($parameters['context']?? array()) as $message) {
+            if (is_array($message) && in_array($message['role']?? '', array('user', 'assistant'), true) && is_string($message['content']?? null)) {
+                $context[] = array('role' => $message['role'], 'content' => $message['content']);
+            }
+        }
+
         $openai = new OpenAI($type);
         return view('AI/openai', array(
-            'response' => $openai->delegate($input, $outcome, $command, $context, $custom),
+            'response' => $openai->delegate($input, $outcome, $command, $context),
             'authorized' => authorized(),
             'parameters' => $parameters
         ));
 
     }
 }
-
 

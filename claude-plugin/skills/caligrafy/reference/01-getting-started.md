@@ -5,6 +5,7 @@
 
 > **Verified against framework source (see gotchas.md):**
 > - Under Docker, `.env` overrides docker-compose environment (Dotenv `createUnsafeMutable`): set `DB_HOST=mysql` and `APP_ROOT=` in `.env`. Ports 8080/8077/3306 may clash with other projects (gotchas G11/G12).
+> - `caligrafer initialize` keeps the keys of a signed project but still deletes `.git` (G25). `app` = Vue as a library, `create` = Vite SPA.
 
 > ## Requirements
 > + PHP > 7.2
@@ -54,15 +55,11 @@
 
     ``` 
 
-    
-
     >
     > Note that the Caligrafer Initialize command breaks all `git` links. 
     > - If you would like to create a `git` repo for your application, it is recommended that you do so after you initialize it. 
     > - If you are pulling an application built in Caligrafy from Github and you would like to preserve the `git` connection in order to pull updates regularly, it is recommended that you proceed with the manual installation instead.
     >
-
-    
 
 + Add/Modify the following to the .env file if not accurate: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`
 
@@ -88,7 +85,7 @@ This method requires Docker to be installed on your local machine. With Docker, 
 + Run the following code from the Caligrafy root folder to start the Caligrafy server
 
     ```bash
-    
+
     #if you have php
     php caligrafer.php server start
 
@@ -141,10 +138,13 @@ Caligrafer is a command line tool that comes prepackaged with several tools and 
 + **Caligrafer help:** At all time you can know what commands are available to you by running ```php caligrafer.php``` from the Caligrafy root.
 
 + **Framework Initialization:** The framework is automatically initialized for you to start using instantly.
-You can run ```php caligrafer.php initialize``` from the Caligrafy root.
+You can run ```php caligrafer.php initialize``` from the Caligrafy root. It signs the project with an `APP_KEY` and an `API_KEY` (an already signed project keeps its keys), creates the `application` folder and **deletes the `.git` folder**.
 
-+ **Create a Vue app:** Scaffolds a Vue app for you to use immediately.
-You can run ```php caligrafer.php create <app_name>``` from the Caligrafy root.
++ **Create a Vue app (Vue as a library):** Scaffolds a simple Vue 3 app in the `public` folder for you to use immediately.
+You can run ```php caligrafer.php app <app_name>``` from the Caligrafy root. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library).
+
++ **Create a Vue project (Single Page Application):** Scaffolds a Vite + Vue 3 project with vue-router and vuex in the `public` folder.
+You can run ```php caligrafer.php create <app_name>``` from the Caligrafy root. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application).
 
 + **Create a Bot app:** Scaffolds a Bot app for you to use immediately.
 You can run ```php caligrafer.php bot <app_name>``` from the Caligrafy root.
@@ -183,6 +183,25 @@ To create a virtual host to point to the framework:
 ```
 127.0.0.1       example.loc
 
+```
+
+### Protecting your server files
+Only the `index.php` front controller and the `public` folder are meant to be reached from a browser. The `.htaccess` file at the root of Caligrafy denies direct access to:
++ dotfiles such as `.env`, `.git` and `.claude`
++ the server-side folders `application`, `framework`, `vendor`, `tests`, `qa`, `docker` and `claude-plugin`
++ tooling files such as `caligrafer.php`, `composer.json`, `composer.lock` and `docker-compose.yaml`, and any `.sql`, `.log`, `.bak`, `.ini`, `.sh` or `.env` file
+
+A second `.htaccess` in `public/uploads` prevents any script that ends up in the uploads folder from being executed or downloaded.
+
+Keep these files when you deploy. They only use `mod_rewrite`, so your virtual host needs `mod_rewrite` enabled and `AllowOverride FileInfo` (or `All`). The rules are case-insensitive, which matters on macOS and Windows file systems. You can check your server with `curl -I http://<your-host>/.env`: the answer must be `403` or `404`.
+
+If you serve Caligrafy with **nginx**, `.htaccess` files are ignored and you need equivalent rules, for example:
+```
+location ~ /\.(?!well-known) { deny all; }
+location ~ ^/(application|framework|vendor|tests|qa|docker|claude-plugin)/ { deny all; }
+location ~ ^/(caligrafer\.php|composer\.(json|lock)|docker-compose\.ya?ml)$ { deny all; }
+location ~* ^/public/uploads/.*\.(php\d*|phtml|phar|cgi|pl|py|sh)$ { deny all; }
+location / { try_files $uri $uri/ /index.php?uri=$uri&$args; }
 ```
 
 ### Caligrafy Namespace
@@ -242,8 +261,8 @@ This framework relies on several foundational concepts that are worth detailing.
 
 + **Naming conventions**: This framework does not put constraints on the naming conventions as much as other frameworks. The only naming convention is around the table keys in the database.
     1. id: Every table must have `id` as its primary key no matter what the table name is. It is therefore recommended to avoid naming primary keys `book_id` or `bookId`. The primary key must always be `id` and cannot be overridden.
-    2. Foreign keys: the foreign keys in the database should be of the format `modelname_id`. Notice that the foreign key takes the name of the Model and NOT the name of the table in the database. The foreign keys name could be overridden if need be.
-    3. Pivot table naming: the framework takes care of creating the pivot tables for your convenience. The pivot table will be named depending on which model the many-to-many (belongsToMany relationship) has been called from first.
+    2. Foreign keys: the foreign keys in the database should be of the format `modelname_id` (model name in lower case). Notice that the foreign key takes the name of the Model and NOT the name of the table in the database. The foreign keys name could be overridden if need be. A foreign key column must have the same type as the `id` it references (for example `INT UNSIGNED` for an `INT UNSIGNED` id), and every foreign key constraint needs a name that is unique in the database (for example `fk_books_publisher`).
+    3. Pivot table naming: the framework takes care of creating the pivot tables for your convenience. The pivot table is named `<table1>_<table2>` after the tables of the model that calls the many-to-many relationship (belongsToMany) first and of the joined model. If a `<table2>_<table1>` table already exists, it is reused.
 
 + **Validation**: Input validation is key to any application. This framework integrates a third-party GUMP - a very solid library - to validate all types of inputs. The validation module is capable to do 2 things: 1) Validating inputs of all types based on easy-to-define  rules 2) Provide easy ways to filter data and format it based easy-to-define rules. You could learn more about GUMP [here](https://github.com/Wixel/GUMP)
 
@@ -253,9 +272,9 @@ Understanding the framework file structure is key to understanding how to plan y
 There are 5 main folders in the structure that you should be aware of:
 1. **`/application`**: 
     This is where most of your application logic should go. This folder is where you should create the routes, models, views and controllers. You can create any classes and organize them freely in this folder without worrying about requiring them or including them. 
-    
+
     This folder has 4 subfolders (models, views, controllers and config). The config folder is where the routes are defined. 
-    
+
     > When your logic becomes too complex to hold in a `Controller`, you can always create new classes to organize them without having to require or include them in the classes where you intend to use them.
 2. **`/framework`**: This is the underlying code for the framework. For novice programmers, you will very rarely need to change anything in this folder. However, if you need to change the way the framework operates, then this is where it can be done.
 3. **`/public`**: This is where your application client-side code should go. All your scripts, stylesheets and any other resource that needs to be publicly accessible will reside in this folder. For example, any javascript or css that you need to reference from your Views (residing in application) will need to be in the public folder. Similarly, if your application supports uploading files, all uploaded files will live in the `/public/uploads` folder.

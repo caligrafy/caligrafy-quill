@@ -1,7 +1,7 @@
 ---
 name: new-resource
 description: Scaffold a Caligrafy Quill resource - MySQL create_db.sql script, Caligrafy\Model, Caligrafy\Controller with validated CRUD actions, and REST routes in application/config/routing/web.php - following the framework conventions.
-when_to_use: The user asks to add an entity, table, model, CRUD, REST endpoint or resource to a Caligrafy Quill project, e.g. "/caligrafy-quill:new-resource Book title:string author:string publisher:belongsTo".
+when_to_use: The user asks to add an entity, table, model, CRUD, REST endpoint or resource to a Caligrafy Quill project, e.g. "/caligrafy-quill:new-resource Book title:string author:string publisher:fk".
 argument-hint: "<Entity> [field:type ...] [parent:fk]"
 ---
 
@@ -58,7 +58,7 @@ class Book extends Model {
         return $this->hasOne('Publisher', 'publishers');
     }
 
-    // Bound lookup - never use search() with user input
+    // Exact match with a bound query (search() is a LIKE search)
     public function findByTitle($title)
     {
         $rows = Database::toArray(Database::execute('SELECT * FROM ' . $this->table . ' WHERE title = ?', [$title]));
@@ -66,7 +66,7 @@ class Book extends Model {
     }
 }
 ```
-Relationships: child->parent `hasOne('Parent','parents')`; parent->children `hasMany('Child','children')`; many-to-many `belongsToMany` only after reading G10 (prefer creating the pivot table in the SQL script).
+Relationships: child->parent `hasOne('Parent','parents')`; parent->children `hasMany('Child','children')`; many-to-many `belongsToMany('Tag','tags')` (the auto-created pivot copies the id types and uses unique constraint names, G10) or create the pivot table yourself in the SQL script.
 
 ### 3. `application/controllers/<Entity>/<Entity>Controller.php`
 ```php
@@ -143,7 +143,7 @@ Rules:
 - each action calls `associate()` first; never override built-in names (`find`, `save`, `delete`, `all`, `search`, `check`, `validate`, `filter`, `view`, `api`, `associate`, `table`), hence `remove()` not `delete()`;
 - set the HTTP status with `http_response_code()` before `api()`; code after `view()`/`api()` never runs on JSON requests (G21);
 - nested routes: name the parent variable `{book_id}`, not `{id}`, or `save()` will update instead of insert (G23);
-- falsy values (0, '', false) are dropped by `save()` (G7) - use `Database::execute` for those updates;
+- `save()` writes `0`, `''` and `false` and skips only `null` (G7); in a project still on an older framework falsy values are dropped (G39) - use `Database::execute` there;
 - add `guard('permissions', <level>)` or an `authorized()` check if the resource is private (API key alone is public, G27).
 
 ### 4. Routes in `application/config/routing/web.php`

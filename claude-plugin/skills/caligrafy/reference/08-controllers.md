@@ -77,7 +77,7 @@ Frameworks are meant to help organize and structure code. Some frameworks impose
 
 Our framework provides the flexibility to create a controller that is independent of a model and it allows changing its context at any point using the `associate` method that takes a `Model` and a database `table name` arguments and returns a `Controller`:
 
-`public function associate(Model $model, String $tablename);`
+`public function associate($modelName, $tablename);` (the model is given by its class name, for example `'Book'`, or as a `Model` object)
 
 Let's consider the books example again. Assume you have a `Book` and a `Publisher` models in an online library system. In a model-constrained framework, if you need to allow the users to make changes to the `Publisher` model, you will need to have a dedicated `PublisherController`. 
 
@@ -92,7 +92,7 @@ class MyController extends Controller {
     {
        // associate the controller with the Book model and the books table
        $this->associate('Book', 'books'); 
-       
+
        // all controller methods executed below will be in the context of Book
      }
      public function addPublisher()
@@ -101,7 +101,7 @@ class MyController extends Controller {
        $this->associate('Publisher', 'publishers'); 
 
        // all controller methods executed below will be in the context of Publisher
- 
+
      }
 }
 ```
@@ -116,13 +116,13 @@ class MyController extends Controller {
 use Caligrafy\Controller;
 
 class MyController extends Controller {
-  
+
     public function myMethod()
     {
        // Context: set the context of the controller by association with model and table 
-       
+
        // Retrieve & Validate: fetch any parameters needed from the request when applicable and validate it
-       
+
        // Model: Create a model when applicable based on the retrieved data or the data to be changed
 
        // Act: perform the action on the model
@@ -133,6 +133,10 @@ class MyController extends Controller {
 }
 
 ```
+
+> **Be careful with `{id}` routes:** `find()`, `save()` and `delete()` take the id from the `{id}` route variable when no id is passed. On a route such as `POST /books/{id}/reviews`, `$this->save($review)` would **update** the review whose id is the book id. Name the variable differently (`{book_id}`) or pass the id explicitly.
+
+> **Redirects:** `redirect('/path')` only sends a `Location` header. Add `exit;` (or `return`) right after it when code follows.
 
 + From the moment a `Controller` is a created as previously described, powerful built-in methods and properties are provided out of the box.
 
@@ -148,20 +152,21 @@ protected $validator; // The GUMP validator can immediately be used from the con
 
 protected $payment; // The Stripe payment module can immediately be used from the controller once activated
 
-public function associate(Model $modelname,  String $table); // allows the model to switch context
+public function associate($modelname, $table); // allows the model to switch context: associate('Book', 'books')
 
 public function activatePayment(); // Activates the Stripe Payment module
 
-public function all($args = null); // Returns all entries of a model unless an array of condition, order and limit are specified to complete the query
+public function all($args = array()); // Returns all entries of a model unless an array of condition, order, limit and bindings is specified to complete the query (see Models)
 
 public function find($id = null); // returns a specific entry. When id is not provided it is fetched from the request URI
 
-public function save($inputs, $id = null); // saves an input Array or Model to the database. When an id is provided it would update
+public function save($inputs, $id = null); // saves an input Array or Model to the database. It updates when an id is given OR when the route has an {id} variable, otherwise it creates
 
 public function delete($id = null); // delete a specific entry. When id is not provided it is fetched from the requested URI
 
 public function search(String $scope = null, String $keywords = null); 
 /* returns all entries in a Model with an attribute that matches the keyword search
+ * $scope lists the columns, separated by commas. The keywords are bound, never inserted in the SQL
  * There are two wildcards that can be passed on with keywords:
  * The percent sign (%) represents zero, one, or multiple characters
  * The underscore sign (_) represents one, single character
@@ -169,7 +174,7 @@ public function search(String $scope = null, String $keywords = null);
 
 public function table(); // returns the database table that the model is associated to at any point in time
 
-public function check($data, $rules = array(), $filters = array()); // calls the GUMP validator for validation and /or filtering
+public function check($data, $rules = array(), $filters = array()); // calls the GUMP validator for validation and /or filtering (see Validation for the return values)
 
 public function validate($data, $rules); // calls the GUMP validation method
 

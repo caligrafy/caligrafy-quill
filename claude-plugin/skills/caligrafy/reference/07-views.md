@@ -87,7 +87,7 @@ The `view` method takes 2 arguments
 
 `public function view(String $templateName, Array $parameters);`
 
-The `templateName` is the name of the `pug` template. The `parameters` is a key/value pair array of the `template variable name` and the `value` that needs to be sent to the view.
+The `templateName` is the name of the `pug` template (path from `/application/views`, without the `.pug` extension). When the request is an API call (`Accept: application/json`) or when the template name is `null`, the `view` method returns the `parameters` as JSON instead and ends the request: set any HTTP status code with `http_response_code()` before calling it. The `parameters` is a key/value pair array of the `template variable name` and the `value` that needs to be sent to the view.
 
 Let's take the "Hello World" example from before and let's assume that we want the sentence in the body to change dynamically. In this example, we need to have a key/value pair that holds the name of the variable that will be used in the view and the value of it is the sentence that we want to display. 
 
@@ -124,7 +124,6 @@ class HelloController extends Controller {
        return view('helloworld', array('sentence' => 'This is our first view using a route'));
    }
 ```
-
 > The use of the `View` in this framework is very straightforward. Most of the effort should be in understanding the syntax of the `Pug` language.It is a simple language to pick up especially if you are familiar with HTML. 
 > Learn Pug and Phug [here](https://www.phug-lang.com/#language-reference)
 

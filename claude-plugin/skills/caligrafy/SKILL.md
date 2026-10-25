@@ -16,7 +16,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Topic | Read |
 | - | - |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G33) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G39) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -28,6 +28,8 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Controllers, associate(), built-in CRUD | [08-controllers.md](reference/08-controllers.md) |
 | Helpers, HTML forms, CSRF, REST API + Postman | [09-helpers-forms-rest-api.md](reference/09-helpers-forms-rest-api.md) |
 | Authentication module | [09.1-authentication.md](reference/09.1-authentication.md) |
+| Production checklist, server-file protection, upgrading old projects, behavior changes | [09.5-security-and-upgrading.md](reference/09.5-security-and-upgrading.md) |
+| This Claude Code plugin (commands, agent, install) | [10-claude-code-plugin.md](reference/10-claude-code-plugin.md) |
 | Stripe and Coinbase payments | [09.2-stripe-crypto-payment.md](reference/09.2-stripe-crypto-payment.md) |
 | Metadata, rich cards, SEO, analytics | [09.3-metadata-rich-cards.md](reference/09.3-metadata-rich-cards.md), [09.4-search-referencing-analytics.md](reference/09.4-search-referencing-analytics.md) |
 | Vue as a library (`caligrafer app`): setup, flow, structure, routes, requests, forms, validation, components | [09.7.0](reference/09.7.0-vue-as-library-setup.md), [09.7](reference/09.7-vue-flow-of-information.md), [09.7.1](reference/09.7.1-vue-structure.md), [09.7.2](reference/09.7.2-vue-routes.md), [09.7.3](reference/09.7.3-vue-requests.md), [09.7.4](reference/09.7.4-vue-forms.md), [09.7.5](reference/09.7.5-vue-validations.md), [09.7.6](reference/09.7.6-vue-components.md) |
@@ -63,7 +65,8 @@ docker-compose.yaml, docker/ # dev server (8080), phpmyadmin (8077), mysql (3306
 - One model class per entity, `use Caligrafy\Model;`, one `public $column;` per column, table bound explicitly via `associate()` - there is no implicit table naming.
 - Controllers `use Caligrafy\Controller;`, must have `index()`; pick the model per action with `$this->associate('Book', 'books');`.
 - Schema is written by hand in SQL (`application/models/<Entity>/create_db.sql`); the framework never migrates (except auto-pivots).
-- Many-to-many pivots are created by `belongsToMany()`; see gotcha G10 before relying on it.
+- Many-to-many pivots are created by `belongsToMany()` (typed like the referenced ids, unique constraint names - G10). Name your own FK constraints `fk_<table>_<column>`.
+- Model writes save `0`, `''` and `false`; only `null` is skipped (G7). `all()` clauses are raw SQL: use `'bindings'` for values (G8).
 - One route file: `application/config/routing/web.php`. Keep `Route::get('/', ...)` first (unmatched URLs fall back to route #1, G4) and `Route::run()` last.
 - The same route serves HTML and JSON: `view('tpl', $data)` returns JSON automatically for API calls; `api($data)` always returns JSON.
 
@@ -77,7 +80,7 @@ use Caligrafy\Database;
 class Book extends Model {
     public $id; public $title; public $author; public $publisher_id; public $created_at;
     public function publisher() { return $this->hasOne('Publisher', 'publishers'); }   // books.publisher_id -> publishers.id
-    public function findByTitle($title) {                                               // bound query, never search() with user input
+    public function findByTitle($title) {                                               // exact match with a bound query (search() is LIKE)
         $rows = Database::toArray(Database::execute('SELECT * FROM ' . $this->table . ' WHERE title = ?', [$title]));
         return array_map(fn($r) => $this->arrayToModel($r), $rows);
     }
@@ -149,7 +152,14 @@ Route::get('/shop/products', 'ProductController@all');   // data route used by a
 In `public/shop/scripts/main.js` send `{ headers: { Authorization: 'Bearer ' + apiKey, Accept: 'application/json' } }`; read server data from `env` (`env.home`, `env.token`, your own view vars). See G15, G16, G27.
 
 ### Authentication
-Uncomment `Auth::authentication('User', 'users');` and the auth routes in web.php, create the `users` table from `application/models/Auth/create_db.sql` (G13: it drops the table), then use `authorized()`, `user()`, `guard('permissions', 1)`, `authorize($user)`, `logout('/')`. Read [09.1-authentication.md](reference/09.1-authentication.md) and G14.
+Uncomment `Auth::authentication('User', 'users');` and the auth routes in web.php, create the `users` table from `application/models/Auth/create_db.sql` (safe to re-run in current templates; old copies start with `DROP TABLE` - G13), then use `authorized()`, `user()`, `guard('permissions', 1)`, `authorize($user)`, `logout('/')`. Passwords are `password_hash()`ed by `User::hashPassword()`; admin pages need `permissions >= 1` (promote in SQL). Read [09.1-authentication.md](reference/09.1-authentication.md) and G14.
+
+### File uploads
+```php
+$valid = $this->check($_FILES, ['image' => 'required_file|extension,png;jpg']);
+if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png', 'jpg']); }   // '' when refused
+```
+`uploadFile()` refuses scripts/html/svg whatever the list; `public/uploads/.htaccess` blocks script execution (G34).
 
 ## Workflow rules for Claude
 
@@ -157,7 +167,8 @@ Uncomment `Auth::authentication('User', 'users');` and the auth routes in web.ph
 2. Read the relevant reference file; prefer the source in `framework/core/` when in doubt.
 3. New server code goes in `application/` (never `framework/` unless the user asks to change the framework). Client code goes in `public/`.
 4. Use bound `Database::execute()` queries for anything built from user input (G2, G8). Filter then validate (G6).
-5. After editing PHP, `php -l <file>`; after changing routes, hit them with curl (JSON + Bearer) or the browser.
-6. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
-7. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
-8. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.
+5. After editing PHP, `php -l <file>`; after changing routes, hit them with curl (JSON + Bearer) or the browser. When you change `framework/` or `framework/settings/application`, run `./qa/run.sh` (G38) and add a test for the change.
+6. In a project initialized with an older framework, compare its `application/` copies (auth module, `views/Client/app.pug`, `ClientController`, `AIController`) with `framework/settings/application` before assuming the current behavior (G39).
+7. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
+8. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
+9. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.

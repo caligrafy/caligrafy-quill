@@ -6,16 +6,19 @@
 - $metadata = array('metadata' => metadata());
 - $copyright = array('copyright' => copyright());
 - $env = sizeof($variables) > 2? array_slice($variables, 2) : array();
-- $env = json_encode(array_merge($env, $globals, $token, $home, $keywords, $metadata, $copyright));
-- $path = PUBLIC_PATH;
+//- $env is printed inside a JavaScript template literal (loadEnvironment(`...`)) by every client app:
+//- HTML-significant characters are hex-escaped and \ ` ${ are escaped so that the JSON reaches JSON.parse() unchanged
+- $env = json_encode(array_merge($env, $globals, $token, $home, $keywords, $metadata, $copyright), JSON_HEX_TAG | JSON_HEX_AMP | JSON_PARTIAL_OUTPUT_ON_ERROR);
+- $env = str_replace(array('\\', '`', '${'), array('\\\\', '\\`', '\\${'), $env);
+//- Only app folders and markup files made of letters, digits, - and _ can be loaded, and only from public/<appName>/
+- $path = null;
+- $validName = '/^[A-Za-z0-9_-]+$/';
+if isset($app, $appName) && is_string($app) && is_string($appName) && preg_match($validName, $appName) && preg_match($validName, $app)
+    - $candidate = realpath(PUBLIC_PATH.$appName.DIRECTORY_SEPARATOR.$app.'.php');
+    - $appFolder = realpath(PUBLIC_PATH.$appName);
+    - $path = ($candidate && $appFolder && strpos($candidate, $appFolder.DIRECTORY_SEPARATOR) === 0)? $candidate : null;
 
-if $app && $appName
-    - $path = PUBLIC_PATH.$appName."/".$app.'.php';
+if $path
+    - include($path);
 else
-    p You need to define a client app in order to be able to use this service
-
-- try { 
-    . include($path); 
-    . } catch (exception $e) { 
-    .    echo "This client app does not exist. Make sure you create in the public folder or use Caligrafer from the console to help you do that";
-    . }
+    p This client app does not exist. Make sure you create it in the public folder or use Caligrafer from the console to help you do that

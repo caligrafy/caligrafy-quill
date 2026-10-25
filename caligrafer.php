@@ -68,11 +68,25 @@ switch(strtolower($argv[1])) {
 		try {
 		   $appRoot = isset($argv[2])? "" : basename(getcwd()); 
 		   print("\n\nPreparing and signing the project for usage... \n");
-           $keys = Caligrafer::generateKeys(); 
-           $appKey = isset($keys['APP_KEY'])? $keys['APP_KEY'] : null;
-           $apiKey = isset($keys['API_KEY'])? $keys['API_KEY'] : null;
 		   $file = '.env';
-		   $input = "APP_KEY=".$appKey."\n"."API_KEY=".$apiKey."\n"."APP_ROOT=".$appRoot."\n". file_get_contents($file);
+		   $current = file_get_contents($file);
+		   // keep the keys of a project that is already signed: new keys would invalidate API keys, sessions and stored data
+		   $existingAppKey = preg_match('/^APP_KEY=(\S+)/m', $current, $m)? $m[1] : null;
+		   $existingApiKey = preg_match('/^API_KEY=(\S+)/m', $current, $m)? $m[1] : null;
+		   if ($existingAppKey && $existingApiKey) {
+		       $appKey = $existingAppKey;
+		       $apiKey = $existingApiKey;
+		       $input = $current;
+		       print("\n Existing APP_KEY and API_KEY kept");
+		   } else {
+               $keys = Caligrafer::generateKeys(); 
+               $appKey = isset($keys['APP_KEY'])? $keys['APP_KEY'] : null;
+               $apiKey = isset($keys['API_KEY'])? $keys['API_KEY'] : null;
+		       $current = preg_replace('/^(APP_KEY|API_KEY)=.*\R?/m', '', $current);
+		       $input = "APP_KEY=".$appKey."\n"."API_KEY=".$apiKey."\n". $current;
+		   }
+		   // APP_ROOT always reflects the current folder (or the root-install argument)
+		   $input = "APP_ROOT=".$appRoot."\n".preg_replace('/^APP_ROOT=.*\R?/m', '', $input);
 		   $vueInput = "VITE_APP_KEY=".$appKey."\n"."VITE_API_KEY=".$apiKey."\n";
 		   file_put_contents($file, $input);
 		   file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);

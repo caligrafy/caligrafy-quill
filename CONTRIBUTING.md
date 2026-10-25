@@ -51,3 +51,15 @@ By contributing, you agree that your contributions will be licensed under its MI
 
 ## References
 This document was inspired by the open-source contribution guidelines for [Facebook's Draft](https://github.com/facebook/draft-js/blob/a9316a723f9e918afde44dea68b5f9f39b7d9b00/CONTRIBUTING.md)
+
+## Running the tests
+
+Run the QA suite before opening a pull request that touches `framework/`, `caligrafer.php`, `.htaccess` or the client
+scaffolds, and add a test for your change in `qa/tests/`:
+
+```bash
+composer install
+./qa/run.sh
+```
+
+When you change the wiki, refresh the Claude plugin mirrors with `python3 claude-plugin/scripts/sync-wiki.py <wiki clone>`.

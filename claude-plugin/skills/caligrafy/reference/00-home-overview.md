@@ -16,6 +16,18 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 >
 > In this video we introduce you to the Caligrafy framework and to the different components that are used in it.
 
+## 🎉 New release: Claude + Caligrafy Quill
+
+Caligrafy Quill now ships with its own **[Claude Code](https://code.claude.com) plugin**. Open a Quill project in Claude Code and Claude knows the framework inside out: the complete documentation, a source-verified API reference, known gotchas, scaffolding commands (`/caligrafy-quill:new-resource`, `/caligrafy-quill:new-app`, `/caligrafy-quill:server`, `/caligrafy-quill:db`) and a `caligrafy-reviewer` agent.
+
+> [Learn how to install and use the Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
+
+## 🔒 Security release
+
+This release hardens Caligrafy Quill: server files such as `.env` are no longer reachable from a browser, uploads cannot run scripts, client apps are protected against path traversal and script injection, queries are bound, and the authentication module hashes passwords. It also fixes many-to-many pivots with `UNSIGNED` ids, `DB_PORT`, Stripe checkout options, the OpenAI `COMPLETE` command and Assistant runs.
+
+**New projects** created or cloned with this release get all the fixes automatically. **Existing projects:** updating the framework does not update the copies in your `application` folder. Follow [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading) and review the [behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes).
+
 ## Requirements
 + PHP > 7.2
 + MySql > 5.6
@@ -53,15 +65,11 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     ``` 
 
-    
-
     >
     > Note that the Caligrafer Initialize command breaks all `git` links. 
     > - If you would like to create a `git` repo for your application, it is recommended that you do so after you initialize it. 
     > - If you are pulling an application built in Caligrafy from Github and you would like to preserve the `git` connection in order to pull updates regularly, it is recommended that you proceed with the manual installation instead.
     >
-
-    
 
 + Add/Modify the following to the .env file if not accurate: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`
 
@@ -87,7 +95,7 @@ This method requires Docker to be installed on your local machine. With Docker, 
 + Run the following code from the Caligrafy root folder to start the Caligrafy server
 
     ```bash
-    
+
     #if you have php
     php caligrafer.php server start
 
@@ -108,8 +116,6 @@ This method requires Docker to be installed on your local machine. With Docker, 
 + This is a web client for MySQL. It will allow you easy access to your Database.
      - Username: `root`
      - Password: `root`
-    
-    
 
 ### Manual Installation
 + Pull the code from github (You can either clone the repo or download the zip file)
@@ -127,6 +133,17 @@ This method requires Docker to be installed on your local machine. With Docker, 
 + You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. 
 
 > For more advanced installation, check the documentation [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started)
+
+## Testing the framework
+
+Caligrafy comes with a QA suite that runs framework, HTTP and tooling tests in an isolated Docker stack (ports 8090 and 3316):
+
+```bash
+composer install
+./qa/run.sh            # add --keep to leave the stack running for debugging
+```
+
+It needs Docker, PHP with curl and Node.js, and refuses to run when an `application` folder or a `.env` file that it did not create is present (use a clean checkout of the framework).
 
 ## Why Caligrafy
 
@@ -182,7 +199,7 @@ We have created a rigorous documentation to help you understand the basics of th
     > + [Routing with parameters](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#parameterroute)
     > + [Controller Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#controllerroute)
     > + [HTML Form Methods](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#htmlformmethods)
-    
+
 3. [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)
     > + [Accessing the Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request#accessrequest)
     > + [Request Properties](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request#requestproperties)
@@ -224,6 +241,7 @@ We have created a rigorous documentation to help you understand the basics of th
 11. [Stripe & Cryptocurrency Payment](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment)
 12. [Metadata & Rich Cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards)
 13. [Search Referencing and Analytics](https://github.com/caligrafy/caligrafy-quill/wiki/9.4-Search-Referencing-and-Analytics)
+14. [Security and Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading)
 
 ### Caligrafy and Vue.js
 
@@ -266,7 +284,13 @@ Caligrafy provides easy ways to include Artificial Intelligence and Machine Lear
 4. [OpenAI: ChatGPT, GPTs, DALL.E](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E)
 5. [OpenAI: Assistants](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.5-Open-AI:-Assistants)
 6. [Open Source Agents (llama, Mistral, etc.)](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.))
-    
+
+### Caligrafy and Claude
+
+Caligrafy Quill ships with a Claude Code plugin that gives Claude complete knowledge of the framework, along with scaffolding, server, database and code review tools.
+
+1. [Claude Code Plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
+
 ## Learn Caligrafy
 
 + Caligrafy is an outstanding framework for educational purposes. We constantly develop instructional video materials to illustrate the main features of the framework. Stay on the look for more video tutorials on our youtube channel.

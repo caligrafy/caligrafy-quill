@@ -73,6 +73,14 @@ The plugin lives in [`claude-plugin/`](claude-plugin/). See its [README](claude-
 <br/>
 
 
+## 🔒 Security release
+
+This release hardens Caligrafy Quill: server files such as `.env` are no longer reachable from a browser, uploads cannot run scripts, client apps are protected against path traversal and script injection, queries are bound, and the authentication module hashes passwords. It also fixes many-to-many pivots with `UNSIGNED` ids, `DB_PORT`, Stripe checkout options, the OpenAI `COMPLETE` command and Assistant runs.
+
+**New projects** created or cloned with this release get all the fixes automatically. **Existing projects:** updating the framework does not update the copies in your `application` folder. Follow [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading) and review the [behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes).
+
+<br/>
+
 ## Requirements
 + PHP > 7.2
 + MySql > 5.6
@@ -198,6 +206,19 @@ This method requires Docker to be installed on your local machine. With Docker, 
 <br />
 
 
+## Testing the framework
+
+Caligrafy comes with a QA suite that runs framework, HTTP and tooling tests in an isolated Docker stack (ports 8090 and 3316):
+
+```bash
+composer install
+./qa/run.sh            # add --keep to leave the stack running for debugging
+```
+
+It needs Docker, PHP with curl and Node.js, and refuses to run when an `application` folder or a `.env` file that it did not create is present (use a clean checkout of the framework).
+
+<br />
+
 ## Why Caligrafy
 
 ### 1. Full-Stack Framework
@@ -296,6 +317,7 @@ We have created a rigorous documentation to help you understand the basics of th
 11. [Stripe & Cryptocurrency Payment](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment)
 12. [Metadata & Rich Cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards)
 13. [Search Referencing and Analytics](https://github.com/caligrafy/caligrafy-quill/wiki/9.4-Search-Referencing-and-Analytics)
+14. [Security and Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading)
 
 ### Caligrafy and Vue.js
 

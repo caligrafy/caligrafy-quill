@@ -24,14 +24,14 @@ block content
                             label(for='passcode', class=isset($errors['passcode']) ? 'textcolor5 error' : 'textcolor5') * passcode
                             if isset($errors['passcode'])
                                 p(class='error')= $errors['passcode']
-                            input(type='password', name='passcode', id='passcode' class='form-control input-default', required, placeholder='Enter a passcode', maxlength='20')
+                            input(type='password', name='passcode', id='passcode' class='form-control input-default', required, placeholder='Enter a passcode', maxlength='72')
                         .spacer-1      
 
                         .form-group
                             label(for='confirmpasscode', class=isset($errors['passcode']) ? 'textcolor5 error' : 'textcolor5') * confirm passcode
                             if isset($errors['passcode'])
                                 p(class='error')= $errors['passcode']
-                            input(type='password', name='confirmpasscode', id='confirmpasscode' class='form-control input-default', required, placeholder='Confirm your passcode', maxlength='20')
+                            input(type='password', name='confirmpasscode', id='confirmpasscode' class='form-control input-default', required, placeholder='Confirm your passcode', maxlength='72')
                         .spacer-1     
 
                         .spacer-2

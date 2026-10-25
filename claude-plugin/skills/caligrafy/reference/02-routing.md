@@ -16,6 +16,12 @@ Route::post($uri, $callback);
 Route::put($uri, $callback);
 Route::delete($uri, $callback);
 ```
+Keep the following rules in mind when you define routes:
++ A request matches a route when the HTTP method is the same and the path has the same number of segments, each fixed segment being identical. `{variables}` match any single segment.
++ The routes are evaluated in the order they are defined and the first match wins.
++ When no route matches (an unknown URL or a wrong HTTP method), **the first route defined in the file is executed**. Caligrafy does not return a 404 by itself: keep `Route::get('/', ...)` as the first route.
++ `Route::run();` must always be the last statement of the file.
+
 Your first reaction might be that HTML `forms` do not support `PUT` and `DELETE`. True that and the framework is capable of doing that work for you. You can check [here](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#htmlformmethods) how it is done.
 
 ## "Hello World" Route
@@ -59,6 +65,8 @@ You could also specify a specific method from the `BookController` to execute:
 Route::get('books', 'BookController@read');
 ```
 This route would call the method `read` from `BookController`.
+
+> Routes that point to a controller (`'BookController'` or `'BookController@read'`) are protected for API calls: a request that asks for JSON (`Accept: application/json`) must carry the `API_KEY` as a Bearer token. Routes defined with a closure (`function() {...}`) do not check the API key. Learn more about the [REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#restapi).
 Later on, you will learn how to create controllers.
 
 > #### (video) [Advanced Routing](https://www.youtube.com/watch?v=32UvcK2bSzo&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)
@@ -80,5 +88,4 @@ Or, using Pug directives that will do it automatically for you:
 form(action="/books", method="POST")
     =methodField('PUT')      
 ```
-
 >[Next Section: Learn about Requests](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)

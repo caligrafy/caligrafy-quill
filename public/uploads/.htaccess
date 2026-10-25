@@ -1,0 +1,6 @@
+# Uploaded files are data, never code: scripts dropped here are neither executed nor served.
+# mod_rewrite only (AllowOverride FileInfo, like the root .htaccess): no Require/php_flag directives.
+<IfModule mod_rewrite.c>
+    RewriteEngine On
+    RewriteRule \.(php\d*|phtml|pht|phar|phps|cgi|pl|py|sh|asp|aspx|jsp|shtml|htaccess|htpasswd)$ - [NC,F,L]
+</IfModule>

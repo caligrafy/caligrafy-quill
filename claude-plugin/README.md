@@ -4,7 +4,7 @@ Gives Claude Code full knowledge of the [Caligrafy Quill](https://github.com/cal
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 33 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata. Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 35 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G39). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + Controller (filter/validate CRUD) + REST routes |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks |
@@ -29,6 +29,21 @@ Local development: `claude --plugin-dir ./claude-plugin`, and `claude plugin val
 
 ## Updating the knowledge
 
-The files in `skills/caligrafy/reference/0*.md` mirror the wiki (https://github.com/caligrafy/caligrafy-quill/wiki)
-with a source link at the top of each. `api-reference.md` and `gotchas.md` are written from the framework source;
-update them when `framework/` changes, and bump `version` in `.claude-plugin/plugin.json`.
+The files in `skills/caligrafy/reference/0*.md`, `10-claude-code-plugin.md` and `wiki-sidebar.md` mirror the wiki
+(https://github.com/caligrafy/caligrafy-quill/wiki) with a source link at the top of each. Refresh them from a wiki clone:
+```
+git clone https://github.com/caligrafy/caligrafy-quill.wiki.git ../caligrafy-quill.wiki
+python3 claude-plugin/scripts/sync-wiki.py ../caligrafy-quill.wiki            # rewrite the mirrors
+python3 claude-plugin/scripts/sync-wiki.py ../caligrafy-quill.wiki --check    # exit 1 when a mirror is stale
+```
+The script keeps each mirror's "Verified against framework source" note. `api-reference.md` and `gotchas.md` are
+written from the framework source: update them when `framework/` changes (and run `./qa/run.sh`), then bump
+`version` in `.claude-plugin/plugin.json`.
+
+## Changelog
+- **1.1.0** - Follows the framework security release: gotchas G34-G39 (server-file protection, client-app template,
+  Watson bot on Vue 2, payments, QA suite, upgrading old projects), fixed items marked **Fixed**, API reference
+  updated (Model bindings, `Database::dsn`, `uploadFile` allow-list, `OpenAI::command/type`, Assistant polling),
+  wiki pages 9.5 Security and Upgrading and 10 Claude Code Plugin mirrored, `scripts/sync-wiki.py`, reviewer checks
+  for uploads, `constant()` on user input, outdated templates and Vue 2 syntax.
+- **1.0.0** - Initial release.

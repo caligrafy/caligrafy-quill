@@ -54,21 +54,18 @@ class Model extends \stdClass {
     // CREATE
     public function create($inputs) 
     { 
-        // turn the object into a manipulatable array
-        $inputArray = !is_array($inputs)? json_decode(json_encode($inputs), true) : $inputs;
-        
-        //remove all undesired values from object: null and other non related attributes
-        $inputArray = array_filter($inputArray, function($value, $key) { return $value != null && !in_array($key, $this->__restricted); }, ARRAY_FILTER_USE_BOTH);
+        $inputArray = $this->prepareInputs($inputs);
 
         // Format the value binder for PDO
-        $binder = [];
-        for($i = 0; $i < sizeof($inputArray); $i++) {
-            $binder[$i] = "?";
-        }
-        $binder = implode(",", $binder);
+        $columns = implode(',', array_map(array($this, 'quoteIdentifier'), array_keys($inputArray)));
+        $binder = implode(',', array_fill(0, sizeof($inputArray), '?'));
 
         // Execute the result
-        $result = Database::execute("INSERT INTO ". $this->table . " (".implode(',', array_keys($inputArray)).") VALUES (".$binder.")", array_values($inputArray));
+        if (empty($inputArray)) {
+            Database::execute("INSERT INTO ". $this->table . " () VALUES ()");
+        } else {
+            Database::execute("INSERT INTO ". $this->table . " (".$columns.") VALUES (".$binder.")", array_values($inputArray));
+        }
 
         // update the object to insert the id
         $this->id = Database::lastInsertId();
@@ -79,19 +76,15 @@ class Model extends \stdClass {
     // UPDATE
     public function update($inputs, $id)
     { 
-        // turn the object into a manipulatable array
-        $inputArray = !is_array($inputs)? json_decode(json_encode($inputs), true) : $inputs;
-
-        //remove all undesired values from object: null and other non related attributes
-        $inputArray = array_filter($inputArray, function($value, $key) { return $value != null && !in_array($key, $this->__restricted); }, ARRAY_FILTER_USE_BOTH);
+        $inputArray = $this->prepareInputs($inputs);
 
         // check if the record exists
-        $record = $this->find($id);
-        $recordExists = $id? !empty($record)? $record->toArray() : array() : array(); 
-        $recordExists = sizeof($recordExists);
-        $binder = array_map(function($v) { return $v." = ?"; }, array_keys($inputArray) );
-        if ($recordExists != 0) {
-            $result = Database::execute("UPDATE ".$this->table." SET ".implode(",", $binder)." WHERE id = ".$id, array_values($inputArray));
+        $record = $id? $this->find($id) : null;
+        if (!empty($record) && !empty($inputArray)) {
+            $binder = array_map(function($v) { return $this->quoteIdentifier($v)." = ?"; }, array_keys($inputArray));
+            $values = array_values($inputArray);
+            $values[] = $id;
+            Database::execute("UPDATE ".$this->table." SET ".implode(",", $binder)." WHERE id = ?", $values);
         } 
 
         // return the fetched result from database
@@ -117,18 +110,26 @@ class Model extends \stdClass {
     }
     
     // ALL
+    /**
+     * Fetches all the records, optionally completed by SQL clauses
+     * @param array $args 'condition' (ex: 'WHERE price > ?'), 'order' (ex: 'ORDER BY title'), 'limit' (ex: 'LIMIT 10')
+     *                    and 'bindings' (array of values bound to the ? placeholders). The clauses are inserted as is:
+     *                    never concatenate user input in them, use ? placeholders and 'bindings' instead.
+     */
     public function all($args = array()) { 
         
         $extension = '';
+        $bindings = array();
         // Create query
         if(!empty($args)) {
             $condition = isset($args['condition'])? ' '.$args['condition'].' ' : '';
             $order = isset($args['order'])? ' '.$args['order'].' ' : '';
             $limit = isset($args['limit'])? ' '.$args['limit'].' ' : '';
             $extension = $condition.$order.$limit;
+            $bindings = isset($args['bindings'])? array_values((array)$args['bindings']) : array();
         }
 
-        $result = Database::execute('SELECT * FROM ' . $this->table . $extension);
+        $result = Database::execute('SELECT * FROM ' . $this->table . $extension, $bindings);
         $renderedResult = array();
         foreach($result as $key => $value) {
             $renderedResult[] = $this->arrayToModel($value);
@@ -139,7 +140,7 @@ class Model extends \stdClass {
     /**
      * Search functionality that searched records in a table
      * @param string $scope defines the columns to search in the database separated by commas
-     * @param string $keywords defines the wildcard pattern to look for
+     * @param string $keywords defines the LIKE pattern to look for (% and _ are wildcards). It is bound, never inlined.
      * @return array $result results found in the database
      * @author Dory A.Azar 
      * @version 1.0
@@ -147,30 +148,79 @@ class Model extends \stdClass {
     public function search($scope, $keywords) {
 
         // clean up the input
-        $scopeArray = explode(',', $scope);
-        $keywords = trim($keywords);
-        $sql = '';
+        $scopeArray = array_map('trim', explode(',', (string)$scope));
+        $keywords = trim((string)$keywords);
+        $conditions = array();
+        $bindings = array();
         
         //build the query
-        foreach($scopeArray as $key => $value) {
-            $DS = ' OR ';
-            if ($key == count($scopeArray) - 1) {
-                $DS = '';
-            }
-            $value = sanitize(trim($value));
-            $sql .= "`$value`". ' LIKE ' . "'$keywords'" . $DS;
+        foreach($scopeArray as $column) {
+            $conditions[] = $this->quoteIdentifier($column) . ' LIKE ?';
+            $bindings[] = $keywords;
         }
         
-        $sql = 'SELECT * FROM ' . $this->table . ' WHERE ' . $sql;
+        $sql = 'SELECT * FROM ' . $this->table . ' WHERE ' . implode(' OR ', $conditions);
         
         // Execute the result
-        $result = Database::execute($sql);
+        $result = Database::execute($sql, $bindings);
         $renderedResult = array();
         foreach($result as $key => $value) {
             $renderedResult[] = $this->arrayToModel($value);
         }
         return $renderedResult;
     } 
+
+    /**
+     * Turns the inputs (array or object) into an array of column => value ready to be bound
+     * Only null values and restricted attributes are skipped: 0, '' and false are kept
+     */
+    protected function prepareInputs($inputs)
+    {
+        $inputArray = !is_array($inputs)? json_decode(json_encode($inputs), true) : $inputs;
+        $inputArray = is_array($inputArray)? $inputArray : array();
+        // only the columns of the table are written: helper properties of a model (ex: public $errors = []) are ignored
+        $columns = $this->tableColumns();
+        $inputArray = array_filter($inputArray, function($value, $key) use ($columns) { 
+            return $value !== null && !in_array($key, $this->__restricted, true) && (empty($columns) || in_array($key, $columns, true)); 
+        }, ARRAY_FILTER_USE_BOTH);
+        return array_map(function($value) { 
+            if (is_bool($value)) return (int)$value;
+            return is_array($value) || is_object($value)? json_encode($value) : $value; 
+        }, $inputArray);
+    }
+
+    /**
+     * Returns the column names of the associated table (cached per table for the request), or an empty array
+     * when they cannot be read
+     */
+    protected function tableColumns()
+    {
+        static $cache = array();
+        if (!$this->table) {
+            return array();
+        }
+        if (!isset($cache[$this->table])) {
+            try {
+                $rows = Database::toArray(Database::execute('SHOW COLUMNS FROM `'.str_replace('`', '', $this->table).'`'));
+                $cache[$this->table] = array_map(function($row) { return $row['Field']; }, $rows);
+            } catch (Exception $e) {
+                $cache[$this->table] = array();
+            }
+        }
+        return $cache[$this->table];
+    }
+
+    /**
+     * Validates a column name and returns it quoted for SQL
+     */
+    protected function quoteIdentifier($name)
+    {
+        $name = trim((string)$name);
+        if (!preg_match('/^[A-Za-z0-9_]+$/', $name)) {
+            throw new Exception(Errors::get(2001) . "- invalid column name '" . sanitize($name) . "'", 2001);
+        }
+        return '`' . $name . '`';
+    }
 
     /**
      * Save functionality applied directly to the object that could update or create depending on whether the object has an id or not
@@ -202,12 +252,13 @@ class Model extends \stdClass {
                 $localId = $localKey?? 'id';
                 $localKey = $localKey?  $joinedTableName.".".$localKey : $joinedTableName.".id";
                 $foreignKey = $foreignKey? $this->table.".".$foreignKey : $this->table.".".strtolower($modelName)."_id";
-                $result = Database::execute('SELECT '.$joinedTableName.'.* FROM '.$this->table.' LEFT JOIN '.$oneToOneModel->table.' ON '.$localKey." = ".$foreignKey." WHERE ".$this->table.".id = ".$this->id);
-                $oneToOneModel = $oneToOneModel->arrayToModel(Database::toArray($result)[0]);
+                $result = Database::execute('SELECT '.$joinedTableName.'.* FROM '.$this->table.' LEFT JOIN '.$oneToOneModel->table.' ON '.$localKey." = ".$foreignKey." WHERE ".$this->table.".id = ?", [$this->id]);
+                $rows = Database::toArray($result);
+                $oneToOneModel = $oneToOneModel->arrayToModel($rows[0]?? array());
                 array_push($this->__restricted, $functionName);
 
             }
-        return $oneToOneModel->id? $oneToOneModel : null ;
+        return $oneToOneModel && $oneToOneModel->id? $oneToOneModel : null ;
     }
     
    
@@ -230,7 +281,7 @@ class Model extends \stdClass {
         if ($oneToManyModel instanceof Model) {
                $foreignKey = $foreignKey?? strtolower(get_class($this))."_id";
                $localKey = $localKey? $this->$localKey?? $this->id : $this->id;
-               $result = Database::execute('SELECT * FROM '.$joinedTableName.' WHERE '.$foreignKey.' = '.$localKey);
+               $result = Database::execute('SELECT * FROM '.$joinedTableName.' WHERE '.$this->quoteIdentifier($foreignKey).' = ?', [$localKey]);
                $result = Database::toArray($result);
                 foreach($result as $key => $value) {
                     $newModel = new $modelName($joinedTableName);
@@ -270,8 +321,11 @@ class Model extends \stdClass {
         $pivotOutcome = array();
     
         
-        // create the pivot table
-        $result = Database::execute('CREATE TABLE IF NOT EXISTS '.$pivot.' (`id` INT(25) UNSIGNED NOT NULL AUTO_INCREMENT,`'.$fklocal.'` INT(25) NOT NULL, `'.$fkjoin.'` INT(25) NOT NULL, `created_at` DATETIME NOT NULL DEFAULT now(), `modified_at` DATETIME NOT NULL DEFAULT now() ON UPDATE now(), PRIMARY KEY (`id`), CONSTRAINT fk1 FOREIGN KEY (`'.$fklocal.'`) REFERENCES `'.$table1.'` (`'.$foreignKeyLocal.'`) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT fk2 FOREIGN KEY (`'.$fkjoin.'`) REFERENCES `'.$table2.'` (`'.$foreignKeyJoin.'`) ON UPDATE CASCADE ON DELETE CASCADE
+        // create the pivot table: the foreign key columns copy the type of the referenced ids (signed or unsigned)
+        // and the constraint names are unique per pivot (MySQL requires unique constraint names per database)
+        $typeLocal = $this->columnType($table1, $foreignKeyLocal);
+        $typeJoin = $this->columnType($table2, $foreignKeyJoin);
+        Database::execute('CREATE TABLE IF NOT EXISTS '.$pivot.' (`id` INT(25) UNSIGNED NOT NULL AUTO_INCREMENT,`'.$fklocal.'` '.$typeLocal.' NOT NULL, `'.$fkjoin.'` '.$typeJoin.' NOT NULL, `created_at` DATETIME NOT NULL DEFAULT now(), `modified_at` DATETIME NOT NULL DEFAULT now() ON UPDATE now(), PRIMARY KEY (`id`), CONSTRAINT `'.$this->constraintName($pivot, $fklocal).'` FOREIGN KEY (`'.$fklocal.'`) REFERENCES `'.$table1.'` (`'.$foreignKeyLocal.'`) ON UPDATE CASCADE ON DELETE CASCADE, CONSTRAINT `'.$this->constraintName($pivot, $fkjoin).'` FOREIGN KEY (`'.$fkjoin.'`) REFERENCES `'.$table2.'` (`'.$foreignKeyJoin.'`) ON UPDATE CASCADE ON DELETE CASCADE
         ) ENGINE = InnoDB DEFAULT CHARSET = utf8;');
 
 
@@ -280,7 +334,7 @@ class Model extends \stdClass {
 
         // build the pivot model and associate to the caller object
         // build the pivot model and associate to the caller object
-        $result = $this->id? Database::execute('SELECT '.$table2.'.* FROM '.$table1.' LEFT JOIN '.$pivot.' ON '.$table1.'.'.$foreignKeyLocal.'='.$pivot.'.'.$fklocal.' LEFT JOIN '.$table2.' ON '.$table2.'.'.$foreignKeyJoin.'='.$pivot.'.'.$fkjoin.' WHERE '.$table1.'.'.$foreignKeyLocal.' = '.$this->id) : []; //$pivot.'.'.$foreignKeyLocal
+        $result = $this->id? Database::execute('SELECT '.$table2.'.* FROM '.$table1.' LEFT JOIN '.$pivot.' ON '.$table1.'.'.$foreignKeyLocal.'='.$pivot.'.'.$fklocal.' LEFT JOIN '.$table2.' ON '.$table2.'.'.$foreignKeyJoin.'='.$pivot.'.'.$fkjoin.' WHERE '.$table1.'.'.$foreignKeyLocal.' = ?', [$this->id]) : [];
         $result = Database::toArray($result);
 
 
@@ -386,6 +440,31 @@ class Model extends \stdClass {
         return $result;
     }
     
+    /**
+     * Returns the SQL type of a column (ex: 'int unsigned') so that foreign keys can match it
+     * Falls back to INT(25) (the previous default) when the column cannot be inspected
+     */
+    protected function columnType($table, $column)
+    {
+        try {
+            $rows = Database::toArray(Database::execute('SHOW COLUMNS FROM `'.str_replace('`', '', $table).'` WHERE Field = ?', [$column]));
+            $type = $rows[0]['Type']?? null;
+            if ($type && preg_match('/^[a-z]+(\(\d+\))?( unsigned)?( zerofill)?$/i', $type)) {
+                return strtoupper($type);
+            }
+        } catch (Exception $e) {}
+        return 'INT(25)';
+    }
+
+    /**
+     * Builds a foreign key constraint name that is unique and fits the 64 characters MySQL allows
+     */
+    protected function constraintName($pivot, $column)
+    {
+        $name = 'fk_'.$pivot.'_'.$column;
+        return strlen($name) <= 64? $name : 'fk_'.substr($pivot, 0, 40).'_'.substr(md5($pivot.'_'.$column), 0, 16);
+    }
+
     /**
      * Checks if a table exists
      * @return boolean of the result

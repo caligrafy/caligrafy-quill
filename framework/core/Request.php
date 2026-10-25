@@ -263,11 +263,14 @@ class Request extends \stdClass {
      */    
     private function checkCSRF()
     {
-        $approved = explode(',', APPROVED_AGENTS);
+        // user agents listed in APPROVED_AGENTS (comma separated) skip the check. Empty entries are ignored
+        // so that an empty setting never approves requests sent without a User-Agent
+        $approved = defined('APPROVED_AGENTS')? array_filter(array_map('trim', explode(',', (string)APPROVED_AGENTS)), 'strlen') : array();
 
         //if it's a form and not an API then check for CSRF
-        if(!$this->wantsJson() && !in_array($this->userAgent, $approved )) {
-            if (!isset($_POST['_token']) || (isset($_POST['_token']) && !hash_equals($_POST['_token'], $_SESSION['token']))) {
+        if(!$this->wantsJson() && !in_array($this->userAgent, $approved, true)) {
+            $token = $_POST['_token']?? null;
+            if (!is_string($token) || !isset($_SESSION['token']) || !hash_equals($_SESSION['token'], $token)) {
                 throw new Exception(Errors::get('3000'), 3000);
                 exit;
             }         

@@ -19,7 +19,7 @@ use \Exception as Exception;
 define("ASSISTANT_GPT3", "gpt-3.5-turbo");
 define ("ASSISTANT_GPT4", "gpt-4");
 define ("ASSISTANT_GPT4O", "gpt-4o");
-define ("ASSISTANT_GPT4OMINI", "gpt-4o mini");
+define ("ASSISTANT_GPT4OMINI", "gpt-4o-mini");
 define ("ASSISTANT_GPT4_32", "gpt-4-32k");
 define ("ASSISTANT_GPT4_LATEST", "gpt-4o");
 define ("ASSISTANT_GPT4_LATEST_VISION", "gpt-4-vision-preview");
@@ -310,17 +310,13 @@ class Assistant extends \stdClass {
             "Content-Type: application/json"
             )
         );
-        // Overrides per run
-        $this->instructions = $instructions?? $this->instructions;
-
-        $body = array(
-            "assistant_id" => $this->assistant_id?? null,
-            "model" => $model?? $this->_model,
-            "additional_instructions" => $additional_instructions,
-            "instructions" => $this->instructions,
-            "tools" => $tools?? $this->tools,
-            "metadata" => $metadata
-        );
+        // Only the overrides that are given are sent: otherwise the run uses the assistant's own model, tools and instructions
+        $body = array("assistant_id" => $this->assistant_id?? null);
+        if (!empty($model)) { $body["model"] = $model; }
+        if (!empty($additional_instructions)) { $body["additional_instructions"] = $additional_instructions; }
+        if (!empty($instructions)) { $body["instructions"] = $instructions; }
+        if (!empty($tools)) { $body["tools"] = $tools; }
+        if (!empty($metadata)) { $body["metadata"] = $metadata; }
 
         if ($this->thread_id && $this->assistant_id) {
             
@@ -336,22 +332,23 @@ class Assistant extends \stdClass {
      * 
      * Retrieve the assistant responses
      */
-    public function retrieveResponse() 
+    public function retrieveResponse($timeout = 120, $interval = 2) 
     {
         $statuses = ["queued", "in_progress"];
-        $response = [];
+        $start = time();
 
-        if (!in_array($this->status, $statuses)){
+        // poll the run until it is no longer queued or in progress, or until $timeout seconds have passed
+        while (in_array($this->status, $statuses) && $this->thread_id && $this->run_id && (time() - $start) < $timeout) {
+            sleep($interval);
+            $response = httpRequest($this->_thread_url.'/'.$this->thread_id.'/runs/'.$this->run_id, 'GET', array(), $this->_headers);
+            $this->status = $response['status']?? 'failed';
+        }
+
+        if (!in_array($this->status, $statuses)) {
             $run_messages = $this->listMessages();
-            if($run_messages['data'][0]) array_push($this->messages, $run_messages['data'][0]);
-            return $this;
+            if (!empty($run_messages['data'][0])) array_push($this->messages, $run_messages['data'][0]);
         }
-        else {
-            sleep(2);
-            $response = $this->thread_id && $this->run_id ? httpRequest($this->_thread_url.'/'.$this->thread_id.'/runs/'.$this->run_id, 'GET', array(), $this->_headers) : ''; 
-            $this->status = $response['status'];
-            return $this->retrieveResponse();
-        }
+        return $this;
 
     }
 

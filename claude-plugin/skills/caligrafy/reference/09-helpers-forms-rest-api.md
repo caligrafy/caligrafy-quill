@@ -4,8 +4,8 @@
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
 > **Verified against framework source (see gotchas.md):**
-> - Source signatures differ in places: `guard()` defaults are `$loginUrl='/login'`, `$notAuthorized='/notAuthorized'`; `startWith()/endWith()` return booleans; `redirect()` does not exit. See api-reference.md > Helpers.
-> - API calls need BOTH `Authorization: Bearer <API_KEY>` and `Accept: application/json` (gotchas G1).
+> - `redirect()` does not exit (G5); `guard()` defaults are `$loginUrl='/login'`, `$notAuthorized='/notAuthorized'` and it exits.
+> - API calls need BOTH `Authorization: Bearer <API_KEY>` and `Accept: application/json` (gotchas G1). The `API_KEY` is exposed to client apps (G27).
 
 This framework provides a certain number of capabilities that are meant to accelerate, to some extent, some of the basic logic that is redundant in every project. Some of those are global helper methods that can be used across the framework, others are specific to HTML Forms. Last but not least, we will show how this framework is already prebuilt to handle api calls without any extra coding.
 
@@ -14,7 +14,7 @@ This framework provides a certain number of capabilities that are meant to accel
 ```php
 function view($viewName, $viewData = array()); // returns a view that uses the Pug template viewName with the data sent to it `viewData`
 
-function redirect($url); // redirects to another local route
+function redirect($url); // redirects to another local route. It only sends a Location header: add exit; after it when code follows
 
 function api($viewData = array()); // returns a view suitable for api result
 
@@ -24,20 +24,33 @@ function connect(); // connects to the database with the credentials defined in 
 
 function currentRoute(); // returns the current Route
 
-function httpRequest($url, $method, $data, $headers); // performs an http request, mainly used to send http requests to external apis
+function httpRequest($url, $method, $data, $headers, $username = null, $password = null); // performs an http request, mainly used to send http requests to external apis. $data is sent as JSON for every method except GET. Returns the decoded JSON response
 
 function httpFile($url, $filepath, $headers, $username = null, $password = null, $purpose = 'assistants'); // performs an http request to upload file
 
-function sendMail($recipients, $emailContent, $from); // sends an email from the host defined in the env file
+function sendMail($recipients, $emailContent, $from); // sends an email through the SMTP server defined by MAIL_HOST, MAIL_PORT, MAIL_USERNAME and MAIL_PASSWORD in the env file. Returns true or false
+// $recipients: array('email' => 'someone@example.com' or array of emails, 'name' => 'Someone')
+// $emailContent: array('subject' => 'Subject', 'body' => '<p>HTML content</p>')
+// $from: array('email' => 'me@example.com', 'name' => 'Me')
+
+function uploadFile($file, $allowedExtensions = null); // moves an uploaded file ($_FILES entry, for example $this->request->files('image')) to public/uploads under a random name and returns its public URL, or '' when the file is refused
+// Only the extensions in $allowedExtensions are accepted. The default list (DEFAULT_UPLOAD_EXTENSIONS) covers images, documents, audio, video, zip and json.
+// Scripts and markup (php, phtml, phar, cgi, html, js, svg...) are always refused
+
+function isAllowedUpload($filename, $allowedExtensions = null); // tells whether uploadFile() would accept this file name
+
+function deleteFile($url); // deletes a file of public/uploads given its public URL
+
+function import($filename); // requires a library from framework/librairies or a helper from framework/helpers
 ```
 
 + Global Variables & Session helper methods
 ```php
-function saveInSession(Object $input, String $sessionVariableName); // saves any data type into a define session variable
+function saveInSession($input, String $sessionVariableName); // saves any data type into a define session variable
 
 function clearFromSession(String $sessionVariableName); // clears a session variable
 
-function session($key, $value = null); // Gets or sets a session variable. When a value is specified it saves it. Otherwise, it retrieves it.
+function session($key, $value = null); // Gets or sets a session variable. When a value is specified (including 0, '' or false) it saves it. Otherwise, it retrieves it. Use clearFromSession() to remove it
 
 function scripts($key, $value = null); // Gets or sets a script stored in the session. When a value is specified it saves it. Otherwise, it retrieves it.
 
@@ -69,11 +82,13 @@ function sanitize($string); // performs a basic html sanitization of a string
 
 function parsePath($path); // returns an array of the different parts of a path
 
-function startWith($haystack, $needle); // checks if a haystack starts with a needle and returns it without the needle
+function startWith($haystack, $needle); // returns true if the haystack starts with the needle
 
-function endWith($haystack, $needle); // checks if a haystack ends with a needle and returns it without the needle
+function endWith($haystack, $needle); // returns true if the haystack ends with the needle
 
-function singularize($word); // returns the singular of a word by simply getting rid of the last character
+function sanitizePath($path); // removes the leading and trailing slashes of a path
+
+function singularize($word); // returns the singular of a word by simply getting rid of the last character (books -> book, but categories -> categorie)
 
 function rearrange($arr); // returns a new array arranged by index 
 
@@ -104,7 +119,7 @@ function unauthorize(); // use this method upon your logout mechanism to unautho
 
 function user(); // returns the logged in user
 
-function guard($permissionAttribute, $acceptedPermission, $loginUrl = '/'); // checks if user is permitted to use controller, otherwise redirect to the specified url
+function guard($permissionAttribute, $acceptedPermission, $loginUrl = '/login', $notAuthorizedUrl = '/notAuthorized'); // redirects to $loginUrl when nobody is logged in and to $notAuthorizedUrl when the user's permission is lower than $acceptedPermission, then stops the script
 
 function logout($redirectUrl = '/'); // logs out an authenticated user and redirects to the specified url
 
@@ -179,6 +194,8 @@ From the terminal, run ```./caligrafer.php generatekeys``` or ```php caligrafer.
 + Generate Multiple API keys for distribution
 If you have an APP_KEY and API_KEY already defined in your ```.env``` file or if you created them through Caligrafer, you might need to generate more API_KEY(s) to hand over to third-parties. You can do this with Caligrafer. From the terminal, run ```./caligrafer.php generateapikey``` or ```php caligrafer.php generateapikey```. This will generate a new API_KEY for you to give away.
 
+> **How API keys work:** an `API_KEY` is the `APP_KEY` encrypted with itself, so every key generated from the same `APP_KEY` is valid and they cannot be revoked one by one: changing the `APP_KEY` revokes all of them (and logs every user out). Also, the `API_KEY` is given to the browser in the `env` of the Vue apps served by Caligrafy, so treat it as a public identifier of your application rather than a secret: protect private data with authentication (`authorized()`, `guard()`) as well.
+
 **2. Enabling API Access:**
 In the `/application/config/routing/web.php`, you will need to activate API access and define the routes. By default the API access is enabled through ```Auth::activateAPI()```. By commenting out the statement, you disable all API accesses.
 
@@ -190,7 +207,7 @@ try {
     Route::get('/books', 'BookController@readAll'); // returns all books in the database books table
     Route::post('/books', 'BookController@create'); // expects a form with all book attributes to create a book record
     Route::put('/books/{id}', 'BookController@update'); // expects a form with all the book attributes to update for book with specified id
-    Route::delete('/books/1', 'BookController@remove'); // deletes book with specified id
+    Route::delete('/books/{id}', 'BookController@remove'); // deletes book with specified id
 
     Route::run();
 
@@ -205,7 +222,7 @@ try {
 
 **4.Create a Controller:** 
 
-In order to output a result, whether an HTML page or a JSON output, you need to return a `View` from the `Controller`. When you first start your project, you most likely don't have any HTML pages or Pug pages created. You however might want to test your api service. In order to help you achieve that, you can return a view that has a `null` template name. 
+In order to output a result, whether an HTML page or a JSON output, you need to return a `View` from the `Controller`. This example has been tested end to end with the Caligrafy QA suite (`qa/run.sh`). When you first start your project, you most likely don't have any HTML pages or Pug pages created. You however might want to test your api service. In order to help you achieve that, you can return a view that has a `null` template name. 
 ```php
 use Caligrafy\Controller;
 
@@ -223,6 +240,7 @@ class BookController extends Controller {
       $book = new Book();
       $book->title = isset($parameters['title'])? $parameters['title'] : '';
       $book->author = isset($parameters['author'])? $parameters['author'] : '';
+      $book->publisher_id = isset($parameters['publisher_id'])? $parameters['publisher_id'] : null;
       return api($this->save($book));
     }
 
@@ -235,7 +253,7 @@ class BookController extends Controller {
       $book->title = isset($parameters['title'])? $parameters['title'] : $book->title; // take the title only if it is set in the post
       $book->author = isset($parameters['author'])? $parameters['author']: $book->author;
       return api($this->save($book));
-      
+
     }
 
     public function remove()
@@ -267,9 +285,9 @@ In Postman, you can go to the `Authorization` tab and select `Bearer Token` from
     + **Option 1** - In the `Body` tab, select `form-data`: this option allows you to mimic an HTML form that could support both text and files. You need to make sure that all the required inputs for the model are entered appropriately. If your application supports file uploading, then you would probably want to test the API using this option. 
 
          > After you add your `form-data` inputs, verify that in the `Headers` section, you have another key `Content-Type` that got added with value either `multipart/form-data` or `application/json`. If not, you should add it manually.
-    
+
     + **Option 2** - In the `Body` tab, select `x-www-form-urlencoded`: this option allows you to send the entire content as a giant query string. This option could be used if you don't have large inputs (such as files) that need to be transferred to the server. Similarly, you need to make sure that all the required inputs for the model are entered appropriately. If your application supports file uploading, this option will not work. 
-    
+
          > After you add your `x-www-form-urlencoded` inputs, verify that in the `Headers` section, you have another key `Content-Type` that got added with value `application/x-www-form-urlencoded`. If not, you should add it manually.
 
     - **Option 3** - In the `Body` tab, select `raw`: this option allows you to send a raw file using the format of your choice. The format could be changed to `Text` or `JSON` or `XML` etc. by clicking on the `Text` dropdown.

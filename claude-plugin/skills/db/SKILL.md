@@ -22,7 +22,7 @@ Read `.env`: `DB_ACTIVATE`, `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`; use `DB_PAS
 - **Local MySQL / MAMP**: `mysql -h <DB_HOST> -u <DB_USERNAME> -p<DB_PASSWORD> <DB_DATABASE> < <script.sql>` (`DB_PORT` is ignored by the framework, G3; pass `-P` to the CLI if needed).
 
 ## 3. Before running a script
-1. Read it. If it contains `DROP TABLE`, `DROP DATABASE`, `TRUNCATE` or `DELETE` (for example `application/models/Auth/create_db.sql` drops `users`, G13), list the tables it would drop, check whether they contain rows (`SELECT COUNT(*) FROM <table>`), and get explicit confirmation before running it.
+1. Read it. If it contains `DROP TABLE`, `DROP DATABASE`, `TRUNCATE` or `DELETE` (for example `application/models/Auth/create_db.sql` of projects created before the security release drops `users`, G13), list the tables it would drop, check whether they contain rows (`SELECT COUNT(*) FROM <table>`), and get explicit confirmation before running it.
 2. If the script has its own `CREATE DATABASE` / `USE <db>`, that database wins over `DB_DATABASE` - point this out when they differ.
 3. Check FK constraint names are unique and FK column types match the parent id signedness (G10).
 4. Parent tables must be created before child tables.

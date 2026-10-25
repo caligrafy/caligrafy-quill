@@ -34,6 +34,7 @@ app.config.globalProperties.apiConfig = {
 	crossDomain: true,
 	headers: {
 		"Authorization": "Bearer " + app.config.globalProperties.config.apiKey,
+		'Accept': 'application/json',
 		'Content-Type': 'application/json'
 	}
 	
