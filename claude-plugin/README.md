@@ -4,10 +4,10 @@ Gives Claude Code full knowledge of the [Caligrafy Quill](https://github.com/cal
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 35 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G39). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 35 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G48) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + Controller (filter/validate CRUD) + REST routes |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
-| Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks |
+| Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
 | Skill | `/caligrafy-quill:db <script.sql\|tables\|query "...">` | Runs SQL scripts in the `mysql` container (or local MySQL), with safety checks for destructive scripts |
 | Agent | `caligrafy-reviewer` | Reviews Caligrafy code against the framework's real behavior |
 | Hook | PostToolUse `php -l` | Syntax-checks every `.php` file Claude writes or edits (skipped when PHP is not installed) |
@@ -41,6 +41,14 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.4.0** - End-to-end recipes: `reference/recipes-ai-apps.md` (OpenAI chat with filtered and capped history,
+  OpenAI errors returned as `response['error']` with `api_success` true, live OpenAI and Groq model lists validated
+  by regex, gpt-image images as data URLs and the 30 s `httpRequest()` timeout, Groq chat and vision from a validated
+  data URL, Vue chat UI in the Caligrafy look) and `reference/recipes-face-login.md` (encrypted face prints,
+  enrolment checks, server-side matching, lockout in UTC, `Auth::authorize`, FaceDetector client, security limits),
+  linked from the caligrafy and new-app skills. server skill: troubleshooting for port clashes
+  (`docker-compose.override.yml` with `ports: !override`) and corporate TLS inspection proxies (corporate root CA
+  mounted into the container). new-app description names @vladmandic/face-api 1.7.15 instead of face-api.js.
 - **1.3.0** - `FaceDetector` camera control and face prints (`autoStart: false`, `startStream()` with camera errors,
   `streamError`, `stopStream()`, `faceprint()`) documented in G42 and the API reference; Bootstrap 5 buttons in the
   Caligrafy black and white look and the 150px form buttons (G40); new gotchas G47 (controller names that collide with

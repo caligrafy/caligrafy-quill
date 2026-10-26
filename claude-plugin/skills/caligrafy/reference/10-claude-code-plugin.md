@@ -11,7 +11,7 @@ The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligraf
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (automatic) | `caligrafy` | The complete Caligrafy documentation (every page of this wiki), a source-verified API reference and a list of verified gotchas, security notes and documentation errata. Loads automatically whenever Claude works in a Quill project |
+| Skill (automatic) | `caligrafy` | The complete Caligrafy documentation (every page of this wiki), a source-verified API reference, a list of verified gotchas, security notes and documentation errata, and end-to-end recipes for OpenAI/Groq chat apps and face login. Loads automatically whenever Claude works in a Quill project |
 | Command | `/caligrafy-quill:new-resource` | Creates the SQL script, Model, Controller (validated CRUD actions) and REST routes for a new entity |
 | Command | `/caligrafy-quill:new-app` | Scaffolds a client app with Caligrafer (Vue as a library, Vue SPA, bot, face detection or machine learning) and wires its routes |
 | Command | `/caligrafy-quill:server` | Starts, stops or checks the Docker development server after checking ports and `.env` |
@@ -73,6 +73,10 @@ Scaffolds a client app in `public/<name>` using Caligrafer and wires its page an
 + `facedetect`: face detection and recognition
 + `ml`: ML Core (ml5 and p5)
 
+For two common projects the plugin carries complete recipes that Claude follows:
++ **AI chat apps**: an OpenAI or Groq chat with the conversation history, live model lists, image generation and Groq image analysis, behind your own controller and a Vue chat page (learn more about [OpenAI](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E) and [Groq agents](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.)))
++ **Face login**: enrolment and login with FaceDetector face prints, encrypted in the database and compared on the server, with a lockout after repeated failures. Face prints have no liveness check (a photo can pass): use face login as a convenience or a second factor, not as the only protection
+
 App names cannot use the reserved folder names `app`, `bot`, `__bots__`, `css`, `facedetect`, `fonts`, `images`, `js`, `ml`, `resources` and `uploads`.
 
 ```
@@ -80,7 +84,7 @@ App names cannot use the reserved folder names `app`, `bot`, `__bots__`, `css`, 
 ```
 
 ### `/caligrafy-quill:server <start | stop | status>`
-Runs the Docker development server through `.bin/caligrafer` (app on `8080`, phpMyAdmin on `8077`, MySQL on `3306`). Before starting, it checks that Docker is running, that those ports are free (and proposes remapping them if they are not) and that `.env` has the Docker settings (`DB_HOST=mysql`, an empty `APP_ROOT`). Learn more about [Using Docker](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#using-docker).
+Runs the Docker development server through `.bin/caligrafer` (app on `8080`, phpMyAdmin on `8077`, MySQL on `3306`). Before starting, it checks that Docker is running, that those ports are free (and proposes remapping them if they are not) and that `.env` has the Docker settings (`DB_HOST=mysql`, an empty `APP_ROOT`). It also knows how to remap ports with a `docker-compose.override.yml` and how to fix PHP requests that fail behind a corporate TLS inspection proxy ("self-signed certificate in certificate chain") by giving the container the corporate root certificate. Learn more about [Using Docker](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#using-docker).
 
 ```
 /caligrafy-quill:server start
