@@ -29,6 +29,8 @@ Caligrafy Quill now ships with its own **[Claude Code](https://code.claude.com) 
     + `/caligrafy-quill:new-app` - Vue, SPA, bot, face detection or machine learning client apps, with their routes
     + `/caligrafy-quill:server` - start/stop the Docker server after checking ports and `.env`
     + `/caligrafy-quill:db` - run your `create_db.sql` scripts in the MySQL container
++ **End-to-end recipes**: OpenAI and Groq chat apps (live model lists, image generation and understanding) and face login on `FaceDetector`
++ **Troubleshooting**: `php caligrafer.php doctor` first, then the Docker notes (port clashes, corporate TLS proxies); `php caligrafer.php upgrade` for existing projects
 + **A `caligrafy-reviewer` agent** that reviews your Caligrafy code, and a hook that runs `php -l` on every PHP file Claude edits
 
 ### Get the plugin

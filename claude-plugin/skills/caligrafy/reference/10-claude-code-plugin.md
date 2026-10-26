@@ -19,6 +19,10 @@ The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligraf
 | Agent | `caligrafy-reviewer` | Reviews your Caligrafy code against the framework's real behavior |
 | Hook | `php -l` | Syntax-checks every `.php` file Claude writes or edits (skipped when PHP is not installed) |
 
+The plugin also knows the Caligrafer maintenance commands and uses them: `php caligrafer.php doctor` (read-only health check of the project, its keys and its services) to diagnose problems first, and `php caligrafer.php upgrade` to bring an existing project up to date with the framework templates.
+
+Current version: **1.8.0**. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7) and `doctor` (1.8).
+
 ## Installing the plugin
 
 ### Automatic (recommended)
@@ -89,6 +93,8 @@ Runs the Docker development server through `.bin/caligrafer` (app on `8080`, php
 ```
 /caligrafy-quill:server start
 ```
+
+When something does not work (database connection, API keys, models not available to a key, TLS errors behind a corporate proxy), the skill runs `php caligrafer.php doctor` first, then follows its troubleshooting notes: port clashes with a `docker-compose.override.yml`, and the corporate root certificate mounted into the Docker container when PHP cannot reach a service that the computer itself reaches.
 
 ### `/caligrafy-quill:db <script.sql | tables | query "SQL">`
 Runs SQL against the project's MySQL: inside the Docker `mysql` container, or a local MySQL using the `DB_*` settings of `.env`.
