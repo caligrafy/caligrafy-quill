@@ -844,7 +844,6 @@ function httpFile($url, $filepath, $headers, $username = null, $password = null,
         $response = curl_exec($curl);
         $err = curl_error($curl);
 
-        curl_close($curl);
 
         if ($err) {
           return json_decode($err, true);
@@ -886,7 +885,6 @@ function httpRequest($url, $method, $data, $headers, $username = null, $password
         $response = curl_exec($curl);
         $err = curl_error($curl);
 
-        curl_close($curl);
 
         if ($err) {
           return json_decode($err, true);

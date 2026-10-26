@@ -11,6 +11,8 @@ block content
                 each $item in $response['response']
                     if isset($item['message']['content'])
                         p= $item['message']['content']
+                    else if isset($item['b64_json'])
+                        img.img-fluid(src="data:image/png;base64," . $item['b64_json'], alt="Generated image")
                     else if isset($item['url'])
                         p
                             a.btn-link(href=$item['url']) View generated image

@@ -1,7 +1,21 @@
 {
     "name": "caligrafy/caligrafy-quill",
     "description": "PHP + VueJS MVC framework",
-    "keywords": ["php", "vuejs", "framework", "mvc", "laravel", "light", "model", "view", "controller", "ai", "bot", "payment", "cryptocurrency"],
+    "keywords": [
+        "php",
+        "vuejs",
+        "framework",
+        "mvc",
+        "laravel",
+        "light",
+        "model",
+        "view",
+        "controller",
+        "ai",
+        "bot",
+        "payment",
+        "cryptocurrency"
+    ],
     "type": "framework",
     "license": "MIT",
     "authors": [
@@ -10,21 +24,22 @@
             "email": "dory.azar@gmail.com"
         }
     ],
-    "minimum-stability": "dev",
+    "minimum-stability": "stable",
     "require": {
-        "php": ">=7.2",
-        "pug-php/pug": "dev-master",
-        "vlucas/phpdotenv": "dev-master",
-        "wixel/gump": "dev-master",
-        "claviska/simpleimage": "dev-master",
-        "stripe/stripe-php": "17.*",
-        "phpmailer/phpmailer": "dev-master",
-        "phug/phug": "^1.13",
-        "lucianotonet/groq-php": "dev-main"
+        "php": "^8.3",
+        "pug-php/pug": "^3.6",
+        "phug/phug": "^2.0",
+        "vlucas/phpdotenv": "^5.8",
+        "wixel/gump": "^2.3",
+        "claviska/simpleimage": "^4.4",
+        "stripe/stripe-php": "^22.0",
+        "phpmailer/phpmailer": "^7.1",
+        "lucianotonet/groq-php": "^1.4"
     },
     "config": {
         "allow-plugins": {
             "nodejs-php-fallback/nodejs-php-fallback": true
         }
-    }
+    },
+    "prefer-stable": true
 }

@@ -4,15 +4,13 @@ extends ../master/layoutblocks
 block additional_css
     link(rel="stylesheet", href=session('cssUrl').'stripe_global.css')
 
-block additional_scripts 
-    script(src="https://js.stripe.com/v3/")
-    script(src=session('appService')."stripe_checkout.js")
-
 block content
     .spacer-4
     .content-section.equally-spaced-1
-        if $sessionId
-            form.horizontal-center
-                button(id="checkout-button", data-secret="{$sessionId}", public-key="{$publicKey}")
+        //- The controller passes the Checkout Session url ($result['url']): Stripe hosts the whole payment page
+        if !empty($checkoutUrl)
+            .horizontal-center
+                a#checkout-button(href=$checkoutUrl)
                     .textcolor0.medium-text Check out
-
+        else
+            p.horizontal-center The checkout session could not be created.

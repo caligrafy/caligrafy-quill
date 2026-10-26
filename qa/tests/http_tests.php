@@ -39,7 +39,6 @@ class QaBrowser
         $raw = curl_exec($ch);
         $status = curl_getinfo($ch, CURLINFO_HTTP_CODE);
         $headerSize = curl_getinfo($ch, CURLINFO_HEADER_SIZE);
-        curl_close($ch);
         $head = substr($raw, 0, $headerSize);
         preg_match('/^Location:\s*(.+)$/mi', $head, $m);
         return ['status' => $status, 'location' => trim($m[1] ?? ''), 'body' => substr($raw, $headerSize), 'headers' => $head];
