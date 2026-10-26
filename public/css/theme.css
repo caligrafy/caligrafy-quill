@@ -177,3 +177,50 @@ body {
     min-width: auto;
     background-clip: border-box;
 }
+
+/* Bootstrap 5 buttons and fields in the Caligrafy black and white look (Bootstrap 5 colors buttons with variables:
+   without these, btn-secondary text is white on white and disabled or focused controls turn blue) */
+.btn-primary {
+    --bs-btn-color: #fff;
+    --bs-btn-bg: #000;
+    --bs-btn-border-color: #000;
+    --bs-btn-hover-color: #fff;
+    --bs-btn-hover-bg: #535150;
+    --bs-btn-hover-border-color: #535150;
+    --bs-btn-active-color: #fff;
+    --bs-btn-active-bg: #000;
+    --bs-btn-active-border-color: #000;
+    --bs-btn-disabled-color: #fff;
+    --bs-btn-disabled-bg: #000;
+    --bs-btn-disabled-border-color: #000;
+    --bs-btn-focus-shadow-rgb: 0, 0, 0;
+}
+.btn-secondary {
+    --bs-btn-color: #000;
+    --bs-btn-bg: #fff;
+    --bs-btn-border-color: #000;
+    --bs-btn-hover-color: #000;
+    --bs-btn-hover-bg: #ececec;
+    --bs-btn-hover-border-color: #000;
+    --bs-btn-active-color: #000;
+    --bs-btn-active-bg: #d1d1d1;
+    --bs-btn-active-border-color: #000;
+    --bs-btn-disabled-color: #000;
+    --bs-btn-disabled-bg: #fff;
+    --bs-btn-disabled-border-color: #000;
+    --bs-btn-focus-shadow-rgb: 0, 0, 0;
+}
+.btn-secondary:hover {
+    background-color: #ececec;
+}
+.form-control:focus, .form-select:focus {
+    border-color: #000;
+    box-shadow: 0 0 0 0.2rem rgba(0, 0, 0, 0.1);
+}
+/* Links styled as buttons: styles.css makes links inherit the text color (body a:link), keep button text readable */
+a.btn-primary:link, a.btn-primary:visited, a.btn-primary:hover, a.btn-primary:active {
+    color: #fff;
+}
+a.btn-secondary:link, a.btn-secondary:visited, a.btn-secondary:hover, a.btn-secondary:active {
+    color: #000;
+}

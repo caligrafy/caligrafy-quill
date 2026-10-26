@@ -46,6 +46,11 @@ BADJQ=$(grep -n '\$(\|jQuery(\|jQuery\.' public/js/script.js public/js/picture_u
 [ -z "$BADJQ" ] && ok "layout scripts do not need jQuery" || ko "jQuery is still used" "$BADJQ"
 grep -q 'vladmandic/face-api' public/js/services/face-api.min.js && ! ls public/resources/models | grep -q mtcnn && ! grep -q 'nets.mtcnn' public/js/services/detect.js \
     && ok "face-api is @vladmandic/face-api with its own models (no MTCNN)" || ko "face-api library or models are outdated"
+node --check public/js/services/detect.js 2>/dev/null && grep -q 'async startStream' public/js/services/detect.js && grep -q 'this.streamError = error' public/js/services/detect.js \
+    && grep -q 'async faceprint' public/js/services/detect.js && grep -q 'autoStart' public/js/services/detect.js && ! grep -q 'return Promise.reject(new Error(error))' public/js/services/detect.js \
+    && ok "FaceDetector reports camera errors (startStream/streamError) and computes face prints" || ko "FaceDetector camera control or faceprint is missing"
+grep -q -- '--bs-btn-color: #000' public/css/theme.css && grep -q -- '--bs-btn-disabled-bg: #000' public/css/theme.css && grep -q 'a.btn-primary:link' public/css/theme.css \
+    && ok "theme.css keeps Bootstrap 5 buttons black and white (readable btn-secondary)" || ko "theme.css lets Bootstrap 5 recolor the buttons (white on white btn-secondary)"
 if grep -q 'ml5.bodyPose' public/js/services/mlcore.js && ! grep -q 'ml5.poseNet\|ml5.uNet' public/js/services/mlcore.js && ! grep -rq 'p5.dom\|p5.js/0\.' framework/plugins/ml; then
     ok "ML scaffold uses ml5 1.x APIs and p5 2.x"
 else ko "ML scaffold still uses ml5 0.x or p5 0.x"; fi
