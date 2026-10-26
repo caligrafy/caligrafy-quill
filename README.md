@@ -77,16 +77,19 @@ The plugin lives in [`claude-plugin/`](claude-plugin/). See its [README](claude-
 
 This release hardens Caligrafy Quill: server files such as `.env` are no longer reachable from a browser, uploads cannot run scripts, client apps are protected against path traversal and script injection, queries are bound, and the authentication module hashes passwords. It also fixes many-to-many pivots with `UNSIGNED` ids, `DB_PORT`, Stripe checkout options, the OpenAI `COMPLETE` command and Assistant runs.
 
-**New projects** created or cloned with this release get all the fixes automatically. **Existing projects:** updating the framework does not update the copies in your `application` folder. Follow [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading) and review the [behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes).
+It also moves Caligrafy to **current libraries and services**: PHP 8.3+ (Docker on PHP 8.5 and MySQL 8.4), Bootstrap 5 without jQuery, Vue 3.5 and a Vite 8 + Pinia SPA template, the current OpenAI models and image API, Assistants on the Responses API, the Stripe Payment Element and Checkout URLs, Coinbase Business for crypto payments, current Groq models, ml5 1.4 and p5 2.3, and @vladmandic/face-api.
+
+**New projects** created or cloned with this release get all the fixes automatically. **Existing projects:** updating the framework does not update the copies in your `application` folder. Follow [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading), [Upgrading to the current libraries](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#libraries) and review the [behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes).
 
 <br/>
 
 ## Requirements
-+ PHP > 7.2
-+ MySql > 5.6
++ PHP 8.3 or higher (8.5 recommended)
++ MySQL 8.4 (or another database supported by PDO)
 + A Apache/MySql/PHP server already installed locally OR Docker
 + Git and Composer
-+ curl, mbstring, openssl, mcrypt, gd, bcmath, ext-intl, headers and redirect modules must be enabled in your servers
++ curl, mbstring, openssl, sodium, gd, bcmath, intl, pdo_mysql, and the Apache rewrite and headers modules must be enabled in your servers
++ Node.js 20.19+ or 22.12+ for the Vue Single Page Application template (`caligrafer create`)
 
 <br/>
 
@@ -208,7 +211,7 @@ This method requires Docker to be installed on your local machine. With Docker, 
 
 ## Testing the framework
 
-Caligrafy comes with a QA suite that runs framework, HTTP and tooling tests in an isolated Docker stack (ports 8090 and 3316):
+Caligrafy comes with a QA suite that runs framework, HTTP and tooling tests in an isolated Docker stack (ports 8090 and 3316, with stripe-mock and local mocks of the OpenAI, Coinbase, Groq and Watson APIs):
 
 ```bash
 composer install
@@ -249,12 +252,14 @@ Caligrafy is committed to providing continuous support to its community of devel
 ## Dependencies
 
 This framework uses several third-party librairies that are included in the distribution
-+ Phug (PHP Pug) is used for creating powerful HTML views and templates
++ Phug 2 / Pug-php 3 (PHP Pug) is used for creating powerful HTML views and templates
 + GUMP Validation is used to provide an easy and painless data validation and filtering
 + dotEnv is used to provide the capability of setting up environment variables for both local and production servers
 + claviska/SimpleImage is used to provide the ability to do server-side manipulations on images
-+ stripe/stripe-php is used for payment features
-+ coinbase/coinbase-commerce is used for cryptopayment features
++ stripe/stripe-php 22 is used for payment features (Stripe.js Payment Element on the client)
++ PHPMailer 7 sends emails, lucianotonet/groq-php connects to Groq
++ Bootstrap 5.3, Vue 3.5 and axios 1.20 (pinned CDN versions) power the default views and client apps; jQuery is no longer required
++ Cryptocurrency payments use the Coinbase Business Checkouts API (no SDK needed)
 
 
 ## Documentation

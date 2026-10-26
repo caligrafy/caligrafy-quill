@@ -8,7 +8,7 @@
 
 ## Bootstrap and request lifecycle
 
-1. `index.php` loads `vendor/autoload.php`, then `Dotenv\Dotenv::createUnsafeMutable(__DIR__)->load()` (the `.env` file **overrides** variables already in the environment, e.g. docker-compose `environment:`).
+1. `index.php` sets `error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED)`, loads `vendor/autoload.php`, then `Dotenv\Dotenv::createUnsafeMutable(__DIR__)->load()` (the `.env` file **overrides** variables already in the environment, e.g. docker-compose `environment:`).
 2. `Framework::run()`:
    - `framework/helpers/initialize.php`: sets timezone (`SERVER_TIMEZONE`), `session_start()`, creates `$_SESSION['token']` (CSRF token), defines path constants and the session URLs (`base`, `home`, `public`, `uploadsUrl`, `jsUrl`, `cssUrl`, `imagesUrl`, `appClient`, `appService`, `appResources`) plus constants `APP_CLIENT`, `APP_SERVICE_ROOT`, `APP_RESOURCES`.
    - loads `corehelpers.php`, then `loadConstantFromArray($_ENV)`: **every `.env` key becomes a PHP constant** (string values).
@@ -204,6 +204,9 @@ Root `.htaccess` (mod_rewrite only, `AllowOverride FileInfo`): front controller 
 - `models/Auth/create_db.sql`: `CREATE TABLE IF NOT EXISTS users` (passcode varchar(255), unique username).
 - `controllers/core/AI/ClientController.php` + `views/Client/app.pug`: client apps (G15, G35). `controllers/core/AI/AIController.php`: OpenAI example using `OpenAI::type()`/`command()`.
 
+## Front-end libraries (`scripts($key)`, pinned in `framework/settings/coresettings.php`)
+`bootstrap_css` / `bootstrap_script` (Bootstrap 5.3.8 CSS / bundle), `vue` (Vue 3.5.44 global prod build), `axios` (1.20.0), `jquery` and alias `bootstrap_jquery` (jQuery 4.0.0, only for Summernote), `wysiwyg_css` / `wysiwyg_js` (Summernote-lite 0.9.1), `css`, `animate`, `script`, `social_buttons_css`, `favicon`. Override in `application/config/config.php`: `scripts('bootstrap_css', '<url>')`. Client scaffolds: app/facedetect (Vue 3 via `scripts('vue')`), ml (p5 2.3.4 + ml5 1.4.0), bot (Vue 3 chat, `public/css/bot.css`). Services: `face-api.min.js` (@vladmandic/face-api 1.7.15) + `detect.js` (`FaceDetector`, `ready`), `mlcore.js` (`MlCore` 2.0), `stripe_client.js` (Payment Element), `app.js` (`loadEnvironment`, `loadVue`).
+
 ## Global helpers (`framework/helpers/corehelpers.php`)
 
 ```php
@@ -253,65 +256,84 @@ Keys: `APP_ENV=production` uses `PAY_PUBLIC_KEY_PRODUCTION/PAY_PRIVATE_KEY_PRODU
 createTransaction($amount, $currency, $card, $receipt_email = null, $metadata = null, $description = '', $transfer = array(), $save = false)
 createPaymentIntent($amount, $currency, $metadata = array(), $receipt_email = null, $description = '', $transfer = array())
 retrieveIntent($intentId)
-createCheckout($amount = 1000, $currency = 'usd', $quantity = 1, $productData = array(), $successUrl = '', $cancelUrl = '', $customerEmail = null, $locale = null, $paymentType = ['card'], $payment_intent_data = array(), $vendor = array())
+createCheckout($amount = 1000, $currency = 'usd', $quantity = 1, $productData = array(), $successUrl = '', $cancelUrl = '', $customerEmail = null, $locale = null, $paymentType = null, $payment_intent_data = array(), $vendor = array())
+   // returns ['action_success', 'data' => session, 'url' => hosted page]; payment_method_types only sent when $paymentType is given
 retrieveCheckout($sessionId)
 createAccount($email = null, $country = null, $type = 'express', $capabilities = array(), $accountInformation = array())   // Stripe Connect
 createAccountLink($accountId, $refreshUrl, $returnUrl, $type = 'account_onboarding'); createLoginLink($accountId)
 updateAccount($accountId, $updates); retrieve($accountId); getPublicKey()
 ```
-Results are arrays with `action_success` and `data` (Stripe object) or `error`. Amounts are in cents.
+Results are arrays with `action_success` and `data` (Stripe object) or `error`. Amounts are in cents. stripe-php 22 (API version pinned by the SDK). `createPaymentIntent()` sets `automatic_payment_methods.enabled`. Client: `public/js/services/stripe_client.js` (Payment Element, `confirmPayment`, `redirect: 'if_required'`, return to the same page); `default/pages/checkout.pug` links to `$checkoutUrl`.
 
-## CryptoPayment (`Caligrafy\CryptoPayment`, Coinbase Commerce, key `CRYPTO_PAY_KEY`)
+## CryptoPayment (`Caligrafy\CryptoPayment`, Coinbase Business Checkouts API, keys `COINBASE_API_KEY_NAME` / `COINBASE_API_KEY_SECRET`)
 ```php
-$crypto = new CryptoPayment();
-createTransaction($amount, $currency, $charge, $metadata = array(), $redirectUrl = '', $cancelUrl = '')   // ['data']['hosted_url']
-cancelTransaction($id); getCharges(); getCharge($chargeId); getChargeStatus($chargeId)
-coinbaseRequest($requestPath, $requestMethod, $body = null, $additionalHeaders = null)
+$crypto = new CryptoPayment($keyName = null, $keySecret = null);   // defaults to the .env keys
+createTransaction($amount, $currency, $charge = array(), $metadata = array(), $redirectUrl = '', $cancelUrl = '', $expiresAt = null)
+   // POST https://business.coinbase.com/api/v1/checkouts {amount "10.00", currency, description, metadata, successRedirectUrl, failRedirectUrl, expiresAt}
+   // returns ['action_success' => true, 'url' => hosted page, 'data' => checkout (+ 'hosted_url')]
+getCharge($chargeId); getChargeStatus($chargeId); getCharges($filters = array())   // GET /api/v1/checkouts[/{id}]
+cancelTransaction($id)                                                          // POST /api/v1/checkouts/{id}/deactivate
+refundTransaction($id, $amount = null, $currency = 'USDC', $reason = '')        // POST /api/v1/checkouts/{id}/refund
+coinbaseRequest($requestPath, $requestMethod, $body = null, $additionalHeaders = array())
+jwt($method, $path)   // per-request JWT: EdDSA (Ed25519 base64 secret) or ES256 (PEM EC key); claims sub, iss=cdp, aud=[cdp_service], nbf, exp=+120, uri
 ```
+Errors (missing keys, API errors) come back as `['action_success' => false, 'error' => message]`. Create/refund send an `X-Idempotency-Key` UUID.
 
 ## Mail (`Caligrafy\Mail`) - PHPMailer over SMTP with `MAIL_HOST`, `MAIL_PORT` (465 => ssl, else tls), `MAIL_USERNAME`, `MAIL_PASSWORD`; `sendMail()` returns bool. SMTP debug output only when `APP_DEBUG` parses as true (`filter_var(..., FILTER_VALIDATE_BOOLEAN)`).
 
 ## OpenAI (`Caligrafy\OpenAI`, key `OPEN_AI_KEY`)
 ```php
-new OpenAI($mode = TEXT)          // TEXT (chat completions) or IMAGE (images/generations) - array constants
+new OpenAI($mode = TEXT)          // TEXT (chat completions) or IMAGE (images/generations, type 'image') - array constants
 delegate($input = '', $outcome = '', $command = ANALYZE, $context = array(), $parameters = array())
 converse($parameters = array(), $attachments = array(), $method = 'POST', $additionalHeaders = array())
-// returns ['api_success' => bool, 'response' => choices|data|raw, 'type' => 'text'|'url']
+// returns ['api_success' => bool, 'response' => choices | data (images: [['b64_json' => ...]]) | raw, 'type' => 'text'|'image']
 OpenAI::command($name): ?string   // allow-list: 'summarize' -> SUMMARIZE ... (OpenAI::COMMANDS), anything else -> null
 OpenAI::type($name): ?array       // 'text' -> TEXT, 'image' -> IMAGE (OpenAI::TYPES), anything else -> null
 ```
 Commands (system prompts): `CONVERSE, SUMMARIZE, ANALYZE, CORRECT, CLASSIFY, COMPLETE` (with an `[insert]` marker the whole text is sent and the prompt asks for the replacement), `PREDICT, RECOMMEND, CUSTOM` (empty system prompt: put yours first in `$context`). Messages sent: `$context` + system command + user input/outcome.
-Model constants: `GPT3` (gpt-3.5-turbo, the default), `GPT4`, `GPT4O`, `GPT4OMINI` (gpt-4o-mini), `GPT4_32`, `GPT4_LATEST` (gpt-4o), `GPT4_LATEST_VISION`. Text defaults: temperature 0, max_tokens 1000. Image defaults: n 1, size 1024x1024.
+Models: `GPT6_LUNA` (`gpt-6-luna`, default via `OPENAI_DEFAULT_MODEL` / `OPEN_AI_MODEL`), `GPT6_SOL` (`gpt-6.1-sol`), `GPT6_ASTRA` (`gpt-6-astra`; `GPT4_LATEST` and `GPT4_LATEST_VISION` point to it), images `GPT_IMAGE` (`gpt-image-2`, default via `OPENAI_DEFAULT_IMAGE_MODEL` / `OPEN_AI_IMAGE_MODEL`), `GPT_IMAGE_BEST`, `GPT_IMAGE_FAST`. Legacy: `GPT3`, `GPT4`, `GPT4_32` (shut down), `GPT4O`, `GPT4OMINI` (retire Jan 2027).
+Defaults: TEXT `['model' => OPENAI_DEFAULT_MODEL]` only; IMAGE `['model', 'n' => 1, 'size' => '1024x1024', 'quality' => 'medium', 'output_format' => 'png']`.
 
-## Assistant (`Caligrafy\Assistant`, OpenAI Assistants API, key `OPEN_AI_KEY`)
+## Assistant (`Caligrafy\Assistant` 2.0, OpenAI Responses + Conversations APIs, key `OPEN_AI_KEY`)
 ```php
-new Assistant($parameters = array())   // name, description, instructions, metadata, model, tools, file_paths, file_ids, assistant_id
-retrieve(); delete(); start(); end()
-createMessage($content, $file_ids = [], $metadata = null, $role = "user")
-run($additional_instructions = '', $instructions = null, $tools = [], $model = '', $metadata = null)   // only non-empty overrides are sent
-retrieveResponse($timeout = 120, $interval = 2)   // polls while queued/in_progress (max $timeout s), then appends the latest message to ->messages
-listMessages(); uploadAssistantFiles($specified_paths = []); deleteAssistantFile($file_id)
-// props: assistant_id, name, description, instructions, tools, file_ids, file_paths, metadata, thread_id, run_id, status, messages
+new Assistant($parameters = array())   // name, description, instructions, model, tools, metadata, file_paths, file_ids, vector_store_id
+                                       // no request unless files are given (upload + vector store)
+retrieve()                             // no-op (compatibility)
+start()                                // POST /v1/conversations -> thread_id = conv_...
+createMessage($content, $file_ids = [], $metadata = null, $role = "user")   // queued until run()
+run($additional_instructions = '', $instructions = null, $tools = [], $model = '', $metadata = null)
+                                       // POST /v1/responses {model, input, instructions, conversation, tools, metadata}; run_id = resp_..., status
+retrieveResponse($timeout = 120, $interval = 2)   // polls GET /v1/responses/{id} while queued/in_progress
+end()                                  // DELETE /v1/conversations/{id}
+text()                                 // text of the last answer (also ->response_text)
+listMessages()                         // GET /v1/conversations/{id}/items?order=asc
+uploadAssistantFiles($paths = [])      // POST /v1/files (purpose assistants) + vector store; returns ids
+deleteAssistantFile($file_id)          // DELETE vector store file + DELETE /v1/files/{id}
+delete()                               // DELETE /v1/vector_stores/{id}
+// props: name, description, instructions, tools, file_ids, file_paths, metadata, vector_store_id, thread_id, run_id, status,
+//        messages (['role', 'content' => [['type', 'text']]]), response_text, last_response, assistant_id (unused)
 ```
-Chainable: `retrieve, start, end, createMessage, run, retrieveResponse`.
+Chainable: `retrieve, start, end, createMessage, run, retrieveResponse`. Tools: `file_search` gets `vector_store_ids` (skipped without a vector store), `code_interpreter` gets `container: {type: auto, file_ids}`, `retrieval` is converted to `file_search`. Model constants: `ASSISTANT_GPT6_LUNA` (default, `ASSISTANT_DEFAULT_MODEL` / `OPEN_AI_MODEL`), `ASSISTANT_GPT6_SOL`, `ASSISTANT_GPT6_ASTRA`.
 
-## Agent (`Caligrafy\Agent`, Groq open-source models, key `GROQ_API_KEY`)
+## Agent (`Caligrafy\Agent`, Groq, key `GROQ_API_KEY`)
 ```php
 new Agent($apiKey = "")
 configure($parameters = array())
 delegate($model = "", $messages = array(), $response_format = array(), $stream = false, $tool_choice = "", $tools = array())
-   // returns ['api_success' => bool, 'response' => content string | GroqException]
-visualize($file = "", $prompt = "Describe this image", $model = "llama-3.2-11b-vision-preview")
-transcribe($file = "", $prompt = "", $model = "whisper-large-v3", $language = "en", $response_format = "json")   // JSON string
-translate($file = "", $prompt = "", $model = "whisper-large-v3", $response_format = "json")                     // JSON string
+   // $model empty -> GROQ_DEFAULT_MODEL; returns ['api_success' => bool, 'response' => content string | error message]
+visualize($file = "", $prompt = "Describe this image", $model = GROQ_DEFAULT_VISION_MODEL)
+transcribe($file = "", $prompt = "", $model = GROQ_TRANSCRIPTION_MODEL, $language = "en", $response_format = "json")   // JSON string
+translate($file = "", $prompt = "", $model = GROQ_TRANSCRIPTION_MODEL, $response_format = "json")                     // JSON string
 ```
+Constants: `GROQ_DEFAULT_MODEL` (`openai/gpt-oss-120b` or `GROQ_MODEL`), `GROQ_SMALL_MODEL` (`openai/gpt-oss-20b`), `GROQ_DEFAULT_VISION_MODEL` (`qwen/qwen3.8-27b` or `GROQ_VISION_MODEL`), `GROQ_TRANSCRIPTION_MODEL` (`whisper-large-v3`). `GROQ_API_BASE` overrides the API URL.
 
-## Watson (`Caligrafy\Watson`, IBM Watson Assistant v2, key `WATSON_API_KEY`)
+## Watson (`Caligrafy\Watson`, watsonx Assistant v2, keys `WATSON_API_KEY`, `WATSON_URL`, `WATSON_ENVIRONMENT_ID`, `WATSON_API_VERSION`)
 ```php
-new Watson($watson_assistant_id)       // opens a session or throws
+new Watson($watson_assistant_id, $environment_id = null)   // throws without WATSON_URL; opens a session or throws
 communicate($messageText, $skillVariables = null); getSessionId(); getContext(); getSkillVariables()
 getContextVariable($variable); getConversation(); getLastExchange(); getResponse(); getExchangeAt($turnCount); closeSession()
 ```
+URLs: `{WATSON_URL}/v2/assistants/{assistant_id}[/environments/{environment_id}]/sessions[/{session}/message]?version={WATSON_API_VERSION|2024-08-25}`, basic auth `apikey:{WATSON_API_KEY}`.
 
 ## Errors (`Caligrafy\Errors::get($code)`, `Errors::set($message, $code)`)
 | Code | Meaning | Usual cause |
@@ -343,7 +365,7 @@ Reserved app names: `app, bot, __bots__, css, facedetect, fonts, images, js, ml,
 ## Docker (`docker-compose.yaml`)
 | Service | Port | Notes |
 | - | - | - |
-| `dev-box` | 8080:80 | php:8.2.2-apache, mounts `./` at `/var/www/html`, env `APP_ROOT=""`, `DB_HOST=mysql` (overridden by `.env`) |
-| `prod-box` | 8080:80 | copies code into `/var/www/html/caligrafy-quill`, runs composer + initialize |
-| `phpmyadmin` | 8077:80 | PMA_HOST=mysql |
-| `mysql` | 3306:3306 | `mysql:latest`, root/root, no named volume (`down` + `up` gives an empty database; use `stop`) |
+| `dev-box` | 8080:80 | php:8.5-apache (rewrite + headers, gd, intl, pdo_mysql, zip, bcmath), mounts `./` at `/var/www/html`, env `APP_ROOT=""`, `DB_HOST=mysql` (overridden by `.env`) |
+| `prod-box` | 8080:80 | copies code into `/var/www/html/caligrafy-quill`, composer (from `composer:2`) + initialize |
+| `phpmyadmin` | 8077:80 | `phpmyadmin:5.2.3`, PMA_HOST=mysql |
+| `mysql` | 3306:3306 | `mysql:8.4` (LTS), root/root, no named volume (`down` + `up` gives an empty database; use `stop`) |
