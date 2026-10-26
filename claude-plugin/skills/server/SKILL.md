@@ -50,6 +50,12 @@ Use `stop`, never `down`, unless the user explicitly wants containers removed: t
 
 ## Troubleshooting
 
+Run the read-only health check first: `docker-compose exec dev-box php caligrafer.php doctor` (inside the container, so
+that `DB_HOST=mysql` resolves and the network is the app's; `php caligrafer.php doctor` without Docker). It reports
+PHP/extensions, `.env`, keys (masked), the database, OpenAI/Groq keys and models, Stripe, Coinbase, Watson and SMTP, with
+one fix per problem and hints for TLS, DNS and timeout errors. `--only openai,groq` limits it, `--json` for parsing.
+Never paste its output's masked keys back into `.env`.
+
 ### Port already taken: remap without editing docker-compose.yaml
 Put personal port changes in `docker-compose.override.yml` at the project root (compose merges it automatically; it is
 not in `.gitignore`: propose adding it so personal settings are not committed). `!override` replaces the port list instead of appending to it (Compose 2.24+):
@@ -69,7 +75,7 @@ Without `!override` compose keeps `8080:80` too and still fails on the taken por
 and report the new URLs.
 
 ### "SSL certificate problem: self-signed certificate in certificate chain" from PHP in Docker
-Symptoms: OpenAI/Groq/Stripe calls return empty responses or that cURL error (`api_success` false, `httpRequest()`
+`caligrafer doctor` reports it as `FAIL ... self-signed certificate in certificate chain` with a pointer here. Symptoms: OpenAI/Groq/Stripe calls return empty responses or that cURL error (`api_success` false, `httpRequest()`
 returns null) for some hosts, while `curl` on the Mac works. Cause: a corporate TLS inspection proxy (Zscaler,
 Netskope, Palo Alto...) re-signs HTTPS traffic with a corporate root CA that macOS trusts (System keychain) but the
 Debian-based `php:8.5-apache` image does not. Never "fix" it with `CURLOPT_SSL_VERIFYPEER => false`.

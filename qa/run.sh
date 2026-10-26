@@ -110,6 +110,10 @@ echo "== HTTP tests"
 php qa/tests/http_tests.php || STATUS=1
 
 echo
+echo "== Doctor tests (caligrafer doctor inside the web container, against the mocks)"
+sh qa/tests/doctor_tests.sh || STATUS=1
+
+echo
 echo "== Hosts that only allow 'AllowOverride FileInfo' (mod_rewrite, no AuthConfig/Options)"
 $COMPOSE exec -T web sh -c "sed -i 's/AllowOverride All/AllowOverride FileInfo/' /etc/apache2/conf-enabled/docker-php.conf && apachectl -k graceful" >/dev/null 2>&1
 sleep 2

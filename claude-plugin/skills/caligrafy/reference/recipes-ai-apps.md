@@ -27,6 +27,10 @@ Route::post('/chat/groq/vision', 'GroqChatController@vision');
 `.env` (names only, never print values): `OPEN_AI_KEY`, optional `OPEN_AI_MODEL` / `OPEN_AI_IMAGE_MODEL`,
 `GROQ_API_KEY`, optional `GROQ_MODEL` / `GROQ_VISION_MODEL` / `GROQ_API_BASE`. Check
 `defined('OPEN_AI_KEY') && OPEN_AI_KEY !== ''` before calling and return a 503 with a readable message otherwise.
+Before building, run `php caligrafer.php doctor --only openai,groq`: it confirms that the keys are accepted (a key
+pasted with a leading space or `sk-proj` without its dash is reported), that the default models are allowed for the
+key's project (OpenAI projects can restrict models) and not retired (Groq), and lists the available ones. It cannot
+see billing: a `429 insufficient_quota` on the first chat means no credits.
 
 ## 2. OpenAI chat with the conversation history
 
