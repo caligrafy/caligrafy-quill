@@ -137,6 +137,11 @@ grep -q 'body .container' public/css/theme.css && grep -q 'max-width: none' publ
     && ! grep -q 'content-section.row' framework/settings/application/views/default/index.pug \
     && ok "theme.css keeps the Bootstrap 3 layout on Bootstrap 5 (full-width container, body.caligrafy-layout and header.caligrafy-header titles, centered grid, card borders)" \
     || ko "theme.css or the home view lost the Bootstrap 3 layout compatibility"
+grep -qF "nav(class='horizontal row g-0')" framework/settings/application/views/default/master/layoutblocks.pug \
+    && grep -qF 'body:where(#gesturize, .caligrafy-layout) header nav.horizontal.row > [class*="col-"]' public/css/theme.css \
+    && grep -qF 'body:where(#gesturize, .caligrafy-layout) header nav.horizontal.row > h1' public/css/theme.css \
+    && ok "theme.css gives the signed-in header columns the Bootstrap 3 15px padding and keeps the title next to the menu icon" \
+    || ko "the signed-in header lost its Bootstrap 3 column padding or title position in theme.css"
 BADJS=""
 for f in framework/plugins/*/scripts/*.js public/js/services/app.js; do node --check "$f" 2>/dev/null || BADJS="$BADJS $f"; done
 [ -z "$BADJS" ] && ok "client scaffold scripts parse (node --check)" || ko "node --check" "$BADJS"
