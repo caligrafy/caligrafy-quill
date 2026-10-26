@@ -62,6 +62,6 @@ composer install
 ./qa/run.sh
 ```
 
-Pure logic in `framework/core` gets a PHPUnit test in `tests/unit` (run alone with `vendor/bin/phpunit`, no Docker needed).
+Pure logic in `framework/core` gets a PHPUnit test in `qa/unit` (run alone with `vendor/bin/phpunit`, no Docker needed).
 
 When you change the wiki, refresh the Claude plugin mirrors with `python3 claude-plugin/scripts/sync-wiki.py <wiki clone>`.

@@ -125,7 +125,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 ## Testing the framework
 
-**G38. QA suite.** `./qa/run.sh` (Docker, PHP + curl, Node, `vendor/`) builds an isolated stack (compose project `quillqa`, ports 8090/3316) and runs framework (`qa/tests/cli_tests.php`), HTTP (`qa/tests/http_tests.php`) and tooling (`qa/tests/tooling_tests.sh`) tests, then removes everything (`--keep` to inspect). It refuses to run when a non-QA `application/` or `.env` exists. `qa/fixtures/docs/components.php` is a browser page of the wiki Vue samples (`/apps/qaapp?app=components` with `--keep`). It also runs the PHPUnit unit tests of the core (`tests/unit`, `phpunit.xml.dist`); run them alone with `vendor/bin/phpunit` (no Docker, database or `.env`), and add one there for new pure logic in `framework/core`.
+**G38. QA suite.** `./qa/run.sh` (Docker, PHP + curl, Node, `vendor/`) builds an isolated stack (compose project `quillqa`, ports 8090/3316) and runs framework (`qa/tests/cli_tests.php`), HTTP (`qa/tests/http_tests.php`) and tooling (`qa/tests/tooling_tests.sh`) tests, then removes everything (`--keep` to inspect). It refuses to run when a non-QA `application/` or `.env` exists. `qa/fixtures/docs/components.php` is a browser page of the wiki Vue samples (`/apps/qaapp?app=components` with `--keep`). It also runs the PHPUnit unit tests of the core (`qa/unit`, `phpunit.xml.dist`); run them alone with `vendor/bin/phpunit` (no Docker, database or `.env`), and add one there for new pure logic in `framework/core` (never under `tests/`: the framework requires every PHP file of `tests/` on each request).
 
 ## Current libraries (October 2026 upgrade)
 
