@@ -35,9 +35,11 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Vue as a library (`caligrafer app`): setup, flow, structure, routes, requests, forms, validation, components | [09.7.0](reference/09.7.0-vue-as-library-setup.md), [09.7](reference/09.7-vue-flow-of-information.md), [09.7.1](reference/09.7.1-vue-structure.md), [09.7.2](reference/09.7.2-vue-routes.md), [09.7.3](reference/09.7.3-vue-requests.md), [09.7.4](reference/09.7.4-vue-forms.md), [09.7.5](reference/09.7.5-vue-validations.md), [09.7.6](reference/09.7.6-vue-components.md) |
 | Vue SPA (`caligrafer create`): Vite 8 setup, Vue Router 5, SFC, Pinia | [09.8.1](reference/09.8.1-vue-spa-setup.md), [09.8.2](reference/09.8.2-vue-spa-routing.md), [09.8.3](reference/09.8.3-vue-single-file-components.md), [09.8.4](reference/09.8.4-vue-state-management.md) |
 | Watson bots | [09.9.1-ai-watson-bots.md](reference/09.9.1-ai-watson-bots.md) |
-| FaceDetect (face-api.js) | [09.9.2-ai-face-detection.md](reference/09.9.2-ai-face-detection.md) |
+| FaceDetect (@vladmandic/face-api) | [09.9.2-ai-face-detection.md](reference/09.9.2-ai-face-detection.md) |
 | ML Core (ml5 + p5) | [09.9.3-ai-machine-learning.md](reference/09.9.3-ai-machine-learning.md) |
 | OpenAI chat/images, Assistants, Groq agents | [09.9.4](reference/09.9.4-ai-openai-chatgpt-dalle.md), [09.9.5](reference/09.9.5-ai-openai-assistants.md), [09.9.6](reference/09.9.6-ai-open-source-agents-groq.md) |
+| Recipe: OpenAI/Groq chat app (history, live model list, images, Groq vision, Vue chat UI) | [recipes-ai-apps.md](reference/recipes-ai-apps.md) |
+| Recipe: face login (encrypted face prints, server-side matching, lockout, FaceDetector client) | [recipes-face-login.md](reference/recipes-face-login.md) |
 | Wiki table of contents | [wiki-sidebar.md](reference/wiki-sidebar.md) |
 
 Online docs: https://github.com/caligrafy/caligrafy-quill/wiki
