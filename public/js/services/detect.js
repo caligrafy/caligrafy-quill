@@ -6,10 +6,20 @@
 
  class FaceDetector {
     
-    constructor(media) {
+    /*
+     * @media: id of the <video>, <img> or <canvas> element to analyze
+     * @options: Optional.
+     *      - autoStart: Boolean (default true). When true and the media is a <video> without a source, the camera starts
+     *        once the models are loaded. Set it to false to start the camera yourself with startStream() and handle its errors
+     */
+    constructor(media, options = {}) {
         
         // neural network models url
         const MODEL_URL = env.app_resources + 'models';
+        this.options = Object.assign({ autoStart: true }, options);
+        this.streamError = null;
+        this.mediaId = media;
+        this.media = document.querySelector(`#${media}`) || null;
 
         // load the faceapi models (this.ready resolves once they are all loaded)
         this.ready = Promise.all([
@@ -25,35 +35,85 @@
             faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
         ])
         .then(() => { 
-                // when loaded start the stream
-                this.media = document.querySelector(`#${media}`) || null; 
-                if (this.media && this.media.tagName.toLowerCase() == 'video' && !this.media.src) {
-                    this.startStream();
+                // when loaded start the stream. The media is looked up again: Vue replaces the page elements when it
+                // mounts (after the detector is created in the scaffolds), which detaches the element found earlier
+                this.resolveMedia(); 
+                if (this.options.autoStart && this.media && this.media.tagName.toLowerCase() == 'video' && !this.media.src && !this.media.srcObject) {
+                    // errors are kept in this.streamError
+                    this.startStream().catch(error => console.log(error));
                 }
         })
         .catch((error) => { console.log(error); }); 
     }
     
     /* 
-    * Method that starts streaming from computer cam 
+    * Method that starts streaming from computer cam into the media <video>
+    * Returns a promise: resolves with the stream once the video plays, rejects with the camera error
+    * (NotAllowedError: access blocked, NotFoundError: no camera...), also kept in this.streamError
+    * @constraints: Optional. getUserMedia constraints, ex: { video: { facingMode: 'user' }, audio: false }
     */
-    async startStream() {
+    async startStream(constraints = { video: true, audio: false }) {
 
-        // Stream from media device returns a promise. Compatible on Safari, Chrome and Firefox
-        navigator.mediaDevices.getUserMedia({
-                video: true,
-                audio: false
-                }
-        )
-        .then(stream => {
+        this.streamError = null;
+        this.resolveMedia();
+        try {
+            if (!this.media) {
+                throw new Error('No media element to stream the camera into');
+            }
+            if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+                throw new Error('This browser cannot use a camera (the page needs https or localhost)');
+            }
+            // Stream from media device returns a promise. Compatible on Safari, Chrome and Firefox
+            const stream = await navigator.mediaDevices.getUserMedia(constraints);
             this.media.srcObject = stream;
-            this.media.play();
-        })
-        .catch(error => {
-            return Promise.reject(new Error(error));
-            
-        });
+            await this.media.play();
+            return stream;
+        } catch (error) {
+            this.streamError = error;
+            throw error;
+        }
+    };
 
+    /*
+    * Returns the media element that is on the page now (the element found earlier may have been replaced by Vue)
+    */
+    resolveMedia() {
+        if (!this.media || !this.media.isConnected) {
+            this.media = document.querySelector(`#${this.mediaId}`) || this.media || null;
+        }
+        return this.media;
+    };
+
+    /*
+    * Method that stops the camera stream
+    */
+    stopStream() {
+        if (this.media && this.media.srcObject) {
+            this.media.srcObject.getTracks().forEach(track => track.stop());
+            this.media.srcObject = null;
+        }
+    };
+
+    /*
+    * Promise that returns the face print of the only face in the media: { descriptor, detection }
+    * The descriptor is an array of 128 numbers: 2 descriptors of the same person are usually closer than 0.5
+    * (faceapi.euclideanDistance(a, b)), different people are usually further than 0.6
+    * Rejects when there is no face or more than one face
+    * @media: Optional. <video>, <img> or <canvas> element (default: the detector media)
+    * @minConfidence: Optional. minimum detection score (default 0.6)
+    */
+    async faceprint(media = null, minConfidence = 0.6) {
+        await this.ready;
+        const detections = await faceapi.detectAllFaces(media || this.resolveMedia(), new faceapi.SsdMobilenetv1Options({ minConfidence: minConfidence }))
+            .withFaceLandmarks()
+            .withFaceDescriptors();
+        if (detections.length === 0) {
+            throw new Error('No face found');
+        }
+        if (detections.length > 1) {
+            throw new Error('More than one face found');
+        }
+        return { descriptor: Array.from(detections[0].descriptor), detection: detections[0].detection };
     };
     
     

@@ -41,6 +41,12 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.3.0** - `FaceDetector` camera control and face prints (`autoStart: false`, `startStream()` with camera errors,
+  `streamError`, `stopStream()`, `faceprint()`) documented in G42 and the API reference; Bootstrap 5 buttons in the
+  Caligrafy black and white look and the 150px form buttons (G40); new gotchas G47 (controller names that collide with
+  the framework examples) and G48 (framework errors served with HTTP 200); reviewer item 15. Bootstrap 5 layout compatibility in G40 (full-width container, header title, grid breakpoints,
+  card borders and colors), SPA template on Bootstrap 5. new-app skill: FaceDetect camera errors and face prints, Caligrafy
+  black and white look for client apps. FaceDetector streams into the live video element (`resolveMedia()`).
 - **1.2.0** - Follows the library upgrade: gotchas G40-G46 (Bootstrap 5 without jQuery, ML Core 2.0 on ml5 1.4 / p5 2.3,
   @vladmandic/face-api, Coinbase Business, PHP 8.3+ / Docker PHP 8.5, Pinia, integration `.env` keys) and updated
   G16, G22, G31-G33, G36, G37; API reference updated (Assistant 2.0 on Responses + Conversations, OpenAI GPT-6 and

@@ -11,9 +11,9 @@ block content
 				table.table.table-hover
 					thead
 						th.fixedcol-xs.semibold Permission
-						th.fixedcol.semibold.d-none.d-md-table-cell User Id
+						th.fixedcol.semibold.d-none.d-lg-table-cell User Id
 						th.fixedcol.semibold Username
-						th.semibold.d-none.d-md-table-cell Date
+						th.semibold.d-none.d-lg-table-cell Date
 					tbody
 						each $user in $users
 							tr
@@ -24,10 +24,10 @@ block content
 												span.badge.bg-success= $user->permissions
 											else
 												span.badge.bg-danger= $user->permissions
-								td.fixedcol.d-none.d-md-table-cell
+								td.fixedcol.d-none.d-lg-table-cell
 									a(href="{$home}users/{$user->id}/edit") #{$user->id}
 								td.fixedcol
 									a(href="{$home}users/{$user->id}/edit") #{$user->username}
-								td.fixedcol.d-none.d-md-table-cell
+								td.fixedcol.d-none.d-lg-table-cell
 									a(href="{$home}users/{$user->id}/edit") #{$user->modified_at}
 	.spacer-3
