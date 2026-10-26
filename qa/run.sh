@@ -63,6 +63,9 @@ $s = preg_replace("#^(\s*)// (Auth::authentication|Route::)#m", "$1$2", $s);
 $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n"
     . "    Route::get(\"/qa/missing\", \"QaController@nope\");\n    Route::get(\"/qa/fatal\", \"QaController@fatal\");\n    Route::get(\"/qa/boom\", \"QaController@boom\");\n"
     . "    Route::post(\"/qa/upload\", \"QaController@upload\");\n"
+    . "    Route::get(\"/qa/own-ai\", \"AIController@mine\");\n    Route::get(\"/qa/old-apps/{appName}\", \"ClientController\");\n"
+    . "    Route::get(\"/qa/shop/{id}\", \"Shop\\\\OrderController@show\");\n    Route::get(\"/qa/shop-root/{id}\", \"\\\\Shop\\\\OrderController@show\");\n"
+    . "    Route::get(\"/qa/shop-missing\", \"Shop\\\\MissingController@show\");\n"
     . "    Route::get(\"/books\", \"BookController@readAll\");\n    Route::post(\"/books\", \"BookController@create\");\n"
     . "    Route::put(\"/books/{id}\", \"BookController@update\");\n    Route::delete(\"/books/{id}\", \"BookController@remove\");\n"
     . "    Route::get(\"/books/{id}/publisher\", \"BookController@publisher\");\n";

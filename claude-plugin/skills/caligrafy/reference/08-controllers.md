@@ -17,6 +17,24 @@ Most of the concepts that we covered thus far - `Routing`, `Request`, `Models`, 
 + There is no formal naming convention for a controller. We do recommend that you remain consistent.
 > Learn more about naming conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#frameworkfundamentals)
 
++ Every PHP file of `/application` is loaded on each request, so two classes with the same fully qualified name are a fatal error. The example controllers that come with Caligrafy (`application/controllers/core/`: `AIController`, `AdminController`, `AuthController`, `ClientController`, `WatsonController`) live in the `Caligrafy\Controllers` namespace, so you can give one of your controllers the same short name without a collision.
+
++ Controllers can be namespaced. Declare the namespace at the top of the file and use the fully qualified name in the routes (see [Namespaced controllers](#namespacedcontrollers)):
+```php
+<?php
+// application/controllers/Shop/OrderController.php
+namespace Shop;
+
+use Caligrafy\Controller;
+
+class OrderController extends Controller {
+    public function show()
+    {
+       // your code goes here
+    }
+}
+```
+
 + All the controllers that you create should extend the `Controller` class
 ```php
 
@@ -71,6 +89,22 @@ The following route will redirect all calls to `http://your-app/books` to the `r
 ```php
 Route::get('books', 'BookController@read');
 ```
+
+### Namespaced controllers
+A route can name a controller by its fully qualified class name, with or without a leading backslash. In a PHP single-quoted string, write the backslash once or twice (`'Shop\OrderController'` and `'Shop\\OrderController'` are the same string):
+```php
+Route::get('/orders/{id}', 'Shop\OrderController@show');
+Route::get('/orders', '\Shop\OrderController');
+```
+
+How the router finds the class of `'Name@action'`:
+1. a declared class named `Name` (global or fully qualified) is used: your own `AIController` wins over the example one;
+2. otherwise, a short name (no backslash) falls back to the example controllers namespace, `Caligrafy\Controllers\Name`. Routes written before the example controllers were namespaced, such as `'AuthController@login'` or `'ClientController'`, keep working;
+3. otherwise the request ends with a `404` ([ERROR 1001] Invalid Controller or Action), as for a missing action.
+
+The routes that come with a new project use the full names (`'Caligrafy\Controllers\ClientController'`), which keep pointing to the examples even if you declare a controller with the same short name.
+
+> The models given to `associate()`, `Auth::authentication()` and the relationships (`hasOne`, `hasMany`, `belongsTo`, `belongsToMany`) can be namespaced too (`'Shop\Order'`). The default foreign keys use the short name in lower case (`order_id`).
 
 ### Controller Context
 Frameworks are meant to help organize and structure code. Some frameworks impose that a `Controller` be tied to a `Model` and imposes a naming convention that forces developers to have a single controller for a model.

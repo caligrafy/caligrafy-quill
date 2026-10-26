@@ -49,6 +49,11 @@ git -C "$ROOT" show edc90af:$P/views/Auth/login.pug > application/views/Auth/log
 echo "// my change" >> application/views/default/index.pug
 git -C "$ROOT" show b16b3ca^:$P/config/routing/web.php > application/config/routing/web.php
 echo "mine" > application/views/default/qa-mine.pug
+# ... the global example controllers of 1.5 (before Caligrafy\Controllers) and a project controller named like one of them
+for c in AI/AIController AI/ClientController AI/WatsonController Auth/AuthController Auth/AdminController; do
+    git -C "$ROOT" show c6eaec4:$P/controllers/core/$c.php > application/controllers/core/$c.php
+done
+printf '<?php\nclass AIController extends Caligrafy\\Controller { public function mine() {} }\n' > application/controllers/AIController.php
 echo "QA_SECRET=keep" >> .env; ENVSUM=$(cksum < .env)
 DRY=$(php caligrafer.php upgrade 2>&1)
 if echo "$DRY" | grep -q '^  missing     application/models/Auth/create_db.sql' && echo "$DRY" | grep -q '^  outdated    application/views/Auth/login.pug' \
@@ -67,6 +72,19 @@ grep -q 'Errors::handle(\$e);' application/config/routing/web.php && grep -q '^u
     && ! grep -q 'echo \$e->getMessage' application/config/routing/web.php && php -l application/config/routing/web.php >/dev/null 2>&1 \
     && [ -f "$B/application/config/routing/web.php" ] && grep -q 'echo \$e->getMessage' "$B/application/config/routing/web.php" \
     && ok "caligrafer upgrade --apply patches the routes catch block to Errors::handle(\$e) after a backup" || ko "upgrade --apply (routes patch)"
+CTRL=$(php -r '
+    spl_autoload_register(function ($c) { if ($c === "Caligrafy\\Controller") require "framework/core/Controller.php"; });
+    require "framework/core/Route.php";
+    $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator("application/controllers", FilesystemIterator::SKIP_DOTS));
+    foreach ($it as $f) if (substr($f, -4) === ".php") require_once $f;
+    preg_match_all("#^\s*Route::\w+\(\s*\x27[^\x27]*\x27\s*,\s*\x27([A-Za-z\\\\]+)(?:@(\w+))?\x27#m", file_get_contents("application/config/routing/web.php"), $m, PREG_SET_ORDER);
+    foreach ($m as $r) { $c = Caligrafy\Route::resolveController($r[1]); echo $r[1], " -> ", $c && method_exists($c, ($r[2] ?? "") ?: "index") ? $c : "UNRESOLVED", "\n"; }
+    echo "own: ", Caligrafy\Route::resolveController("AIController"), "\n";' 2>&1)
+grep -q '^namespace Caligrafy\\Controllers;' application/controllers/core/AI/AIController.php && grep -q "'ClientController'" application/config/routing/web.php \
+    && echo "$CTRL" | grep -q '^ClientController -> Caligrafy\\Controllers\\ClientController$' && echo "$CTRL" | grep -q '^WatsonController -> Caligrafy\\Controllers\\WatsonController$' \
+    && ! echo "$CTRL" | grep -q 'UNRESOLVED\|Fatal\|Error' && echo "$CTRL" | grep -q '^own: AIController$' \
+    && ok "caligrafer upgrade --apply namespaces the 1.5 example controllers; old short routes resolve and a project AIController no longer collides" \
+    || ko "upgrade --apply (namespaced example controllers)" "$CTRL"
 SUMS1=$(find application -type f -not -name .caligrafy-manifest.json -exec cksum {} \; | sort)
 AGAIN=$(php caligrafer.php upgrade --apply 2>&1)
 SUMS2=$(find application -type f -not -name .caligrafy-manifest.json -exec cksum {} \; | sort)

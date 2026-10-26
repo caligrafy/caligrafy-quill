@@ -1,5 +1,10 @@
 <?php
 
+// Example controller shipped by Caligrafy. It lives in the Caligrafy\Controllers namespace so that a
+// controller of the same name in your application never collides with it. Routes may use the short
+// name (resolved by the router) or the fully qualified one ('Caligrafy\Controllers\AIController@query').
+namespace Caligrafy\Controllers;
+
 use Caligrafy\Controller;
 
 class ClientController extends Controller {

@@ -746,6 +746,15 @@ qa_test('a missing WATSON_URL gives a clear error', function () {
     qa_contains('Set WATSON_URL', $out);
 });
 
+qa_test('Route::resolveController: declared classes win, short example names fall back to Caligrafy\Controllers', function () {
+    qa_equals('AIController', Caligrafy\Route::resolveController('AIController'));
+    qa_equals('Caligrafy\Controllers\WatsonController', Caligrafy\Route::resolveController('WatsonController'));
+    qa_equals('Caligrafy\Controllers\AuthController', Caligrafy\Route::resolveController('\Caligrafy\Controllers\AuthController'));
+    qa_equals('Shop\OrderController', Caligrafy\Route::resolveController('\Shop\OrderController'));
+    qa_equals(null, Caligrafy\Route::resolveController('Shop\AIController'));
+    qa_equals(null, Caligrafy\Route::resolveController('NopeController'));
+});
+
 proc_terminate($watsonMock);
 
 qa_summary();

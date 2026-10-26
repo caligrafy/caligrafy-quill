@@ -15,7 +15,7 @@ and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G2
 
 ## Preconditions
 1. Confirm this is an initialized Quill project: `application/config/routing/web.php` exists. If only `framework/settings/application` exists, tell the user to run `php caligrafer.php initialize` (it deletes `.git` - ask first).
-2. Choose names. Entity `Book` -> model class `Book`, table `books` (lowercase plural, ask if irregular), controller `BookController`, folder `Book`. Grep `application/` for `class Book\b` and `class BookController\b`: class names are global (G19) - pick another name on a clash.
+2. Choose names. Entity `Book` -> model class `Book`, table `books` (lowercase plural, ask if irregular), controller `BookController`, folder `Book`. Grep `application/` for `class Book\b` and `class BookController\b`: class names are global (G19) - pick another name on a clash, or put the controller in a namespace when the project already groups controllers that way (`namespace Shop;`, route `'Shop\\BookController@read'`, G47). Names of the example controllers (`AIController`...) are fine once they are namespaced in `Caligrafy\Controllers`.
 
 ## Files to create
 

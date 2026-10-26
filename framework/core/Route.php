@@ -19,6 +19,11 @@ use \Exception as Exception;
 
 class Route extends \stdClass
 {
+    /**
+     * Namespace of the example controllers shipped in application/controllers/core (AIController, AuthController...)
+    */
+    const EXAMPLE_CONTROLLERS_NAMESPACE = 'Caligrafy\\Controllers';
+
     
     /**
      * @var array $_httpMethods defines all the valid http methods that are set at runtime
@@ -165,12 +170,12 @@ class Route extends \stdClass
         } else if (is_string(self::$_methods[self::$_currentRouteKey])) {
             // if the method is a string then parse Controller and Action
             $parsedMethod = explode('@',self::$_methods[self::$_currentRouteKey]);
-            $controller = $parsedMethod[0];
+            $controller = self::resolveController($parsedMethod[0]);
             $action = $parsedMethod[1]?? 'index';
         
             
             // Generate Exception if Controller or the Action do not exist 
-            if (!method_exists($controller, $action)) {
+            if (!$controller || !method_exists($controller, $action)) {
                 throw Errors::raise(1001);
                 exit;
             }
@@ -193,6 +198,30 @@ class Route extends \stdClass
     }
     
     
+    /**
+     * Resolves the controller part of a 'Controller@action' route to a declared class name
+     * - fully qualified names are accepted, with or without a leading backslash: 'Shop\OrderController', '\Shop\OrderController'
+     * - a declared class always wins (a project's own global AIController is used as is)
+     * - a short name that is not a declared class falls back to the framework example controllers
+     *   namespace (Caligrafy\Controllers), so routes written before 1.6 such as 'AIController@query' keep working
+     * @param string $name defines the controller part of the route
+     * @return string|null the class name, or null when no such controller exists
+    */
+    public static function resolveController($name)
+    {
+        $name = ltrim(trim((string) $name), '\\');
+        if ($name === '') {
+            return null;
+        }
+        if (class_exists($name)) {
+            return $name;
+        }
+        if (strpos($name, '\\') === false && class_exists(self::EXAMPLE_CONTROLLERS_NAMESPACE . '\\' . $name)) {
+            return self::EXAMPLE_CONTROLLERS_NAMESPACE . '\\' . $name;
+        }
+        return null;
+    }
+
     /**
      * GET http method handler
      * @param string $route defines the uri

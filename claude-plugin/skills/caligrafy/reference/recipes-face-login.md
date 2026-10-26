@@ -264,7 +264,7 @@ app.mount('#app');
   models ship in `public/resources/models`.
 
 ## Checklist
-- [ ] Controller not named after a core controller (G47); `php -l` on each file; SQL run with the db skill.
+- [ ] Controller not named after an example controller unless they are namespaced (G47); `php -l` on each file; SQL run with the db skill.
 - [ ] Prints encrypted with `encryptDecrypt` (APP_KEY), compared on the server, never returned.
 - [ ] Enrolment: 3-5 samples within 0.6 of each other; face already enrolled (< 0.5) refused.
 - [ ] Login: threshold 0.5, optional username, same error for unknown user and wrong face, 5 failures -> 60 s lock in UTC.
