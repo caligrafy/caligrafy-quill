@@ -50,6 +50,110 @@ class Errors extends \stdClass
     );
     
     
+    /**
+     * @var array of HTTP status codes for the error codes. Codes that are not listed return 500
+    */
+    private static $_statuses = array(
+        1000 => 405,
+        1001 => 404,
+        1004 => 401,
+        3000 => 403
+    );
+
+    /**
+     * @var string the body returned for unexpected errors when APP_DEBUG is not true
+    */
+    const GENERIC_MESSAGE = '[ERROR 500] Internal Server Error';
+
+    /**
+     * Get the HTTP status code of an error code
+     * @param int $errorCode identifies the error code
+     * @return int HTTP status code (500 when the error code is unknown)
+    */
+    public static function status($errorCode) {
+        return self::$_statuses[(int)$errorCode] ?? 500;
+    }
+
+    /**
+     * Creates the exception of a framework error and sets its HTTP status code right away, so that the status is
+     * correct even when the exception is caught by an application that only echoes the message
+     * @param int $errorCode identifies the error code
+     * @return \Exception to be thrown
+    */
+    public static function raise($errorCode) {
+        if (!headers_sent()) {
+            http_response_code(self::status($errorCode));
+        }
+        return new \Exception(self::get($errorCode), (int)$errorCode);
+    }
+
+    /**
+     * Sends an error response: HTTP status code and the error text (HTML requests) or
+     * {"error": {"code": ..., "message": ...}} (requests that want JSON)
+     * Framework errors keep their message. Other exceptions caught by the application keep theirs too
+     * unless $hideUnknown is true (uncaught exceptions), in which case the message is only shown when APP_DEBUG is true
+     * @param \Throwable $e the error
+     * @param bool $hideUnknown hides the message of errors that are not framework errors unless APP_DEBUG is true
+    */
+    public static function handle(\Throwable $e, $hideUnknown = false) {
+        $code = (int)$e->getCode();
+        $known = isset(self::$_errors[$code]) && $e instanceof \Exception;
+        $message = $e->getMessage();
+        if (!$known) {
+            $code = 500;
+            if ($hideUnknown) {
+                $message = self::debug()? '[ERROR 500] ' . $message : self::GENERIC_MESSAGE;
+            }
+        }
+        self::respond(self::status($code), $code, $message);
+    }
+
+    /**
+     * Shutdown function: turns PHP fatal errors into a 500 response (message only when APP_DEBUG is true)
+    */
+    public static function shutdown() {
+        $error = error_get_last();
+        if (!$error || !($error['type'] & (E_ERROR | E_PARSE | E_CORE_ERROR | E_COMPILE_ERROR | E_USER_ERROR | E_RECOVERABLE_ERROR))) {
+            return;
+        }
+        // discard the partial page and PHP's own error text
+        while (ob_get_level() > 0) {
+            ob_end_clean();
+        }
+        $message = self::debug()? '[ERROR 500] ' . strtok($error['message'], "\n") : self::GENERIC_MESSAGE;
+        self::respond(500, 500, $message);
+    }
+
+    /**
+     * Writes the error response
+    */
+    private static function respond($status, $code, $message) {
+        $json = self::wantsJson();
+        if (!headers_sent()) {
+            http_response_code($status);
+            if ($json) {
+                header('Content-Type: application/json');
+            }
+        }
+        if ($json) {
+            echo json_encode(array('error' => array('code' => $code, 'message' => trim(preg_replace('/^\[ERROR \d+\]\s*/', '', $message)))));
+        } else {
+            echo $message;
+        }
+    }
+
+    /**
+     * Same rule as Request::wantsJson(): the client accepts application/json and not text/html
+    */
+    private static function wantsJson() {
+        $accept = explode(',', strtolower(preg_replace('/\s+/', '', $_SERVER['HTTP_ACCEPT'] ?? '')));
+        return !in_array('text/html', $accept) && in_array('application/json', $accept);
+    }
+
+    private static function debug() {
+        return defined('APP_DEBUG') && filter_var(APP_DEBUG, FILTER_VALIDATE_BOOLEAN);
+    }
+
     /** 
      * Get error message based on error code
      * @param string $errorCode identifies the error code

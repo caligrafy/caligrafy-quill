@@ -10,6 +10,7 @@
 
 use Caligrafy\Auth;
 use Caligrafy\Route;
+use Caligrafy\Errors;
 use \Exception as Exception;
 
 try {
@@ -74,8 +75,8 @@ try {
 }
 catch (Exception $e) {
     
-    // Error handling 
-    echo $e->getMessage();
+    // Error handling: HTTP status code (404, 401, 403, 500...) with the error text, or a JSON error for API calls
+    Errors::handle($e);
 }
 
 

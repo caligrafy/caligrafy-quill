@@ -32,7 +32,7 @@ try {
             echo 'Hello World';
     });
 } catch (Exception $e) {
-    echo $e->getMessage();
+    Errors::handle($e);   // HTTP status code (404, 401, 403, 500...) with the error text, or JSON for API calls
 }
 ```
 You should be able to access it by navigating to `http://your-app/helloworld` in your browser. If you have not changed the name of the app folder `caligrafy` then you could use `http://localhost/caligrafy/helloworld`.

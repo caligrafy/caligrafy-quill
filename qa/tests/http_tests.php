@@ -191,17 +191,72 @@ qa_section('CSRF and API access');
 
 qa_test('a form POST without _token is rejected', function () use ($guest) {
     $r = $guest->post('/login', ['username' => 'a', 'passcode' => 'b']);
-    qa_contains('ERROR 3000', $r['body']);
+    qa_equals(403, $r['status']);
+    qa_contains('[ERROR 3000] Security Error - Cross Site Forgery', $r['body']);
 });
 
 qa_test('a form POST without _token and without a User-Agent is rejected', function () use ($guest) {
     $r = $guest->post('/login', ['username' => 'a', 'passcode' => 'b'], ['agent' => '']);
+    qa_equals(403, $r['status']);
     qa_contains('ERROR 3000', $r['body']);
 });
 
 qa_test('a JSON call without the API key is denied', function () use ($guest) {
     $r = $guest->get('/qa/books/5', ['headers' => ['Accept: application/json']]);
-    qa_contains('ERROR 1004', $r['body']);
+    qa_equals(401, $r['status']);
+    qa_contains('application/json', $r['headers']);
+    qa_equals(['error' => ['code' => 1004, 'message' => 'Access Denied']], json_decode($r['body'], true));
+});
+
+qa_test('a JSON call with a wrong API key is denied with 401', function () use ($guest) {
+    $r = $guest->get('/qa/books/5', ['headers' => ['Accept: application/json', 'Authorization: Bearer wrong']]);
+    qa_equals(401, $r['status']);
+    qa_equals(1004, json_decode($r['body'], true)['error']['code'] ?? null);
+});
+
+qa_test('a route to a missing controller action returns 404 with the same error text', function () use ($guest) {
+    $r = $guest->get('/qa/missing');
+    qa_equals(404, $r['status']);
+    qa_contains('[ERROR 1001] Invalid Controller or Action', $r['body']);
+});
+
+qa_test('a route to a missing action returns a JSON 404 to API clients', function () use ($guest, $API_KEY) {
+    $r = $guest->get('/qa/missing', ['headers' => ['Accept: application/json', 'Authorization: Bearer ' . $API_KEY]]);
+    qa_equals(404, $r['status']);
+    qa_equals(['error' => ['code' => 1001, 'message' => 'Invalid Controller or Action']], json_decode($r['body'], true));
+});
+
+// PHP fatal errors and uncaught Errors: 500, message only with APP_DEBUG=true, never a stack trace
+$qaWithDebug = function ($value, $fn) use ($ROOT) {
+    $file = "$ROOT/.env";
+    $orig = file_get_contents($file);
+    file_put_contents($file, preg_replace('/^APP_DEBUG=.*$/m', "APP_DEBUG=$value", $orig));
+    try { $fn(); } finally { file_put_contents($file, $orig); }
+};
+
+qa_test('a PHP fatal error returns 500 without details when APP_DEBUG=false', function () use ($guest, $qaWithDebug, $API_KEY) {
+    $qaWithDebug('false', function () use ($guest, $API_KEY) {
+        $r = $guest->get('/qa/fatal');
+        qa_equals(500, $r['status']);
+        qa_equals('[ERROR 500] Internal Server Error', trim($r['body']));
+        $r = $guest->get('/qa/boom', ['headers' => ['Accept: application/json', 'Authorization: Bearer ' . $API_KEY]]);
+        qa_equals(500, $r['status']);
+        qa_equals(['error' => ['code' => 500, 'message' => 'Internal Server Error']], json_decode($r['body'], true));
+    });
+});
+
+qa_test('with APP_DEBUG=true the 500 shows the message but no stack trace', function () use ($guest, $qaWithDebug) {
+    $qaWithDebug('true', function () use ($guest) {
+        $r = $guest->get('/qa/fatal');
+        qa_equals(500, $r['status']);
+        qa_contains('QaFatalTwice', $r['body']);
+        qa_not_contains('PARTIAL-PAGE', $r['body']);
+        $r = $guest->get('/qa/boom');
+        qa_equals(500, $r['status']);
+        qa_contains('qa_undefined_function_with_secret_name', $r['body']);
+        qa_not_contains('Stack trace', $r['body']);
+        qa_not_contains('#0 ', $r['body']);
+    });
 });
 
 qa_test('a JSON call with the API key succeeds', function () use ($guest, $API_KEY) {
