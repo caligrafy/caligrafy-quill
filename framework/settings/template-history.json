@@ -1,0 +1,175 @@
+{
+    ".gitignore": [
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "config/.gitignore": [
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "config/config.php": [
+        "ec1f676eb5c2c9ca35a7de63373c06b962fb67130806c15b6aa0895dbca9b41f"
+    ],
+    "config/routing/.gitignore": [
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "config/routing/web.php": [
+        "3a69e70c1de83e311942d8b9494bb71dd0c02df117a06c3980f4f3705bd62c86",
+        "7a5afe5400e62d51b1b74641df2aeeff21ea58d1a99a7ba66b8814a5e24c92b3",
+        "8f18fbfb500b88dfdc7bf4eab5c50fb31fb968ec928a9acae0a389534916cf45",
+        "a0f733ab78e219919a0ff7b5d08fcacdacf605dad53823440a237d94cb0b8ecb",
+        "d766c02837d3fdce1438611fc20b8d5ded11b080214fc200f48351e5b346d1b9"
+    ],
+    "controllers/.gitignore": [
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "controllers/Auth/AuthController.php": [
+        "1b9aa729666dbbe1cda4b49bddcb14fdc41afd55bf0c0796ea8c3a6733ac8a46"
+    ],
+    "controllers/Bot/WatsonController.php": [
+        "c05d81fcc8d294c7cc2fb80c16bdf6039454cfb806105c3c9050bfb9708046d5"
+    ],
+    "controllers/core/AI/AIController.php": [
+        "0a0129dcd961e1b9709048b2d6ebe82f0a276f75ecf1f2512b585223dfcf4a78",
+        "130a7d2095d22b307ba44c530e688a28159ccff149c3bb90651eccc2d844b2b3",
+        "3b0ee6aefa4c73a77bd5c76a7aa59a5de34dc6f9dabeaafecdba4cb9be7b02cd",
+        "a00fb16dddbc2c1f41eed0a8d12b2f00fee34784fcef1fcd23e5425b63e76fb1",
+        "a73e5b934633d108274a9007f06d8744d987a29437dcb0910df3b3aec430a722"
+    ],
+    "controllers/core/AI/ClientController.php": [
+        "44940604c6030d18c4e0c55f3f4f17dfc99c7f7c2a7fc40d35e5ff5c5fc1900b",
+        "b1a993dc84acd7f01a234d84af6480032cdbc83c765bc350dabf01eed01f7320"
+    ],
+    "controllers/core/AI/WatsonController.php": [
+        "c05d81fcc8d294c7cc2fb80c16bdf6039454cfb806105c3c9050bfb9708046d5"
+    ],
+    "controllers/core/Auth/AdminController.php": [
+        "0dd2905d2ef419a4c72411bc78c942507a00bdc72fc4e4225b15c63f3ce970fe",
+        "1bb93ade98dd81b24c9d16f52bce81b86d526c2c6599064bea84d6624a72bc49",
+        "925b839321cba4256a7cb9da2083f98c20ae1fd1b6a021d3c2b38eb1300c1737"
+    ],
+    "controllers/core/Auth/AuthController.php": [
+        "1b9aa729666dbbe1cda4b49bddcb14fdc41afd55bf0c0796ea8c3a6733ac8a46",
+        "7f1d7f84d83e3b4e9267afe2b83f1ef8ff7c1b7e2ff1b679d86b04124333e2d0",
+        "844fefbaf0c41dfc022099f1a4fc0bc5162fdb0e951db1605259cd978f41d705"
+    ],
+    "models/.gitignore": [
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "models/Auth/User.php": [
+        "556e773f4fb94a579cc2e343f63d74bdee66edd5bcb9313778f7a643c9fdc8e5",
+        "693059b39a4259fbb7d8bd0d2907b4da5ec2913f295555a0385c0da743790fe6"
+    ],
+    "models/Auth/create_db.sql": [
+        "43343045db96b8ca64724c6ab72d330a37b6c1db24f8844d1cef0bdc506e82e9",
+        "dd51e4b2dfcb9fd655a16a2359625d021b290e0fc64bd638743a504457d4319f"
+    ],
+    "views/.gitignore": [
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "views/AI/openai.pug": [
+        "12305b6e94258a7b404004ea87356792a46788b36fbd77d0fc58811e8fe2d03c",
+        "42a5e813f28948e8d6d77ced5eea9dc3feca9ebcf118be55c5b784acaa3dbcc1",
+        "b69ed82fc4d7850929b61b2f0244cf7217f8095996d3fa335d52c72c4f3b5b84",
+        "bf311ed76bf738b0c62d6c7ea372832b9d3b0d7bb8395654e1a5cbd2b284cdab",
+        "ef5ff1b11d49fdeea3220f87d4ec522e838cf7e1e71fff898542a0bfd9e519b4"
+    ],
+    "views/Auth/login.pug": [
+        "307f5056f50c1634dd411081be39cc418969d0e245c3db53fbecb397adb906f2",
+        "92dce54fb9d320c0dc99d370c98096f5ef0a299e0e240dc32900b089c0165511",
+        "ca34d48543e6689e0996d01413fdfc055693ce733c4d84714fb84fce6400b9a3"
+    ],
+    "views/Auth/manageusers.pug": [
+        "65055b3c9f0c9f28cfafabd2003a98672f8ed99c4229e2f6533ce105c3dc8c77",
+        "874f6e677d08db27f5a01ca5fa7bdef66fe8d501cce32aac5b53daddccdb1b8c",
+        "d1c67919363d564f8015a7d057d4b403487195e753cbc4b43c9261aea7fc93bf"
+    ],
+    "views/Auth/register.pug": [
+        "7559f1f154b20f663be909940372613609ca0b0f8e5f94072db640cedd8d6b69",
+        "a85f2bb456f7f64188dd329fd2843d3252428502d8721276597a25449cf52c4e",
+        "ab23b91c9dd4c915d203f8c42630af787c2dff0020be7bceb683139dd4b9db1f"
+    ],
+    "views/Auth/users.pug": [
+        "6978962b522710f39d895486c045dd2bd3fbfec7f6f326ba38af8c0b58e6aee8",
+        "c9840be5f45b1c41924854a940143b9706b57ce7fb80dd99a1330599acfbf58d",
+        "f668827036ec1cd3a032f59c75a6cd5952494728218599e053fdf58711824bba"
+    ],
+    "views/Client/app.pug": [
+        "12e8b9ebb65ea7f66cdabb1a3daa434dafff22a7aca115f45f3f995074742399",
+        "1a6ba9d62735e8aba44978f0bfa5e62888f56ceebc379b5d19be0e9285a7c190",
+        "2187d5ac93a074c0b1cdc6f5b7576a7e871403820c753324ed7257bd625f97fd"
+    ],
+    "views/default/index.pug": [
+        "1ce87b8d354356c5a19af5ca8d2e64a47d37ffe82f7043d7ee1766590ecae2af",
+        "2f2ac0e6349eb45f16822097489a4a5d2dc4c528aa6e3be4a60967365b9b231e",
+        "70ecbd48cda2dae8b1cc3bf7b8bdb86ee28c50bcc8e54b609a8bfe5c6606bd4b",
+        "733df0ddd092559dc1bbe0919991c5aab904b39973fd8e5c9b4640c7c7b6df39",
+        "c8ff6950624b6dbb728917689d6e41aaa2fa5cde9ca4bc193620a85a88eb107b",
+        "cbcf0dd28fd3addaf8be929cf3af35798977a6d0fd396d4fe3158ce7762a8ca3",
+        "d96da57b223fbd1e0e03e7a7aa6d3e2f356420d139a34c8b7526688ee4858847"
+    ],
+    "views/default/master/layout.pug": [
+        "cdfb2525f35c4aad8ab83eb139f5713fcf94ae703aa600d2919c1847ab6f3c72",
+        "ffcf0f51e3d1560d9133fd35e1025b603ca2a209316f95c13040ddf2577c2560"
+    ],
+    "views/default/master/layoutblocks.pug": [
+        "0021db47a1780b64e21a4f5439355672ae0a6973e8e1c4b17c917c4b10a508a4",
+        "09d9e729f75b5e68500f1b1ab4f9747acc62a0e0e14ab4527bb491dc6a7e18e4",
+        "23565b594b137e5a862c218d626b4395bc39bf30af7b4f24a46aa2a51ba906cc",
+        "33f43d710ece4af4841a458c7f3c72ce8608162730b44338fd2a37fcca2f9ff5",
+        "65ecf5bbf192b15a802a68dce7e21f641721ee4eee806258e397af7168a8b8c3",
+        "79a30a4c2575a9e79fc4998dd56f9f44a91987805d9880aec02b3667072dc71d",
+        "9cceeeb3c38c13a5102ca9846fee59772e06a0dbaed34b87997bfe04fe3ad4ef",
+        "a06bd6388826960393fef74a7239c35f09bff3bb2b4e59d50ed99976108d69bc",
+        "c61ad4bdf402a7a07b3d2dd7e5ab6356fa90e9063aed6fb752db12aa94a2fce3"
+    ],
+    "views/default/modules/ach.pug": [
+        "abd68d07a18095c9185cdd103d7d333f2fad54cff793e2dd0a817cc970a50031",
+        "e3e4eebcf38f99e38e51201ee2c9df7434dd7b4de1ab9ddebc75356609fc3b82"
+    ],
+    "views/default/modules/cryptopayment.pug": [
+        "696368468708b93c2d62e9842c7373e62c1ce81b54c9450b66d5e5eba6ea4cfc",
+        "7d9377fd7bc9e12ce3fc04392810401af76641350b68c63e19ea5dfc4a7166bd",
+        "e2db8d17fd23d829a8ea609b4872661deb76917306202dacd6adb3c50174e3db",
+        "ff4f9b292db50483fb2a4daa3394e9d2936996db8a4140dc7f51dbb9565bcc1d"
+    ],
+    "views/default/modules/gestures.pug": [
+        "082990b002890a3eb24cb811bcf6f33c32f39b952dbfa742d641f7c6a2917797"
+    ],
+    "views/default/modules/install.pug": [
+        "f4fb9c7ee54f9efcebdd4c8acb9f13b035088d27e2f73742348c696e8a5ab559"
+    ],
+    "views/default/modules/messaging.pug": [
+        "cb8da2effa8e3722ee372785c9b20c1465b6b19ae729598fb871c05b2db0937b",
+        "e1abe7c9591cc8fdf958055a8d08b40d8d5ec9f50c300eb37dd398f1cd8c3b97"
+    ],
+    "views/default/modules/metadata.pug": [
+        "4dc37449485282f316919c1facb3f18aab483ec4cb8bf9559b0467e970a7928f"
+    ],
+    "views/default/modules/metadata_body.pug": [
+        "311ef350d4e4c620106298bbbaae42ff622543d2d57858c9b279e4dd9b273565",
+        "437972121376d3577044eee168869009909be9d4549dbb7c392cb5012e136772"
+    ],
+    "views/default/modules/social.pug": [
+        "208cc3a56bfbfba683b4d5149d52c8309aeb7b7091966f18af363dd0efd91be4"
+    ],
+    "views/default/modules/standalone.pug": [
+        "daa921c5e6af0eb7f6612a8dcebca240c55e4db42a7568d3ec3883e04360672d"
+    ],
+    "views/default/modules/touchicons.pug": [
+        "5452551660ac4d51b9b8fe1a6a5dd093280619740673ac2066b58163d09aa1d3"
+    ],
+    "views/default/pages/checkout.pug": [
+        "5500ebf695f31fef91397de9bc8348cc628e5aa38a53421dbc973920e63db0ce",
+        "818dc997572f1b6d80d8131e0f796b36f38855d933221e19bdf799c63fb59875",
+        "8b93902a5cda2fd127f00dda0570d13b448d4f884a7ab175fd2db85d91486c2c",
+        "df251d97c0b20683c0078726580f420287008aee840e0b2a7a9a91e5b81dcbd9",
+        "ff2d05a1a666e2f3dc4e35e62cc56d94b5808751fe2a05882d26936a85a61ddc"
+    ],
+    "views/default/pages/payment.pug": [
+        "024e897f28ae14d2996540191c9aa1205424ccf2fcf24e3999f76b7136a46c47",
+        "08aa38b6c69def1b18f91edcf2b84b7b22e44f1ff8c1150c1ae8dab00553d911",
+        "b03342d25d8ec0b7fd62b96322c13f1c3e5ba072a97f73969c9dfedc2d70a9ab",
+        "b554286e0e52361d0e486a510a4deeb5e9e795927d9e661bfd4c9dfd2441ff78",
+        "ba50f00283a79d7c162f0fdc34ea24579a1ef584fe247039acb3b2b85850ed3f",
+        "ec1f9a57d21523984d933957b3a37bfb631babaa90e30dbc934cd4e4d972007c"
+    ]
+}

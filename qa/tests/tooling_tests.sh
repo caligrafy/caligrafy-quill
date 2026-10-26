@@ -33,6 +33,52 @@ if [ "$ROOTS" = 1 ] && [ "$ROOTV" = "APP_ROOT=" ]; then ok "caligrafer initializ
 else ko "caligrafer initialize APP_ROOT" "$ROOTS line(s): $ROOTV"; fi
 cd "$ROOT"
 
+# --- caligrafer upgrade on an older project ------------------------------------------------
+[ -f "$TMP/init/application/.caligrafy-manifest.json" ] && ok "caligrafer initialize writes application/.caligrafy-manifest.json" || ko "initialize does not write the upgrade manifest"
+MISSINGHIST=$(php -r '$h = json_decode(file_get_contents("framework/settings/template-history.json"), true); require "framework/core/Upgrader.php";
+    foreach (Caligrafy\Upgrader::hashes("framework/settings/application") as $p => $x) if (!in_array($x, $h[$p] ?? [])) echo "$p\n";')
+[ -z "$MISSINGHIST" ] && ok "template-history.json knows every current template (php qa/build-template-history.php)" || ko "template-history.json is stale: run php qa/build-template-history.php" "$MISSINGHIST"
+mkdir -p "$TMP/upgrade" && cd "$TMP/upgrade"
+cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads
+cp framework/settings/.env.example .env
+php caligrafer.php initialize >/dev/null 2>&1
+P=framework/settings/application
+# an older project: no manifest, an untouched old view, a customized view, a missing file, the old routes catch block
+rm application/.caligrafy-manifest.json application/models/Auth/create_db.sql
+git -C "$ROOT" show edc90af:$P/views/Auth/login.pug > application/views/Auth/login.pug
+echo "// my change" >> application/views/default/index.pug
+git -C "$ROOT" show b16b3ca^:$P/config/routing/web.php > application/config/routing/web.php
+echo "mine" > application/views/default/qa-mine.pug
+echo "QA_SECRET=keep" >> .env; ENVSUM=$(cksum < .env)
+DRY=$(php caligrafer.php upgrade 2>&1)
+if echo "$DRY" | grep -q '^  missing     application/models/Auth/create_db.sql' && echo "$DRY" | grep -q '^  outdated    application/views/Auth/login.pug' \
+    && echo "$DRY" | grep -q '^  customized  application/views/default/index.pug' && echo "$DRY" | grep -q 'echo \$e->getMessage();' \
+    && [ ! -f application/models/Auth/create_db.sql ] && [ ! -d backups ] && [ ! -f application/.caligrafy-manifest.json ]; then
+    ok "caligrafer upgrade dry run lists missing, outdated (untouched), customized files and the routes patch without changing anything"
+else ko "caligrafer upgrade dry run" "$DRY"; fi
+php caligrafer.php upgrade --apply >"$TMP/upgrade.log" 2>&1
+B=$(ls -d backups/caligrafy-upgrade-* 2>/dev/null | head -1)
+cmp -s application/models/Auth/create_db.sql $P/models/Auth/create_db.sql && cmp -s application/views/Auth/login.pug $P/views/Auth/login.pug \
+    && [ -n "$B" ] && [ -f "$B/application/views/Auth/login.pug" ] && ! cmp -s "$B/application/views/Auth/login.pug" $P/views/Auth/login.pug \
+    && ok "caligrafer upgrade --apply adds missing files and replaces untouched ones after a backup" || ko "upgrade --apply (missing/outdated)" "$(cat "$TMP/upgrade.log")"
+grep -q '// my change' application/views/default/index.pug && cmp -s application/views/default/index.pug.caligrafy-new $P/views/default/index.pug \
+    && ok "caligrafer upgrade --apply keeps customized files and writes <file>.caligrafy-new" || ko "upgrade --apply (customized)"
+grep -q 'Errors::handle(\$e);' application/config/routing/web.php && grep -q '^use Caligrafy\\Errors;' application/config/routing/web.php \
+    && ! grep -q 'echo \$e->getMessage' application/config/routing/web.php && php -l application/config/routing/web.php >/dev/null 2>&1 \
+    && [ -f "$B/application/config/routing/web.php" ] && grep -q 'echo \$e->getMessage' "$B/application/config/routing/web.php" \
+    && ok "caligrafer upgrade --apply patches the routes catch block to Errors::handle(\$e) after a backup" || ko "upgrade --apply (routes patch)"
+SUMS1=$(find application -type f -not -name .caligrafy-manifest.json -exec cksum {} \; | sort)
+AGAIN=$(php caligrafer.php upgrade --apply 2>&1)
+SUMS2=$(find application -type f -not -name .caligrafy-manifest.json -exec cksum {} \; | sort)
+[ "$SUMS1" = "$SUMS2" ] && [ "$(ls -d backups/caligrafy-upgrade-* | wc -l | tr -d ' ')" = 1 ] && ! echo "$AGAIN" | grep -qE '^  (missing|outdated) ' \
+    && [ "$(cat application/views/default/qa-mine.pug)" = mine ] && [ "$(cksum < .env)" = "$ENVSUM" ] && [ -f application/.caligrafy-manifest.json ] \
+    && ok "caligrafer upgrade --apply is idempotent and leaves .env and user files alone" || ko "upgrade --apply second run" "$AGAIN"
+sleep 1; php caligrafer.php upgrade --force application/views/default/index.pug >/dev/null 2>&1
+cmp -s application/views/default/index.pug $P/views/default/index.pug && [ ! -f application/views/default/index.pug.caligrafy-new ] \
+    && [ "$(ls -d backups/caligrafy-upgrade-* | wc -l | tr -d ' ')" = 2 ] \
+    && ok "caligrafer upgrade --force replaces one customized file after a backup" || ko "upgrade --force"
+cd "$ROOT"
+
 # --- scaffolded client apps ----------------------------------------------------------------
 if node --check framework/plugins/facedetect/scripts/main.js 2>/dev/null && grep -q 'Vue.markRaw(new FaceDetector' framework/plugins/facedetect/scripts/main.js; then
     ok "facedetect scaffold wraps FaceDetector in Vue.markRaw and parses"

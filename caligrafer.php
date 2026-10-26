@@ -31,6 +31,7 @@ Caligrafer::run();
 
 $defaultMsg = "\n Available Functions: 
 				\n - initialize: Initializes and signs your project
+				\n - upgrade [--apply] [--force <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files
 				\n - server <start | stop>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker)
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
@@ -94,6 +95,8 @@ switch(strtolower($argv[1])) {
 		   file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);
 		   if (!is_dir("./application")) {
 			system('cp -r framework/settings/application ./application', $retValue);
+			// records the template versions so that 'upgrade' can tell untouched files from customized ones
+			Caligrafy\Upgrader::writeManifest('.');
 		   }
 		   system('chmod -R 777 public/uploads');
 
@@ -109,6 +112,12 @@ switch(strtolower($argv[1])) {
             print($e->getMessage());
         }
 		break;
+
+	case 'upgrade':
+		$apply = in_array('--apply', $argv);
+		$forceAt = array_search('--force', $argv);
+		$force = $forceAt !== false? ($argv[$forceAt + 1] ?? '') : null;
+		exit((new Caligrafy\Upgrader('.', $apply, $force))->run());
 
 	case 'create':
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {
