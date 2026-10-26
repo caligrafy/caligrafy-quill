@@ -1,2 +1,5 @@
 *
 !.gitignore
+# framework unit tests (vendor/bin/phpunit)
+!unit/
+!unit/**
