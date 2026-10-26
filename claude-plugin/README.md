@@ -41,6 +41,11 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.6.0** - Namespaced controllers: G47 is fixed. The example controllers of `application/controllers/core/` are in
+  `Caligrafy\Controllers`, routes accept fully qualified controllers (`'Shop\OrderController@show'`), and a short name that
+  is not a declared class falls back to `Caligrafy\Controllers` so old routes keep working; relationships with namespaced
+  models use the short name for default foreign keys. API reference (Route, Controller), G19, reviewer item 15,
+  new-resource, new-app and the recipes updated; wiki 2, 8 and 9.5 updated.
 - **1.5.0** - `php caligrafer.php upgrade [--apply] [--force <path>]`: API reference Caligrafer CLI section (statuses,
   manifest `application/.caligrafy-manifest.json`, `framework/settings/template-history.json`, backups, routes `catch`
   patch, client app report), G39 and the skill workflow recommend it for older projects; wiki 9.5 and 1 updated.

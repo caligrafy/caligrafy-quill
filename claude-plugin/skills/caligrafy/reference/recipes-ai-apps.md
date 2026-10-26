@@ -9,8 +9,9 @@ The browser never sees `OPEN_AI_KEY` or `GROQ_API_KEY`: every provider call is m
 
 ## 1. Controller and routes
 
-Do **not** name the controller `AIController`: the initialized `application/controllers/core/AI/AIController.php`
-already declares it and a second class is a fatal error on every page (G47). Use `ChatController`, `GroqController`...
+Prefer a descriptive name (`ChatController`, `GroqController`...). Since plugin 1.6.0 the example `AIController` is
+`Caligrafy\Controllers\AIController`, so your own `AIController` no longer collides (G47); on older projects that have
+not run `php caligrafer.php upgrade --apply`, it is still a fatal error on every page.
 
 ```php
 // application/config/routing/web.php (inside the try, before Route::run(); keep Auth::activateAPI())
@@ -267,7 +268,7 @@ Render replies as text (`{{ }}` / `white-space: pre-wrap`), never `v-html` on mo
 data URL to `<img :src="image">`; vision: read the file with `FileReader.readAsDataURL()` and post it as `image`.
 
 ## Checklist
-- [ ] Controller not named `AIController` (G47); `php -l` on each file.
+- [ ] Controller not named `AIController` unless the project has the namespaced example controllers (G47); `php -l` on each file.
 - [ ] Roles filtered to user/assistant, number and length capped, server-side system prompt.
 - [ ] `response['error']` checked for OpenAI; `api_success` false handled (timeouts).
 - [ ] Model ids validated with a regex; lists fetched live.

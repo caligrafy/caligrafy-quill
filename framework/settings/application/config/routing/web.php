@@ -27,38 +27,38 @@ try {
     Route::get('/helloworld', function() { echo "Hello World"; });
 	
     // Auth Routes - Uncomment only if AUTHENTICATION activated above
-    // Route::get('/home', 'AuthController@home');
-    // Route::get('/login', 'AuthController');
-    // Route::get('/logout', 'AuthController@logout');
-	// Route::get('/notAuthorized', 'AuthController@notAuthorized');
-    // Route::get('/register', 'AuthController@registerForm');
-    // Route::post('/login', 'AuthController@login');
-    // Route::post('/register', 'AuthController@register');
+    // Route::get('/home', 'Caligrafy\\Controllers\\AuthController@home');
+    // Route::get('/login', 'Caligrafy\\Controllers\\AuthController');
+    // Route::get('/logout', 'Caligrafy\\Controllers\\AuthController@logout');
+	// Route::get('/notAuthorized', 'Caligrafy\\Controllers\\AuthController@notAuthorized');
+    // Route::get('/register', 'Caligrafy\\Controllers\\AuthController@registerForm');
+    // Route::post('/login', 'Caligrafy\\Controllers\\AuthController@login');
+    // Route::post('/register', 'Caligrafy\\Controllers\\AuthController@register');
 
     // User Administration Routes - Uncomment only if AUTHENTICATION activated above
-	// Route::get('/admin', 'AdminController');
-	// Route::get('/users', 'AdminController');
-	// Route::get('/users/{id}/edit', 'AdminController@editUserForm');
-	// Route::put('/users/{id}/edit', 'AdminController@updateUser');
-	// Route::delete('/users/{id}/edit', 'AdminController@deleteUser');
+	// Route::get('/admin', 'Caligrafy\\Controllers\\AdminController');
+	// Route::get('/users', 'Caligrafy\\Controllers\\AdminController');
+	// Route::get('/users/{id}/edit', 'Caligrafy\\Controllers\\AdminController@editUserForm');
+	// Route::put('/users/{id}/edit', 'Caligrafy\\Controllers\\AdminController@updateUser');
+	// Route::delete('/users/{id}/edit', 'Caligrafy\\Controllers\\AdminController@deleteUser');
 
     // GPT AI controller
-    // Route::get('/ai', 'AIController');
-    // Route::post('/ai', 'AIController@query');
+    // Route::get('/ai', 'Caligrafy\\Controllers\\AIController');
+    // Route::post('/ai', 'Caligrafy\\Controllers\\AIController@query');
 
     // ROUTING TO JAVASCRIPT APPS
     // Make sure you create a JS app or a Vue app in Caligrafer first
-    Route::get('/apps/{appName}', 'ClientController'); // you can specify any path as long as it ends with appName
+    Route::get('/apps/{appName}', 'Caligrafy\\Controllers\\ClientController'); // you can specify any path as long as it ends with appName
 
     
     // BOT PAGE ROUTES
-    Route::get('/bot/{appName}', 'ClientController');  // A botSkillId needs to be provided in the URL. For Example: ?botSkillId=62196ce3-0b22-4aea-b2f2-d39730c03797
+    Route::get('/bot/{appName}', 'Caligrafy\\Controllers\\ClientController');  // A botSkillId needs to be provided in the URL. For Example: ?botSkillId=62196ce3-0b22-4aea-b2f2-d39730c03797
     
     // BOT DATA ROUTES
     // routes need to start with reserved path __bots__ 
-    Route::post('/__bots__/{appName}/communicate', 'WatsonController@communicate');
-    Route::post('/__bots__/{appName}/{appId}', 'WatsonController@connect');
-    Route::delete('/__bots__/{appName}', 'WatsonController@end');   
+    Route::post('/__bots__/{appName}/communicate', 'Caligrafy\\Controllers\\WatsonController@communicate');
+    Route::post('/__bots__/{appName}/{appId}', 'Caligrafy\\Controllers\\WatsonController@connect');
+    Route::delete('/__bots__/{appName}', 'Caligrafy\\Controllers\\WatsonController@end');   
 
     /* ML Routes
      *
@@ -67,7 +67,7 @@ try {
      * 
      * There are 3 possible apps: featureextractor, neuralnetwork and posedetector
     */
-    Route::get('/ml/{appName}', 'ClientController'); 
+    Route::get('/ml/{appName}', 'Caligrafy\\Controllers\\ClientController'); 
     
 
     // MUST NOT BE REMOVED - Routes need to be run after being defined 

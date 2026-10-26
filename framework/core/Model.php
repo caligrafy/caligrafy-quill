@@ -251,7 +251,7 @@ class Model extends \stdClass {
         if ($oneToOneModel instanceof Model) {
                 $localId = $localKey?? 'id';
                 $localKey = $localKey?  $joinedTableName.".".$localKey : $joinedTableName.".id";
-                $foreignKey = $foreignKey? $this->table.".".$foreignKey : $this->table.".".strtolower($modelName)."_id";
+                $foreignKey = $foreignKey? $this->table.".".$foreignKey : $this->table.".".self::shortName($modelName)."_id";
                 $result = Database::execute('SELECT '.$joinedTableName.'.* FROM '.$this->table.' LEFT JOIN '.$oneToOneModel->table.' ON '.$localKey." = ".$foreignKey." WHERE ".$this->table.".id = ?", [$this->id]);
                 $rows = Database::toArray($result);
                 $oneToOneModel = $oneToOneModel->arrayToModel($rows[0]?? array());
@@ -279,7 +279,7 @@ class Model extends \stdClass {
         $oneToManyModel = class_exists($modelName)? new $modelName($joinedTableName): null;
         $outcome = array();
         if ($oneToManyModel instanceof Model) {
-               $foreignKey = $foreignKey?? strtolower(get_class($this))."_id";
+               $foreignKey = $foreignKey?? self::shortName(get_class($this))."_id";
                $localKey = $localKey? $this->$localKey?? $this->id : $this->id;
                $result = Database::execute('SELECT * FROM '.$joinedTableName.' WHERE '.$this->quoteIdentifier($foreignKey).' = ?', [$localKey]);
                $result = Database::toArray($result);
@@ -310,8 +310,8 @@ class Model extends \stdClass {
         // get the tables' names, foreign keys,  and create the pivot table name
         $table1 = $this->table;
         $table2 = $joinedTableName;
-        $model1 = strtolower(get_class($this));
-        $model2 = strtolower($modelName);
+        $model1 = self::shortName(get_class($this));
+        $model2 = self::shortName($modelName);
         $foreignKeyLocal = $foreignKeyLocal?? 'id';
         $foreignKeyJoin = $foreignKeyJoin?? 'id';
         $fklocal = $model1."_"."id";
@@ -482,4 +482,16 @@ class Model extends \stdClass {
         
     }
     
+
+    /**
+     * Lower-case class name without its namespace, used to derive the default foreign keys
+     * (Shop\Order and Order both give "order")
+     * @param string $className defines the (possibly namespaced) class name
+     * @return string
+     */
+    private static function shortName($className)
+    {
+        $parts = explode('\\', trim((string) $className, '\\'));
+        return strtolower(end($parts));
+    }
 }

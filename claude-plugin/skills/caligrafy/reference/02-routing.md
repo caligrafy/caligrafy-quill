@@ -66,6 +66,8 @@ Route::get('books', 'BookController@read');
 ```
 This route would call the method `read` from `BookController`.
 
+Controllers can be namespaced: `Route::get('orders/{id}', 'Shop\OrderController@show');` (a leading backslash is accepted). A short name that is not a declared class falls back to the example controllers of `Caligrafy\Controllers` (`'ClientController'`, `'AuthController@login'`...), and a controller or action that does not exist returns a `404`. Learn more in [Namespaced controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#namespacedcontrollers).
+
 > Routes that point to a controller (`'BookController'` or `'BookController@read'`) are protected for API calls: a request that asks for JSON (`Accept: application/json`) must carry the `API_KEY` as a Bearer token. Routes defined with a closure (`function() {...}`) do not check the API key. Learn more about the [REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#restapi).
 Later on, you will learn how to create controllers.
 

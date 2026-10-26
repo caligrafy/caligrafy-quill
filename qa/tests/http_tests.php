@@ -226,6 +226,34 @@ qa_test('a route to a missing action returns a JSON 404 to API clients', functio
     qa_equals(['error' => ['code' => 1001, 'message' => 'Invalid Controller or Action']], json_decode($r['body'], true));
 });
 
+// Controller names (plugin gotcha G47): example controllers live in Caligrafy\Controllers
+qa_test('a project controller named like an example controller (global AIController) does not collide and is routed', function () use ($guest) {
+    $r = $guest->get('/qa/own-ai');
+    qa_equals(200, $r['status']);
+    qa_contains('QA-OWN-AICONTROLLER', $r['body']);
+    qa_equals(200, $guest->get('/')['status']);
+});
+
+qa_test('an old-style short route to an example controller (ClientController) still resolves', function () use ($guest) {
+    $r = $guest->get('/qa/old-apps/qaapp');
+    qa_equals(200, $r['status']);
+    qa_contains('loadEnvironment(', $r['body']);
+});
+
+qa_test('a namespaced application controller route (Shop\OrderController@show, with or without a leading backslash)', function () use ($guest, $API_KEY) {
+    foreach (['/qa/shop/7', '/qa/shop-root/7'] as $path) {
+        $r = $guest->get($path, ['headers' => ['Accept: application/json', 'Authorization: Bearer ' . $API_KEY]]);
+        qa_equals(200, $r['status'], $path);
+        qa_equals(['controller' => 'Shop\OrderController', 'id' => '7'], json_decode($r['body'], true), $path);
+    }
+});
+
+qa_test('a route to a missing namespaced controller returns 404', function () use ($guest) {
+    $r = $guest->get('/qa/shop-missing');
+    qa_equals(404, $r['status']);
+    qa_contains('[ERROR 1001] Invalid Controller or Action', $r['body']);
+});
+
 // PHP fatal errors and uncaught Errors: 500, message only with APP_DEBUG=true, never a stack trace
 $qaWithDebug = function ($value, $fn) use ($ROOT) {
     $file = "$ROOT/.env";

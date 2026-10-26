@@ -15,6 +15,7 @@
         "3a69e70c1de83e311942d8b9494bb71dd0c02df117a06c3980f4f3705bd62c86",
         "7a5afe5400e62d51b1b74641df2aeeff21ea58d1a99a7ba66b8814a5e24c92b3",
         "8f18fbfb500b88dfdc7bf4eab5c50fb31fb968ec928a9acae0a389534916cf45",
+        "980b6b5948f59b71b9c7431c233b733a44785616be9e6b0f63b6b4a59a614456",
         "a0f733ab78e219919a0ff7b5d08fcacdacf605dad53823440a237d94cb0b8ecb",
         "d766c02837d3fdce1438611fc20b8d5ded11b080214fc200f48351e5b346d1b9"
     ],
@@ -30,24 +31,29 @@
     "controllers/core/AI/AIController.php": [
         "0a0129dcd961e1b9709048b2d6ebe82f0a276f75ecf1f2512b585223dfcf4a78",
         "130a7d2095d22b307ba44c530e688a28159ccff149c3bb90651eccc2d844b2b3",
+        "15575229247df4deee721076c7598dbcd9143559556cbfc4563f2ed6f52224af",
         "3b0ee6aefa4c73a77bd5c76a7aa59a5de34dc6f9dabeaafecdba4cb9be7b02cd",
         "a00fb16dddbc2c1f41eed0a8d12b2f00fee34784fcef1fcd23e5425b63e76fb1",
         "a73e5b934633d108274a9007f06d8744d987a29437dcb0910df3b3aec430a722"
     ],
     "controllers/core/AI/ClientController.php": [
+        "0accee4ba830fbece6183f1aeb0c3a66ddad13fc03bc74b01a3ac9c93324d167",
         "44940604c6030d18c4e0c55f3f4f17dfc99c7f7c2a7fc40d35e5ff5c5fc1900b",
         "b1a993dc84acd7f01a234d84af6480032cdbc83c765bc350dabf01eed01f7320"
     ],
     "controllers/core/AI/WatsonController.php": [
+        "1197e2988025a47c64a52e2f1c75fc6d2641cc5747a0b404db391773915c8807",
         "c05d81fcc8d294c7cc2fb80c16bdf6039454cfb806105c3c9050bfb9708046d5"
     ],
     "controllers/core/Auth/AdminController.php": [
         "0dd2905d2ef419a4c72411bc78c942507a00bdc72fc4e4225b15c63f3ce970fe",
+        "1906eb67c897d47b5cc7be2b46f85041ccc966f146847c3dfce17600d7d0818a",
         "1bb93ade98dd81b24c9d16f52bce81b86d526c2c6599064bea84d6624a72bc49",
         "925b839321cba4256a7cb9da2083f98c20ae1fd1b6a021d3c2b38eb1300c1737"
     ],
     "controllers/core/Auth/AuthController.php": [
         "1b9aa729666dbbe1cda4b49bddcb14fdc41afd55bf0c0796ea8c3a6733ac8a46",
+        "3abb501827dd50c736093fca54375b2b7eada0741becd663f203e7d9f87b99a0",
         "7f1d7f84d83e3b4e9267afe2b83f1ef8ff7c1b7e2ff1b679d86b04124333e2d0",
         "844fefbaf0c41dfc022099f1a4fc0bc5162fdb0e951db1605259cd978f41d705"
     ],

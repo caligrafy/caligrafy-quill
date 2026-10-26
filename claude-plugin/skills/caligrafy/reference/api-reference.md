@@ -32,7 +32,7 @@ Route::run()                       // MUST be the last call in web.php
 Route::$currentRoute               // matched route pattern, e.g. "books/{id}"
 Route::$currentBind                // ['id' => '12', ...] (+ query string params for GET routes)
 ```
-- `$method` is `'Controller'` (runs `index`), `'Controller@action'`, or a closure.
+- `$method` is `'Controller'` (runs `index`), `'Controller@action'`, or a closure. The controller may be fully qualified (`'Shop\OrderController@show'`, leading `\` allowed). `Route::resolveController($name)`: a declared class wins; else a short name falls back to `Route::EXAMPLE_CONTROLLERS_NAMESPACE` (`Caligrafy\Controllers`, the example controllers of `controllers/core/`); else `null` -> 1001 (G47).
 - Leading/trailing slashes are stripped; a route matches only if it has the **same number of segments** and the **same HTTP method** as the request; `{name}` segments capture values.
 - No match (or wrong method) falls back to the **first route declared** (keep `Route::get('/', ...)` first).
 - For controller routes: missing class/method throws `[ERROR 1001]` (404); a JSON request (`wantsJson()`) without `Auth::activateAPI()` or without a valid Bearer API key throws `[ERROR 1004] Access Denied` (401). Closure routes skip the API-key check.
@@ -84,7 +84,7 @@ CSRF (`checkCSRF`, run for POST/PUT/DELETE whenever a Request is built): skipped
 ## Controller (`Caligrafy\Controller`)
 
 ```php
-class BookController extends Controller { public function index() { ... } }   // global namespace, use Caligrafy\Controller;
+class BookController extends Controller { public function index() { ... } }   // global or namespaced (namespace Shop; -> 'Shop\BookController@index'), use Caligrafy\Controller;
 
 protected $loader;      // Caligrafy\Loader: ->library($lib) includes LIB_PATH/$lib.php, ->helper($h) includes HELPER_PATH/$h.php
 protected $request;     // Caligrafy\Request
@@ -199,6 +199,7 @@ Root `.htaccess` (mod_rewrite only, `AllowOverride FileInfo`): front controller 
 
 ## Auth module templates (`framework/settings/application`, copied to `application/` by initialize)
 - `models/Auth/User.php`: `findByUsername($username)`, `User::hashPassword($password)`, `verifyPassword($password)` (hash, or legacy `encryptDecrypt` value), `needsRehash()`.
+- The example controllers below are in `namespace Caligrafy\Controllers` (template routes use the full names; short names still resolve, G47).
 - `controllers/core/Auth/AuthController.php`: `index, registerForm, home, register, login, logout, notAuthorized`; login upgrades legacy passcodes. Passwords 8-72 chars, alphanumeric unique usernames.
 - `controllers/core/Auth/AdminController.php`: `ADMIN_PERMISSION = 1`; `index, editUserForm, updateUser, deleteUser` all `guard('permissions', 1)`.
 - `models/Auth/create_db.sql`: `CREATE TABLE IF NOT EXISTS users` (passcode varchar(255), unique username).
@@ -339,7 +340,7 @@ URLs: `{WATSON_URL}/v2/assistants/{assistant_id}[/environments/{environment_id}]
 | Code | Meaning | Usual cause |
 | - | - | - |
 | 1000 | Invalid Http Request Method | |
-| 1001 | Invalid Controller or Action | class/method name typo, file outside `application/`, duplicate class name |
+| 1001 | Invalid Controller or Action | class/method name typo, file outside `application/`, wrong namespace in the route |
 | 1002 | Invalid library | `import()` of a missing file |
 | 1004 | Access Denied | JSON request to a controller route without `Auth::activateAPI()` or without a valid `Authorization: Bearer <API_KEY>` |
 | 2001 | Database Security Error | invalid column name given to `search()` or a Model write |
