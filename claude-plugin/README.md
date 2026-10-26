@@ -41,6 +41,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.7.1** - The signed-in header keeps the Bootstrap 3 column padding and the title next to the menu icon on phones
+  (`theme.css`, QA check); G40 and the Views page document it.
 - **1.7.0** - Explicit layout classes: the Pug layout body is `body(id='gesturize' class='caligrafy-layout')` and the
   Bootstrap 5 compatibility layer of `theme.css` scopes its heading margins to `body:where(#gesturize, .caligrafy-layout)`
   (the id stays an alias for older layouts). Client apps that reuse the Caligrafy header add `header.caligrafy-header`
