@@ -14,7 +14,17 @@ function qa_message($text) {
             'content' => [['type' => 'output_text', 'text' => $text, 'annotations' => []]]];
 }
 
-if ($method === 'POST' && $uri === '/v1/conversations') {
+$token = trim(substr($_SERVER['HTTP_AUTHORIZATION'] ?? '', 7));
+if ($method === 'GET' && $uri === '/v1/models') {
+    // doctor: 401 for a malformed or 'invalid' key, otherwise the models of a restricted project
+    if (!preg_match('/^sk-(proj-|svcacct-)?[A-Za-z0-9_-]{8,}$/', $token) || preg_match('/^sk-proj(?!-)/', $token) || strpos($token, 'invalid') !== false) {
+        http_response_code(401);
+        echo json_encode(['error' => ['message' => 'Incorrect API key provided: ' . $token, 'code' => 'invalid_api_key']]);
+    } else {
+        echo json_encode(['object' => 'list', 'data' => array_map(function ($id) { return ['id' => $id, 'object' => 'model']; },
+            ['gpt-6-luna', 'gpt-6-astra', 'gpt-6.1-sol', 'gpt-image-2', 'text-embedding-3-small', 'whisper-1'])]);
+    }
+} elseif ($method === 'POST' && $uri === '/v1/conversations') {
     echo json_encode(['id' => 'conv_qa', 'object' => 'conversation']);
 } elseif ($method === 'DELETE' && preg_match('#^/v1/conversations/[^/]+$#', $uri)) {
     echo json_encode(['id' => basename($uri), 'object' => 'conversation.deleted', 'deleted' => true]);

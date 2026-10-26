@@ -10,7 +10,7 @@ argument-hint: "<path/to/script.sql | tables | query \"SQL\">"
 Arguments: `$ARGUMENTS`. Read [gotchas.md](../caligrafy/reference/gotchas.md) G3, G10, G11, G13 first.
 
 ## 1. Find the database settings (never print passwords)
-Read `.env`: `DB_ACTIVATE`, `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`; use `DB_PASSWORD` only inside commands. If `DB_ACTIVATE` is not `true`, the app will not connect (G20 - tell the user).
+Read `.env`: `DB_ACTIVATE`, `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`; use `DB_PASSWORD` only inside commands. If `DB_ACTIVATE` is not `true`, the app will not connect (G20 - tell the user). For connection errors, `php caligrafer.php doctor --only db` reports the exact cause without printing the password.
 
 ## 2. Pick the target
 - **Docker** (default when `DB_HOST=mysql` or this project's `mysql` service is running): find it with `docker-compose ps mysql` (or `docker compose ps mysql`). If it is not running, offer `/caligrafy-quill:server start`. Use

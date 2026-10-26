@@ -19,11 +19,20 @@ require_once "framework/core/Caligrafer.php";
 require_once 'vendor/autoload.php';
        
 // load environment variables
-if (!file_exists('.env')) {
+$isDoctor = strtolower($argv[1] ?? '') === 'doctor'; // read-only: never creates .env
+if (!file_exists('.env') && !$isDoctor) {
 	system("cp framework/settings/.env.example .env");
 }
-$dotenv = Dotenv\Dotenv::createUnsafeMutable(__DIR__);
-$dotenv->load();
+// doctor --env <file> checks another environment file (for example .env.production)
+$envAt = array_search('--env', $argv);
+$envFile = $envAt !== false && isset($argv[$envAt + 1])? $argv[$envAt + 1] : '.env';
+if (is_file($envFile)) {
+	$dotenv = Dotenv\Dotenv::createUnsafeMutable(dirname(realpath($envFile)), basename($envFile));
+	$dotenv->load();
+} elseif ($envAt !== false || !$isDoctor) {
+	print("\n Environment file not found: $envFile\n\n");
+	exit(1);
+}
 
 $restricted = ['app', 'bot', '__bots__', 'css', 'facedetect', 'fonts', 'images', 'js', 'ml', 'resources', 'uploads'];
 
@@ -32,6 +41,7 @@ Caligrafer::run();
 $defaultMsg = "\n Available Functions: 
 				\n - initialize: Initializes and signs your project
 				\n - upgrade [--apply] [--force <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files
+				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - server <start | stop>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker)
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
@@ -118,6 +128,11 @@ switch(strtolower($argv[1])) {
 		$forceAt = array_search('--force', $argv);
 		$force = $forceAt !== false? ($argv[$forceAt + 1] ?? '') : null;
 		exit((new Caligrafy\Upgrader('.', $apply, $force))->run());
+
+	case 'doctor':
+		$onlyAt = array_search('--only', $argv);
+		$only = $onlyAt !== false? ($argv[$onlyAt + 1] ?? '') : null;
+		exit((new Caligrafy\Doctor('.', $only, $envFile))->run(in_array('--json', $argv)));
 
 	case 'create':
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {

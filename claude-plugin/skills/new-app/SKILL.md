@@ -53,4 +53,4 @@ Read first: [09.7.2-vue-routes.md](../caligrafy/reference/09.7.2-vue-routes.md),
    - **create** (Vite): fix `src/common/app.js` to `import axios from 'axios'` and `import.meta.env.VITE_API_KEY` (G22).
 7. **Verify**: `php -l` any PHP you touched, open `<base>/<route>` (Docker: `http://localhost:8080/...`), check the browser console, and call one data route with curl + JSON headers.
 
-Report the files created, the URL to open, and any `.env` keys the type needs (`WATSON_API_KEY` for bot, none for facedetect/ml).
+Report the files created, the URL to open, and any `.env` keys the type needs (`WATSON_API_KEY` for bot, none for facedetect/ml). For apps that call OpenAI, Groq, Watson, Stripe or Coinbase, have the user run `php caligrafer.php doctor` after entering the keys: it catches malformed keys and models the key cannot use before the app is tested.

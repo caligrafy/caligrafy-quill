@@ -26,7 +26,11 @@ fi
 printf "Checking PHP and composer..."
 php --version && composer --version
 if  [ $? -eq 0 ]; then
-    if [ -d "./vendor" ] && [ -f "./.env" ] &&  [ -d "./application" ] && [ "$MODE" = "upgrade" ]; then
+    if [ "$MODE" = "doctor" ]; then
+        # read-only: never initializes or installs anything; options are passed as typed
+        if [ -d "./vendor" ]; then ./caligrafer.php doctor "${@:2}"; exit $?; fi
+        printf "\n\nFAIL vendor/ is missing: run composer install first\n\n"; exit 1
+    elif [ -d "./vendor" ] && [ -f "./.env" ] &&  [ -d "./application" ] && [ "$MODE" = "upgrade" ]; then
         # upgrade options are passed as typed (--force takes a case-sensitive path)
         ./caligrafer.php upgrade "${@:2}"
     elif [ -d "./vendor" ] && [ -f "./.env" ] &&  [ -d "./application" ]; then

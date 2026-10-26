@@ -6,7 +6,12 @@ $body = file_get_contents('php://input');
 file_put_contents(sys_get_temp_dir() . '/qa_watson_mock.log', json_encode(['method' => $method, 'uri' => $uri, 'body' => $body,
     'auth' => $_SERVER['HTTP_AUTHORIZATION'] ?? (isset($_SERVER['PHP_AUTH_USER']) ? 'Basic ' . base64_encode($_SERVER['PHP_AUTH_USER'] . ':' . $_SERVER['PHP_AUTH_PW']) : '')]) . "\n", FILE_APPEND);
 header('Content-Type: application/json');
-if ($method === 'POST' && preg_match('#/sessions\?version=#', $uri)) {
+if (($_SERVER['PHP_AUTH_PW'] ?? '') !== '' && strpos($_SERVER['PHP_AUTH_PW'], 'invalid') !== false) {
+    http_response_code(401);
+    echo json_encode(['error' => 'Unauthorized', 'code' => 401]);
+} elseif ($method === 'GET' && preg_match('#/v2/assistants\?version=#', $uri)) {
+    echo json_encode(['assistants' => [['assistant_id' => 'qa-assistant', 'name' => 'QA']], 'pagination' => []]);
+} elseif ($method === 'POST' && preg_match('#/sessions\?version=#', $uri)) {
     echo json_encode(['session_id' => 'sess-qa']);
 } elseif ($method === 'POST' && preg_match('#/sessions/sess-qa/message\?version=#', $uri)) {
     $text = json_decode($body, true)['input']['text'] ?? '';
