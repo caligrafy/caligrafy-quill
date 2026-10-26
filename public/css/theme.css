@@ -167,3 +167,13 @@ body {
     font-size: 80px;
   }
 }
+/* Bootstrap 5 compatibility: keep the Caligrafy look (Bootstrap 3 used a 14px body and had no .card component) */
+:root {
+    --bs-body-font-size: 14px;
+    --bs-body-line-height: 1.42857;
+}
+.card {
+    display: block;
+    min-width: auto;
+    background-clip: border-box;
+}

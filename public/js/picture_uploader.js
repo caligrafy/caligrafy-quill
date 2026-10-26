@@ -1,70 +1,39 @@
 /*!
- * @copyright Copyright &copy; Broadposter 2018
- * @version 1.0
- *
+ * picture_uploader.js - click an <img data-type="editable" id="..."> to pick a new picture (max 2 MB) and preview it.
+ * A hidden file input named after the image id is added to the form #kp_new_form (or to the image's form).
+ * No jQuery needed.
  */
+document.addEventListener('DOMContentLoaded', function () {
+    document.querySelectorAll('img[data-type=editable]').forEach(function (img) {
+        var input = document.createElement('input');
+        input.type = 'file';
+        input.hidden = true;
+        input.className = 'd-none';
+        input.accept = 'image/*';
+        input.name = img.id;
+        input.setAttribute('data-image-placeholder', img.id);
 
-function init() {
-    var _inputFile;
-    
-    $("img[data-type=editable]").each(function (i, e) {
-        _inputFile = $('<input/>')
-	    .attr('class', 'hide')
-            .attr('type', 'file')
-            .attr('hidden', 'hidden')
-            .attr('accept', 'image/*')
-	    .attr('name', e.id)
-            .attr('onchange', 'readImage()')
-            .attr('data-image-placeholder', e.id);
+        var form = document.getElementById('kp_new_form') || img.closest('form') || img.parentElement;
+        form.appendChild(input);
 
-        $('#kp_new_form').append(_inputFile); //e.parentElement
+        img.addEventListener('click', function () {
+            var globalError = document.getElementById('global_error_message');
+            if (globalError) globalError.className = 'd-none';
+            input.click();
+        });
 
-        $(e).on("click", _inputFile, triggerClick);
+        input.addEventListener('change', function () {
+            var file = input.files && input.files[0];
+            var pictureError = document.getElementById('picture_error');
+            if (!file) return;
+            if (file.size / 1024 / 1024 <= 2) {
+                var reader = new FileReader();
+                reader.onload = function (e) { img.src = e.target.result; };
+                reader.readAsDataURL(file);
+                if (pictureError) pictureError.className = 'error d-none';
+            } else if (pictureError) {
+                pictureError.className = 'error show';
+            }
+        });
     });
-}
-
-function triggerClick(e) {
-    $('#global_error_message').attr('class', 'hide');
-    e.data.click();
-}
-
-Element.prototype.readImage = function () {
-    var _inputFile = this;
-
-    if (_inputFile && _inputFile.files && _inputFile.files[0]) {
-	if (_inputFile.files[0].size/1024/1024 <= 2) { // if picture size is acceptable
-	    var _fileReader = new FileReader();
-	    _fileReader.onload = function (e) {
-		var _imagePlaceholder = _inputFile.attributes.getNamedItem("data-image-placeholder").value;
-		var _img = $("#" + _imagePlaceholder);
-		_img.attr("src", e.target.result);
-	    };
-	    _fileReader.readAsDataURL(_inputFile.files[0]);
-	    $('#picture_error').attr('class', 'error hide');
-	} else { //otherwise show inline error message
-	    $('#picture_error').attr('class', 'error show');
-	}
-    }
-};
-
-// 
-// IIFE - Immediately Invoked Function Expression
-// https://stackoverflow.com/questions/18307078/jquery-best-practises-in-case-of-document-ready
-(
-
-function (yourcode) {
-    "use strict";
-    // The global jQuery object is passed as a parameter
-    yourcode(window.jQuery, window, document);
-}(
-
-function ($, window, document) {
-    "use strict";
-    // The $ is now locally scoped 
-    $(function () {
-        // The DOM is ready!
-        init();
-    });
-
-    // The rest of your code goes here!
-}));
+});

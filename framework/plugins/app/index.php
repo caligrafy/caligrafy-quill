@@ -33,8 +33,8 @@
 		-->
         
         <!-- Initialization scripts -->
-        <script src="https://unpkg.com/vue@3"></script>
-        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
+        <script src="<?php echo scripts('vue'); ?>"></script>
+        <script src="<?php echo scripts('axios'); ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
         <script>loadEnvironment(`<?php echo $env; ?>`);</script>
         <script> 
@@ -47,7 +47,6 @@
         </script>
         
         <!-- Additional scripts go here -->
-        <script src="<?php echo scripts('bootstrap_jquery'); ?>"></script>
         <script src="<?php echo scripts('bootstrap_script'); ?>"></script>
         <script src="<?php echo scripts('script'); ?>"></script>
         

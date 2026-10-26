@@ -10,7 +10,14 @@ if ($method === 'POST' && preg_match('#/sessions\?version=#', $uri)) {
     echo json_encode(['session_id' => 'sess-qa']);
 } elseif ($method === 'POST' && preg_match('#/sessions/sess-qa/message\?version=#', $uri)) {
     $text = json_decode($body, true)['input']['text'] ?? '';
-    echo json_encode(['output' => ['generic' => [['response_type' => 'text', 'text' => 'You said ' . $text]]],
+    $generic = [['response_type' => 'text', 'text' => 'You said ' . $text]];
+    if (stripos($text, 'menu') !== false) {
+        $generic = [['response_type' => 'option', 'title' => 'Pick an animal', 'options' => [
+            ['label' => 'Dog', 'value' => ['input' => ['text' => 'dog']]], ['label' => 'Cat', 'value' => ['input' => ['text' => 'cat']]]]]];
+    } elseif (stripos($text, 'dog') !== false) {
+        $generic = [['response_type' => 'image', 'title' => 'A dog', 'source' => '/public/images/resources/play.png']];
+    }
+    echo json_encode(['output' => ['generic' => $generic],
                       'context' => ['skills' => ['main skill' => ['user_defined' => ['bot_name' => 'Cali']]]]]);
 } elseif ($method === 'DELETE') {
     echo '{}';

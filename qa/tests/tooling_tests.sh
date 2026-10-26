@@ -39,7 +39,23 @@ if node --check framework/plugins/facedetect/scripts/main.js 2>/dev/null && grep
 else
     ko "facedetect scaffold (markRaw / syntax)"
 fi
-grep -q 'vue@2.7.16/dist/vue' framework/plugins/bot/index.php && ok "bot scaffold pins Vue 2.7.16" || ko "bot scaffold Vue version is not pinned"
+if grep -q "scripts('vue')" framework/plugins/bot/index.php && ! grep -rqi 'botui\|vue@2' framework/plugins/bot public/js/services 2>/dev/null; then ok "bot scaffold uses Vue 3 without BotUI"; else ko "bot scaffold still references Vue 2 or BotUI"; fi
+
+# --- front-end libraries --------------------------------------------------------------------
+BADJQ=$(grep -n '\$(\|jQuery(\|jQuery\.' public/js/script.js public/js/picture_uploader.js framework/settings/application/views/default/master/*.pug 2>/dev/null)
+[ -z "$BADJQ" ] && ok "layout scripts do not need jQuery" || ko "jQuery is still used" "$BADJQ"
+grep -q 'vladmandic/face-api' public/js/services/face-api.min.js && ! ls public/resources/models | grep -q mtcnn && ! grep -q 'nets.mtcnn' public/js/services/detect.js \
+    && ok "face-api is @vladmandic/face-api with its own models (no MTCNN)" || ko "face-api library or models are outdated"
+if grep -q 'ml5.bodyPose' public/js/services/mlcore.js && ! grep -q 'ml5.poseNet\|ml5.uNet' public/js/services/mlcore.js && ! grep -rq 'p5.dom\|p5.js/0\.' framework/plugins/ml; then
+    ok "ML scaffold uses ml5 1.x APIs and p5 2.x"
+else ko "ML scaffold still uses ml5 0.x or p5 0.x"; fi
+UNPINNED=$(grep -rhoE "https://(unpkg\.com|cdn\.jsdelivr\.net/npm|cdnjs\.cloudflare\.com/ajax/libs)/[^\"' )]+" framework public/js 2>/dev/null | grep -v node_modules | grep -vE '@[0-9]+\.[0-9]+\.[0-9]+|/[0-9]+\.[0-9]+\.[0-9]+/' | sort -u)
+[ -z "$UNPINNED" ] && ok "every CDN library has an exact version" || ko "unpinned CDN libraries" "$UNPINNED"
+DEAD=""
+for url in $(grep -rhoE "https://(unpkg\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)/[^\"' )]+" framework/settings/coresettings.php framework/plugins 2>/dev/null | sort -u); do
+    code=$(curl -s -o /dev/null -L -w '%{http_code}' --max-time 20 "$url"); [ "$code" = 200 ] || DEAD="$DEAD $url=$code"
+done
+[ -z "$DEAD" ] && ok "every CDN library URL answers 200" || ko "CDN URLs not reachable" "$DEAD"
 BADJS=""
 for f in framework/plugins/*/scripts/*.js public/js/services/app.js; do node --check "$f" 2>/dev/null || BADJS="$BADJS $f"; done
 [ -z "$BADJS" ] && ok "client scaffold scripts parse (node --check)" || ko "node --check" "$BADJS"
@@ -56,6 +72,8 @@ else
         if grep -rqE "VUE_APP_API_KEY|require\(['\"]axios['\"]\)" dist/assets/*.js; then
             ko "Vue SPA bundle still contains Vue CLI code from common/app.js (require/process.env)"
         elif grep -rq 'qa-api-key' dist/assets/*.js; then ok "Vue SPA template builds with Vite and common/app.js reads VITE_API_KEY"
+            OUT=$(npx eslint . 2>&1) && ok "Vue SPA template passes ESLint (flat config)" || ko "Vue SPA ESLint" "$OUT"
+            OUT=$(npm audit --omit=dev 2>&1) && ok "Vue SPA template has no known vulnerabilities" || ko "npm audit" "$(echo "$OUT" | tail -5)"
         else ko "Vue SPA build does not inline VITE_API_KEY"; fi
     else
         ko "Vue SPA build failed" "$(tail -20 "$TMP/build.log" 2>/dev/null; tail -5 "$TMP/npm.log")"

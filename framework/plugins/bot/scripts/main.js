@@ -1,127 +1,127 @@
-var botui = new BotUI('my-botui-app');
-var app = new Vue({
-  el: '#app',
-  data() {
-    return {
-        response: null,
-        env: env,
-        botui: botui,
-        botId: env.botSkillId,
-        route: env.home + "__bots__/" + env.appName + "/",
-        config: {
-            async: true,
-            crossDomain: true,
-            headers: {
-                "Authorization": "Bearer " + apiKey,
-                'Content-Type': 'application/json'
+/*
+ * Caligrafy Bot client (Vue 3) for IBM watsonx Assistant
+ *
+ * Data routes (application/config/routing/web.php):
+ * - POST __bots__/{appName}/{botSkillId}   connect
+ * - POST __bots__/{appName}/communicate    {text, variables?} -> {action_success, response: [...], context}
+ * - DELETE __bots__/{appName}              end
+ *
+ * Watson response types: text, option, image, pause. For "pause" responses whose context has an action,
+ * define window.executeBotAction = function (context) { return { text: '...', variables: {...} }; }
+ */
+const app = Vue.createApp({
+    data() {
+        return {
+            env: env,
+            botId: env.botSkillId,
+            route: env.home + "__bots__/" + env.appName + "/",
+            messages: [],
+            action: { type: null, options: [], context: null },
+            text: '',
+            waiting: false,
+            config: {
+                headers: {
+                    "Authorization": "Bearer " + apiKey,
+                    "Accept": "application/json",
+                    "Content-Type": "application/json"
                 }
-        }
-    }
-  },
-  /* Method Definition  */
-  methods: {
-      
-      addMessage: function(message, human = false, type = 'text') {
-          this.botui.message.add({
-              autoHide: false,
-              type: type,
-              human: human,
-              content: message
-            });
-      },
-      
-      addAction: function(action, options = [], context = null) {
-          this.botui.action[action]({
-              autoHide: false,
-              delay: 500,
-              action: options
-        }).then(function(res){
-            var input = { "text": res.value};
-            if (context) {
-                input.variables = context; 
             }
-            app.communicate(app.route, JSON.stringify(input));
-          });
-      },
+        };
+    },
+    methods: {
+        addMessage(content, human = false) {
+            this.messages.push({ type: 'text', content: content, human: human });
+            this.scroll();
+        },
 
-      addContext: function(context = null) {
-        if (context)
-            this.addAction('text',[], context);
-      },
-      
-      promptUser: function(message, action = 'text', options = []) {
-          this.addMessage(message);
-          this.addAction(action, options);
-      },
-      
-      
-    // Connect to the bot
-      connect: function(route) {
-            axios.post(route + this.botId, [], this.config)
-            .then(response => {
-                // if an error occurs then show a generic message
-                if(response.data === true) {
-                    console.log('Connected');
-                } else {
-                    console.log('Connection could not be established');
-                }
-            })
-            .catch(error => (console.log(error)));          
-      },
-      
-      // Communicate with the bot
-      communicate: function(route, input) {
-            axios.post(route + 'communicate', input, this.config)
-            .then(response => {
-                if (response.data && response.data['action_success'] === true && response.data.response) {
-                    response.data.response.forEach((element) => {
-                        switch(element['response_type']) {
+        addImage(source, title) {
+            this.messages.push({ type: 'image', source: source, title: title, human: false });
+            this.scroll();
+        },
+
+        // action: 'text' (free input) or 'button' (options), context: variables sent with the next answer
+        addAction(type, options = [], context = null) {
+            this.action = { type: type, options: options, context: context };
+        },
+
+        answer(value, label) {
+            if (!String(value).trim()) return;
+            const input = { text: value };
+            if (this.action.context) input.variables = this.action.context;
+            this.addMessage(label, true);
+            this.text = '';
+            this.action = { type: null, options: [], context: null };
+            this.communicate(input);
+        },
+
+        scroll() {
+            this.$nextTick(() => {
+                const box = this.$refs.messages;
+                if (box) box.scrollTop = box.scrollHeight;
+            });
+        },
+
+        // Connect to the bot
+        connect() {
+            return axios.post(this.route + this.botId, {}, this.config)
+                .then(response => {
+                    if (response.data !== true) console.log('Connection could not be established');
+                    return response.data === true;
+                })
+                .catch(error => { console.log(error); return false; });
+        },
+
+        // Communicate with the bot
+        communicate(input) {
+            this.waiting = true;
+            return axios.post(this.route + 'communicate', input, this.config)
+                .then(response => {
+                    this.waiting = false;
+                    const data = response.data;
+                    if (!(data && data.action_success === true && data.response)) {
+                        this.addMessage("Bye for now. You can close the chat");
+                        return;
+                    }
+                    data.response.forEach(element => {
+                        switch (element.response_type) {
                             case 'text':
-                                app.promptUser(element.text, 'text', []);
+                                this.addMessage(element.text);
+                                this.addAction('text');
                                 break;
                             case 'option':
-                                var options = [];
-                                element.options.forEach(function(element) {
-                                    options.push({ 'text': element.label, 'value': element.value.input.text});
-                                });
-                                app.promptUser(element.title,'button', options);
+                                this.addMessage(element.title);
+                                this.addAction('button', element.options.map(option => ({ text: option.label, value: option.value.input.text })));
                                 break;
                             case 'image':
-                                // assume it's an embed
-                                var imageInput = element.source;
-                                app.addMessage("<a target=_blank href='" + element.source +"'>" + element.title  + "</a>", false, 'html'); 
-                                imageInput = "<embed src='" + element.source + "' style='width: 50vw; max-width: 600px; height: auto;'></embed>";
-                                type='html';
-                                app.addMessage(imageInput, false, type); 
-                                app.addAction('text');
+                                this.addImage(element.source, element.title);
+                                this.addAction('text');
                                 break;
                             case 'pause':
-                                if (response.data.context && response.data.context.action) {
-                                    var actionResponse = execute(response.data.context);
-                                    if (actionResponse) {
-                                        app.addMessage(actionResponse.text);
-                                        app.addAction('text', [], actionResponse.variables);
+                                if (data.context && data.context.action && typeof window.executeBotAction === 'function') {
+                                    const result = window.executeBotAction(data.context);
+                                    if (result) {
+                                        this.addMessage(result.text);
+                                        this.addAction('text', [], result.variables);
                                     }
                                 }
                                 break;
                             default:
-                                console.log(response.data);
-                        }                        
+                                console.log(element);
+                        }
                     });
-                } else {
-                    app.addMessage("Bye for now. You can close the chat");
-                }
-
-            })
-            .catch(error => (console.log(error)));          
-      }   
-
-  },
-  /* upon object load, the following will be executed */
-  mounted () {
-      this.connect(this.route);
-      this.addMessage("Hi there!");
-      this.addAction('text', [], { "bot_name": 'Cali' });
-  }
-
+                })
+                .catch(error => {
+                    this.waiting = false;
+                    console.log(error);
+                    this.addMessage("The assistant could not be reached.");
+                });
+        }
+    },
+    mounted() {
+        this.connect();
+        this.addMessage("Hi there!");
+        this.addAction('text', [], { "bot_name": 'Cali' });
+    }
 });
+
+app.mount('#app');

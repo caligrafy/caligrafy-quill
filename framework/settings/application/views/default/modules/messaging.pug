@@ -1,11 +1,11 @@
-- $alertType = $status == 'danger'? 'exclamation-sign': ($status == 'success' ? 'ok' : ($status == 'info'? 'info-sign' : ''))
+- $alertIcon = $status == 'danger'? '⚠': ($status == 'success' ? '✓' : ($status == 'info'? 'ℹ' : ''))
 .show
     .spacer-2
     div(class="horizontal-center bounded")
         div(class="alert alert-{$status}", role="alert", style="margin:0;")
             p(class="medium-text horizontal-left semibold")
-                span(class="glyphicon glyphicon-{$alertType}", aria-hidden="true") &nbsp;
+                span(aria-hidden="true")= $alertIcon . ' '
                 = $message_header
-            span(class="sr-only")= $status
+            span(class="visually-hidden")= $status
             p(class="horizontal-left")= $message
             .spacer-1

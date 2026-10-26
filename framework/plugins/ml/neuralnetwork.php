@@ -14,11 +14,10 @@
 		<!-- Initialization scripts -->
 		
 		<!-- p5.js -->
-		<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/p5.min.js"></script>
-  		<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/0.9.0/addons/p5.dom.min.js"></script>
+		<script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/2.3.4/p5.min.js"></script>
 		
 		<!-- ml5 -->
-		<script src="https://unpkg.com/ml5@0.12.2/dist/ml5.min.js" type="text/javascript"></script>
+		<script src="https://unpkg.com/ml5@1.4.0/dist/ml5.min.js" type="text/javascript"></script>
         
     </head>
     
@@ -57,7 +56,6 @@
 		</script>
 
 		<!-- Additional scripts go here -->
-		<script src="<?php echo scripts('bootstrap_jquery'); ?>"></script>
 		<script src="<?php echo scripts('bootstrap_script'); ?>"></script>
 		<script src="<?php echo scripts('script'); ?>"></script>
 

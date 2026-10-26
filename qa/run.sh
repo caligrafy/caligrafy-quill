@@ -46,8 +46,9 @@ API_KEY=$(echo "$KEYS" | sed -n 's/^ *API_KEY=//p')
     echo "APP_KEY=$APP_KEY"
     echo "API_KEY=$API_KEY"
     echo "APP_ROOT="
+    echo "WATSON_URL=http://127.0.0.1:8769/instances/qa-instance"
     sed -e 's/^DB_ACTIVATE=.*/DB_ACTIVATE=true/' -e 's/^DB_HOST=.*/DB_HOST=mysql/' \
-        -e 's/^DB_DATABASE=.*/DB_DATABASE=quillqa/' framework/settings/.env.example
+        -e 's/^DB_DATABASE=.*/DB_DATABASE=quillqa/' -e '/^WATSON_URL=/d' framework/settings/.env.example
 } > .env
 
 # --- application/ and client apps -------------------------------------------------------
@@ -82,6 +83,8 @@ done
 $COMPOSE exec -T mysql mysql -uroot -proot quillqa < framework/settings/application/models/Auth/create_db.sql 2>/dev/null \
     || fail "could not create the users table"
 $COMPOSE exec -T mysql mysql -uroot -proot quillqa < qa/fixtures/books.sql 2>/dev/null || fail "could not create the books tables"
+# Watson mock inside the web container, used by WatsonController in the HTTP tests
+$COMPOSE exec -d web php -S 127.0.0.1:8769 qa/fixtures/watson_mock.php
 
 STATUS=0
 

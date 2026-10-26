@@ -54,7 +54,7 @@ myMl.detect((myMl) => {
 	myMl.drawSkeleton(myMl);
 
 	// Draw Particular Features
-	// myMl.drawFeature(myMl, ['nose', 'rightEye'] );
+	// myMl.drawFeature(myMl, ['nose', 'left_eye'] ); // ml5 names (snake_case) or the previous camelCase names
 
 	
 });
@@ -67,8 +67,8 @@ myMl.detect((myMl) => {
  */
 function draw() {
 	if (myMl.poses && myMl.poses.length > 0) {
-		let pose = myMl.poses[0].pose;
-		let nose = pose['nose'];
+		// ml5 1.x shape: myMl.poses[0].nose = {x, y, confidence} (myMl.poses[0].pose.nose still works)
+		let nose = myMl.poses[0].nose;
 		fill(255, 0,0);
 		ellipse(nose.x, nose.y, 50);
 	}

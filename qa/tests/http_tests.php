@@ -168,10 +168,22 @@ qa_test('query parameters cannot inject script into the env template literal', f
     qa_equals($payload, $res['x'], 'the value must round-trip unchanged');
 });
 
-qa_test('the Watson bot page loads a pinned Vue 2 build', function () use ($guest) {
+qa_test('the Watson bot page uses the pinned Vue 3 build and no BotUI', function () use ($guest) {
     $r = $guest->get('/bot/qabot?botSkillId=qa');
     qa_equals(200, $r['status']);
-    qa_contains('vue@2.7.16/dist/vue', $r['body']);
+    qa_contains('vue@3.5.44/dist/vue.global.prod.js', $r['body']);
+    qa_not_contains('botui', strtolower($r['body']));
+});
+
+qa_test('the bot data routes reach Watson (mock) through WatsonController', function () use ($API_KEY) {
+    $b = new QaBrowser();
+    $headers = ['headers' => ['Accept: application/json', 'Content-Type: application/json', 'Authorization: Bearer ' . $API_KEY]];
+    $connect = $b->request('POST', '/__bots__/qabot/assistant-qa', $headers + ['form' => '{}']);
+    qa_equals('true', trim($connect['body']), $connect['body']);
+    $reply = json_decode($b->request('POST', '/__bots__/qabot/communicate', $headers + ['form' => json_encode(['text' => 'show me the menu'])])['body'], true);
+    qa_equals(true, $reply['action_success'] ?? null, json_encode($reply));
+    qa_equals('option', $reply['response'][0]['response_type']);
+    qa_equals(['Dog', 'Cat'], array_column($reply['response'][0]['options'], 'label'));
 });
 
 // ---------------------------------------------------------------------------
