@@ -238,6 +238,17 @@ body:where(#gesturize, .caligrafy-layout) header .row > h1, body header:where(.c
     margin-top: 20px;
     margin-bottom: 10px;
 }
+/* Signed-in header columns: 15px padding like the Bootstrap 3 columns (the .row.g-0 has no gutter and no negative
+   margins; #vertical_menu is not a column and keeps no padding). The auto margins of the .horizontal-center title
+   centered it in the flex row on small screens; the Bootstrap 3 float kept it next to the menu icon */
+body:where(#gesturize, .caligrafy-layout) header nav.horizontal.row > [class*="col-"] {
+    padding-left: 15px;
+    padding-right: 15px;
+}
+body:where(#gesturize, .caligrafy-layout) header nav.horizontal.row > h1 {
+    margin-left: 0;
+    margin-right: 0;
+}
 
 /* Bootstrap 3 text spacing that the Caligrafy views rely on (everywhere, single page apps included) */
 html h1, html h2, html h3, html h4, html h5, html h6 {
