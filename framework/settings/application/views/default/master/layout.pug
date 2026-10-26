@@ -10,7 +10,8 @@ html(lang="en")
     block headers
     
   //- Defining the body
-  body(id='gesturize')
+  //- caligrafy-layout: Caligrafy layout scope of public/css/theme.css (the gesturize id is kept for older layouts)
+  body(id='gesturize' class='caligrafy-layout')
     if $authorized
         block navigation_authorized
     else 

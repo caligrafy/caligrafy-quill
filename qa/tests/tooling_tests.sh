@@ -127,10 +127,15 @@ done
 [ -z "$DEAD" ] && ok "every CDN library URL answers 200" || ko "CDN URLs not reachable" "$DEAD"
 OLDLIBS=$(grep -rnE "maxcdn\.bootstrapcdn|bootstrap(@|/)3\.|ajax\.googleapis\.com/ajax/libs/jquery|jquery/1\.|col-xs-|hidden-xs|visible-xs" framework/librairies/app/index.html framework/librairies/app/src framework/settings/application/views framework/plugins 2>/dev/null | grep -v node_modules)
 [ -z "$OLDLIBS" ] && ok "no Bootstrap 3 / jQuery 1 links or Bootstrap 3 grid classes (views, plugins, SPA template)" || ko "Bootstrap 3 or jQuery 1 is still referenced" "$OLDLIBS"
-grep -q 'body .container' public/css/theme.css && grep -q 'max-width: none' public/css/theme.css && grep -q ':where(#gesturize) h1' public/css/theme.css \
+grep -q 'body .container' public/css/theme.css && grep -q 'max-width: none' public/css/theme.css \
+    && grep -qF 'body:where(#gesturize, .caligrafy-layout) h1' public/css/theme.css \
+    && grep -qF 'body:where(#gesturize, .caligrafy-layout) header .row > h1' public/css/theme.css \
+    && grep -qF 'body header:where(.caligrafy-header) h1' public/css/theme.css \
+    && grep -qF 'html .btn-primary' public/css/theme.css && grep -qF 'html:root' public/css/theme.css \
+    && grep -qF "body(id='gesturize' class='caligrafy-layout')" framework/settings/application/views/default/master/layout.pug \
     && grep -q -- '--bs-gutter-x: 30px' public/css/theme.css && grep -q -- '--bs-card-border-color: #d9d9d9' public/css/theme.css \
     && ! grep -q 'content-section.row' framework/settings/application/views/default/index.pug \
-    && ok "theme.css keeps the Bootstrap 3 layout on Bootstrap 5 (full-width container, header title, centered grid, card borders)" \
+    && ok "theme.css keeps the Bootstrap 3 layout on Bootstrap 5 (full-width container, body.caligrafy-layout and header.caligrafy-header titles, centered grid, card borders)" \
     || ko "theme.css or the home view lost the Bootstrap 3 layout compatibility"
 BADJS=""
 for f in framework/plugins/*/scripts/*.js public/js/services/app.js; do node --check "$f" 2>/dev/null || BADJS="$BADJS $f"; done

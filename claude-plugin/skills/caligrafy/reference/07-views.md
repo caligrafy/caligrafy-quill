@@ -34,6 +34,20 @@ The views provided in `/application/views/default` extend the layout `default/ma
             .card.color0 ...
 ```
 
+The layout body carries the class `caligrafy-layout` (`body(id='gesturize' class='caligrafy-layout')` in `default/master/layout.pug`): it scopes the Bootstrap 3 heading margins of `theme.css`. Layouts copied before this class existed keep working through the `gesturize` id; if you write your own layout, put `class='caligrafy-layout'` on its body. `theme.css` must load after Bootstrap (as in `layoutblocks.pug`).
+
+Client apps that reuse the Caligrafy header outside the Pug layout (for example a PHP page in `public/<app>`) add the class `caligrafy-header` to the header, which gives the title the margins that center it, with no custom CSS:
+
+```html
+<header class="color0 caligrafy-header">
+    <nav class="horizontal">
+        <h1 class="large-text horizontal-center"><span class="semibold">Cali</span>grafy</h1>
+    </nav>
+</header>
+```
+
+Put `class="caligrafy-layout"` on the client app body instead to give all its headings the layout margins. Single page apps (Vue template) load `styles.css` after Bootstrap and keep the styles.css heading margin 0, as they did with Bootstrap 3: do not add these classes there.
+
 > Projects created before Caligrafy moved to Bootstrap 5 keep their own copies of the views in `/application/views`: see [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
 
 ## `Pug` Templates

@@ -41,6 +41,11 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.7.0** - Explicit layout classes: the Pug layout body is `body(id='gesturize' class='caligrafy-layout')` and the
+  Bootstrap 5 compatibility layer of `theme.css` scopes its heading margins to `body:where(#gesturize, .caligrafy-layout)`
+  (the id stays an alias for older layouts). Client apps that reuse the Caligrafy header add `header.caligrafy-header`
+  instead of a custom title margin (G40, new-app). Compat rules that override a same-selector Bootstrap rule are
+  prefixed with `html`, so they no longer depend on the stylesheet order; the look is unchanged (measured).
 - **1.6.0** - Namespaced controllers: G47 is fixed. The example controllers of `application/controllers/core/` are in
   `Caligrafy\Controllers`, routes accept fully qualified controllers (`'Shop\OrderController@show'`), and a short name that
   is not a declared class falls back to `Caligrafy\Controllers` so old routes keep working; relationships with namespaced
