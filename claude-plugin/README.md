@@ -45,6 +45,7 @@ written from the framework source: update them when `framework/` changes (and ru
   services in `.env` (database, OpenAI and Groq keys and models, Stripe mode, Coinbase, Watson, SMTP EHLO) with masked
   secrets, key-format warnings, TLS/DNS/timeout hints, `--only`, `--json` and `--env`. Documented in the api-reference
   Caligrafer CLI table, the server skill troubleshooting (run doctor first), the caligrafy workflow rules and the AI recipe.
+  Troubleshooting (gotchas), db and new-app skills point to `doctor`.
 - **1.7.1** - The signed-in header keeps the Bootstrap 3 column padding and the title next to the menu icon on phones
   (`theme.css`, QA check); G40 and the Views page document it.
 - **1.7.0** - Explicit layout classes: the Pug layout body is `body(id='gesturize' class='caligrafy-layout')` and the
