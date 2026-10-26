@@ -140,6 +140,7 @@ Caligrafer is a command line tool that comes prepackaged with several tools and 
 
 + **Framework Initialization:** The framework is automatically initialized for you to start using instantly.
 You can run ```php caligrafer.php initialize``` from the Caligrafy root. It signs the project with an `APP_KEY` and an `API_KEY` (an already signed project keeps its keys), creates the `application` folder and **deletes the `.git` folder**.
+After updating the framework of an existing project, run ```php caligrafer.php upgrade``` (dry run) then ```php caligrafer.php upgrade --apply``` to bring the template files of `application` up to date (see [Upgrading an existing project](9.5-Security-and-Upgrading#upgrading)).
 
 + **Create a Vue app (Vue as a library):** Scaffolds a simple Vue 3 app in the `public` folder for you to use immediately.
 You can run ```php caligrafer.php app <app_name>``` from the Caligrafy root. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library).

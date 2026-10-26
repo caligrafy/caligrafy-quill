@@ -170,7 +170,7 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 3. New server code goes in `application/` (never `framework/` unless the user asks to change the framework). Client code goes in `public/`.
 4. Use bound `Database::execute()` queries for anything built from user input (G2, G8). Filter then validate (G6).
 5. After editing PHP, `php -l <file>`; after changing routes, hit them with curl (JSON + Bearer) or the browser. When you change `framework/` or `framework/settings/application`, run `./qa/run.sh` (G38) and add a test for the change.
-6. In a project initialized with an older framework, compare its `application/` copies (auth module, `views/Client/app.pug`, `ClientController`, `AIController`) with `framework/settings/application` before assuming the current behavior (G39).
+6. In a project initialized with an older framework, run `php caligrafer.php upgrade` (dry run, safe) to see which `application/` copies are outdated or customized before assuming the current behavior; apply with `--apply` only when the user agrees (G39).
 7. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
 8. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
 9. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.

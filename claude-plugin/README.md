@@ -41,6 +41,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.5.0** - `php caligrafer.php upgrade [--apply] [--force <path>]`: API reference Caligrafer CLI section (statuses,
+  manifest `application/.caligrafy-manifest.json`, `framework/settings/template-history.json`, backups, routes `catch`
+  patch, client app report), G39 and the skill workflow recommend it for older projects; wiki 9.5 and 1 updated.
 - **1.4.1** - Framework errors use real HTTP status codes: G48 is fixed (401 for 1004, 403 for 3000, 404 for 1001,
   405 for 1000, 500 for other errors, PHP fatals and uncaught exceptions with the message only when `APP_DEBUG=true`;
   JSON body `{"error": {"code", "message"}}` for API calls, unchanged `[ERROR ...]` text for HTML). API reference
