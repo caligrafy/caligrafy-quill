@@ -354,7 +354,8 @@ Errors are caught in `web.php` by `Errors::handle($e)`: HTTP status from `Errors
 | Command | Effect (from caligrafer.php) |
 | - | - |
 | (none) | help text |
-| `initialize` | keeps existing `APP_KEY`/`API_KEY` or prepends new ones, adds `APP_ROOT` if missing (creates `.env` from `framework/settings/.env.example` first if missing), writes `framework/librairies/app/.env` (`VITE_APP_KEY`, `VITE_API_KEY`), copies `framework/settings/application` to `./application` if absent, `chmod -R 777 public/uploads`, **deletes `.git`**. `APP_ROOT` = folder name, or empty when a 2nd argument is passed (`.bin/caligrafer` passes `off` when no local httpd runs, i.e. Docker) |
+| `initialize` | keeps existing `APP_KEY`/`API_KEY` or prepends new ones, adds `APP_ROOT` if missing (creates `.env` from `framework/settings/.env.example` first if missing), writes `framework/librairies/app/.env` (`VITE_APP_KEY`, `VITE_API_KEY`), copies `framework/settings/application` to `./application` if absent (and writes `application/.caligrafy-manifest.json`), `chmod -R 777 public/uploads`, **deletes `.git`**. `APP_ROOT` = folder name, or empty when a 2nd argument is passed (`.bin/caligrafer` passes `off` when no local httpd runs, i.e. Docker) |
+| `upgrade [--apply] [--force <application/path>]` | compares every file of `framework/settings/application` with `application/` (`Caligrafy\Upgrader`): `missing`, `identical`, `outdated` (hash matches `application/.caligrafy-manifest.json` or a previous release in `framework/settings/template-history.json` = untouched), `customized`, `routes` (`config/routing/web.php`, never replaced). Dry run by default. `--apply`: copies missing, replaces outdated, writes `<file>.caligrafy-new` next to customized files, patches a `catch` that does `echo $e->getMessage();` to `Errors::handle($e);` (+ `use Caligrafy\Errors;`), updates the manifest. `--force <path>` (alone) replaces one template file. Replaced files are backed up to `backups/caligrafy-upgrade-<Ymd-His>/application/...`. Never touches `.env`, uploads, vendor or non-template files. Client apps in `public/` (markers `new FaceDetector`, `new MlCore`, `__bots__`, `loadVue(`) are reported against `framework/plugins/<type>`, never modified. Exit 1 without `application/` or with an unknown `--force` path |
 | `generatekeys` | prints a new `APP_KEY`/`API_KEY` pair |
 | `generateapikey` | prints an extra API key for the current `APP_KEY` |
 | `create <name>` | copies `framework/librairies/app` (Vue 3 + Vite + vue-router + vuex SPA) to `public/<name>` and runs `npm install` |
@@ -362,7 +363,7 @@ Errors are caught in `web.php` by `Errors::handle($e)`: HTTP status from `Errors
 | `server start|stop` | only acts when a 3rd arg is present (`.bin/caligrafer` adds `off` if no `httpd` process): `docker-compose up --build -d dev-box` / `docker-compose stop` |
 Reserved app names: `app, bot, __bots__, css, facedetect, fonts, images, js, ml, resources, uploads`.
 
-`.bin/caligrafer`: if PHP and Composer exist, runs `composer install` and `initialize` when needed, then `./caligrafer.php <mode> <command> [off]`; without PHP it runs `.bin/server start|stop` (Docker `prod-box`, which copies the code into the image).
+`.bin/caligrafer`: if PHP and Composer exist, runs `composer install` and `initialize` when needed, then `./caligrafer.php <mode> <command> [off]` (`upgrade` gets its arguments unchanged); without PHP it runs `.bin/server start|stop` (Docker `prod-box`, which copies the code into the image).
 
 ## Docker (`docker-compose.yaml`)
 | Service | Port | Notes |
