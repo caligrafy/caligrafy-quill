@@ -57,10 +57,17 @@ else ko "ML scaffold still uses ml5 0.x or p5 0.x"; fi
 UNPINNED=$(grep -rhoE "https://(unpkg\.com|cdn\.jsdelivr\.net/npm|cdnjs\.cloudflare\.com/ajax/libs)/[^\"' )]+" framework public/js 2>/dev/null | grep -v node_modules | grep -vE '@[0-9]+\.[0-9]+\.[0-9]+|/[0-9]+\.[0-9]+\.[0-9]+/' | sort -u)
 [ -z "$UNPINNED" ] && ok "every CDN library has an exact version" || ko "unpinned CDN libraries" "$UNPINNED"
 DEAD=""
-for url in $(grep -rhoE "https://(unpkg\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)/[^\"' )]+" framework/settings/coresettings.php framework/plugins 2>/dev/null | sort -u); do
+for url in $(grep -rhoE "https://(unpkg\.com|cdn\.jsdelivr\.net|cdnjs\.cloudflare\.com)/[^\"' )]+" framework/settings/coresettings.php framework/plugins framework/librairies/app/index.html 2>/dev/null | sort -u); do
     code=$(curl -s -o /dev/null -L -w '%{http_code}' --max-time 20 "$url"); [ "$code" = 200 ] || DEAD="$DEAD $url=$code"
 done
 [ -z "$DEAD" ] && ok "every CDN library URL answers 200" || ko "CDN URLs not reachable" "$DEAD"
+OLDLIBS=$(grep -rnE "maxcdn\.bootstrapcdn|bootstrap(@|/)3\.|ajax\.googleapis\.com/ajax/libs/jquery|jquery/1\.|col-xs-|hidden-xs|visible-xs" framework/librairies/app/index.html framework/librairies/app/src framework/settings/application/views framework/plugins 2>/dev/null | grep -v node_modules)
+[ -z "$OLDLIBS" ] && ok "no Bootstrap 3 / jQuery 1 links or Bootstrap 3 grid classes (views, plugins, SPA template)" || ko "Bootstrap 3 or jQuery 1 is still referenced" "$OLDLIBS"
+grep -q 'body .container' public/css/theme.css && grep -q 'max-width: none' public/css/theme.css && grep -q ':where(#gesturize) h1' public/css/theme.css \
+    && grep -q -- '--bs-gutter-x: 30px' public/css/theme.css && grep -q -- '--bs-card-border-color: #d9d9d9' public/css/theme.css \
+    && ! grep -q 'content-section.row' framework/settings/application/views/default/index.pug \
+    && ok "theme.css keeps the Bootstrap 3 layout on Bootstrap 5 (full-width container, header title, centered grid, card borders)" \
+    || ko "theme.css or the home view lost the Bootstrap 3 layout compatibility"
 BADJS=""
 for f in framework/plugins/*/scripts/*.js public/js/services/app.js; do node --check "$f" 2>/dev/null || BADJS="$BADJS $f"; done
 [ -z "$BADJS" ] && ok "client scaffold scripts parse (node --check)" || ko "node --check" "$BADJS"

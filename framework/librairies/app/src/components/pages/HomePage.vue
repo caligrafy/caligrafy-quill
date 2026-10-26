@@ -9,11 +9,11 @@
 		<div class="spacer-4"></div>
 		<show-message header="Welcome to Caligrafy" message="Start from the ground up with this light MVC framework"></show-message>
 		<div class="spacer-4"></div>
-		<template v-for="homecard in homecards" :key="homecard.id">
-			<div class="col-sm-6 col-md-4">
+		<div class="row">
+			<div class="col-md-6 col-lg-4" v-for="homecard in homecards" :key="homecard.id">
 				<show-card :homecard="homecard" ></show-card>
 			</div>
-		</template>
+		</div>
 		<div class='spacer-2'></div>
     </div>
 </template>

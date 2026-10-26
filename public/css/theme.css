@@ -171,13 +171,76 @@ body {
 :root {
     --bs-body-font-size: 14px;
     --bs-body-line-height: 1.42857;
+    --bs-body-color: #333; /* Bootstrap 3 text color (Bootstrap 5: #212529) */
 }
 .card {
     display: block;
     min-width: auto;
     background-clip: border-box;
+    /* the Caligrafy card border (styles.css) instead of the darker Bootstrap 5 one */
+    --bs-card-border-width: thin;
+    --bs-card-border-color: #d9d9d9;
+}
+/* Caligrafy color classes keep their colors on cards (Bootstrap 5 .card sets its own and loads after styles.css) */
+.card.color0 { background-color: #ffffff; color: #000000; border-color: #ffffff; }
+.card.color1 { background-color: #000000; color: #ffffff; border-color: #d5d5d5; }
+.card.color2 { background-color: #990000; color: #ffffff; border-color: #d5d5d5; }
+.card.color3 { background-color: #88959e; color: #000000; border-color: #d5d5d5; }
+.card.color4 { background-color: #fafafa; color: #414141; border-color: #d5d5d5; }
+.card.color5 { background-color: #414141; color: #f2f2f2; border-color: #d5d5d5; }
+.card.color6 { background-color: #EED461; color: #000000; border-color: #d5d5d5; }
+.card.color7 { background-color: #0551A3; color: #000000; border-color: #d5d5d5; }
+.card.color8 { background-color: #7AC2FB; color: #000000; border-color: #d5d5d5; }
+/* The layout wraps pages in .container, which styles.css makes full width: Bootstrap 5 limits .container with
+   max-width (Bootstrap 3 used width), which made every page narrower and stuck to the left */
+body .container {
+    max-width: none;
+}
+/* Bootstrap 3 spacing that the Caligrafy views rely on. Heading margins: in the Pug layout (body#gesturize)
+   Bootstrap 3 loaded after styles.css and its margins won (they center the header title); Bootstrap 5 has no top
+   margin. Single page apps load styles.css after Bootstrap, so their headings keep the styles.css margin 0.
+   :where() keeps the Bootstrap 3 specificity: classes such as .reset-margin still win */
+:where(#gesturize) h1, :where(#gesturize) h2, :where(#gesturize) h3 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+/* the signed-in header title is also a grid column: Bootstrap 5 resets the top margin of .row > * */
+:where(#gesturize) header .row > h1 {
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+:where(#gesturize) h4, :where(#gesturize) h5, :where(#gesturize) h6 {
+    margin-top: 10px;
+    margin-bottom: 10px;
+}
+h1, h2, h3, h4, h5, h6 {
+    line-height: 1.1;
+}
+p {
+    margin: 0 0 10px;
+}
+label {
+    margin-bottom: 5px;
+}
+/* Grids inside Caligrafy wrappers: 15px columns like Bootstrap 3, without the negative margins of the Bootstrap 5
+   .row that pushed centered wrappers to the left */
+.wrapper .row, .bounded .row, .bounded-large .row, .bounded-xlarge .row {
+    --bs-gutter-x: 30px;
+    margin-left: 0;
+    margin-right: 0;
+}
+/* below 768px, Bootstrap 3 columns were stacked blocks (card margins collapse between them) */
+@media (max-width: 767.98px) {
+    .wrapper .row, .bounded .row, .bounded-large .row, .bounded-xlarge .row {
+        display: block;
+    }
 }
 
+/* Bootstrap 3 button metrics (Bootstrap 5: line-height 1.5, 6px corners) */
+.btn {
+    --bs-btn-line-height: 1.42857;
+    --bs-btn-border-radius: 4px;
+}
 /* Bootstrap 5 buttons and fields in the Caligrafy black and white look (Bootstrap 5 colors buttons with variables:
    without these, btn-secondary text is white on white and disabled or focused controls turn blue) */
 .btn-primary {
