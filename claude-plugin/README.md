@@ -41,6 +41,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.8.1** - G38: the QA suite runs the new PHPUnit unit tests of the framework core (`tests/unit`, `vendor/bin/phpunit`).
 - **1.8.0** - `php caligrafer.php doctor` (`.bin/caligrafer doctor`): read-only health check of the project and of the
   services in `.env` (database, OpenAI and Groq keys and models, Stripe mode, Coinbase, Watson, SMTP EHLO) with masked
   secrets, key-format warnings, TLS/DNS/timeout hints, `--only`, `--json` and `--env`. Documented in the api-reference
