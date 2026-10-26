@@ -18,6 +18,7 @@
         const MODEL_URL = env.app_resources + 'models';
         this.options = Object.assign({ autoStart: true }, options);
         this.streamError = null;
+        this.mediaId = media;
         this.media = document.querySelector(`#${media}`) || null;
 
         // load the faceapi models (this.ready resolves once they are all loaded)
@@ -34,8 +35,9 @@
             faceapi.nets.faceExpressionNet.loadFromUri(MODEL_URL)
         ])
         .then(() => { 
-                // when loaded start the stream (the media may have been added to the page after the constructor)
-                this.media = this.media || document.querySelector(`#${media}`) || null; 
+                // when loaded start the stream. The media is looked up again: Vue replaces the page elements when it
+                // mounts (after the detector is created in the scaffolds), which detaches the element found earlier
+                this.resolveMedia(); 
                 if (this.options.autoStart && this.media && this.media.tagName.toLowerCase() == 'video' && !this.media.src && !this.media.srcObject) {
                     // errors are kept in this.streamError
                     this.startStream().catch(error => console.log(error));
@@ -53,6 +55,7 @@
     async startStream(constraints = { video: true, audio: false }) {
 
         this.streamError = null;
+        this.resolveMedia();
         try {
             if (!this.media) {
                 throw new Error('No media element to stream the camera into');
@@ -69,6 +72,16 @@
             this.streamError = error;
             throw error;
         }
+    };
+
+    /*
+    * Returns the media element that is on the page now (the element found earlier may have been replaced by Vue)
+    */
+    resolveMedia() {
+        if (!this.media || !this.media.isConnected) {
+            this.media = document.querySelector(`#${this.mediaId}`) || this.media || null;
+        }
+        return this.media;
     };
 
     /*
@@ -91,7 +104,7 @@
     */
     async faceprint(media = null, minConfidence = 0.6) {
         await this.ready;
-        const detections = await faceapi.detectAllFaces(media || this.media, new faceapi.SsdMobilenetv1Options({ minConfidence: minConfidence }))
+        const detections = await faceapi.detectAllFaces(media || this.resolveMedia(), new faceapi.SsdMobilenetv1Options({ minConfidence: minConfidence }))
             .withFaceLandmarks()
             .withFaceDescriptors();
         if (detections.length === 0) {

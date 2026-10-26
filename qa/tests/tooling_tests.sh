@@ -47,7 +47,7 @@ BADJQ=$(grep -n '\$(\|jQuery(\|jQuery\.' public/js/script.js public/js/picture_u
 grep -q 'vladmandic/face-api' public/js/services/face-api.min.js && ! ls public/resources/models | grep -q mtcnn && ! grep -q 'nets.mtcnn' public/js/services/detect.js \
     && ok "face-api is @vladmandic/face-api with its own models (no MTCNN)" || ko "face-api library or models are outdated"
 node --check public/js/services/detect.js 2>/dev/null && grep -q 'async startStream' public/js/services/detect.js && grep -q 'this.streamError = error' public/js/services/detect.js \
-    && grep -q 'async faceprint' public/js/services/detect.js && grep -q 'autoStart' public/js/services/detect.js && ! grep -q 'return Promise.reject(new Error(error))' public/js/services/detect.js \
+    && grep -q 'async faceprint' public/js/services/detect.js && grep -q 'isConnected' public/js/services/detect.js && grep -q 'autoStart' public/js/services/detect.js && ! grep -q 'return Promise.reject(new Error(error))' public/js/services/detect.js \
     && ok "FaceDetector reports camera errors (startStream/streamError) and computes face prints" || ko "FaceDetector camera control or faceprint is missing"
 grep -q -- '--bs-btn-color: #000' public/css/theme.css && grep -q -- '--bs-btn-disabled-bg: #000' public/css/theme.css && grep -q 'a.btn-primary:link' public/css/theme.css \
     && ok "theme.css keeps Bootstrap 5 buttons black and white (readable btn-secondary)" || ko "theme.css lets Bootstrap 5 recolor the buttons (white on white btn-secondary)"
