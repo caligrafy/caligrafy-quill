@@ -23,6 +23,12 @@ class Framework extends \stdClass {
    */
   public static function run() 
   {
+       // Errors get real HTTP status codes: the page is buffered (up to 1 MB) so that a PHP fatal error can still
+       // be turned into a 500 response, and uncaught exceptions return 500 (message only when APP_DEBUG is true)
+       ob_start(null, 1048576);
+       require_once 'framework/core/Errors.php';
+       register_shutdown_function(array('Caligrafy\\Errors', 'shutdown'));
+       set_exception_handler(function ($e) { Errors::handle($e, true); });
        self::init();
        self::autoload();
        self::dispatch();

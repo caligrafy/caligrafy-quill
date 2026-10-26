@@ -60,7 +60,9 @@ php -r '
 $f = "application/config/routing/web.php";
 $s = file_get_contents($f);
 $s = preg_replace("#^(\s*)// (Auth::authentication|Route::)#m", "$1$2", $s);
-$qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n    Route::post(\"/qa/upload\", \"QaController@upload\");\n"
+$qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n"
+    . "    Route::get(\"/qa/missing\", \"QaController@nope\");\n    Route::get(\"/qa/fatal\", \"QaController@fatal\");\n    Route::get(\"/qa/boom\", \"QaController@boom\");\n"
+    . "    Route::post(\"/qa/upload\", \"QaController@upload\");\n"
     . "    Route::get(\"/books\", \"BookController@readAll\");\n    Route::post(\"/books\", \"BookController@create\");\n"
     . "    Route::put(\"/books/{id}\", \"BookController@update\");\n    Route::delete(\"/books/{id}\", \"BookController@remove\");\n"
     . "    Route::get(\"/books/{id}/publisher\", \"BookController@publisher\");\n";

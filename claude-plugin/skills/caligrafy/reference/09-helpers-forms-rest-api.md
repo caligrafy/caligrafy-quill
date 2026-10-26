@@ -310,6 +310,21 @@ Then you could type directly in the body the content you want to send in the des
 
         > After you add your `raw` inputs in a format, verify that in the `Headers` section, you have another key `Content-Type` that got added with value `application/json` (if the format you chose was JSON). 
 
++ **Errors:** framework errors come back with a real HTTP status code and, for API calls (`Accept: application/json`), a JSON body:
+
+    | Status | Error | When |
+    | - | - | - |
+    | `401` | `1004` Access Denied | missing or invalid API key, or `Auth::activateAPI()` not called |
+    | `403` | `3000` Cross Site Forgery | form post without a valid `_token` |
+    | `404` | `1001` Invalid Controller or Action | the route points to a missing controller or method |
+    | `405` | `1000` Invalid Http Request Method | |
+    | `500` | any other error, PHP fatal errors and uncaught exceptions | the message is only shown when `APP_DEBUG=true` |
+
+    ```json
+    {"error": {"code": 1004, "message": "Access Denied"}}
+    ```
+    HTML requests still receive the same text as before (`[ERROR 1004] Access Denied`). Check the status code in your clients: earlier versions answered errors with `200`. A status that your own controller sets with `http_response_code()` before `api()` is kept.
+
 + **PUT:** For `PUT`, since our framework spoofs a `POST` method, options 1 and 2 above won't work. Only option 3 could work. If your application supports file uploading, then you should test the API as a `POST` and add a `_method` key in the `Body` that has the value `PUT`. 
 
 >[Next Section: Learn about Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication)

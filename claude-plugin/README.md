@@ -41,6 +41,11 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.4.1** - Framework errors use real HTTP status codes: G48 is fixed (401 for 1004, 403 for 3000, 404 for 1001,
+  405 for 1000, 500 for other errors, PHP fatals and uncaught exceptions with the message only when `APP_DEBUG=true`;
+  JSON body `{"error": {"code", "message"}}` for API calls, unchanged `[ERROR ...]` text for HTML). API reference
+  error section (`Errors::handle()`, `Errors::status()`, `Errors::raise()`), AI chat recipe and reviewer item 15
+  updated; upgrade note for the `catch` of older `web.php` files.
 - **1.4.0** - End-to-end recipes: `reference/recipes-ai-apps.md` (OpenAI chat with filtered and capped history,
   OpenAI errors returned as `response['error']` with `api_success` true, live OpenAI and Groq model lists validated
   by regex, gpt-image images as data URLs and the 30 s `httpRequest()` timeout, Groq chat and vision from a validated

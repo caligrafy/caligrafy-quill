@@ -15,7 +15,7 @@
    - `framework/settings/coresettings.php`: `ROUTE_ARG_PATTERN` (`#\{+(.*?)\}+#`), default `scripts()`, `metadata()`, `keywords()`, `copyright()`.
    - registers an autoloader that, on the first unknown class, `require_once`s **every `.php` file** under `framework/core`, `framework/database`, `application/` and `tests/` (max depth 5).
    - `include application/config/config.php`, then `require_once application/config/routing/web.php`.
-3. `web.php` declares routes then calls `Route::run()`, wrapped in `try { ... } catch (Exception $e) { echo $e->getMessage(); }`.
+3. `web.php` declares routes then calls `Route::run()`, wrapped in `try { ... } catch (Exception $e) { Errors::handle($e); }` (older projects: `echo $e->getMessage();`, see Errors below).
 
 Path constants: `ROOT` (cwd), `APP_PATH` (application/), `TEST_PATH`, `FRAMEWORK_PATH`, `PUBLIC_PATH`, `CONFIG_PATH`, `ROUTING_PATH`, `CONTROLLER_PATH`, `MODEL_PATH`, `VIEW_PATH` (application/views/), `CORE_PATH`, `DB_PATH`, `LIB_PATH` (framework/librairies/), `HELPER_PATH`, `UPLOAD_PATH` (public/uploads/), `FONTS_PATH`, `DS`.
 
@@ -35,7 +35,7 @@ Route::$currentBind                // ['id' => '12', ...] (+ query string params
 - `$method` is `'Controller'` (runs `index`), `'Controller@action'`, or a closure.
 - Leading/trailing slashes are stripped; a route matches only if it has the **same number of segments** and the **same HTTP method** as the request; `{name}` segments capture values.
 - No match (or wrong method) falls back to the **first route declared** (keep `Route::get('/', ...)` first).
-- For controller routes: missing class/method throws `[ERROR 1001]`; a JSON request (`wantsJson()`) without `Auth::activateAPI()` or without a valid Bearer API key throws `[ERROR 1004] Access Denied`. Closure routes skip the API-key check.
+- For controller routes: missing class/method throws `[ERROR 1001]` (404); a JSON request (`wantsJson()`) without `Auth::activateAPI()` or without a valid Bearer API key throws `[ERROR 1004] Access Denied` (401). Closure routes skip the API-key check.
 - Method spoofing: a `_method` field (`PUT`/`DELETE`) in `$_REQUEST` overrides the HTTP method.
 
 ## Auth (`Caligrafy\Auth`)
@@ -338,6 +338,7 @@ URLs: `{WATSON_URL}/v2/assistants/{assistant_id}[/environments/{environment_id}]
 ## Errors (`Caligrafy\Errors::get($code)`, `Errors::set($message, $code)`)
 | Code | Meaning | Usual cause |
 | - | - | - |
+| 1000 | Invalid Http Request Method | |
 | 1001 | Invalid Controller or Action | class/method name typo, file outside `application/`, duplicate class name |
 | 1002 | Invalid library | `import()` of a missing file |
 | 1004 | Access Denied | JSON request to a controller route without `Auth::activateAPI()` or without a valid `Authorization: Bearer <API_KEY>` |
@@ -346,7 +347,8 @@ URLs: `{WATSON_URL}/v2/assistants/{assistant_id}[/environments/{environment_id}]
 | 3000 | Cross Site Forgery | form POST/PUT/DELETE without `_token`, or a non-JSON fetch/axios call |
 | 4000/4001 | Mail errors | |
 | 5000 | Key generator error | |
-Errors are caught in `web.php` and echoed as plain text (HTTP 200 unless something else set the status).
+
+Errors are caught in `web.php` by `Errors::handle($e)`: HTTP status from `Errors::status($code)` (1001 → 404, 1004 → 401, 3000 → 403, 1000 → 405, anything else → 500), the `[ERROR ...]` text for HTML requests and `{"error": {"code": ..., "message": "..."}}` (prefix removed) when the request wants JSON. `Errors::raise($code)` (used by the router and the CSRF check) sets the status and returns the exception, so the status is right even with an old `web.php` that only echoes. `Framework::run()` buffers output (`ob_start` 1 MB chunks), and registers `Errors::shutdown` (PHP fatals → 500, partial page discarded) and an exception handler (uncaught `Throwable` → 500); their message is only shown when `APP_DEBUG=true`, otherwise `[ERROR 500] Internal Server Error`. Before this fix every error was HTTP 200.
 
 ## Caligrafer CLI (`php caligrafer.php <cmd>` or `.bin/caligrafer <cmd>`)
 | Command | Effect (from caligrafer.php) |

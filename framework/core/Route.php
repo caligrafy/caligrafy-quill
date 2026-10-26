@@ -171,13 +171,13 @@ class Route extends \stdClass
             
             // Generate Exception if Controller or the Action do not exist 
             if (!method_exists($controller, $action)) {
-                throw new Exception(Errors::get(1001), 1001);
+                throw Errors::raise(1001);
                 exit;
             }
 
             // Generate Exception if it is an API access and it is not allowed
             if (self::$_request->wantsJson() && (!Auth::$api || !self::$_request->authorizeApiRequest())) {
-                throw new Exception(Errors::get(1004), 1004);
+                throw Errors::raise(1004);
                 exit;
             }
         

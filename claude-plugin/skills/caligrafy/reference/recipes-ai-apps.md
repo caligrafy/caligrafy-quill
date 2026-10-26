@@ -2,7 +2,7 @@
 
 > Written from the framework source (`framework/core/OpenAI.php`, `framework/core/Agent.php`, `httpRequest()` in
 > `framework/helpers/corehelpers.php`) and a working proof app. Signatures: [api-reference.md](api-reference.md).
-> Related gotchas: G27 (client apps read `apiKey`), G46 (`.env` keys), G47 (controller names), G48 (errors with HTTP 200).
+> Related gotchas: G27 (client apps read `apiKey`), G46 (`.env` keys), G47 (controller names), G48 (error status codes).
 
 End result: a Vue client app (`/caligrafy-quill:new-app app chat`) that talks to data routes of one controller.
 The browser never sees `OPEN_AI_KEY` or `GROQ_API_KEY`: every provider call is made by PHP.
@@ -238,10 +238,10 @@ const app = Vue.createApp({
       this.messages.push({ role: 'user', content: text }); this.input = ''; this.busy = true; this.error = '';
       try {
         const { data } = await axios.post(this.base + 'message', { model: this.model, messages: this.messages }, this.config);
-        if (typeof data === 'string') throw new Error(data);           // [ERROR ...] text comes with HTTP 200 (G48)
+        if (typeof data === 'string') throw new Error(data);           // older Quill: [ERROR ...] text with HTTP 200 (G48)
         this.messages.push({ role: 'assistant', content: data.reply });
       } catch (e) {
-        this.error = e.response?.data?.error || e.message;
+        this.error = e.response?.data?.error?.message || e.response?.data?.error || e.message; // framework errors: {error: {code, message}}
       } finally { this.busy = false; }
     }
   },
@@ -272,5 +272,5 @@ data URL to `<img :src="image">`; vision: read the file with `FileReader.readAsD
 - [ ] `response['error']` checked for OpenAI; `api_success` false handled (timeouts).
 - [ ] Model ids validated with a regex; lists fetched live.
 - [ ] Vision: data URL type, 4 MB, `getimagesizefromstring`, temp file deleted in `finally`.
-- [ ] axios timeout >= 120 s; client checks for `[ERROR ...]` strings (G48).
+- [ ] axios timeout >= 120 s; client handles rejected responses (401/403/404/500 with `{error: {code, message}}`) and, on older Quill, `[ERROR ...]` strings (G48).
 - [ ] In Docker behind a corporate TLS proxy, empty responses mean cURL rejects the certificate: see the server skill troubleshooting.

@@ -271,7 +271,7 @@ class Request extends \stdClass {
         if(!$this->wantsJson() && !in_array($this->userAgent, $approved, true)) {
             $token = $_POST['_token']?? null;
             if (!is_string($token) || !isset($_SESSION['token']) || !hash_equals($_SESSION['token'], $token)) {
-                throw new Exception(Errors::get('3000'), 3000);
+                throw Errors::raise(3000);
                 exit;
             }         
         }

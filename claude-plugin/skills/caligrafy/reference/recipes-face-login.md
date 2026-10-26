@@ -2,7 +2,7 @@
 
 > Written from the framework source (`public/js/services/detect.js`, `framework/core/Auth.php`, `encryptDecrypt()`
 > in `framework/helpers/corehelpers.php`) and a working proof app. Related gotchas: G16 (`Vue.markRaw`),
-> G42 (face-api, `startStream()`, `faceprint()`), G47 (controller names), G48 (errors with HTTP 200).
+> G42 (face-api, `startStream()`, `faceprint()`), G47 (controller names), G48 (error status codes).
 
 **Security first.** There is no liveness check: a photo or a video of the user can pass, and a stolen descriptor
 can be replayed by anyone who can call the API. Use face login as a convenience (with a password fallback) or as a

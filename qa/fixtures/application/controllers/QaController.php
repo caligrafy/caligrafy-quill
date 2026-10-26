@@ -15,4 +15,17 @@ class QaController extends Controller {
     {
         return api(array('ok' => true, 'id' => $this->request->fetch('id')));
     }
+
+    // a PHP fatal error (class redeclared at compile time)
+    public function fatal()
+    {
+        echo 'PARTIAL-PAGE';
+        eval('class QaFatalTwice {} class QaFatalTwice {}');
+    }
+
+    // an uncaught Error (not an Exception, so the try/catch of web.php does not see it)
+    public function boom()
+    {
+        qa_undefined_function_with_secret_name();
+    }
 }
