@@ -14,6 +14,8 @@ services:
     depends_on:
       mysql:
         condition: service_healthy
+      stripe-mock:
+        condition: service_started
 
   mysql:
     image: mysql:8.4
@@ -27,3 +29,7 @@ services:
       interval: 3s
       timeout: 3s
       retries: 40
+
+  # Stripe's official API mock: Payment is tested against the real stripe-php client over HTTP
+  stripe-mock:
+    image: stripe/stripe-mock:v0.206.0

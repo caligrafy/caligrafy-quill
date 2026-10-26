@@ -24,7 +24,12 @@ class Watson extends \stdClass {
 	* @var string the Watson API URI
 	* @property Watson API URI
 	*/
-	private $_watson_url = 'https://api.us-south.assistant.watson.cloud.ibm.com/instances/797dcdd0-68e1-4632-9dbb-b367d8e020bd/v2/assistants/';
+	private $_watson_url;
+
+    /**
+	* @var string the assistant environment id (watsonx Assistant): sessions live in an environment
+	*/
+	private $_watson_environment_id;
     
     
     /**
@@ -74,17 +79,31 @@ class Watson extends \stdClass {
 	 * @version 1.0
 	 */
 
-	public function __construct($watson_assistant_id)
+	/**
+	 * .env settings:
+	 * - WATSON_API_KEY: the service API key
+	 * - WATSON_URL: the service instance URL, https://api.<region>.assistant.watson.cloud.ibm.com/instances/<instance_id>
+	 * - WATSON_ENVIRONMENT_ID (optional): the environment of the assistant (Environment settings > API details).
+	 *   Without it, the legacy /v2/assistants/<id>/sessions path is used
+	 * - WATSON_API_VERSION (optional): the API version date, 2024-08-25 by default
+	 */
+	public function __construct($watson_assistant_id, $environment_id = null)
 	{
 		$this->_api_key = WATSON_API_KEY;
         $this->_watson_assistant_id = $watson_assistant_id;
-        $this->_watson_api_version = "?version=2021-11-27";
+        $this->_watson_environment_id = $environment_id?? (defined('WATSON_ENVIRONMENT_ID') && WATSON_ENVIRONMENT_ID !== ''? WATSON_ENVIRONMENT_ID : null);
+        $instance = defined('WATSON_URL') && WATSON_URL !== ''? WATSON_URL : '';
+        if (!$instance) {
+            throw new Exception('Set WATSON_URL to your watsonx Assistant instance URL (https://api.<region>.assistant.watson.cloud.ibm.com/instances/<instance_id>)');
+        }
+        $this->_watson_url = rtrim($instance, '/').'/v2/assistants/';
+        $this->_watson_api_version = "?version=".(defined('WATSON_API_VERSION') && WATSON_API_VERSION !== ''? WATSON_API_VERSION : '2024-08-25');
         $this->_watson_context = array();
         $this->_watson_conversation_log = array();
         
-        $url = $this->_watson_url.$this->_watson_assistant_id."/sessions".$this->_watson_api_version;
+        $url = $this->sessionsUrl().$this->_watson_api_version;
         
-        $result = httpRequest($url, 'POST', array(), array(), 'apikey', $this->_api_key);
+        $result = httpRequest($url, 'POST', new \stdClass(), array('Accept: application/json', 'Content-Type: application/json'), 'apikey', $this->_api_key);
         
         if (isset($result['session_id'])) {
             $this->_watson_session = $result['session_id'];
@@ -111,7 +130,7 @@ class Watson extends \stdClass {
             $input['context']['skills']['main skill']['user_defined'] = $skillVariables;
         }
         
-        $url = $this->_watson_url.$this->_watson_assistant_id."/sessions/".$this->_watson_session."/message".$this->_watson_api_version;
+        $url = $this->sessionsUrl()."/".$this->_watson_session."/message".$this->_watson_api_version;
         $result = httpRequest($url, 'POST', $input, array('Accept: application/json', 'Content-Type:application/json'), 'apikey', $this->_api_key);
         
         // If there is an output then log the conversation
@@ -245,10 +264,21 @@ class Watson extends \stdClass {
     
     public function closeSession()
     {
-        $url = $this->_watson_url.$this->_watson_assistant_id."/sessions/".$this->_watson_session.$this->_watson_api_version;
+        $url = $this->sessionsUrl()."/".$this->_watson_session.$this->_watson_api_version;
         $result = httpRequest($url, 'DELETE', array(), array(), 'apikey', $this->_api_key);
         return $result;
         
+    }
+
+
+    /**
+     * Sessions endpoint of the assistant, inside its environment when one is configured
+     */
+    private function sessionsUrl()
+    {
+        return $this->_watson_url.rawurlencode($this->_watson_assistant_id)
+            .($this->_watson_environment_id? '/environments/'.rawurlencode($this->_watson_environment_id) : '')
+            .'/sessions';
     }
 
 }

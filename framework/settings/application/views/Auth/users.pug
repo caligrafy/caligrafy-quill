@@ -11,9 +11,9 @@ block content
 				table.table.table-hover
 					thead
 						th.fixedcol-xs.semibold Permission
-						th.fixedcol.semibold.hidden-sm.hidden-xs User Id
+						th.fixedcol.semibold.d-none.d-md-table-cell User Id
 						th.fixedcol.semibold Username
-						th.semibold.hidden-sm.hidden-xs Date
+						th.semibold.d-none.d-md-table-cell Date
 					tbody
 						each $user in $users
 							tr
@@ -21,13 +21,13 @@ block content
 									a(href="{$home}users/{$user->id}/edit")
 										p
 											if $user->permissions > 0
-												span.label.label-success= $user->permissions
+												span.badge.bg-success= $user->permissions
 											else
-												span.label.label-danger= $user->permissions
-								td.fixedcol.hidden-sm.hidden-xs
+												span.badge.bg-danger= $user->permissions
+								td.fixedcol.d-none.d-md-table-cell
 									a(href="{$home}users/{$user->id}/edit") #{$user->id}
 								td.fixedcol
 									a(href="{$home}users/{$user->id}/edit") #{$user->username}
-								td.fixedcol.hidden-sm.hidden-xs
+								td.fixedcol.d-none.d-md-table-cell
 									a(href="{$home}users/{$user->id}/edit") #{$user->modified_at}
 	.spacer-3

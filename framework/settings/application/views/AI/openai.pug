@@ -11,6 +11,8 @@ block content
                 each $item in $response['response']
                     if isset($item['message']['content'])
                         p= $item['message']['content']
+                    else if isset($item['b64_json'])
+                        img.img-fluid(src="data:image/png;base64," . $item['b64_json'], alt="Generated image")
                     else if isset($item['url'])
                         p
                             a.btn-link(href=$item['url']) View generated image
@@ -30,21 +32,21 @@ block content
                         .spacer-2
                         span(class='normal medium-text textcolor1') OpenAI
                         .spacer-2
-                        .form-group
+                        .mb-3
                             label(for='type', class="textcolor5") * Type
                             if isset($errors['type'])
                                 p(class="error")= $errors['type']
-                            select.form-control.btn-sm.btn-block(id="type", name="type")
+                            select.form-control.btn-sm.w-100(id="type", name="type")
                                 option(value="TEXT", selected=isset($parameters['type'])&&$parameters['type']=='TEXT') TEXT
                                 option(value="IMAGE", selected=isset($parameters['type'])&&$parameters['type']=='IMAGE') IMAGE
                         
                         .spacer-1  
 
-                        .form-group
+                        .mb-3
                             label(for='command', class="textcolor5") * Command
                             if isset($errors['command'])
                                 p(class="error")= $errors['command']
-                            select.form-control.btn-sm.btn-block(id="command", name="command")
+                            select.form-control.btn-sm.w-100(id="command", name="command")
                                 option(value="ANALYZE", selected=isset($parameters['command'])&&$parameters['command']=='ANALYZE') ANALYZE
                                 option(value="SUMMARIZE", selected=isset($parameters['command'])&&$parameters['command']=='SUMMARIZE') SUMMARIZE
                                 option(value="COMPLETE", selected=isset($parameters['command'])&&$parameters['command']=='COMPLETE') COMPLETE
@@ -54,7 +56,7 @@ block content
                                 option(value="PREDICT", selected=isset($parameters['command'])&&$parameters['command']=='PREDICT') PREDICT
                                 option(value="RECOMMEND", selected=isset($parameters['command'])&&$parameters['command']=='RECOMMEND') RECOMMEND
 
-                        .form-group
+                        .mb-3
                             label(for='input', class="textcolor5") * input
                             if isset($errors['input'])
                                 p(class="error")= $errors['input']
@@ -62,7 +64,7 @@ block content
 
                         .spacer-2
 
-                        .form-group
+                        .mb-3
                             label(for='input', class="textcolor5") outcome
                             if isset($errors['outcome'])
                                 p(class="error")= $errors['outcome']
@@ -70,7 +72,7 @@ block content
                         
                         .spacer-2
 
-                        input(class='btn btn-primary btn-md btn-block', type='submit' value='Submit')
+                        input(class='btn btn-primary btn-md w-100', type='submit' value='Submit')
                     
                         .spacer-2
 

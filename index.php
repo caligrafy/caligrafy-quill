@@ -10,7 +10,8 @@
 
 use Caligrafy\Framework;
 
-//error_reporting(0);
+// Deprecation notices (often raised inside vendor libraries by new PHP versions) are never printed into pages
+error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
 require_once "framework/core/Framework.php";
 

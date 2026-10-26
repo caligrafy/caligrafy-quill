@@ -1,5 +1,5 @@
 ## Build Dev
-FROM php:8.2.2-apache AS dev-php
+FROM php:8.5-apache AS dev-php
 RUN apt-get update && apt-get install -y \
         libfreetype6-dev \
         libjpeg-dev \
@@ -29,7 +29,7 @@ RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
 FROM dev-php AS prod-php
 WORKDIR /var/www/html/caligrafy-quill
 ENV COMPOSER_ALLOW_SUPERUSER=1
-RUN curl -sS https://getcomposer.org/installer | php -- --install-dir=/usr/local/bin --filename=composer
+COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 COPY ./composer.* ./
 COPY .htaccess ./
 COPY ./*.php ./

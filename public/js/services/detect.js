@@ -1,7 +1,7 @@
 /********************************************************************************** 
  * Face detection framework built on top of the face-api framework
  * @author: Dory A.Azar
- * @dependencies: face-api.js
+ * @dependencies: @vladmandic/face-api 1.7.15 (public/js/services/face-api.min.js)
  **********************************************************************************/
 
  class FaceDetector {
@@ -11,12 +11,11 @@
         // neural network models url
         const MODEL_URL = env.app_resources + 'models';
 
-        // load the faceapi models
-        Promise.all([
+        // load the faceapi models (this.ready resolves once they are all loaded)
+        this.ready = Promise.all([
             // face detection algorithms
             faceapi.nets.ssdMobilenetv1.loadFromUri(MODEL_URL), // SsdMobilenetv1Options
 
-            faceapi.nets.mtcnn.loadFromUri(MODEL_URL), // MtcnnOptions
             faceapi.nets.tinyFaceDetector.loadFromUri(MODEL_URL), // TinyFaceDetectorOptions
 
             // Models for landmarks, age/gender, recognition and expressions
@@ -94,6 +93,9 @@
                 }
         };
         
+        // the recognition models need the neural networks: wait until they are loaded
+        await this.ready;
+
         // load recognition models for use in the "Where is" app
         try {
            app.options.recognitionModel = settings && settings.models && app.options.recognition? await this.loadRecognition(settings.models) : null; 
@@ -393,7 +395,7 @@
         return Promise.all(
 
             // for each label get the descriptors based on the model image
-            labels.map(async label => {
+            labels.map(async (label, key) => {
 
                 const descriptors = [];
                 let url;

@@ -133,6 +133,21 @@ $image = imageCanva(); // returns a SimpleImage object
 A SimpleImage object gets returned by this method and all the powerful features of the library can now be used.
 > Check the full SimpleImage library [here](https://github.com/claviska/SimpleImage)
 
++ Front-end libraries
+
+`scripts($key)` returns the URL of a shared front-end library. The versions are pinned in `framework/settings/coresettings.php`, and you can override any of them in `application/config/config.php` with `scripts('key', 'url')`.
+
+| Key | Library |
+| - | - |
+| `bootstrap_css`, `bootstrap_script` | Bootstrap 5.3.8 (CSS and JavaScript bundle). Bootstrap 5 does not need jQuery |
+| `vue` | Vue 3.5.44 (global production build) |
+| `axios` | axios 1.20.0 |
+| `jquery` | jQuery 4.0.0, only for libraries that still need it (Summernote). `bootstrap_jquery` is kept as an alias |
+| `wysiwyg_css`, `wysiwyg_js` | Summernote-lite 0.9.1 rich text editor, initialized by `public/js/load_wysiwyg.js` on `#summernote` (load `jquery` first) |
+| `css`, `animate`, `script`, `social_buttons_css`, `favicon` | Caligrafy's own files in `public` |
+
+`public/js/script.js` (menu, smooth scrolling) and `public/js/picture_uploader.js` (click an `img[data-type=editable]` to choose and preview a picture) are plain JavaScript.
+
 ## HTML Forms
 
 This framework provides 2 major capabilities that allow your HTML forms to 1) Send `PUT` and `DELETE` requests

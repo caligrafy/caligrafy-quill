@@ -1,0 +1,12 @@
+/* Caligrafy Bot client */
+[v-cloak] { display: none; }
+body { background: #f5f6f8; }
+.bot-container { max-width: 640px; margin: 2rem auto; display: flex; flex-direction: column; height: calc(100vh - 4rem); background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .08); }
+.bot-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .5rem; }
+.bot-message { max-width: 80%; padding: .6rem .9rem; border-radius: 14px; line-height: 1.4; word-wrap: break-word; }
+.bot-message.bot { align-self: flex-start; background: #eef1f6; color: #222; }
+.bot-message.human { align-self: flex-end; background: #0d6efd; color: #fff; }
+.bot-message.typing { opacity: .6; }
+.bot-image { display: block; max-width: 100%; margin-top: .5rem; border-radius: 8px; }
+.bot-actions { display: flex; flex-wrap: wrap; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid #eee; }
+.bot-input { display: flex; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid #eee; }

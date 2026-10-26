@@ -2,8 +2,8 @@ import { createApp } from 'vue'
 import App from './App.vue'
 import router from './router'
 
-// import Store State Management
-import store from './common/store'
+// import Store State Management (Pinia)
+import { createPinia } from 'pinia'
 
 // import axios
 import axios from "axios"
@@ -41,6 +41,6 @@ app.config.globalProperties.apiConfig = {
 };
 
 app.use(router)
-app.use(store)
+app.use(createPinia())
 
 app.mount('#app')

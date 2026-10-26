@@ -1,36 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
     <head>
-        <meta http-equiv="content-type", content="text/html; charset=UTF-8">
-        <meta name="viewport" content="width=device-width initial-scale=1 maximum-scale=1">
-        <meta name='apple-mobile-web-app-capable' content='yes'>
-        <meta name='apple-mobile-web-app-status-bar-style' content='black'>
+        <meta charset="UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
         <title>Caligrafy Bot</title>
 
         <!-- Stylesheet and head scripts go here -->
         <link rel="shortcut icon" href="<?php echo scripts('favicon'); ?>" type="image/x-icon" />
         <link rel="stylesheet" href="<?php echo scripts('bootstrap_css'); ?>" />
-        <link rel="stylesheet" href="<?php echo session('public').'css/botui.min.css';?>">
-        <link rel="stylesheet" href="<?php echo session('public').'css/botui-theme-default.css';?>">
-        
+        <link rel="stylesheet" href="<?php echo session('public').'css/bot.css';?>">
     </head>
-    
-    <body>
-        <!-- Beginning of the app -->
-        <div id="app">
 
+    <body>
+        <!-- Chat application (Vue 3) -->
+        <div id="app" class="bot-container" v-cloak>
+            <div class="bot-messages" ref="messages">
+                <div v-for="(message, index) in messages" :key="index" class="bot-message" :class="message.human ? 'human' : 'bot'">
+                    <template v-if="message.type === 'image'">
+                        <a :href="message.source" target="_blank" rel="noopener">{{ message.title || message.source }}</a>
+                        <img :src="message.source" :alt="message.title" class="bot-image">
+                    </template>
+                    <template v-else>{{ message.content }}</template>
+                </div>
+                <div v-if="waiting" class="bot-message bot typing">…</div>
+            </div>
+
+            <!-- Buttons answer (Watson "option" responses) -->
+            <div v-if="action.type === 'button'" class="bot-actions">
+                <button v-for="option in action.options" :key="option.value" type="button" class="btn btn-outline-primary btn-sm" @click="answer(option.value, option.text)">{{ option.text }}</button>
+            </div>
+
+            <!-- Free text answer -->
+            <form v-else-if="action.type === 'text'" class="bot-input" @submit.prevent="answer(text, text)">
+                <input v-model="text" class="form-control" type="text" placeholder="Type a message" aria-label="Message" autofocus>
+                <button class="btn btn-primary" type="submit" :disabled="!text.trim()">Go</button>
+            </form>
         </div>
-        <div id="my-botui-app">
-            <bot-ui></bot-ui>
-        </div>
-    
+
         <!-- Initialization scripts -->
-        <script src="https://cdn.jsdelivr.net/npm/vue@2.7.16/dist/vue.js"></script>
-        <script src="https://unpkg.com/axios/dist/axios.min.js"></script>
-        <script src="<?php echo session('public').'js/services/botui.js';?>"></script>
+        <script src="<?php echo scripts('vue'); ?>"></script>
+        <script src="<?php echo scripts('axios'); ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
         <script>loadEnvironment(`<?php echo $env; ?>`);</script>
-        <script> 
+        <script>
             /* Loading the app client framework
              * Any environment variables to be passed on from the server can take place in this here
              */
@@ -38,10 +50,5 @@
                 scripts: ['main']
              });
         </script>
-        
-        <!-- Additional scripts go here -->
-        <script src="<?php echo scripts('bootstrap_jquery'); ?>"></script>
-        <script src="<?php echo scripts('bootstrap_script'); ?>"></script>
-        
     </body>
 </html>

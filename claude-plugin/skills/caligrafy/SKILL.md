@@ -16,7 +16,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Topic | Read |
 | - | - |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G39) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G46) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -33,7 +33,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Stripe and Coinbase payments | [09.2-stripe-crypto-payment.md](reference/09.2-stripe-crypto-payment.md) |
 | Metadata, rich cards, SEO, analytics | [09.3-metadata-rich-cards.md](reference/09.3-metadata-rich-cards.md), [09.4-search-referencing-analytics.md](reference/09.4-search-referencing-analytics.md) |
 | Vue as a library (`caligrafer app`): setup, flow, structure, routes, requests, forms, validation, components | [09.7.0](reference/09.7.0-vue-as-library-setup.md), [09.7](reference/09.7-vue-flow-of-information.md), [09.7.1](reference/09.7.1-vue-structure.md), [09.7.2](reference/09.7.2-vue-routes.md), [09.7.3](reference/09.7.3-vue-requests.md), [09.7.4](reference/09.7.4-vue-forms.md), [09.7.5](reference/09.7.5-vue-validations.md), [09.7.6](reference/09.7.6-vue-components.md) |
-| Vue SPA (`caligrafer create`): Vite setup, vue-router, SFC, Vuex | [09.8.1](reference/09.8.1-vue-spa-setup.md), [09.8.2](reference/09.8.2-vue-spa-routing.md), [09.8.3](reference/09.8.3-vue-single-file-components.md), [09.8.4](reference/09.8.4-vue-state-management.md) |
+| Vue SPA (`caligrafer create`): Vite 8 setup, Vue Router 5, SFC, Pinia | [09.8.1](reference/09.8.1-vue-spa-setup.md), [09.8.2](reference/09.8.2-vue-spa-routing.md), [09.8.3](reference/09.8.3-vue-single-file-components.md), [09.8.4](reference/09.8.4-vue-state-management.md) |
 | Watson bots | [09.9.1-ai-watson-bots.md](reference/09.9.1-ai-watson-bots.md) |
 | FaceDetect (face-api.js) | [09.9.2-ai-face-detection.md](reference/09.9.2-ai-face-detection.md) |
 | ML Core (ml5 + p5) | [09.9.3-ai-machine-learning.md](reference/09.9.3-ai-machine-learning.md) |

@@ -1,107 +1,64 @@
-// A reference to Stripe.js initialized with your real test publishable API key.
-var clientSecret = document.querySelector("button").getAttribute('data-secret') || '';
-var publicKey = document.querySelector("button").getAttribute('public-key') || '';
+// Stripe Payment Element (replaces the legacy Card Element)
+// The page provides the PaymentIntent client secret and the publishable key on the #submit button.
+var submitButton = document.querySelector("#submit");
+var clientSecret = submitButton.getAttribute('data-secret') || '';
+var publicKey = submitButton.getAttribute('public-key') || '';
 var stripe = Stripe(publicKey);
+var elements = null;
 
-// The items the customer wants to buy
-var purchase = {
-  items: [{ id: "xl-tshirt" }]
+var showMessage = function (text) {
+  var message = document.querySelector("#payment-message");
+  message.textContent = text;
 };
 
-// Disable the button until we have Stripe set up on the page
-document.querySelector("button").disabled = true;
-
-var elements = stripe.elements();
-
-var style = {
-      base: {
-        color: "#32325d",
-        fontFamily: 'Arial, sans-serif',
-        fontSmoothing: "antialiased",
-        fontSize: "16px",
-        "::placeholder": {
-          color: "#32325d"
-        }
-      },
-      invalid: {
-        fontFamily: 'Arial, sans-serif',
-        color: "#fa755a",
-        iconColor: "#fa755a"
-      }
+var loading = function (isLoading) {
+  submitButton.disabled = isLoading;
+  document.querySelector("#spinner").classList.toggle("hidden", !isLoading);
+  document.querySelector("#button-text").classList.toggle("hidden", isLoading);
 };
 
-var card = elements.create("card", { style: style });
-// Stripe injects an iframe into the DOM
-card.mount("#card-element");
-
-card.on("change", function (event) {
-  // Disable the Pay button if there are no card details in the Element
-  document.querySelector("button").disabled = event.empty;
-  document.querySelector("#card-error").textContent = event.error ? event.error.message : "";
-});
-
-var form = document.getElementById("payment-form");
-form.addEventListener("submit", function(event) {
-  event.preventDefault();
-  // Complete payment when the submit button is clicked
-  if (clientSecret) {
-	  payWithCard(stripe, card, clientSecret);
-  }
-});
-
-// Calls stripe.confirmCardPayment
-// If the card requires authentication Stripe shows a pop-up modal to
-// prompt the user to enter authentication details without leaving your page.
-var payWithCard = function(stripe, card, clientSecret) {
-  loading(true);
-  stripe
-    .confirmCardPayment(clientSecret, {
-      payment_method: {
-        card: card
-      }
-    })
-    .then(function(result) {
-      if (result.error) {
-        // Show error to your customer
-        showError(result.error.message);
-      } else {
-        // The payment succeeded!
-        orderComplete(result.paymentIntent.id);
-      }
-    });
-};
-
-/* ------- UI helpers ------- */
-
-// Shows a success message when the payment is complete
-var orderComplete = function(paymentIntentId) {
-  loading(false);
-  document
-    .querySelector(".result-message a")
+var orderComplete = function () {
   document.querySelector(".result-message").classList.remove("hidden");
-  document.querySelector("button").disabled = true;
+  document.querySelector("#payment-element").classList.add("hidden");
+  submitButton.classList.add("hidden");
 };
 
-// Show the customer the error from Stripe if their card fails to charge
-var showError = function(errorMsgText) {
-  loading(false);
-  var errorMsg = document.querySelector("#card-error");
-  errorMsg.textContent = errorMsgText;
-  setTimeout(function() {
-    errorMsg.textContent = "";
-  }, 4000);
-};
+// Back from a redirect (3D Secure, bank redirect...): Stripe appends payment_intent_client_secret to the return_url
+var returnSecret = new URLSearchParams(window.location.search).get("payment_intent_client_secret");
+if (returnSecret) {
+  stripe.retrievePaymentIntent(returnSecret).then(function (result) {
+    var status = result.paymentIntent ? result.paymentIntent.status : '';
+    if (status === "succeeded") { orderComplete(); }
+    else if (status === "processing") { showMessage("Your payment is processing."); }
+    else { showMessage("Your payment was not successful, please try again."); }
+  });
+}
 
-// Show a spinner on payment submission
-var loading = function(isLoading) {
-  if (isLoading) {
-    // Disable the button and show a spinner
-    document.querySelector("button").disabled = true;
-    document.querySelector("#spinner").classList.remove("hidden");
-    document.querySelector("#button-text").classList.add("hidden");
-  } else {
-    document.querySelector("button").disabled = false;
-    document.querySelector("#spinner").classList.add("hidden");
-    document.querySelector("#button-text").classList.remove("hidden");
-  }
-};
+if (clientSecret) {
+  elements = stripe.elements({ clientSecret: clientSecret, appearance: { theme: 'stripe' } });
+  var paymentElement = elements.create("payment", { layout: "tabs" });
+  paymentElement.mount("#payment-element");
+} else {
+  submitButton.disabled = true;
+}
+
+document.getElementById("payment-form").addEventListener("submit", function (event) {
+  event.preventDefault();
+  if (!elements) { return; }
+  loading(true);
+  stripe.confirmPayment({
+    elements: elements,
+    // Stripe redirects here only when the payment method needs it (3D Secure, bank redirects...)
+    confirmParams: { return_url: window.location.href.split('?')[0] },
+    redirect: "if_required"
+  }).then(function (result) {
+    loading(false);
+    if (result.error) {
+      showMessage(result.error.message);
+    } else if (result.paymentIntent && result.paymentIntent.status === "succeeded") {
+      orderComplete();
+    } else {
+      showMessage("Payment status: " + (result.paymentIntent ? result.paymentIntent.status : "unknown"));
+    }
+  });
+});

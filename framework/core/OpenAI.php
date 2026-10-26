@@ -16,14 +16,28 @@
 namespace Caligrafy;
 use \Exception as Exception;
 
+// Current OpenAI models (October 2026)
+define ("GPT6_ASTRA", "gpt-6-astra");    // flagship
+define ("GPT6_SOL", "gpt-6.1-sol");      // close to the flagship, cheaper
+define ("GPT6_LUNA", "gpt-6-luna");      // fastest and cheapest
+define ("GPT_IMAGE", "gpt-image-2");     // image generation (base64 output)
+define ("GPT_IMAGE_BEST", "gpt-image-2.5-sunburst");
+define ("GPT_IMAGE_FAST", "gpt-image-2.5-flare");
+
+// Default models: set OPEN_AI_MODEL / OPEN_AI_IMAGE_MODEL in .env to change them without touching the code
+define ("OPENAI_DEFAULT_MODEL", defined('OPEN_AI_MODEL') && OPEN_AI_MODEL !== ''? OPEN_AI_MODEL : GPT6_LUNA);
+define ("OPENAI_DEFAULT_IMAGE_MODEL", defined('OPEN_AI_IMAGE_MODEL') && OPEN_AI_IMAGE_MODEL !== ''? OPEN_AI_IMAGE_MODEL : GPT_IMAGE);
+
+// Older model ids kept for backward compatibility. OpenAI shut down gpt-3.5-turbo, gpt-4-turbo, gpt-4-32k and
+// gpt-4-vision-preview, and retires the gpt-4o family on January 14, 2027: use the constants above
 define("GPT3", "gpt-3.5-turbo");
 define ("GPT4", "gpt-4-turbo");
 define ("GPT4O", "gpt-4o");
 define ("GPT4OMINI", "gpt-4o-mini");
-define ("GPT4-32", "gpt-4-32k"); // kept for backward compatibility: only reachable with constant("GPT4-32")
+define ("GPT4-32", "gpt-4-32k"); // only reachable with constant("GPT4-32")
 define ("GPT4_32", "gpt-4-32k");
-define ("GPT4_LATEST", "gpt-4o");
-define ("GPT4_LATEST_VISION", "gpt-4-vision-preview");
+define ("GPT4_LATEST", GPT6_ASTRA);
+define ("GPT4_LATEST_VISION", GPT6_ASTRA);
 
 define ("CONVERSE", "You are a helpful assistant:\n");
 define ("SUMMARIZE", "Summarize the following:\n");
@@ -35,18 +49,19 @@ define ("PREDICT", "Predict based on the following:\n");
 define ("RECOMMEND", "Recommend about the following:\n");
 define ("CUSTOM",  "");
 
-define("DEFAULT_TEXT_PARAMETERS", array(    
-    "model" => GPT3,   
-    "temperature" => 0,
-    "max_tokens" => 1000,
-    "top_p" => 1.0,
-    "frequency_penalty" => 0.0,
-    "presence_penalty"=> 0.0
+// Only the model is sent by default: current reasoning models reject some sampling parameters
+// (temperature, top_p, max_tokens...). Pass them in $parameters when the chosen model supports them,
+// for example array("max_completion_tokens" => 1000)
+define("DEFAULT_TEXT_PARAMETERS", array(
+    "model" => OPENAI_DEFAULT_MODEL
 ));
 
 define("DEFAULT_IMAGE_PARAMETERS", array(
+    "model" => OPENAI_DEFAULT_IMAGE_MODEL,
     "n" => 1,
-    "size" => "1024x1024"
+    "size" => "1024x1024",
+    "quality" => "medium",
+    "output_format" => "png"
 ));
 
 
@@ -55,8 +70,9 @@ define("TEXT", array(
     "endpoint"=> "https://api.openai.com/v1/chat/completions",
 ));
 
+// GPT image models return base64 images (data[].b64_json), never URLs
 define("IMAGE", array(
-    "type" => "url",
+    "type" => "image",
     "endpoint" => "https://api.openai.com/v1/images/generations"
 ));
 
@@ -171,7 +187,7 @@ class OpenAI extends \stdClass {
                                                                                         )]));
         }
         // if image
-        elseif ($this->type == 'url') {
+        elseif ($this->type == 'image' || $this->type == 'url') {
             return $this->converse(array_merge($parameters, ["prompt" => $input]));
         }
             return "Delegation does not work for this model";

@@ -50,7 +50,7 @@ input {
   display: none;
 }
 
-#card-error {
+#payment-message {
   color: rgb(105, 115, 134);
   text-align: left;
   font-size: 13px;
@@ -58,7 +58,7 @@ input {
   margin-top: 12px;
 }
 
-#card-element {
+#payment-element {
   border-radius: 4px 4px 0 0 ;
   padding: 12px;
   border: 1px solid rgba(50, 50, 93, 0.1);

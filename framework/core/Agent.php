@@ -18,6 +18,12 @@
  use LucianoTonet\GroqPHP\Groq;
  use LucianoTonet\GroqPHP\GroqException;
 
+ // Current Groq models (October 2026). Override them in .env with GROQ_MODEL and GROQ_VISION_MODEL
+ define("GROQ_DEFAULT_MODEL", defined('GROQ_MODEL') && GROQ_MODEL !== ''? GROQ_MODEL : "openai/gpt-oss-120b");
+ define("GROQ_SMALL_MODEL", "openai/gpt-oss-20b");
+ define("GROQ_DEFAULT_VISION_MODEL", defined('GROQ_VISION_MODEL') && GROQ_VISION_MODEL !== ''? GROQ_VISION_MODEL : "qwen/qwen3.8-27b"); // preview model: Groq has no production vision model
+ define("GROQ_TRANSCRIPTION_MODEL", "whisper-large-v3");
+
 
  class Agent extends \stdClass {
 
@@ -63,6 +69,7 @@
      */
     public function delegate($model = "", $messages  = array(), $response_format = array(), $stream = false, $tool_choice = "", $tools = array() ) 
     {
+        $model = $model? $model : GROQ_DEFAULT_MODEL;
         // Prepare response
         $response = array(
             'api_success' => false,
@@ -91,7 +98,7 @@
             );
         }
         catch (GroqException $err) {
-            $response['response'] = $err;
+            $response['response'] = $err->getMessage();
         }
         return $response;
     }
@@ -102,10 +109,14 @@
      * file: file path
      * prompt: what to do with image
      */
-    public function visualize($file = "", $prompt = "Describe this image", $model = "llama-3.2-11b-vision-preview")
+    public function visualize($file = "", $prompt = "Describe this image", $model = GROQ_DEFAULT_VISION_MODEL)
     {
-       $options = $model? array('model' => $model) : [];
-       $analysis = $this->_groq->vision()->analyze($file, $prompt, $options);
+       $options = array('model' => $model? $model : GROQ_DEFAULT_VISION_MODEL);
+       try {
+           $analysis = $this->_groq->vision()->analyze($file, $prompt, $options);
+       } catch (GroqException $err) {
+           return array('api_success' => false, 'response' => $err->getMessage());
+       }
 
        // return output
        return array(
@@ -124,7 +135,7 @@
      * language: specify language of audio
      * prompt: string of an optional transcription prompt
      */
-    public function transcribe($file = "", $prompt = "", $model = "whisper-large-v3", $language = "en", $response_format = "json")
+    public function transcribe($file = "", $prompt = "", $model = GROQ_TRANSCRIPTION_MODEL, $language = "en", $response_format = "json")
     {
         $transcription = $this->_groq->audio()->transcriptions()->create([
             'file' => $file,
@@ -144,7 +155,7 @@
      * response_format: string. 'json'
      * prompt: string of an optional transcription prompt
      */
-    public function translate($file = "", $prompt = "", $model = "whisper-large-v3", $response_format = "json")
+    public function translate($file = "", $prompt = "", $model = GROQ_TRANSCRIPTION_MODEL, $response_format = "json")
     {
         $translation = $this->_groq->audio()->translations()->create([
             'file' => $file,

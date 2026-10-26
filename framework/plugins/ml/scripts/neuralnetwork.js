@@ -77,8 +77,8 @@ function classify(){
     myMl.brain.classify(input, handleResults);
 }
 
-// Step 5 - Interim State to do something upon prediction completion
-function handleResults(error, results) {
+// Step 5 - Interim State to do something upon prediction completion (ml5 1.x callbacks receive results first)
+function handleResults(results, error) {
     if(error){
       console.error(error);
       return;

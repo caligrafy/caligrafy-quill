@@ -128,6 +128,8 @@ class Payment extends \stdClass {
 			$input = array(
 				'amount' => $amount,
 		  		'currency' => $currency,
+				// the Payment Element shows every payment method enabled in the Stripe dashboard
+				'automatic_payment_methods' => ['enabled' => true],
 		  		// Verify your integration in this guide by including this parameter
 				'metadata' => strtolower(APP_ENV) == 'production'? $metadata : array_merge($metadata, ['integration_check' => 'accept_a_payment']),
 				'description' => $description
@@ -186,7 +188,7 @@ class Payment extends \stdClass {
 	 * @author Dory A.Azar
 	 * @version 1.0
 	 */
-	public function createCheckout($amount = 1000, $currency = 'usd', $quantity = 1, $productData = array(), $successUrl = '', $cancelUrl = '', $customerEmail = null, $locale = null, $paymentType = ['card'], $payment_intent_data = array(), $vendor = array())
+	public function createCheckout($amount = 1000, $currency = 'usd', $quantity = 1, $productData = array(), $successUrl = '', $cancelUrl = '', $customerEmail = null, $locale = null, $paymentType = null, $payment_intent_data = array(), $vendor = array())
 	{
 		$result = array('action_success' => false, 'error' => 'Transaction could not be completed');
 		$locales = isset($locale)? ['locale' => $locale] : array();
@@ -195,8 +197,9 @@ class Payment extends \stdClass {
 		try {
 			
 			// Initial parameters area
+			// Payment methods are managed in the Stripe dashboard (current API versions reject payment_method_types):
+			// $paymentType is only kept for accounts pinned to an older API version
 			$parameters = [
-  				'payment_method_types' => $paymentType,
   				'line_items' => [[
     				'price_data' => [
       					'currency' => $currency,
@@ -210,6 +213,7 @@ class Payment extends \stdClass {
 
 			// Append to input when needed
 			$parameters = array_merge($parameters, $locales, $emails);
+			if (!empty($paymentType)) { $parameters['payment_method_types'] = $paymentType; }
 			
 			// If success URL specified, then add to parameters
 			if (isset($successUrl) && trim($successUrl) != '') { $parameters = array_merge($parameters, ['success_url' => $successUrl]); }
@@ -221,7 +225,8 @@ class Payment extends \stdClass {
 			
 			$checkout = $this->_stripe->checkout->sessions->create($parameters, $vendor);
 			
-			$result = $checkout? array('action_success' => true, 'data' => $checkout) : $result;
+			// 'url' is the Stripe-hosted payment page: redirect the customer to it (redirectToCheckout no longer exists in Stripe.js)
+			$result = $checkout? array('action_success' => true, 'data' => $checkout, 'url' => $checkout->url?? null) : $result;
 			
 		} catch(Exception $e) {
 			$result['error'] = $e->getMessage();

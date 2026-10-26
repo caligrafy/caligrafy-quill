@@ -63,6 +63,7 @@
     > + [Production checklist](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#checklist)
     > + [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading)
     > + [Behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes)
+    > + [Upgrading to the current libraries](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#libraries)
 
 ## Caligrafy and VueJS
 

@@ -304,7 +304,7 @@ qa_test('uploadFile() accepts allowed extensions and a custom allow-list', funct
 });
 
 qa_test('APP_DEBUG=false turns the SMTP debug output off', function () {
-    $code = 'define("APP_DEBUG", "%s"); require "qa/tests/bootstrap.php"; $m = new Caligrafy\Mail(); $p = new ReflectionProperty($m, "mailer"); $p->setAccessible(true); echo $p->getValue($m)->SMTPDebug;';
+    $code = 'define("APP_DEBUG", "%s"); require "qa/tests/bootstrap.php"; $m = new Caligrafy\Mail(); $p = new ReflectionProperty($m, "mailer"); echo $p->getValue($m)->SMTPDebug;';
     qa_equals('0', trim(shell_exec('php -r ' . escapeshellarg(sprintf($code, 'false')) . ' 2>/dev/null')));
     qa_equals('1', trim(shell_exec('php -r ' . escapeshellarg(sprintf($code, 'true')) . ' 2>/dev/null')));
 });
@@ -316,6 +316,7 @@ qa_test('model constants are valid OpenAI ids', function () {
     qa_equals('gpt-4o-mini', GPT4OMINI);
     class_exists('Caligrafy\\Assistant');
     qa_equals('gpt-4o-mini', ASSISTANT_GPT4OMINI);
+    qa_equals('gpt-6-luna', ASSISTANT_DEFAULT_MODEL);
     qa_assert(defined('GPT4_32'), 'GPT4_32 alias is defined');
 });
 
@@ -333,7 +334,6 @@ qa_test('OpenAI::command() only resolves the documented commands', function () {
 qa_test('COMPLETE keeps the text after [insert]', function () {
     $ai = new OpenAI();
     $prop = new ReflectionProperty($ai, '_openai_url');
-    $prop->setAccessible(true);
     $prop->setValue($ai, 'http://127.0.0.1:8765/v1/chat/completions');
     $out = $ai->delegate('The cat [insert] on the mat.', '', COMPLETE);
     $body = json_decode($out['response']['echo']['body'], true);
@@ -346,7 +346,6 @@ qa_test('COMPLETE keeps the text after [insert]', function () {
 qa_test('other commands still send system + user messages', function () {
     $ai = new OpenAI();
     $prop = new ReflectionProperty($ai, '_openai_url');
-    $prop->setAccessible(true);
     $prop->setValue($ai, 'http://127.0.0.1:8765/v1/chat/completions');
     $out = $ai->delegate('Some text', 'one line', SUMMARIZE, [], ['model' => 'gpt-4o-mini']);
     $body = json_decode($out['response']['echo']['body'], true);
@@ -357,62 +356,131 @@ qa_test('other commands still send system + user messages', function () {
 });
 
 // ---------------------------------------------------------------------------
-qa_section('OpenAI Assistant (mock OpenAI server)');
+qa_section('OpenAI Assistant on the Responses and Conversations APIs (mock OpenAI server)');
 
 $mock = proc_open('php -S 127.0.0.1:8766 qa/fixtures/openai_mock.php', [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $mockPipes);
 usleep(600000);
 
-function qa_assistant($threadId)
+function qa_assistant_url($object)
 {
+    $p = new ReflectionProperty($object, '_api_url');
+    $p->setValue($object, 'http://127.0.0.1:8766/v1');
+    return $object;
+}
+
+function qa_assistant($parameters = [])
+{
+    // build without the constructor so that no request reaches api.openai.com, then configure through the mock
     $ref = new ReflectionClass('Caligrafy\Assistant');
-    $a = $ref->newInstanceWithoutConstructor();
-    $url = $ref->getProperty('_thread_url');
-    $url->setAccessible(true);
-    $url->setValue($a, 'http://127.0.0.1:8766/v1/threads');
-    $a->assistant_id = 'asst_qa';
-    $a->thread_id = $threadId;
+    $a = qa_assistant_url($ref->newInstanceWithoutConstructor());
+    $a->__construct($parameters);
     return $a;
 }
 
-function qa_mock_requests()
+function qa_mock_requests($filter = null)
 {
     $log = sys_get_temp_dir() . '/qa_openai_mock.log';
     $lines = file_exists($log)? array_filter(explode("\n", file_get_contents($log))) : [];
-    return array_map(function ($l) { return json_decode($l, true); }, $lines);
+    $requests = array_map(function ($l) { return json_decode($l, true); }, $lines);
+    return array_values($filter? array_filter($requests, $filter) : $requests);
 }
 
-qa_test('run() without overrides only sends the assistant id (keeps its model and tools)', function () {
-    @unlink(sys_get_temp_dir() . '/qa_openai_mock.log');
-    $a = qa_assistant('thread_qa')->run();
-    qa_equals('run_qa', $a->run_id);
-    $runs = array_values(array_filter(qa_mock_requests(), function ($r) { return substr($r['uri'], -5) === '/runs'; }));
-    qa_equals(['assistant_id' => 'asst_qa'], json_decode($runs[0]['body'], true));
+function qa_mock_reset() { @unlink(sys_get_temp_dir() . '/qa_openai_mock.log'); }
+
+qa_test('start() creates a conversation with an empty JSON object', function () {
+    qa_mock_reset();
+    $a = qa_assistant(['name' => 'QA'])->start();
+    qa_equals('conv_qa', $a->thread_id);
+    $req = qa_mock_requests();
+    qa_equals('POST', $req[0]['method']);
+    qa_equals('/v1/conversations', $req[0]['uri']);
+    qa_equals('{}', $req[0]['body']);
 });
 
-qa_test('run() sends the overrides that are given', function () {
-    @unlink(sys_get_temp_dir() . '/qa_openai_mock.log');
-    qa_assistant('thread_qa')->run('Be brief', null, [['type' => 'code_interpreter']], 'gpt-4o-mini');
-    $runs = array_values(array_filter(qa_mock_requests(), function ($r) { return substr($r['uri'], -5) === '/runs'; }));
-    $body = json_decode($runs[0]['body'], true);
-    qa_equals('gpt-4o-mini', $body['model']);
-    qa_equals('Be brief', $body['additional_instructions']);
-    qa_equals([['type' => 'code_interpreter']], $body['tools']);
-    qa_assert(!isset($body['instructions']), 'instructions not given');
-});
-
-qa_test('retrieveResponse() returns the message once the run completes', function () {
-    $a = qa_assistant('thread_qa')->run()->retrieveResponse(10, 0);
+qa_test('createMessage() + run() send one response request with the conversation and read the answer', function () {
+    qa_mock_reset();
+    $a = qa_assistant(['instructions' => 'Be brief'])->start()->createMessage('Hi')->run();
+    qa_equals('resp_qa', $a->run_id);
     qa_equals('completed', $a->status);
-    qa_equals('msg_qa', $a->messages[0]['id']);
+    qa_equals('You said: Hi', $a->text());
+    qa_equals(['user', 'assistant'], array_column($a->messages, 'role'));
+    $body = json_decode(qa_mock_requests(function ($r) { return $r['uri'] === '/v1/responses'; })[0]['body'], true);
+    qa_equals(GPT6_LUNA, $body['model'], 'default model');
+    qa_equals('conv_qa', $body['conversation']);
+    qa_equals('Be brief', $body['instructions']);
+    qa_equals([['role' => 'user', 'content' => 'Hi']], $body['input']);
+    qa_assert(!isset($body['tools']), 'file_search without a vector store must not be sent');
+});
+
+qa_test('the documented chain returns the messages', function () {
+    $messages = qa_assistant(['name' => 'QA'])->start()->createMessage('Hello there')->run()->retrieveResponse()->messages;
+    qa_equals('You said: Hello there', end($messages)['content'][0]['text']);
+});
+
+qa_test('file_paths are uploaded to a vector store used by file_search; code_interpreter gets the files', function () {
+    qa_mock_reset();
+    $tmp = tempnam(sys_get_temp_dir(), 'qa') . '.txt';
+    file_put_contents($tmp, 'knowledge');
+    $a = qa_assistant(['name' => 'Docs', 'file_paths' => [$tmp], 'tools' => [['type' => 'file_search'], ['type' => 'code_interpreter']]]);
+    qa_equals('vs_qa', $a->vector_store_id);
+    qa_equals(1, count($a->file_ids));
+    $a->start()->createMessage('What is in the file?')->run('', null, [], 'gpt-6-astra');
+    $uris = array_column(qa_mock_requests(), 'uri');
+    qa_equals(['/v1/files', '/v1/vector_stores', '/v1/conversations', '/v1/responses'], $uris);
+    $upload = json_decode(qa_mock_requests()[0]['body'], true);
+    qa_equals(['file'], $upload['multipart'], 'multipart upload');
+    qa_equals('assistants', $upload['fields']['purpose']);
+    $body = json_decode(qa_mock_requests(function ($r) { return $r['uri'] === '/v1/responses'; })[0]['body'], true);
+    qa_equals('gpt-6-astra', $body['model']);
+    qa_equals(['type' => 'file_search', 'vector_store_ids' => ['vs_qa']], $body['tools'][0]);
+    qa_equals(['type' => 'auto', 'file_ids' => $a->file_ids], $body['tools'][1]['container']);
+});
+
+qa_test('a response still in progress is polled until it completes', function () {
+    $a = qa_assistant(['metadata' => ['qa' => 'background']])->start()->createMessage('Long task')->run();
+    qa_equals('in_progress', $a->status);
+    $a->retrieveResponse(10, 0);
+    qa_equals('completed', $a->status);
+    qa_equals('Done in the background', $a->text());
 });
 
 qa_test('retrieveResponse() gives up after the timeout', function () {
     $start = microtime(true);
-    $a = qa_assistant('thread_stuck')->run()->retrieveResponse(2, 1);
+    $a = qa_assistant(['metadata' => ['qa' => 'stuck']])->start()->createMessage('Never ends')->run()->retrieveResponse(2, 1);
     $elapsed = microtime(true) - $start;
     qa_equals('in_progress', $a->status);
-    qa_equals([], $a->messages);
+    qa_equals('', $a->text());
     qa_assert($elapsed >= 2 && $elapsed < 6, "took $elapsed s");
+});
+
+qa_test('end(), deleteAssistantFile() and delete() call the right endpoints', function () {
+    $tmp = tempnam(sys_get_temp_dir(), 'qa') . '.txt';
+    file_put_contents($tmp, 'x');
+    $a = qa_assistant(['file_paths' => [$tmp]])->start();
+    qa_mock_reset();
+    $fileId = $a->file_ids[0];
+    $a->end();
+    qa_equals('', $a->thread_id);
+    qa_equals(true, $a->deleteAssistantFile($fileId));
+    qa_equals(true, $a->delete());
+    $calls = array_map(function ($r) { return $r['method'] . ' ' . $r['uri']; }, qa_mock_requests());
+    qa_equals(['DELETE /v1/conversations/conv_qa', "DELETE /v1/vector_stores/vs_qa/files/$fileId", "DELETE /v1/files/$fileId", 'DELETE /v1/vector_stores/vs_qa'], $calls);
+});
+
+qa_test('OpenAI IMAGE uses a GPT image model and returns base64 data', function () {
+    $ai = new OpenAI(IMAGE);
+    $p = new ReflectionProperty($ai, '_openai_url');
+    $p->setValue($ai, 'http://127.0.0.1:8766/v1/images/generations');
+    $out = $ai->delegate('A red bicycle');
+    qa_equals(base64_encode('QA-PNG'), $out['response'][0]['b64_json']);
+    qa_equals('image', $out['type']);
+    qa_equals('gpt-image-2', OPENAI_DEFAULT_IMAGE_MODEL);
+});
+
+qa_test('OpenAI TEXT defaults to a current model and sends no legacy sampling parameters', function () {
+    $ai = new OpenAI();
+    qa_equals(['model' => GPT6_LUNA], $ai->parameters);
+    qa_equals('gpt-6-astra', GPT4_LATEST, 'GPT4_LATEST points to the current flagship');
 });
 
 proc_terminate($mock);
@@ -430,7 +498,6 @@ function qa_payment_with_fake()
     $p = new Payment();
     $fake = new QaFakeStripe();
     $prop = new ReflectionProperty($p, '_stripe');
-    $prop->setAccessible(true);
     $prop->setValue($p, $fake);
     return [$p, $fake];
 }
@@ -454,7 +521,231 @@ qa_test('createCheckout() with the defaults is unchanged', function () {
     qa_equals(true, $r['action_success']);
     $params = $fake->checkout->sessions->params;
     qa_assert(!isset($params['locale']) && !isset($params['customer_email']));
-    qa_equals(['card'], $params['payment_method_types']);
+    qa_assert(!isset($params['payment_method_types']), 'payment methods come from the dashboard by default');
 });
+
+qa_section('Stripe payment against stripe-mock (stripe-php ' . \Stripe\Stripe::VERSION . ')');
+
+function qa_payment_mock()
+{
+    $p = new Payment();
+    $prop = new ReflectionProperty($p, '_stripe');
+    $prop->setValue($p, new \Stripe\StripeClient(['api_key' => 'sk_test_123', 'api_base' => 'http://stripe-mock:12111']));
+    return $p;
+}
+
+qa_test('createPaymentIntent() and retrieveIntent()', function () {
+    $p = qa_payment_mock();
+    $r = $p->createPaymentIntent(1000, 'usd', ['order' => '42'], 'buyer@example.com', 'T-shirt');
+    qa_equals(true, $r['action_success'], json_encode($r));
+    qa_assert(!empty($r['data']->client_secret), 'client_secret');
+    $again = $p->retrieveIntent($r['data']->id);
+    qa_equals(true, $again['action_success'], json_encode($again));
+});
+
+qa_test('createCheckout() returns the hosted page url', function () {
+    $p = qa_payment_mock();
+    $r = $p->createCheckout(2000, 'usd', 1, ['name' => 'Mug'], 'https://example.com/ok', 'https://example.com/ko', 'buyer@example.com', 'fr');
+    qa_equals(true, $r['action_success'], json_encode($r));
+    qa_assert(array_key_exists('url', $r), 'url key');
+    qa_equals(true, $p->retrieveCheckout($r['data']->id)['action_success']);
+});
+
+qa_test('createTransaction() with a token and the Connect helpers', function () {
+    $p = qa_payment_mock();
+    qa_equals(true, $p->createTransaction(500, 'usd', 'tok_visa')['action_success']);
+    $account = $p->createAccount('vendor@example.com', 'US');
+    qa_equals(true, $account['action_success'], json_encode($account));
+    qa_equals(true, $p->createAccountLink($account['data']->id, 'https://example.com/r', 'https://example.com/b')['action_success']);
+    qa_equals(true, $p->retrieve($account['data']->id)['action_success']);
+});
+
+qa_test('Stripe errors are returned, not thrown', function () {
+    $p = new Payment();
+    $prop = new ReflectionProperty($p, '_stripe');
+    $prop->setValue($p, new \Stripe\StripeClient(['api_key' => 'sk_test_123', 'api_base' => 'http://127.0.0.1:1']));
+    $r = $p->createPaymentIntent(1000, 'usd');
+    qa_equals(false, $r['action_success']);
+    qa_assert(!empty($r['error']));
+});
+
+qa_section('Crypto payment: Coinbase Business Checkouts API (mock server, real JWT signatures)');
+
+use Caligrafy\CryptoPayment;
+
+$coinbaseMock = proc_open('php -S 127.0.0.1:8767 qa/fixtures/coinbase_mock.php', [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $cbPipes);
+usleep(600000);
+
+function qa_b64url_decode($s) { return base64_decode(strtr($s, '-_', '+/') . str_repeat('=', (4 - strlen($s) % 4) % 4)); }
+
+function qa_crypto($name, $secret)
+{
+    $c = new CryptoPayment($name, $secret);
+    foreach (['_host' => '127.0.0.1:8767', '_scheme' => 'http'] as $prop => $value) {
+        $p = new ReflectionProperty($c, $prop);
+        $p->setValue($c, $value);
+    }
+    return $c;
+}
+
+function qa_coinbase_requests()
+{
+    $log = sys_get_temp_dir() . '/qa_coinbase_mock.log';
+    $lines = file_exists($log)? array_filter(explode("\n", file_get_contents($log))) : [];
+    return array_map(function ($l) { return json_decode($l, true); }, array_values($lines));
+}
+
+// a CDP Ed25519 secret is base64(seed . public key)
+$cbKeypair = sodium_crypto_sign_seed_keypair(random_bytes(32));
+$cbSecret = base64_encode(substr(sodium_crypto_sign_secretkey($cbKeypair), 0, 32) . sodium_crypto_sign_publickey($cbKeypair));
+$cbName = 'organizations/org-qa/apiKeys/key-qa';
+
+qa_test('createTransaction() creates a checkout and returns the hosted url', function () use ($cbName, $cbSecret) {
+    @unlink(sys_get_temp_dir() . '/qa_coinbase_mock.log');
+    $r = qa_crypto($cbName, $cbSecret)->createTransaction(10, 'usd', ['name' => 'T-shirt', 'description' => 'Blue'], ['order' => 42], 'https://example.com/ok', 'https://example.com/ko');
+    qa_equals(true, $r['action_success'], json_encode($r));
+    qa_equals('https://payments.coinbase.com/payment-links/pl_qa', $r['url']);
+    qa_equals($r['url'], $r['data']['hosted_url'], 'backward-compatible hosted_url');
+    $req = qa_coinbase_requests()[0];
+    qa_equals(['amount' => '10.00', 'currency' => 'USD', 'description' => 'T-shirt - Blue', 'metadata' => ['order' => '42'],
+               'successRedirectUrl' => 'https://example.com/ok', 'failRedirectUrl' => 'https://example.com/ko'], json_decode($req['body'], true));
+    qa_assert(preg_match('/^[0-9a-f]{8}-[0-9a-f]{4}-4[0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/', $req['idempotency']), 'idempotency key is a UUID v4');
+});
+
+qa_test('the Ed25519 JWT has the CDP header and claims and a valid signature', function () use ($cbName, $cbSecret, $cbKeypair) {
+    $jwt = substr(qa_coinbase_requests()[0]['auth'], 7);
+    [$h, $p, $sig] = explode('.', $jwt);
+    $header = json_decode(qa_b64url_decode($h), true);
+    $claims = json_decode(qa_b64url_decode($p), true);
+    qa_equals('EdDSA', $header['alg']);
+    qa_equals($cbName, $header['kid']);
+    qa_assert(strlen($header['nonce']) >= 16, 'nonce');
+    qa_equals($cbName, $claims['sub']);
+    qa_equals('cdp', $claims['iss']);
+    qa_equals(['cdp_service'], $claims['aud']);
+    qa_equals(120, $claims['exp'] - $claims['nbf']);
+    qa_equals('POST 127.0.0.1:8767/api/v1/checkouts', $claims['uri']);
+    qa_assert(sodium_crypto_sign_verify_detached(qa_b64url_decode($sig), "$h.$p", sodium_crypto_sign_publickey($cbKeypair)), 'signature verifies with the public key');
+});
+
+qa_test('a legacy ECDSA (PEM) key signs ES256', function () use ($cbName) {
+    $key = openssl_pkey_new(['private_key_type' => OPENSSL_KEYTYPE_EC, 'curve_name' => 'prime256v1']);
+    openssl_pkey_export($key, $pem);
+    $jwt = qa_crypto($cbName, str_replace("\n", '\n', $pem))->jwt('GET', '/api/v1/checkouts');
+    [$h, $p, $sig] = explode('.', $jwt);
+    qa_equals('ES256', json_decode(qa_b64url_decode($h), true)['alg']);
+    $raw = qa_b64url_decode($sig);
+    qa_equals(64, strlen($raw));
+    // rebuild the DER signature to verify it with openssl
+    $int = function ($b) { $b = ltrim($b, "\x00"); if (ord($b[0]) & 0x80) $b = "\x00" . $b; return "\x02" . chr(strlen($b)) . $b; };
+    $seq = $int(substr($raw, 0, 32)) . $int(substr($raw, 32));
+    $der = "\x30" . chr(strlen($seq)) . $seq;
+    qa_equals(1, openssl_verify("$h.$p", $der, openssl_pkey_get_details($key)['key'], OPENSSL_ALGO_SHA256));
+});
+
+qa_test('getChargeStatus(), getCharges(), cancelTransaction() and refundTransaction()', function () use ($cbName, $cbSecret) {
+    $c = qa_crypto($cbName, $cbSecret);
+    qa_equals('COMPLETED', $c->getChargeStatus('68f7a946db0529ea9b6d3a12'));
+    qa_equals(1, count($c->getCharges(['status' => 'ACTIVE'])['data']['checkouts']));
+    qa_equals('DEACTIVATED', $c->cancelTransaction('68f7a946db0529ea9b6d3a12')['data']['status']);
+    $refund = $c->refundTransaction('68f7a946db0529ea9b6d3a12', 5, 'USDC', 'damaged');
+    qa_equals(['5.00', 'USDC', 'damaged'], [$refund['data']['amount'], $refund['data']['currency'], $refund['data']['reason']]);
+    $cbRequests = qa_coinbase_requests(); $last = end($cbRequests);
+    qa_equals('POST 127.0.0.1:8767/api/v1/checkouts/68f7a946db0529ea9b6d3a12/refund', json_decode(qa_b64url_decode(explode('.', substr($last['auth'], 7))[1]), true)['uri']);
+});
+
+qa_test('missing or invalid credentials return an error instead of calling Coinbase', function () {
+    $r = qa_crypto('', '')->createTransaction(10, 'USD');
+    qa_equals(false, $r['action_success']);
+    qa_contains('COINBASE_API_KEY_NAME', $r['error']);
+    $r = qa_crypto('organizations/x/apiKeys/y', base64_encode('short'))->createTransaction(10, 'USD');
+    qa_contains('Ed25519', $r['error']);
+});
+
+proc_terminate($coinbaseMock);
+
+qa_section('Groq Agent (mock server)');
+
+$groqMock = proc_open('php -S 127.0.0.1:8768 qa/fixtures/groq_mock.php', [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $gPipes);
+usleep(600000);
+$_ENV['GROQ_API_BASE'] = 'http://127.0.0.1:8768/openai/v1';
+
+function qa_groq_requests()
+{
+    $log = sys_get_temp_dir() . '/qa_groq_mock.log';
+    $lines = file_exists($log)? array_filter(explode("\n", file_get_contents($log))) : [];
+    return array_map(function ($l) { return json_decode($l, true); }, array_values($lines));
+}
+
+qa_test('delegate() uses the current default model when none is given', function () {
+    @unlink(sys_get_temp_dir() . '/qa_groq_mock.log');
+    $agent = new Caligrafy\Agent('gsk_qa');
+    $r = $agent->delegate(messages: [['role' => 'user', 'content' => 'Hi']]);
+    qa_equals(['api_success' => true, 'response' => 'echo: Hi'], $r);
+    qa_equals('openai/gpt-oss-120b', json_decode(qa_groq_requests()[0]['body'], true)['model']);
+    (new Caligrafy\Agent('gsk_qa'))->delegate(GROQ_SMALL_MODEL, [['role' => 'user', 'content' => 'x']]);
+    qa_equals('openai/gpt-oss-20b', json_decode(qa_groq_requests()[1]['body'], true)['model'], 'explicit model');
+});
+
+qa_test('visualize() sends the image to the default vision model', function () {
+    @unlink(sys_get_temp_dir() . '/qa_groq_mock.log');
+    $img = tempnam(sys_get_temp_dir(), 'qa') . '.png';
+    file_put_contents($img, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='));
+    $r = (new Caligrafy\Agent('gsk_qa'))->visualize($img, 'What is this?');
+    qa_equals(true, $r['api_success'], json_encode($r));
+    qa_equals('image of 2 parts', $r['response']);
+    qa_equals('qwen/qwen3.8-27b', json_decode(qa_groq_requests()[0]['body'], true)['model']);
+});
+
+qa_test('transcribe() uses whisper-large-v3 and returns JSON text', function () {
+    @unlink(sys_get_temp_dir() . '/qa_groq_mock.log');
+    $audio = tempnam(sys_get_temp_dir(), 'qa') . '.mp3';
+    file_put_contents($audio, 'fake audio');
+    $r = json_decode((new Caligrafy\Agent('gsk_qa'))->transcribe($audio), true);
+    qa_equals('hello from audio', $r['text'] ?? null, json_encode($r));
+    qa_equals('whisper-large-v3', json_decode(qa_groq_requests()[0]['body'], true)['model']);
+});
+
+proc_terminate($groqMock);
+unset($_ENV['GROQ_API_BASE']);
+
+qa_section('Watson (watsonx Assistant v2 mock)');
+
+$watsonMock = proc_open('php -S 127.0.0.1:8769 qa/fixtures/watson_mock.php', [1 => ['file', '/dev/null', 'w'], 2 => ['file', '/dev/null', 'w']], $wPipes);
+usleep(600000);
+
+function qa_watson_requests()
+{
+    $log = sys_get_temp_dir() . '/qa_watson_mock.log';
+    $lines = file_exists($log)? array_filter(explode("\n", file_get_contents($log))) : [];
+    return array_map(function ($l) { return json_decode($l, true); }, array_values($lines));
+}
+
+qa_test('sessions are created in the configured environment with the current API version', function () {
+    @unlink(sys_get_temp_dir() . '/qa_watson_mock.log');
+    $out = json_decode(shell_exec('php qa/tests/watson_probe.php env-qa 2>&1'), true);
+    qa_equals('sess-qa', $out['session'] ?? null, json_encode($out));
+    qa_equals('You said hello', $out['response'][0]['text']);
+    $calls = array_map(function ($r) { return $r['method'] . ' ' . $r['uri']; }, qa_watson_requests());
+    qa_equals([
+        'POST /instances/qa-instance/v2/assistants/assistant-qa/environments/env-qa/sessions?version=2024-08-25',
+        'POST /instances/qa-instance/v2/assistants/assistant-qa/environments/env-qa/sessions/sess-qa/message?version=2024-08-25',
+        'DELETE /instances/qa-instance/v2/assistants/assistant-qa/environments/env-qa/sessions/sess-qa?version=2024-08-25'], $calls);
+    qa_equals('Basic ' . base64_encode('apikey:watson-key'), qa_watson_requests()[0]['auth']);
+    qa_equals(['bot_name' => 'Cali'], json_decode(qa_watson_requests()[1]['body'], true)['context']['skills']['main skill']['user_defined']);
+});
+
+qa_test('without an environment id the legacy assistant path is used', function () {
+    @unlink(sys_get_temp_dir() . '/qa_watson_mock.log');
+    shell_exec("php qa/tests/watson_probe.php '' 2>&1");
+    qa_equals('POST /instances/qa-instance/v2/assistants/assistant-qa/sessions?version=2024-08-25', qa_watson_requests()[0]['method'] . ' ' . qa_watson_requests()[0]['uri']);
+});
+
+qa_test('a missing WATSON_URL gives a clear error', function () {
+    $out = shell_exec('php -r ' . escapeshellarg('define("WATSON_URL", ""); require "qa/tests/bootstrap.php"; try { new Caligrafy\Watson("a"); } catch (Exception $e) { echo $e->getMessage(); }') . ' 2>&1');
+    qa_contains('Set WATSON_URL', $out);
+});
+
+proc_terminate($watsonMock);
 
 qa_summary();

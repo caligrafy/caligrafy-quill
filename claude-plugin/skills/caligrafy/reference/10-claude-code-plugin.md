@@ -68,7 +68,7 @@ Field types: `string`, `text`, `int`, `decimal`, `bool`, `date`, `datetime`, `js
 Scaffolds a client app in `public/<name>` using Caligrafer and wires its page and data routes (learn more about [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library), the [Vue SPA](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application), [Bots](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.1-Creating-Bots-with-Watson), [FaceDetect](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition) and [Machine Learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning)).
 
 + `app`: Vue 3 as a library (default)
-+ `create`: Vite Vue SPA with vue-router and vuex (requires Node.js 16 or higher)
++ `create`: Vite Vue SPA with Vue Router and Pinia (requires Node.js 20.19+ or 22.12+)
 + `bot`: IBM Watson bot
 + `facedetect`: face detection and recognition
 + `ml`: ML Core (ml5 and p5)

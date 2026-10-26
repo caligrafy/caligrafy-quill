@@ -8,11 +8,12 @@
 > - `caligrafer initialize` keeps the keys of a signed project but still deletes `.git` (G25). `app` = Vue as a library, `create` = Vite SPA.
 
 > ## Requirements
-> + PHP > 7.2
-> + MySql > 5.6
+> + PHP 8.3 or higher (8.5 recommended)
+> + MySQL 8.4 (or another database supported by PDO)
 > + A Apache/MySql/PHP server already installed locally
 > + Git and Composer
-> + curl, mbstring, openssl, mcrypt, gd, bcmath, ext-intl, headers and redirect modules must be enabled in your servers
+> + curl, mbstring, openssl, sodium, gd, bcmath, intl, pdo_mysql, and the Apache rewrite and headers modules must be enabled in your servers
+> + Node.js 20.19+ or 22.12+ for the Vue Single Page Application template
 
 > #### (video) [Introduction to Caligrafy](https://youtu.be/zTqbWlTPrNQ)
 >
@@ -74,7 +75,7 @@
 >
 > In this video we show you how Caligrafy can be installed and run without setting up any development environment.
 
-This method requires Docker to be installed on your local machine. With Docker, you no longer need to go through the hassle of having an Apache server installed locally to run PHP and MySQL.
+This method requires Docker to be installed on your local machine. With Docker, you no longer need to go through the hassle of having an Apache server installed locally to run PHP and MySQL. The stack runs PHP 8.5 with Apache (`php:8.5-apache`), MySQL 8.4 LTS and phpMyAdmin 5.2.3.
 
 + If you have PHP and Composer installed on your machine, check the `Quick installation`.
 
@@ -143,7 +144,7 @@ You can run ```php caligrafer.php initialize``` from the Caligrafy root. It sign
 + **Create a Vue app (Vue as a library):** Scaffolds a simple Vue 3 app in the `public` folder for you to use immediately.
 You can run ```php caligrafer.php app <app_name>``` from the Caligrafy root. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library).
 
-+ **Create a Vue project (Single Page Application):** Scaffolds a Vite + Vue 3 project with vue-router and vuex in the `public` folder.
++ **Create a Vue project (Single Page Application):** Scaffolds a Vite 8 + Vue 3 project with Vue Router 5 and Pinia in the `public` folder.
 You can run ```php caligrafer.php create <app_name>``` from the Caligrafy root. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application).
 
 + **Create a Bot app:** Scaffolds a Bot app for you to use immediately.
