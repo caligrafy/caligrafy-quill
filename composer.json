@@ -41,5 +41,8 @@
             "nodejs-php-fallback/nodejs-php-fallback": true
         }
     },
-    "prefer-stable": true
+    "prefer-stable": true,
+    "require-dev": {
+        "phpunit/phpunit": "^12"
+    }
 }

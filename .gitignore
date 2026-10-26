@@ -6,3 +6,4 @@
 /archives/
 .idea
 /backups/
+.phpunit.cache/

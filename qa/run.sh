@@ -4,6 +4,7 @@
 #   qa/run.sh          build the isolated stack, run all tests, tear everything down
 #   qa/run.sh --keep   leave the stack and the generated files in place (debugging)
 #
+# Phases: database scripts, framework (CLI), unit tests (PHPUnit), HTTP, doctor, FileInfo hosts, tooling.
 # Requires Docker, PHP >= 8.1 with curl on the host, Composer dependencies installed (vendor/) and Node.js.
 # The stack uses its own compose project (quillqa) and ports (QA_WEB_PORT=8090, QA_DB_PORT=3316).
 # It refuses to run if application/ or .env exist and were not created by a previous QA run.
@@ -104,6 +105,11 @@ $COMPOSE exec -T mysql mysql -uroot -proot quillqa -e "DELETE FROM users" 2>/dev
 echo
 echo "== Framework tests (inside the web container)"
 $COMPOSE exec -T web php qa/tests/cli_tests.php || STATUS=1
+
+echo
+echo "== Unit tests (PHPUnit inside the web container)"
+[ -x vendor/bin/phpunit ] || $COMPOSE exec -T web composer install --no-interaction --quiet || STATUS=1
+$COMPOSE exec -T web vendor/bin/phpunit --colors=never --do-not-cache-result || STATUS=1
 
 echo
 echo "== HTTP tests"
