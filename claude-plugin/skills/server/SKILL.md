@@ -56,6 +56,9 @@ PHP/extensions, `.env`, keys (masked), the database, OpenAI/Groq keys and models
 one fix per problem and hints for TLS, DNS and timeout errors. `--only openai,groq` limits it, `--json` for parsing.
 Never paste its output's masked keys back into `.env`.
 
+### Image build "Killed" / "cannot allocate memory" during apt-get
+On some slow or proxied (corporate) networks, `apt-get install` in `docker/Dockerfile` grows to several GB while retrying downloads and Docker kills it. Tell the user: raise Docker Desktop's memory (Settings, Resources), stop other containers (only builds that are the user's own), retry, or build on another network. Do not delete existing images to "start fresh": an existing image is the fallback. For the framework's QA suite, `QA_NO_BUILD=1 ./qa/run.sh` reuses an existing `quillqa-web` image.
+
 ### Port already taken: remap without editing docker-compose.yaml
 Put personal port changes in `docker-compose.override.yml` at the project root (compose merges it automatically; it is
 not in `.gitignore`: propose adding it so personal settings are not committed). `!override` replaces the port list instead of appending to it (Compose 2.24+):

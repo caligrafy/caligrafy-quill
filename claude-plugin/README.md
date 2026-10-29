@@ -48,6 +48,7 @@ written from the framework source: update them when `framework/` changes (and ru
   Groq, Together, Fireworks, OpenRouter, Ollama and custom OpenAI-compatible endpoints (`AGENT_PROVIDER`,
   `AGENT_MODEL`...), `Agent::models()`, doctor `agent` check; Llama examples. G40, G42, G17/G33, API reference,
   recipes, new-app skill and reviewer updated.
+  G38 `QA_NO_BUILD=1`; G49 `.env` comments on their own line; server skill: image build killed during apt-get.
 - **1.8.1** - G38: the QA suite runs the new PHPUnit unit tests of the framework core (`qa/unit`, `vendor/bin/phpunit`).
 - **1.8.0** - `php caligrafer.php doctor` (`.bin/caligrafer doctor`): read-only health check of the project and of the
   services in `.env` (database, OpenAI and Groq keys and models, Stripe mode, Coinbase, Watson, SMTP EHLO) with masked

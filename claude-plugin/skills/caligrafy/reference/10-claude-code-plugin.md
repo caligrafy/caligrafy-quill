@@ -21,7 +21,7 @@ The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligraf
 
 The plugin also knows the Caligrafer maintenance commands and uses them: `php caligrafer.php doctor` (read-only health check of the project, its keys and its services) to diagnose problems first, and `php caligrafer.php upgrade` to bring an existing project up to date with the framework templates.
 
-Current version: **1.8.1**. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7), `doctor` (1.8) and the PHPUnit unit tests of the framework core in the QA suite (1.8.1).
+Current version: **1.9.0**. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7), `doctor` (1.8) the PHPUnit unit tests of the framework core in the QA suite (1.8.1), and install to home screen, face login liveness and passkeys, and open-model providers such as Llama on OpenRouter or Ollama (1.9).
 
 ## Installing the plugin
 
