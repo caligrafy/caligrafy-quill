@@ -30,7 +30,7 @@ Report which services of this project run, their host ports, and the URLs (app `
    - `APP_ROOT=` empty (the dev-box serves the project at the web root);
    - `APP_KEY` / `API_KEY` present.
    Propose fixes; edit only with the user's OK.
-5. **Initialization.** If `application/` or `vendor/` is missing, `.bin/caligrafer server start` will run `composer install` and `caligrafer initialize`, which **deletes `.git`** (G25). If the folder is a git repo, warn and ask first; alternatively run `composer install` and `cp -r framework/settings/application ./application` manually and create `.env` from `framework/settings/.env.docker`.
+5. **Initialization.** If `application/` or `vendor/` is missing, `.bin/caligrafer server start` will run `composer install` and `caligrafer initialize`, which **deletes `.git`** (G25). If the folder is a git repo, warn and ask first; alternatively run `composer install` and `cp -r framework/settings/application ./application` manually and create `.env` from `framework/settings/.env.docker`, then set `APP_ROOT=` (empty: that template has `APP_ROOT=caligrafy-quill`, which is right for `prod-box` only).
 6. **Start** from the project root:
    ```bash
    .bin/caligrafer server start

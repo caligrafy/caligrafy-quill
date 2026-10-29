@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS books (
 ## Model Fundamentals
 The `Model` is the entity that interfaces directly with the database tables.
 Every table from your database that represents an object or an entity in your application that a user could act on needs to have a `Model` in the framework. For example, the table `books` needs to be represented by a `Book` Model in the framework. This framework dictates some conventions around the naming of the primary and foreign keys.
-> Learn more about naming conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#frameworkfundamentals)
+> Learn more about naming conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#fundamentals)
 + All the models that you create should be in the `/application/models` folder. In this folder, you can organize the models to your convenience. If you prefer to have your models in a different folder, you can always do that for as long as it is within the `/application` folder.
 + There is no formal naming convention for the `Model`. We do recommend that you remain consistent. If you choose to name the models in singular or plural then make sure to do that for all your models.
 + All the models that you create should extend the `Model` class

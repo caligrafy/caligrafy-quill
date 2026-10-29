@@ -3,6 +3,12 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/_Sidebar
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
+## What's new
+
++ [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026)
+    > + [Upgrade checklist](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#checklist)
+    > + [Compatibility summary](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#compatibility)
+
 ## Learning Caligrafy
 
 1. [Getting Started](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started)
@@ -10,6 +16,7 @@
     > + [Understanding MVC architecture](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#architecture)
     > + [Framework fundamentals](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#fundamentals)
     > + [File Structure](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#filestructure)
+    > + [Caligrafer doctor](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#doctor)
 
 2. [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing)
     > + [Defining Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#definingroutes)
@@ -26,7 +33,7 @@
 4. [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models)
     > + [Relational Databases](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models)
     > + [Model Fundamentals](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models#modelfundamentals)
-    > + [Interfacing with the Model](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models#modelfundamentals)
+    > + [Interfacing with the Model](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models#modelinterface)
     > + [Model Methods](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models#modelmethods)
 5. [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships)
     > + [One-to-One Relationship](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships)
@@ -52,6 +59,7 @@
     > + [Routing to the Controller](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#controllerrouting)
     > + [Controller Context](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#controllercontext)
     > + [Controller Methods](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#controllermethods)
+    > + [Namespaced controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#namespacedcontrollers)
 9. [Helpers, Forms & REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API)
     > + [Helpers](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#helpers)
     > + [HTML Forms](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#forms)
@@ -93,7 +101,7 @@
 3. [Machine Learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning)
 4. [OpenAI: ChatGPT, GPTs, DALL.E](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E)
 5. [OpenAI: Assistants](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.5-Open-AI:-Assistants)
-6. [Open Source Agents (llama, Mistral, etc.](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.))
+6. [Open Source Agents (llama, Mistral, etc.)](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.))
 
 ## Caligrafy and Claude
 
@@ -102,3 +110,10 @@
     > + [Installing the plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin#install)
     > + [Commands](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin#commands)
     > + [The caligrafy-reviewer agent](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin#reviewer)
+
+## Contributing to Caligrafy
+
+1. [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy)
+    > + [The QA suite](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy#qa)
+    > + [Unit tests](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy#unit)
+    > + [Release process](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy#release)

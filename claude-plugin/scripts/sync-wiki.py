@@ -53,6 +53,8 @@ PAGES = {
     '09.9.5-ai-openai-assistants.md': ('9.9.5-Open-AI:-Assistants.md', '9.9.5 OpenAI: Assistants'),
     '09.9.6-ai-open-source-agents-groq.md': ('9.9.6-Open-Source-Agents-(llama,-Mistral-etc.).md', '9.9.6 Open Source Agents (llama, Mistral etc.)'),
     '10-claude-code-plugin.md': ('10.-Claude-Code-Plugin.md', '10. Claude Code Plugin'),
+    '11-release-notes-october-2026.md': ('Release-notes:-October-2026.md', 'Release notes: October 2026'),
+    '12-testing-caligrafy.md': ('Testing-Caligrafy.md', 'Testing Caligrafy (contributors)'),
     'wiki-sidebar.md': ('_Sidebar.md', 'Wiki sidebar (table of contents)'),
 }
 

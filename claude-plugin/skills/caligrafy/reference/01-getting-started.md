@@ -10,7 +10,7 @@
 > ## Requirements
 > + PHP 8.3 or higher (8.5 recommended)
 > + MySQL 8.4 (or another database supported by PDO)
-> + A Apache/MySql/PHP server already installed locally
+> + A Apache/MySql/PHP server already installed locally OR Docker
 > + Git and Composer
 > + curl, mbstring, openssl, sodium, gd, bcmath, intl, pdo_mysql, and the Apache rewrite and headers modules must be enabled in your servers
 > + Node.js 20.19+ or 22.12+ for the Vue Single Page Application template
@@ -32,7 +32,7 @@
 
 > #### (video) [Installing Caligrafy](https://youtu.be/21Lazd38FfQ)
 >
-> In this video we introduce you to the Caligrafy framework and to the different components that are used in it.
+> In this video we show you how to install Caligrafy on a local Apache/MySQL/PHP server.
 
 + Run the following code from the terminal to get the latest version of Caligrafy
 
@@ -44,17 +44,19 @@
 
 + Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#using-docker) 
 
-+ Run the following code in from the Caligrafy root folder to initialize the framework
++ Run the following code from the Caligrafy root folder to initialize the framework
 
     ```bash
 
-    php caligrafer.php server start
+    php caligrafer.php initialize
 
     #or
 
-    .bin/caligrafer server start
+    .bin/caligrafer initialize
 
     ``` 
+
+    It signs the project with an `APP_KEY` and an `API_KEY`, creates the `application` folder, sets `APP_ROOT` to the name of the folder and deletes the `.git` folder.
 
     >
     > Note that the Caligrafer Initialize command breaks all `git` links. 
@@ -86,21 +88,16 @@ This method requires Docker to be installed on your local machine. With Docker, 
 + Run the following code from the Caligrafy root folder to start the Caligrafy server
 
     ```bash
-
-    #if you have php
-    php caligrafer.php server start
-
-    #in all cases
     .bin/caligrafer server start
-
     ``` 
 
-+ Add/Modify the following to the .env file if not accurate: `APP_ROOT=''` (leave blank)
+    + **With PHP and Composer on your machine**, `.bin/caligrafer` installs the dependencies and initializes the project when needed, then starts the `dev-box` container with your folder mounted into it: your changes are live. Check that `.env` has `APP_ROOT=` (blank). (`php caligrafer.php server start` alone does nothing: the command is meant to be called through `.bin/caligrafer`. Without it, run `docker-compose up --build -d dev-box`.)
+    + **Without PHP**, `.bin/caligrafer` runs `.bin/server`, which starts the `prod-box` container: the code is copied into the image, `.env` is created from `framework/settings/.env.docker` (`APP_ROOT=caligrafy-quill`) and the image is rebuilt when files change. The site is then at `http://localhost:8080/caligrafy-quill`.
 
 + Run `server stop` instead of `server start` to stop the server at all time
 
 **Testing the Installation**
-+ Once started, you can access the website locally via `http://localhost:8080`
++ Once started, you can access the website locally via `http://localhost:8080` (`http://localhost:8080/caligrafy-quill` with `prod-box`)
 
 **Testing the Database provided in Docker**
 + In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
@@ -116,8 +113,8 @@ This method requires Docker to be installed on your local machine. With Docker, 
 + Add the following to the .env file if not present: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`. If caligrafy is not installed at the Server Document Root level, refer to the [Different Root Folder instructions](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#different-root-folder).
 + Change the other values in .env file to match your local or production server settings
 + Run `composer install` to get all the dependencies needed
-+ Initialize the application folder by running the following `cp -r framework/settings/application ./application`
-+ Make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `sudo chmod -R 777 /public/uploads`
++ Initialize the application folder by running the following `cp -r framework/settings/application ./application`. Unlike `initialize`, this copy writes no `application/.caligrafy-manifest.json`: `php caligrafer.php upgrade` then recognizes your untouched files from the template history instead
++ Make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `chmod -R 777 public/uploads` from the Caligrafy root
 + You are good to go!
 
 ### Testing the Installation
@@ -138,9 +135,9 @@ Caligrafer is a command line tool that comes prepackaged with several tools and 
 
 + **Caligrafer help:** At all time you can know what commands are available to you by running ```php caligrafer.php``` from the Caligrafy root.
 
-+ **Framework Initialization:** The framework is automatically initialized for you to start using instantly.
-You can run ```php caligrafer.php initialize``` from the Caligrafy root. It signs the project with an `APP_KEY` and an `API_KEY` (an already signed project keeps its keys), creates the `application` folder and **deletes the `.git` folder**.
-After updating the framework of an existing project, run ```php caligrafer.php upgrade``` (dry run) then ```php caligrafer.php upgrade --apply``` to bring the template files of `application` up to date (see [Upgrading an existing project](9.5-Security-and-Upgrading#upgrading)).
++ **Framework Initialization:** `.bin/caligrafer` initializes the project the first time you use it.
+You can also run ```php caligrafer.php initialize``` from the Caligrafy root. It signs the project with an `APP_KEY` and an `API_KEY` (an already signed project keeps its keys), creates the `application` folder and **deletes the `.git` folder**.
+After updating the framework of an existing project, run ```php caligrafer.php upgrade``` (dry run) then ```php caligrafer.php upgrade --apply``` to bring the template files of `application` up to date: untouched files are replaced after a backup in `backups/caligrafy-upgrade-<timestamp>/`, customized files are kept and get a `<file>.caligrafy-new` version next to them, and `php caligrafer.php upgrade --force <application/path>` replaces one customized file (see [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading)).
 
 + **Project health check:** run ```php caligrafer.php doctor``` (or `.bin/caligrafer doctor`) from the Caligrafy root. It is read-only: it checks PHP and its extensions, `vendor/`, `.env`, the `APP_KEY`/`API_KEY`, `public/uploads`, the web app manifest and its icons (and the service worker files when `PWA_SERVICE_WORKER=true`), whether `application` is up to date with the framework templates, the database connection (when `DB_ACTIVATE=true`) and every service configured in `.env`: OpenAI and Groq (the key is accepted and the configured models are available for it), the provider of the open source `Agent` (`AGENT_PROVIDER`: Together AI, Fireworks AI, OpenRouter, a custom endpoint, or Ollama: the server answers and the models are pulled, with the `host.docker.internal` hint when PHP runs in Docker), Stripe (key accepted, test or live mode), Coinbase Business, Watson and the SMTP server (connect and `EHLO` only, no mail is sent). Each line is `OK`, `WARN`, `FAIL` or `SKIP` (not configured) with a one-line fix. Secrets are never printed (at most `sk-proj-…EZ8A`), and a key pasted with spaces or a missing `-`/`_` after its prefix is reported. Network errors are explained: a `self-signed certificate in certificate chain` error means a corporate TLS inspection proxy (see the Claude plugin `server` skill for the Docker fix).
     + `--only openai,groq` limits the checks (`project`, `database`, `openai`, `groq`, `agent`, `stripe`, `coinbase`, `watson`, `mail`), `--json` prints machine-readable results, `--env .env.production` checks another environment file. The exit code is `1` when a check fails.
@@ -197,17 +194,20 @@ To create a virtual host to point to the framework:
 Only the `index.php` front controller and the `public` folder are meant to be reached from a browser. The `.htaccess` file at the root of Caligrafy denies direct access to:
 + dotfiles such as `.env`, `.git` and `.claude`
 + the server-side folders `application`, `framework`, `vendor`, `tests`, `qa`, `docker` and `claude-plugin`
-+ tooling files such as `caligrafer.php`, `composer.json`, `composer.lock` and `docker-compose.yaml`, and any `.sql`, `.log`, `.bak`, `.ini`, `.sh` or `.env` file
++ tooling files such as `caligrafer.php`, `composer.json`, `composer.lock` and `docker-compose.yaml` and `package.json`, the `archives` and `node_modules` folders, and any `.sql`, `.log`, `.bak`, `.ini`, `.sh` or `.env` file
 
 A second `.htaccess` in `public/uploads` prevents any script that ends up in the uploads folder from being executed or downloaded.
 
-Keep these files when you deploy. They only use `mod_rewrite`, so your virtual host needs `mod_rewrite` enabled and `AllowOverride FileInfo` (or `All`). The rules are case-insensitive, which matters on macOS and Windows file systems. You can check your server with `curl -I http://<your-host>/.env`: the answer must be `403` or `404`.
+Keep these files when you deploy. They use `mod_rewrite`, `mod_headers` (CORS, cookies, the service worker scope) and `mod_mime` (the web app manifest type), so your server needs these modules enabled and `AllowOverride FileInfo` (or `All`): without `mod_headers`, Apache answers `500`. The rules are case-insensitive, which matters on macOS and Windows file systems. You can check your server with `curl -I http://<your-host>/.env`: the answer must be `403` or `404`.
 
 If you serve Caligrafy with **nginx**, `.htaccess` files are ignored and you need equivalent rules, for example:
 ```
 location ~ /\.(?!well-known) { deny all; }
-location ~ ^/(application|framework|vendor|tests|qa|docker|claude-plugin)/ { deny all; }
-location ~ ^/(caligrafer\.php|composer\.(json|lock)|docker-compose\.ya?ml)$ { deny all; }
+location ~ ^/(application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules|backups)/ { deny all; }
+location ~ ^/(caligrafer\.php|composer\.(json|lock)|docker-compose\.ya?ml|package(-lock)?\.json)$ { deny all; }
+location ~* \.(sql|log|bak|ini|sh|env)$ { deny all; }
+location = /public/sw.js { add_header Service-Worker-Allowed "/"; }
+types { application/manifest+json webmanifest; }
 location ~* ^/public/uploads/.*\.(php\d*|phtml|phar|cgi|pl|py|sh)$ { deny all; }
 location / { try_files $uri $uri/ /index.php?uri=$uri&$args; }
 ```
@@ -240,7 +240,7 @@ If you would like to build your own server, you will need to go through the foll
 
 2. [Prepare your development environment](https://github.com/caligrafy/caligrafy-course/wiki/Lecture-1.3:-Environment-Setup,-Github)
 
-3. Download a code editor (recommended: [Brackets](http://brackets.io/), [Sublime](https://www.sublimetext.com/) or [Visual Studio](https://code.visualstudio.com/))
+3. Download a code editor (for example [Visual Studio Code](https://code.visualstudio.com/) or [Sublime Text](https://www.sublimetext.com/))
 
 ## MVC Framework
 
@@ -279,14 +279,14 @@ This framework relies on several foundational concepts that are worth detailing.
 Understanding the framework file structure is key to understanding how to plan your development project.
 There are 5 main folders in the structure that you should be aware of:
 1. **`/application`**: 
-    This is where most of your application logic should go. This folder is where you should create the routes, models, views and controllers. You can create any classes and organize them freely in this folder without worrying about requiring them or including them. 
+    This is where most of your application logic should go. This folder is where you should create the routes, models, views and controllers. You can create any classes and organize them freely in this folder without worrying about requiring them or including them: every PHP file of `application` (up to 5 folder levels deep) is loaded on each request, so two classes cannot have the same fully qualified name. 
 
     This folder has 4 subfolders (models, views, controllers and config). The config folder is where the routes are defined. 
 
     > When your logic becomes too complex to hold in a `Controller`, you can always create new classes to organize them without having to require or include them in the classes where you intend to use them.
 2. **`/framework`**: This is the underlying code for the framework. For novice programmers, you will very rarely need to change anything in this folder. However, if you need to change the way the framework operates, then this is where it can be done.
 3. **`/public`**: This is where your application client-side code should go. All your scripts, stylesheets and any other resource that needs to be publicly accessible will reside in this folder. For example, any javascript or css that you need to reference from your Views (residing in application) will need to be in the public folder. Similarly, if your application supports uploading files, all uploaded files will live in the `/public/uploads` folder.
-4. **`/tests`**: This is the folder that you could use for unit testing. Any test logic that you need to create will reside in this folder.
+4. **`/tests`**: every PHP file of this folder is loaded on each request, like `application`: use it for helpers that your application needs, not for PHPUnit tests (the framework's own unit tests live in `qa/unit`, see [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy)).
 5. **`/vendor`**: The vendor folder contains all the third-party libraries that this framework depends on.
 
 > [Next Section: Learn about Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing)

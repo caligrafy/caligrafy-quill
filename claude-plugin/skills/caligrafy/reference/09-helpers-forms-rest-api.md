@@ -68,7 +68,7 @@ function getGlobalInformation($superGlobal = 'session'); // Gets PHP Super Globa
 + String & Array helper methods
 ```php
 
-function generateToken($size = 12); // generates a random string of hexadecimals of a specified size
+function generateToken($size = 12); // generates a random string of 2 x $size hexadecimal characters ($size random bytes)
 
 function findKey($array, $keySearch); // finds a key in a multi-dimensional array
 
@@ -176,7 +176,7 @@ In order to remedy to this, this framework provides the capability of signing th
 This can be achieved using regular HTML:
 ```html
 <form action="/books" method="POST">
-    <input type="hidden" name="_token" value="<session ID goes here">
+    <input type="hidden" name="_token" value="<?= session('token') ?>"> <!-- the CSRF token of the session -->
 </form>
 ```
 Or, using a Pug directive that will do it automatically for you:
@@ -227,7 +227,7 @@ try {
     Route::run();
 
 } catch(Exception $e) {
-  // error handling goes here
+    Errors::handle($e);   // real status code, JSON for API calls (use Caligrafy\Errors; at the top of the file)
 }
 ```
 
@@ -314,17 +314,17 @@ Then you could type directly in the body the content you want to send in the des
 
     | Status | Error | When |
     | - | - | - |
-    | `401` | `1004` Access Denied | missing or invalid API key, or `Auth::activateAPI()` not called |
+    | `401` | `1004` Access Denied | an API call to a controller route with a missing or invalid API key, or without `Auth::activateAPI()` (closure routes are not checked) |
     | `403` | `3000` Cross Site Forgery | form post without a valid `_token` |
     | `404` | `1001` Invalid Controller or Action | the route points to a missing controller or method |
-    | `405` | `1000` Invalid Http Request Method | |
-    | `500` | any other error, PHP fatal errors and uncaught exceptions | the message is only shown when `APP_DEBUG=true` |
+    | `405` | `1000` Invalid Http Request Method | mapped for your own `throw Errors::raise(1000)`: the router does not raise it (an unmatched URL runs the first route) |
+    | `500` | any other error | exceptions caught by the `catch` of `web.php` keep their message; for PHP fatal errors and errors outside the routes `try`, the message is only shown when `APP_DEBUG=true` |
 
     ```json
     {"error": {"code": 1004, "message": "Access Denied"}}
     ```
-    HTML requests still receive the same text as before (`[ERROR 1004] Access Denied`). Check the status code in your clients: earlier versions answered errors with `200`. A status that your own controller sets with `http_response_code()` before `api()` is kept.
+    HTML requests still receive the same text as before (for example `[ERROR 1001] Invalid Controller or Action`). API calls skip the CSRF check: they need the API key, not a `_token`. Check the status code in your clients: earlier versions answered errors with `200`. A status that your own controller sets with `http_response_code()` before `api()` is kept.
 
-+ **PUT:** For `PUT`, since our framework spoofs a `POST` method, options 1 and 2 above won't work. Only option 3 could work. If your application supports file uploading, then you should test the API as a `POST` and add a `_method` key in the `Body` that has the value `PUT`. 
++ **PUT:** For `PUT`, since our framework spoofs a `POST` method, options 1 and 2 above won't work. Only option 3 with a JSON body could work. If your application supports file uploading, then you should test the API as a `POST` and add a `_method` key in the `Body` that has the value `PUT`. 
 
 >[Next Section: Learn about Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication)

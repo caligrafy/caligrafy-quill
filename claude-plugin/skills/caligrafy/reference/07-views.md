@@ -70,7 +70,7 @@ Make yourself familiar with its syntax. There is a slight learning curve in the 
 Using templates can be overwhelming at first. We recommend that you first start creating `pug` pages individually and not worry about templates just yet. While you are developing your pages, you will notice blocks of code that start repeating. This should be a trigger for you to consider separating these blocks out in a separate `pug` file
 
 Let's start with a basic "Hello World" example:
-+ Create a new file called 'helloworld.pug'
++ Create a new file called `helloworld.pug` in `/application/views`
 ```pug
 head
     title Hello World Application
@@ -90,7 +90,7 @@ However, there are cases, especially for public pages, where they are just for p
 It is acceptable in such cases to return a `View` directly from a `Route`.
 ```php
 Route::get('hello', function() { return view('helloworld'); }); 
-// Not that you only enter the name of the template without the `.pug` extension
+// Note that you only enter the name of the template without the `.pug` extension
 ```
 ### `View` from `Controller`
 When the view is called from a `Controller`:
@@ -113,7 +113,7 @@ Most of the time, you are going to need to send the data to be displayed to the 
 
 The `view` method takes 2 arguments
 
-`public function view(String $templateName, Array $parameters);`
+`view($viewName, $viewData = array())` (the `view()` helper and the `$this->view()` method of a controller have the same arguments)
 
 The `templateName` is the name of the `pug` template (path from `/application/views`, without the `.pug` extension). When the request is an API call (`Accept: application/json`) or when the template name is `null`, the `view` method returns the `parameters` as JSON instead and ends the request: set any HTTP status code with `http_response_code()` before calling it. The `parameters` is a key/value pair array of the `template variable name` and the `value` that needs to be sent to the view.
 
@@ -134,7 +134,7 @@ body
 We now need to make sure that when the view method is called to assign a value to the `sentence` variable that will be read by the template.
 ```php
 Route::get('hello', function() {
-  return view('helloworld', array('sentence' => 'This is our first view using a route');    
+  return view('helloworld', array('sentence' => 'This is our first view using a route'));    
 });
 ```
 
@@ -146,11 +146,12 @@ use Caligrafy\Controller;
 class HelloController extends Controller {
    public function display()
    {
-       return $this->view('helloworld', array('sentence' => 'This is our first view using a route') );
+       return $this->view('helloworld', array('sentence' => 'This is our first view using a controller') );
 
        // Alternatively
-       return view('helloworld', array('sentence' => 'This is our first view using a route'));
+       // return view('helloworld', array('sentence' => 'This is our first view using a controller'));
    }
+}
 ```
 ## Mobile: install to home screen
 Browsers can install a Caligrafy application on a phone, a tablet or a computer: it opens from its own icon, full screen, without the browser bar. The default layout (`default/master/layoutblocks.pug`) links the web app manifest `public/manifest.webmanifest`, which gives browsers the name, the black and white colors and the icons of the app (`public/images/resources/icon-192x192.png`, `icon-512x512.png` and the Apple touch icons). Its `start_url` and `scope` are `../`, relative to the manifest: they always point to the root of your application, whatever `APP_ROOT` is. Change `name`, `short_name` and the icons in that file to brand your app (keep a 192x192 and a 512x512 PNG: Chrome needs both). Installation needs HTTPS (or `localhost`).

@@ -6,7 +6,7 @@ when_to_use: The working directory contains caligrafer.php, framework/core/Contr
 
 # Caligrafy Quill
 
-Caligrafy Quill is a PHP MVC framework (PHP >= 7.2, MySQL via PDO) with Pug templates (Phug), GUMP validation,
+Caligrafy Quill is a PHP MVC framework (PHP >= 8.3, MySQL via PDO) with Pug templates (Phug), GUMP validation,
 a REST API built into every route, and Vue 3 client apps. This skill is an index: read the reference file
 for the topic before writing code, and check [gotchas.md](reference/gotchas.md) whenever behavior surprises you.
 Signatures in [api-reference.md](reference/api-reference.md) are copied from the source and win over the wiki.
@@ -16,7 +16,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Topic | Read |
 | - | - |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G48) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G49) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -30,6 +30,8 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Authentication module | [09.1-authentication.md](reference/09.1-authentication.md) |
 | Production checklist, server-file protection, upgrading old projects, behavior changes | [09.5-security-and-upgrading.md](reference/09.5-security-and-upgrading.md) |
 | This Claude Code plugin (commands, agent, install) | [10-claude-code-plugin.md](reference/10-claude-code-plugin.md) |
+| Every change of October 2026: upgrade checklist for existing projects, what can break, `.env` settings | [11-release-notes-october-2026.md](reference/11-release-notes-october-2026.md) |
+| Changing the framework itself: QA suite phases, PHPUnit tests in `qa/unit`, mocks, adding a test, release process | [12-testing-caligrafy.md](reference/12-testing-caligrafy.md) |
 | Stripe and Coinbase payments | [09.2-stripe-crypto-payment.md](reference/09.2-stripe-crypto-payment.md) |
 | Metadata, rich cards, SEO, analytics | [09.3-metadata-rich-cards.md](reference/09.3-metadata-rich-cards.md), [09.4-search-referencing-analytics.md](reference/09.4-search-referencing-analytics.md) |
 | Vue as a library (`caligrafer app`): setup, flow, structure, routes, requests, forms, validation, components | [09.7.0](reference/09.7.0-vue-as-library-setup.md), [09.7](reference/09.7-vue-flow-of-information.md), [09.7.1](reference/09.7.1-vue-structure.md), [09.7.2](reference/09.7.2-vue-routes.md), [09.7.3](reference/09.7.3-vue-requests.md), [09.7.4](reference/09.7.4-vue-forms.md), [09.7.5](reference/09.7.5-vue-validations.md), [09.7.6](reference/09.7.6-vue-components.md) |
