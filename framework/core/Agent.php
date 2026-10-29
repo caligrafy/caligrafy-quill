@@ -407,7 +407,7 @@
         if (curl_errno($curl)) {
             $error = curl_error($curl);
             $hint = '';
-            if ($this->_settings['provider'] === 'ollama' && preg_match('/refused|resolve|timed out/i', $error)) {
+            if ($this->_settings['provider'] === 'ollama' && preg_match('/refused|resolve|timed out|connect/i', $error)) {
                 $hint = ' - is Ollama running (ollama serve)? From Docker use AGENT_API_BASE=http://host.docker.internal:11434/v1';
             }
             return ['error' => $this->_settings['label'] . ' could not be reached: ' . $error . $hint];
