@@ -28,7 +28,7 @@ if [ -f .env ] && ! grep -q '^# QA-GENERATED' .env; then fail ".env exists and i
 cleanup() {
     if [ "$KEEP" = 1 ]; then echo "qa: --keep: stack and generated files left in place"; return; fi
     $COMPOSE down -v >/dev/null 2>&1
-    rm -rf application public/qaapp public/qabot public/qaspa .env qa/tmp
+    rm -rf application public/qaapp public/qabot public/qaspa public/qafacelogin public/qafacedetect .env qa/tmp
     for f in public/uploads/*; do
         [ -e "$f" ] || continue
         echo "$UPLOADS_BEFORE" | grep -qxF "$f" || rm -f "$f"
@@ -53,10 +53,14 @@ API_KEY=$(echo "$KEYS" | sed -n 's/^ *API_KEY=//p')
 } > .env
 
 # --- application/ and client apps -------------------------------------------------------
-rm -rf application public/qaapp public/qabot
+rm -rf application public/qaapp public/qabot public/qafacelogin public/qafacedetect
 cp -r framework/settings/application ./application
 touch application/.qa-generated
 cp -r qa/fixtures/application/. application/
+# face login app of the recipe (recipes-face-login.md): controllers, tables, client app; and the facedetect scaffold
+cp -r qa/fixtures/facelogin/controllers/. application/controllers/
+cp -r qa/fixtures/facelogin/app public/qafacelogin
+cp -r framework/plugins/facedetect public/qafacedetect
 php -r '
 $f = "application/config/routing/web.php";
 $s = file_get_contents($f);
@@ -69,7 +73,12 @@ $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n"
     . "    Route::get(\"/qa/shop-missing\", \"Shop\\\\MissingController@show\");\n"
     . "    Route::get(\"/books\", \"BookController@readAll\");\n    Route::post(\"/books\", \"BookController@create\");\n"
     . "    Route::put(\"/books/{id}\", \"BookController@update\");\n    Route::delete(\"/books/{id}\", \"BookController@remove\");\n"
-    . "    Route::get(\"/books/{id}/publisher\", \"BookController@publisher\");\n";
+    . "    Route::get(\"/books/{id}/publisher\", \"BookController@publisher\");\n"
+    . "    Route::post(\"/facelogin/start\", \"FaceLoginController@start\");\n    Route::post(\"/facelogin/enroll\", \"FaceLoginController@enroll\");\n"
+    . "    Route::post(\"/facelogin/login\", \"FaceLoginController@login\");\n    Route::get(\"/facelogin/me\", \"FaceLoginController@me\");\n"
+    . "    Route::post(\"/facelogin/logout\", \"FaceLoginController@signout\");\n"
+    . "    Route::post(\"/passkey/register/options\", \"PasskeyController@registerOptions\");\n    Route::post(\"/passkey/register\", \"PasskeyController@register\");\n"
+    . "    Route::post(\"/passkey/login/options\", \"PasskeyController@loginOptions\");\n    Route::post(\"/passkey/login\", \"PasskeyController@login\");\n";
 $s = str_replace("    Route::run();", $qa . "    Route::run();", $s);
 file_put_contents($f, $s);
 '
@@ -89,6 +98,7 @@ done
 $COMPOSE exec -T mysql mysql -uroot -proot quillqa < framework/settings/application/models/Auth/create_db.sql 2>/dev/null \
     || fail "could not create the users table"
 $COMPOSE exec -T mysql mysql -uroot -proot quillqa < qa/fixtures/books.sql 2>/dev/null || fail "could not create the books tables"
+$COMPOSE exec -T mysql mysql -uroot -proot quillqa < qa/fixtures/facelogin/create_db.sql 2>/dev/null || fail "could not create the face login tables"
 # Watson mock inside the web container, used by WatsonController in the HTTP tests
 $COMPOSE exec -d web php -S 127.0.0.1:8769 qa/fixtures/watson_mock.php
 

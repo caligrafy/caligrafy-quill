@@ -46,6 +46,8 @@ const app = Vue.createApp({
         * this.detector.loadRecognition({ labels: [], images: [], sampleSize: 100}): load models to recognize by the recognition engine
         * this.detector.recognize(facedetector): runs the recognition engine and draws on canvas. Must make sure that detections is started before
         * this.detector.fetchImage(canvas, media): takes a canvas capture of the media and returns a blob data image (data url)
+        * await this.detector.faceprint(): 128-number descriptor of the only face in the media
+        * await this.detector.liveness({ challenges: ['blink', 'turn-left'] }): liveness check with face prints (face login: see the wiki 9.9.2)
         * this.detector.display(message, output): displays a message in the infobar and gives it an ID as specified by the 'output' input
         * this.detector.clearDisplay(): clears the infobar display
         */

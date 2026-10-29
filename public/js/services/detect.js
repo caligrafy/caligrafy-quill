@@ -115,7 +115,110 @@
         }
         return { descriptor: Array.from(detections[0].descriptor), detection: detections[0].detection };
     };
-    
+
+    /*
+    * Promise that runs a liveness check on the live camera: the person performs the challenges in the given order
+    * (the server chooses them and their order, see FaceLogin::challenge()). Face prints are captured while they move.
+    * Resolves (never rejects on a failed check) with:
+    *   { passed, reason, challenges: [{ name, passed, at }], prints: [{ descriptor, challenge, at }], frames, duration }
+    * Rejects only when the models or the media cannot be used.
+    * Liveness in the browser raises the bar against photos and replayed prints, it is not proof against a determined
+    * attacker (a deepfake video or a modified page can pass): keep a passkey for sensitive accounts.
+    * @options: Optional.
+    *   - challenges: Array of 'blink', 'turn-left', 'turn-right', 'smile' (default ['blink', 'turn-left']).
+    *     Left and right are the person's own left and right
+    *   - timeout: Integer. ms for the whole check (default 20000)
+    *   - prints: Integer. face prints to capture (default 4, at least one per challenge when possible)
+    *   - printInterval: Integer. minimum ms between 2 prints (default 350)
+    *   - onProgress: Function({ challenge, index, total, passed }) called when a challenge starts or passes
+    *   - thresholds: Object. overrides of FaceDetector.LIVENESS_THRESHOLDS
+    */
+    async liveness(options = {}) {
+        await this.ready;
+        const media = this.resolveMedia();
+        if (!media) {
+            throw new Error('No media element to check');
+        }
+        const settings = Object.assign({ challenges: ['blink', 'turn-left'], timeout: 20000, prints: 4, printInterval: 350, onProgress: null }, options);
+        const tracker = new LivenessTracker(settings.challenges, settings.thresholds);
+        const prints = [];
+        const start = Date.now();
+        let frames = 0, lastPrint = 0, reason = 'timeout', announced = -1;
+        const progress = (passed) => {
+            if (typeof settings.onProgress === 'function') {
+                settings.onProgress({ challenge: tracker.current(), index: tracker.index, total: tracker.challenges.length, passed: passed });
+            }
+        };
+
+        while (Date.now() - start < settings.timeout) {
+            if (announced !== tracker.index) { announced = tracker.index; progress(false); }
+            const now = Date.now() - start;
+            // a print every printInterval ms, spread over the challenges: SSD + descriptor is slower than tiny + landmarks
+            const wantPrint = prints.length < settings.prints && now - lastPrint >= settings.printInterval;
+            let task = faceapi.detectAllFaces(media, new faceapi.TinyFaceDetectorOptions({ inputSize: 320 })).withFaceLandmarks().withFaceExpressions();
+            if (wantPrint) {
+                task = task.withFaceDescriptors();
+            }
+            const detections = await task;
+            frames++;
+            if (detections.length > 1) {
+                reason = 'More than one face found';
+                break;
+            }
+            if (detections.length === 1) {
+                const d = detections[0];
+                const before = tracker.index;
+                tracker.add(FaceDetector.frameSummary(d.landmarks.positions, d.expressions, now));
+                if (wantPrint && d.descriptor) {
+                    prints.push({ descriptor: Array.from(d.descriptor), challenge: tracker.challenges[Math.min(before, tracker.challenges.length - 1)] || null, at: now });
+                    lastPrint = now;
+                }
+                if (tracker.index > before) { progress(true); }
+            }
+            if (tracker.done() && prints.length >= Math.min(settings.prints, 2)) {
+                reason = null;
+                break;
+            }
+            await new Promise(r => setTimeout(r, 30));
+        }
+
+        const passed = tracker.done() && reason === null;
+        return {
+            passed: passed,
+            reason: passed ? null : (reason === 'timeout' && tracker.done() ? 'Not enough face prints' : reason === 'timeout' ? 'Challenge not completed: ' + tracker.current() : reason),
+            challenges: tracker.results(),
+            prints: prints,
+            frames: frames,
+            duration: Date.now() - start
+        };
+    };
+
+    /*
+    * Pure helpers of the liveness check (also used by the QA tests in Node)
+    */
+
+    // eye aspect ratio of the 6 points of one eye (68-point landmarks 36-41 or 42-47): about 0.3 open, under 0.2 closed
+    static eyeAspectRatio(eye) {
+        const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
+        const width = d(eye[0], eye[3]);
+        return width > 0 ? (d(eye[1], eye[5]) + d(eye[2], eye[4])) / (2 * width) : 0;
+    };
+
+    // head yaw from 68-point landmarks: 0 facing the camera, > 0 turned to the person's own left, < 0 to their right
+    // (in the camera image the person's left is on the right: the nose moves towards jaw point 16)
+    static headYaw(points) {
+        const left = points[0], right = points[16], nose = points[30];
+        const width = right.x - left.x;
+        return width > 0 ? ((nose.x - left.x) / width - 0.5) * 2 : 0;
+    };
+
+    // summary of one detection used by LivenessTracker: { ear, yaw, happy, at }
+    static frameSummary(points, expressions, at) {
+        const ear = (FaceDetector.eyeAspectRatio(points.slice(36, 42)) + FaceDetector.eyeAspectRatio(points.slice(42, 48))) / 2;
+        return { ear: ear, yaw: FaceDetector.headYaw(points), happy: expressions && typeof expressions.happy === 'number' ? expressions.happy : 0, at: at };
+    };
+
+
     
     /* 
      * Promise that loads the app settings
@@ -573,4 +676,93 @@
         }
     
     
+}
+/*
+ * Default thresholds of the liveness check (FaceDetector.liveness({ thresholds }) overrides them)
+ * - openEar: minimum eye aspect ratio of an open eye; closedRatio / reopenRatio: a blink is an open eye, then a ratio
+ *   under closedRatio x the open value, then back over reopenRatio x the open value
+ * - frontalYaw / turnYaw: a turn starts facing the camera (|yaw| <= frontalYaw) and reaches |yaw| >= turnYaw
+ * - neutral / smile: a smile starts with happy <= neutral and reaches happy >= smile (face-api expression scores)
+ */
+FaceDetector.LIVENESS_CHALLENGES = ['blink', 'turn-left', 'turn-right', 'smile'];
+FaceDetector.LIVENESS_THRESHOLDS = { openEar: 0.18, closedRatio: 0.7, reopenRatio: 0.85, frontalYaw: 0.15, turnYaw: 0.3, neutral: 0.3, smile: 0.8 };
+
+/*
+ * State machine of the liveness check: feed it frame summaries ({ ear, yaw, happy, at }) with add(), it moves to the
+ * next challenge when the current one is seen. Pure (no camera, no face-api): FaceDetector.liveness() feeds it
+ */
+class LivenessTracker {
+
+    constructor(challenges, thresholds = {}) {
+        if (!Array.isArray(challenges) || challenges.length === 0) {
+            throw new Error('Liveness needs at least one challenge');
+        }
+        challenges.forEach(c => {
+            if (!FaceDetector.LIVENESS_CHALLENGES.includes(c)) { throw new Error('Unknown liveness challenge: ' + c); }
+        });
+        this.challenges = challenges.slice();
+        this.t = Object.assign({}, FaceDetector.LIVENESS_THRESHOLDS, thresholds || {});
+        this.index = 0;
+        this.passedAt = [];
+        this.reset();
+    }
+
+    // state of the current challenge
+    reset() {
+        this.state = { phase: 0, peak: 0 };
+    }
+
+    current() {
+        return this.challenges[this.index] || null;
+    }
+
+    done() {
+        return this.index >= this.challenges.length;
+    }
+
+    results() {
+        return this.challenges.map((name, i) => ({ name: name, passed: i < this.passedAt.length, at: i < this.passedAt.length ? this.passedAt[i] : null }));
+    }
+
+    // returns true when this frame completed the current challenge
+    add(frame) {
+        if (this.done() || !frame) {
+            return false;
+        }
+        const t = this.t, s = this.state;
+        let passed = false;
+        switch (this.current()) {
+            case 'blink':
+                // phase 0: eye open, 1: eye closed, then open again
+                if (s.phase === 0) {
+                    if (frame.ear >= t.openEar) { s.peak = Math.max(s.peak, frame.ear); }
+                    if (s.peak > 0 && frame.ear <= s.peak * t.closedRatio) { s.phase = 1; }
+                } else if (frame.ear >= s.peak * t.reopenRatio) {
+                    passed = true;
+                }
+                break;
+            case 'turn-left':
+            case 'turn-right': {
+                const sign = this.current() === 'turn-left' ? 1 : -1;
+                if (s.phase === 0 && Math.abs(frame.yaw) <= t.frontalYaw) { s.phase = 1; }
+                else if (s.phase === 1 && frame.yaw * sign >= t.turnYaw) { passed = true; }
+                break;
+            }
+            case 'smile':
+                if (s.phase === 0 && frame.happy <= t.neutral) { s.phase = 1; }
+                else if (s.phase === 1 && frame.happy >= t.smile) { passed = true; }
+                break;
+        }
+        if (passed) {
+            this.passedAt.push(frame.at);
+            this.index++;
+            this.reset();
+        }
+        return passed;
+    }
+}
+
+// Node (QA tests): the pure helpers can be required without a browser
+if (typeof module !== 'undefined' && module.exports) {
+    module.exports = { FaceDetector, LivenessTracker };
 }

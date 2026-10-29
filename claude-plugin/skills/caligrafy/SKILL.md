@@ -39,7 +39,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | ML Core (ml5 + p5) | [09.9.3-ai-machine-learning.md](reference/09.9.3-ai-machine-learning.md) |
 | OpenAI chat/images, Assistants, Groq agents | [09.9.4](reference/09.9.4-ai-openai-chatgpt-dalle.md), [09.9.5](reference/09.9.5-ai-openai-assistants.md), [09.9.6](reference/09.9.6-ai-open-source-agents-groq.md) |
 | Recipe: OpenAI/Groq chat app (history, live model list, images, Groq vision, Vue chat UI) | [recipes-ai-apps.md](reference/recipes-ai-apps.md) |
-| Recipe: face login (encrypted face prints, server-side matching, lockout, FaceDetector client) | [recipes-face-login.md](reference/recipes-face-login.md) |
+| Recipe: face login (liveness challenges, single-use nonce, anti-replay, encrypted prints, lockout, passkeys / WebAuthn step-up) | [recipes-face-login.md](reference/recipes-face-login.md) |
 | Wiki table of contents | [wiki-sidebar.md](reference/wiki-sidebar.md) |
 
 Online docs: https://github.com/caligrafy/caligrafy-quill/wiki

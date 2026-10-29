@@ -491,4 +491,197 @@ qa_test('POST /ai refuses an unknown model type', function () use ($alice) {
     qa_contains('Invalid type', $r['body']);
 });
 
+// ---------------------------------------------------------------------------
+qa_section('Face login with liveness and passkeys (qa/fixtures/facelogin, recipes-face-login.md)');
+
+require_once dirname(__DIR__) . '/unit/fixtures/SoftAuthenticator.php';
+
+// JSON calls of the face login app: API key + the browser's session cookie
+function qa_face($b, $path, $body = null)
+{
+    global $API_KEY;
+    $o = ['headers' => ['Accept: application/json', 'Content-Type: application/json', 'Authorization: Bearer ' . $API_KEY]];
+    $r = $body === null ? $b->request('GET', $path, $o) : $b->request('POST', $path, $o + ['form' => json_encode($body)]);
+    $r['json'] = json_decode($r['body'], true);
+    return $r;
+}
+// synthetic face prints: a face is a random vector, a frame of it is the face plus about 0.15 of noise
+function qa_face_vector($seed) { mt_srand($seed); return array_map(fn() => (mt_rand() / mt_getrandmax() - 0.5) * 0.3, range(1, 128)); }
+function qa_face_frames($face, $seed, $n = 4) {
+    mt_srand($seed);
+    return array_map(fn() => array_map(fn($v) => $v + (mt_rand() / mt_getrandmax() - 0.5) * 0.045, $face), range(1, $n));
+}
+// what the browser sends after detector.liveness(): the challenges done in the order the server asked
+function qa_face_check($b, $prints, $start = [], $tamper = null)
+{
+    $c = qa_face($b, '/facelogin/start', (object)$start)['json'];
+    $response = ['nonce' => $c['nonce'] ?? null, 'liveness' => ['passed' => true, 'challenges' => array_map(fn($n) => ['name' => $n, 'passed' => true], $c['challenges'] ?? [])],
+        'prints' => $prints];
+    return $tamper ? $tamper($response, $c) : $response;
+}
+
+$FACE = qa_face_vector(4242);
+$faceUser = new QaBrowser();
+$faceUser->post('/register', ['_token' => $faceUser->token('/register'), 'username' => 'faceqa', 'passcode' => 'Passw0rdQa', 'confirmpasscode' => 'Passw0rdQa']);
+$faceUser->login('faceqa', 'Passw0rdQa');
+$SEED = 1000;
+
+qa_test('the face login app and the facedetect scaffold load, with their scripts and models', function () use ($guest) {
+    $r = $guest->get('/apps/qafacelogin');
+    qa_equals(200, $r['status']);
+    foreach (['face-api.min.js', 'detect.js', 'passkey.js', 'loadEnvironment('] as $s) { qa_contains($s, $r['body']); }
+    qa_equals(200, $guest->get('/public/qafacelogin/scripts/main.js')['status']);
+    $r = $guest->get('/apps/qafacedetect');
+    qa_equals(200, $r['status']);
+    qa_contains('id="detection"', $r['body']);
+    qa_contains('detect.js', $r['body']);
+    qa_equals(200, $guest->get('/public/qafacedetect/scripts/main.js')['status']);
+    qa_equals(200, $guest->get('/public/qafacedetect/recognition/Flash/1.png')['status']);
+    foreach (['detect.js', 'passkey.js', 'face-api.min.js'] as $js) { qa_equals(200, $guest->get("/public/js/services/$js")['status'], $js); }
+    foreach (['tiny_face_detector_model-weights_manifest.json', 'ssd_mobilenetv1_model-weights_manifest.json', 'face_landmark_68_model-weights_manifest.json',
+              'face_recognition_model-weights_manifest.json', 'face_expression_model-weights_manifest.json'] as $m) {
+        qa_equals(200, $guest->get("/public/resources/models/$m")['status'], $m);
+    }
+});
+
+qa_test('start issues a nonce and 3 random challenges', function () {
+    $orders = [];
+    for ($i = 0; $i < 12; $i++) {
+        $c = qa_face(new QaBrowser(), '/facelogin/start', (object)[])['json'];
+        qa_assert(preg_match('/^[0-9a-f]{64}$/', $c['nonce'] ?? ''), json_encode($c));
+        qa_equals(3, count($c['challenges']));
+        qa_equals([], array_diff($c['challenges'], ['blink', 'turn-left', 'turn-right', 'smile']));
+        $orders[implode(',', $c['challenges'])] = true;
+    }
+    qa_assert(count($orders) > 1, 'the challenges are always the same');
+});
+
+qa_test('enrolment needs a password login first', function () use ($FACE, &$SEED) {
+    $b = new QaBrowser();
+    qa_equals(401, qa_face($b, '/facelogin/start', ['enroll' => true])['status']);
+    qa_equals(401, qa_face($b, '/facelogin/enroll', ['nonce' => 'x'])['status']);
+});
+
+qa_test('a logged-in user enrols with a liveness check', function () use ($faceUser, $FACE, &$SEED) {
+    $r = qa_face($faceUser, '/facelogin/enroll', qa_face_check($faceUser, qa_face_frames($FACE, $SEED++), ['enroll' => true]));
+    qa_equals(201, $r['status'], $r['body']);
+    qa_equals(4, $r['json']['enrolled']);
+    qa_equals('4', qa_sql("SELECT COUNT(*) FROM face_prints p JOIN users u ON u.id = p.user_id WHERE u.username = 'faceqa'"));
+    qa_not_contains('[', qa_sql("SELECT descriptor FROM face_prints LIMIT 1"), 'prints must be encrypted');
+});
+
+qa_test('another account cannot enrol the same face', function () use ($FACE, &$SEED) {
+    $b = new QaBrowser();
+    $b->post('/register', ['_token' => $b->token('/register'), 'username' => 'facetwin', 'passcode' => 'Passw0rdQa', 'confirmpasscode' => 'Passw0rdQa']);
+    $b->login('facetwin', 'Passw0rdQa');
+    $r = qa_face($b, '/facelogin/enroll', qa_face_check($b, qa_face_frames($FACE, $SEED++), ['enroll' => true]));
+    qa_equals(409, $r['status'], $r['body']);
+});
+
+$LOGIN = null;
+qa_test('face login with liveness logs in (1:N and 1:1)', function () use ($FACE, &$SEED, &$LOGIN) {
+    $b = new QaBrowser();
+    $LOGIN = qa_face_check($b, qa_face_frames($FACE, $SEED++));
+    $r = qa_face($b, '/facelogin/login', $LOGIN);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_equals('faceqa', $r['json']['user']['username']);
+    qa_equals(['face'], $r['json']['factors']);
+    qa_equals('faceqa', qa_face($b, '/facelogin/me')['json']['user']['username']);
+    $b2 = new QaBrowser();
+    $r = qa_face($b2, '/facelogin/login', ['username' => 'faceqa'] + qa_face_check($b2, qa_face_frames($FACE, $SEED++), ['username' => 'faceqa']));
+    qa_equals(200, $r['status'], $r['body']);
+});
+
+qa_test('replaying a previous login response is refused (nonce already used)', function () use (&$LOGIN) {
+    $b = new QaBrowser();
+    $r = qa_face($b, '/facelogin/login', $LOGIN);
+    qa_equals(401, $r['status'], $r['body']);
+    qa_equals(401, qa_face($b, '/facelogin/me')['status']);
+});
+
+qa_test('the prints of a previous login with a fresh nonce are refused', function () use (&$LOGIN) {
+    $b = new QaBrowser();
+    $r = qa_face($b, '/facelogin/login', qa_face_check($b, $LOGIN['prints']));
+    qa_equals(401, $r['status'], $r['body']);
+    qa_contains('already used', $r['json']['error'] ?? '');
+});
+
+qa_test('identical prints (a static replayed print) are refused', function () use ($FACE, &$SEED) {
+    qa_sql('DELETE FROM face_login_attempts'); // the failures of the previous tests come from the same IP
+    $b = new QaBrowser();
+    $one = qa_face_frames($FACE, $SEED++, 1)[0];
+    $r = qa_face($b, '/facelogin/login', qa_face_check($b, [$one, $one, $one]));
+    qa_equals(422, $r['status'], $r['body']);
+    qa_contains('Identical', $r['json']['error'] ?? '');
+});
+
+qa_test('a nonce of another session, a failed or reordered liveness check and a wrong account are refused', function () use ($FACE, &$SEED) {
+    qa_sql('DELETE FROM face_login_attempts'); // the failures of the previous tests come from the same IP
+    $a = new QaBrowser(); $b = new QaBrowser();
+    $stolen = qa_face_check($a, qa_face_frames($FACE, $SEED++));
+    qa_face($b, '/facelogin/start', (object)[]);
+    qa_equals(401, qa_face($b, '/facelogin/login', $stolen)['status'], 'nonce of another session');
+    $failed = qa_face_check($b, qa_face_frames($FACE, $SEED++), [], function ($r) { $r['liveness']['passed'] = false; return $r; });
+    qa_equals(422, qa_face($b, '/facelogin/login', $failed)['status'], 'failed liveness');
+    $reordered = qa_face_check($b, qa_face_frames($FACE, $SEED++), [], function ($r) { $r['liveness']['challenges'] = array_reverse($r['liveness']['challenges']); return $r; });
+    qa_equals(422, qa_face($b, '/facelogin/login', $reordered)['status'], 'challenges in another order');
+    $other = qa_face_check($b, qa_face_frames($FACE, $SEED++), ['username' => 'someoneelse']);
+    qa_equals(401, qa_face($b, '/facelogin/login', ['username' => 'faceqa'] + $other)['status'], 'nonce issued for another username');
+    qa_equals(401, qa_face($b, '/facelogin/me')['status']);
+});
+
+qa_test('an unknown face is refused and 5 failures lock the client for a minute', function () use (&$SEED) {
+    $b = new QaBrowser();
+    $stranger = qa_face_vector(777);
+    for ($i = 0; $i < 4; $i++) {
+        $r = qa_face($b, '/facelogin/login', ['username' => 'lockqa'] + qa_face_check($b, qa_face_frames($stranger, $SEED++), ['username' => 'lockqa']));
+        qa_equals(401, $r['status'], $r['body']);
+        qa_equals('Face not recognized', $r['json']['error']);
+    }
+    qa_face($b, '/facelogin/login', ['username' => 'lockqa'] + qa_face_check($b, qa_face_frames($stranger, $SEED++), ['username' => 'lockqa']));
+    $r = qa_face($b, '/facelogin/login', ['username' => 'lockqa'] + qa_face_check($b, qa_face_frames($stranger, $SEED++), ['username' => 'lockqa']));
+    qa_equals(429, $r['status'], $r['body']);
+});
+
+$AUTHENTICATOR = new QaSoftAuthenticator();
+$ORIGIN = $BASE;
+qa_test('a logged-in user registers a passkey (software authenticator)', function () use ($faceUser, $AUTHENTICATOR, $ORIGIN) {
+    qa_equals(401, qa_face(new QaBrowser(), '/passkey/register/options', (object)[])['status']);
+    $options = qa_face($faceUser, '/passkey/register/options', (object)[])['json'];
+    qa_equals('localhost', $options['publicKey']['rp']['id'] ?? null, json_encode($options));
+    $r = qa_face($faceUser, '/passkey/register', ['name' => 'QA key'] + $AUTHENTICATOR->create($options, $ORIGIN));
+    qa_equals(201, $r['status'], $r['body']);
+    qa_equals('1', qa_sql("SELECT COUNT(*) FROM passkeys k JOIN users u ON u.id = k.user_id WHERE u.username = 'faceqa'"));
+});
+
+qa_test('with a passkey, face login asks for it (step-up) and both factors log in', function () use ($FACE, &$SEED, $AUTHENTICATOR, $ORIGIN) {
+    qa_sql('DELETE FROM face_login_attempts'); // the failures of the previous tests come from the same IP
+    $b = new QaBrowser();
+    $r = qa_face($b, '/facelogin/login', qa_face_check($b, qa_face_frames($FACE, $SEED++)));
+    qa_equals(200, $r['status'], $r['body']);
+    qa_equals('passkey', $r['json']['step'] ?? null, $r['body']);
+    qa_equals(401, qa_face($b, '/facelogin/me')['status'], 'the face alone must not log in');
+    $assertion = $AUTHENTICATOR->get($r['json']['options'], $ORIGIN);
+    $r = qa_face($b, '/passkey/login', $assertion);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_equals(['face', 'passkey'], $r['json']['factors']);
+    qa_equals('faceqa', qa_face($b, '/facelogin/me')['json']['user']['username']);
+    $c = new QaBrowser();
+    qa_equals(401, qa_face($c, '/passkey/login', $assertion)['status'], 'replayed passkey assertion');
+});
+
+qa_test('a passkey alone logs in; a wrong origin or a forged signature is refused', function () use ($AUTHENTICATOR, $ORIGIN) {
+    $b = new QaBrowser();
+    $r = qa_face($b, '/passkey/login', $AUTHENTICATOR->get(qa_face($b, '/passkey/login/options', (object)[])['json'], $ORIGIN));
+    qa_equals(200, $r['status'], $r['body']);
+    qa_equals(['passkey'], $r['json']['factors']);
+    $c = new QaBrowser();
+    qa_equals(401, qa_face($c, '/passkey/login', $AUTHENTICATOR->get(qa_face($c, '/passkey/login/options', (object)[])['json'], 'http://evil.localhost:8090'))['status']);
+    $forger = new QaSoftAuthenticator();
+    $forger->credentialId = $AUTHENTICATOR->credentialId;
+    $forger->userHandle = $AUTHENTICATOR->userHandle;
+    qa_equals(401, qa_face($c, '/passkey/login', $forger->get(qa_face($c, '/passkey/login/options', (object)[])['json'], $ORIGIN))['status']);
+    qa_equals(401, qa_face($c, '/facelogin/me')['status']);
+});
+
 qa_summary();
