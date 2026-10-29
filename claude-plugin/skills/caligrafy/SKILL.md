@@ -1,6 +1,6 @@
 ---
 name: caligrafy
-description: Expert knowledge of the Caligrafy Quill PHP MVC framework (Caligrafy\Controller, Caligrafy\Model, Route, Request, Auth, Pug/Phug views, GUMP validation, caligrafer CLI, Docker dev server, Vue client apps, Stripe/Coinbase payments, OpenAI/Groq/Watson AI, FaceDetect, ML). Use whenever code touches a Caligrafy Quill project - application/config/routing/web.php, application/controllers, application/models, application/views/*.pug, public/<app>/, .env, caligrafer.php or .bin/caligrafer.
+description: Expert knowledge of the Caligrafy Quill PHP MVC framework (Caligrafy\Controller, Caligrafy\Model, Route, Request, Auth, Pug/Phug views, GUMP validation, caligrafer CLI, Docker dev server, Vue client apps, Stripe/Coinbase payments, OpenAI/Groq/Watson AI, open models (Llama) through Together, Fireworks, OpenRouter or Ollama, FaceDetect, ML). Use whenever code touches a Caligrafy Quill project - application/config/routing/web.php, application/controllers, application/models, application/views/*.pug, public/<app>/, .env, caligrafer.php or .bin/caligrafer.
 when_to_use: The working directory contains caligrafer.php, framework/core/Controller.php or application/config/routing/web.php; the user mentions Caligrafy, Quill, caligrafer, Phug/pug views, Caligrafy Vue apps, FaceDetect or MlCore; or asks to add routes, controllers, models, REST APIs, auth, payments, AI features, or to debug [ERROR 1001/1004/2003/3000] messages.
 ---
 
@@ -37,8 +37,8 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Watson bots | [09.9.1-ai-watson-bots.md](reference/09.9.1-ai-watson-bots.md) |
 | FaceDetect (@vladmandic/face-api) | [09.9.2-ai-face-detection.md](reference/09.9.2-ai-face-detection.md) |
 | ML Core (ml5 + p5) | [09.9.3-ai-machine-learning.md](reference/09.9.3-ai-machine-learning.md) |
-| OpenAI chat/images, Assistants, Groq agents | [09.9.4](reference/09.9.4-ai-openai-chatgpt-dalle.md), [09.9.5](reference/09.9.5-ai-openai-assistants.md), [09.9.6](reference/09.9.6-ai-open-source-agents-groq.md) |
-| Recipe: OpenAI/Groq chat app (history, live model list, images, Groq vision, Vue chat UI) | [recipes-ai-apps.md](reference/recipes-ai-apps.md) |
+| OpenAI chat/images, Assistants, open source agents (Groq, Together, Fireworks, OpenRouter, Ollama) | [09.9.4](reference/09.9.4-ai-openai-chatgpt-dalle.md), [09.9.5](reference/09.9.5-ai-openai-assistants.md), [09.9.6](reference/09.9.6-ai-open-source-agents-groq.md) |
+| Recipe: OpenAI/open model chat app (history, live model list, images, vision, Llama on OpenRouter/Ollama, Vue chat UI) | [recipes-ai-apps.md](reference/recipes-ai-apps.md) |
 | Recipe: face login (liveness challenges, single-use nonce, anti-replay, encrypted prints, lockout, passkeys / WebAuthn step-up) | [recipes-face-login.md](reference/recipes-face-login.md) |
 | Wiki table of contents | [wiki-sidebar.md](reference/wiki-sidebar.md) |
 
@@ -172,7 +172,7 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 4. Use bound `Database::execute()` queries for anything built from user input (G2, G8). Filter then validate (G6).
 5. After editing PHP, `php -l <file>`; after changing routes, hit them with curl (JSON + Bearer) or the browser. When you change `framework/` or `framework/settings/application`, run `./qa/run.sh` (G38) and add a test for the change.
 6. In a project initialized with an older framework, run `php caligrafer.php upgrade` (dry run, safe) to see which `application/` copies are outdated or customized before assuming the current behavior; apply with `--apply` only when the user agrees (G39).
-7. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the database and the services, with a fix per line.
+7. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the Agent provider (Ollama reachable, models pulled), the database and the services, with a fix per line.
 8. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
 9. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
 10. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.

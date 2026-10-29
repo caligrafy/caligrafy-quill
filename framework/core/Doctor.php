@@ -14,13 +14,13 @@ namespace Caligrafy;
  * (the only exception is Watson when its assistants cannot be listed: a session is opened and closed right away).
  * Secret values are never printed: at most a known prefix and the last 4 characters.
  *
- * Base URLs can be overridden (tests, proxies, regional endpoints): OPENAI_API_BASE, GROQ_API_BASE,
+ * Base URLs can be overridden (tests, proxies, regional endpoints): OPENAI_API_BASE, GROQ_API_BASE, AGENT_API_BASE,
  * STRIPE_API_BASE, COINBASE_API_BASE. Watson always uses WATSON_URL.
  */
 class Doctor
 {
-    const CHECKS = ['project', 'database', 'openai', 'groq', 'stripe', 'coinbase', 'watson', 'mail'];
-    const LABELS = ['project' => 'Project', 'database' => 'Database', 'openai' => 'OpenAI', 'groq' => 'Groq', 'stripe' => 'Stripe',
+    const CHECKS = ['project', 'database', 'openai', 'groq', 'agent', 'stripe', 'coinbase', 'watson', 'mail'];
+    const LABELS = ['project' => 'Project', 'database' => 'Database', 'openai' => 'OpenAI', 'groq' => 'Groq', 'agent' => 'Agent provider', 'stripe' => 'Stripe',
                     'coinbase' => 'Coinbase Business', 'watson' => 'Watson', 'mail' => 'Mail'];
     const TIMEOUT = 8;
 
@@ -246,14 +246,18 @@ class Doctor
 
     private function groq()
     {
+        // AGENT_* settings apply to Groq when it is the Agent provider (AGENT_PROVIDER empty or groq)
+        $agent = in_array(strtolower($this->env('AGENT_PROVIDER')), ['', 'groq'], true);
+        $keyName = 'GROQ_API_KEY';
         $key = $this->env('GROQ_API_KEY', false);
+        if (trim($key) === '' && $agent && $this->env('AGENT_API_KEY') !== '') { $keyName = 'AGENT_API_KEY'; $key = $this->env('AGENT_API_KEY', false); }
         if (trim($key) === '') { $this->add('groq', 'Groq', 'SKIP', 'GROQ_API_KEY is not set'); return; }
-        $this->secret('groq', 'GROQ_API_KEY', $key);
-        $base = rtrim($this->env('GROQ_API_BASE') ?: 'https://api.groq.com/openai/v1', '/');
-        $r = $this->http("$base/models", ['Authorization: Bearer ' . $key]);
+        $this->secret('groq', $keyName, $key);
+        $base = rtrim(($agent? $this->env('AGENT_API_BASE') : '') ?: $this->env('GROQ_API_BASE') ?: 'https://api.groq.com/openai/v1', '/');
+        $r = $this->http("$base/models", ['Authorization: Bearer ' . trim($key)]);
         if (!$this->reachable('groq', 'Groq', $r)) return;
         if ($r['status'] === 401) {
-            $this->add('groq', 'Groq', 'FAIL', 'the API key was rejected (401)', 'create a key on https://console.groq.com/keys and paste it as GROQ_API_KEY=gsk_... without spaces');
+            $this->add('groq', 'Groq', 'FAIL', 'the API key was rejected (401)', "create a key on https://console.groq.com/keys and paste it as $keyName=gsk_... without spaces");
             return;
         }
         if ($r['status'] !== 200 || !isset($r['json']['data'])) {
@@ -263,9 +267,102 @@ class Doctor
         $models = array_column(array_filter($r['json']['data'], function ($m) { return $m['active'] ?? true; }), 'id');
         $this->add('groq', 'Groq', 'OK', 'key accepted, ' . count($models) . ' models available');
         $chat = array_values(array_filter($models, function ($m) { return !preg_match('/whisper|guard|tts|orpheus|playai|distil/', $m); }));
-        $retired = 'Groq retires models regularly: pick a current one on https://console.groq.com/docs/models';
-        $this->models('groq', 'GROQ_MODEL', defined('GROQ_DEFAULT_MODEL')? GROQ_DEFAULT_MODEL : ($this->env('GROQ_MODEL') ?: 'openai/gpt-oss-120b'), $models, $chat, $retired);
-        $this->models('groq', 'GROQ_VISION_MODEL', defined('GROQ_DEFAULT_VISION_MODEL')? GROQ_DEFAULT_VISION_MODEL : ($this->env('GROQ_VISION_MODEL') ?: 'qwen/qwen3.8-27b'), $models, $chat, $retired);
+        $retired = 'Groq retires models regularly (its Llama chat models are gone since August 2026): pick a current one on https://console.groq.com/docs/models';
+        foreach (['AGENT_MODEL' => ['GROQ_MODEL', 'GROQ_DEFAULT_MODEL', 'openai/gpt-oss-120b'], 'AGENT_VISION_MODEL' => ['GROQ_VISION_MODEL', 'GROQ_DEFAULT_VISION_MODEL', 'qwen/qwen3.8-27b']] as $agentSetting => [$setting, $constant, $default]) {
+            if ($agent && $this->env($agentSetting) !== '') { $this->models('groq', $agentSetting, $this->env($agentSetting), $models, $chat, $retired); continue; }
+            $this->models('groq', $setting, defined($constant)? constant($constant) : ($this->env($setting) ?: $default), $models, $chat, $retired);
+        }
+    }
+
+    /**
+     * Provider of Caligrafy\Agent (AGENT_PROVIDER): Groq is checked by groq(), the others here (key, models, default models;
+     * Ollama: server reachable and models pulled)
+     */
+    private function agent()
+    {
+        try {
+            $s = Agent::settings(function ($name) { return $this->env($name); });
+        } catch (\Exception $e) {
+            $this->add('agent', 'AGENT_PROVIDER', 'FAIL', $e->getMessage(), 'fix AGENT_PROVIDER in .env (empty means groq)');
+            return;
+        }
+        $provider = $s['provider'];
+        $p = Agent::PROVIDERS[$provider];
+        if ($provider === 'groq') {
+            $this->add('agent', 'AGENT_PROVIDER', 'OK', ($this->env('AGENT_PROVIDER') === ''? 'not set: groq (default)' : 'groq') . ', see the Groq check');
+            if (!in_array('groq', $this->only, true)) $this->groq();
+            return;
+        }
+        if ($s['base'] === '') {
+            $this->add('agent', 'AGENT_API_BASE', 'FAIL', 'AGENT_PROVIDER=custom needs AGENT_API_BASE', 'set AGENT_API_BASE=https://<your endpoint>/v1 (an OpenAI-compatible API)');
+            return;
+        }
+        $this->add('agent', 'AGENT_PROVIDER', 'OK', "$provider ({$s['label']}), " . $s['base']);
+        $label = $s['label'];
+        $headers = ['Accept: application/json'];
+        if ($provider !== 'ollama' && !($provider === 'custom' && $s['key'] === '')) { // custom endpoints may need no key
+            $keyName = $this->env($s['keyName']) !== ''? $s['keyName'] : 'AGENT_API_KEY';
+            if ($s['key'] === '') {
+                $this->add('agent', $label, 'FAIL', "{$s['keyName']} is not set", "add {$s['keyName']}=<your key> (or AGENT_API_KEY) to .env" . ($p['keys']? ': create one on ' . $p['keys'] : ''));
+                return;
+            }
+            $this->secret('agent', $keyName, $this->env($keyName, false));
+            $headers[] = 'Authorization: Bearer ' . $s['key'];
+        }
+        $local = preg_match('#^https?://(localhost|127\.0\.0\.1|\[::1\])[:/]#i', $s['base'] . '/');
+        $r = $this->http($s['base'] . '/models', $headers);
+        if ($provider === 'ollama' && ($r['error'] !== null || $r['status'] === 0)) {
+            $docker = is_file('/.dockerenv');
+            $this->add('agent', $label, 'FAIL', 'the Ollama server does not answer on ' . $s['base'] . ': ' . $this->scrub($r['error'] ?: 'no answer'),
+                ($docker && $local? 'inside Docker localhost is the container itself: set AGENT_API_BASE=http://host.docker.internal:11434/v1 (Linux: add extra_hosts "host.docker.internal:host-gateway" and start Ollama with OLLAMA_HOST=0.0.0.0)'
+                    : 'start Ollama (ollama serve, or open the Ollama app) and check the port' . ($local? '' : '; from Docker use http://host.docker.internal:11434/v1')));
+            return;
+        }
+        if (!$this->reachable('agent', $label, $r)) return;
+        $fixKey = "create a key on {$p['keys']} and paste it as " . ($keyName ?? '') . '=<key> without spaces';
+        if (in_array($r['status'], [401, 403], true)) {
+            $this->add('agent', $label, 'FAIL', 'the API key was rejected (' . $r['status'] . ')', $provider === 'custom'? 'check AGENT_API_KEY' : $fixKey);
+            return;
+        }
+        $models = $r['status'] === 200? Agent::modelIds($r['json']) : null;
+        if ($models === null) {
+            $this->add('agent', $label, 'FAIL', 'GET /models answered ' . $r['status'] . ': ' . $this->apiError($r), 'check AGENT_API_BASE' . ($p['docs']? ' and ' . $p['docs'] : ''));
+            return;
+        }
+        if ($provider === 'openrouter') {
+            // OpenRouter lists its models without a key: GET /key checks it (and shows the remaining credit)
+            $k = $this->http($s['base'] . '/key', $headers);
+            if (!$this->reachable('agent', $label, $k)) return;
+            if ($k['status'] !== 200) {
+                $this->add('agent', $label, 'FAIL', 'the API key was rejected (' . $k['status'] . '): ' . $this->apiError($k), $fixKey);
+                return;
+            }
+            $d = $k['json']['data'] ?? [];
+            $credit = !empty($d['is_free_tier'])? ', free tier (":free" models only, daily request limit)'
+                : (isset($d['limit_remaining'])? ', ' . $d['limit_remaining'] . ' USD left on the key limit' : '');
+            $this->add('agent', $label, 'OK', 'key accepted, ' . count($models) . ' models available' . $credit);
+        } elseif ($provider === 'ollama') {
+            if (!$models) {
+                $this->add('agent', $label, 'WARN', 'the server answers but no model is pulled', 'ollama pull ' . ($s['model'] ?: 'llama3.2'));
+                return;
+            }
+            $this->add('agent', $label, 'OK', 'server answers, ' . count($models) . ' model(s) pulled');
+        } else {
+            $this->add('agent', $label, 'OK', 'key accepted, ' . count($models) . ' models available');
+        }
+        foreach (['AGENT_MODEL' => $s['model'], 'AGENT_VISION_MODEL' => $s['vision']] as $setting => $model) {
+            if ($model === '') {
+                if ($setting === 'AGENT_MODEL') $this->add('agent', $setting, 'WARN', 'not set and ' . $label . ' has no default', 'set AGENT_MODEL=<a model of the list> in .env');
+                continue;
+            }
+            if ($provider === 'ollama') {
+                $tagged = strpos($model, ':') === false? "$model:latest" : $model;
+                $model = in_array($tagged, $models, true)? $tagged : $model;
+                $this->models('agent', $setting, $model, $models, $models, "pull it where Ollama runs: ollama pull " . preg_replace('/:latest$/', '', $model), 'on this Ollama server');
+            } else {
+                $this->models('agent', $setting, $model, $models, $models, 'pick a current model' . ($p['docs']? ' on ' . $p['docs'] : ''));
+            }
+        }
     }
 
     private function stripe()
@@ -493,14 +590,14 @@ class Doctor
     /**
      * Configured model present in the list of the key, otherwise WARN with a few alternatives
      */
-    private function models($check, $setting, $model, $available, $suggestions, $reason)
+    private function models($check, $setting, $model, $available, $suggestions, $reason, $where = 'for this key')
     {
         if (in_array($model, $available, true)) {
             $this->add($check, $setting, 'OK', "$model is available");
             return;
         }
         $some = array_slice($suggestions, 0, 6);
-        $this->add($check, $setting, 'WARN', "$model is not available for this key" . ($some? ' (available: ' . implode(', ', $some) . ')' : ''),
+        $this->add($check, $setting, 'WARN', "$model is not available $where" . ($some? ' (available: ' . implode(', ', $some) . ')' : ''),
             "$reason; or set $setting=<an available model> in .env");
     }
 
@@ -570,11 +667,11 @@ class Doctor
     private function scrub($text)
     {
         $text = (string)$text;
-        foreach (['OPEN_AI_KEY', 'GROQ_API_KEY', 'PAY_PRIVATE_KEY_TEST', 'PAY_PRIVATE_KEY_PRODUCTION', 'COINBASE_API_KEY_SECRET', 'WATSON_API_KEY', 'DB_PASSWORD', 'MAIL_PASSWORD', 'APP_KEY', 'API_KEY'] as $name) {
+        foreach (['OPEN_AI_KEY', 'GROQ_API_KEY', 'AGENT_API_KEY', 'TOGETHER_API_KEY', 'FIREWORKS_API_KEY', 'OPENROUTER_API_KEY', 'PAY_PRIVATE_KEY_TEST', 'PAY_PRIVATE_KEY_PRODUCTION', 'COINBASE_API_KEY_SECRET', 'WATSON_API_KEY', 'DB_PASSWORD', 'MAIL_PASSWORD', 'APP_KEY', 'API_KEY'] as $name) {
             $value = $this->env($name);
             if (strlen($value) >= 6) $text = str_replace($value, self::mask($value), $text);
         }
-        return preg_replace('/\b(sk-[A-Za-z0-9_-]{8,}|gsk_[A-Za-z0-9]{8,}|[sr]k_(test|live)_[A-Za-z0-9]{8,})/', '[key]', $text);
+        return preg_replace('/\b(sk-[A-Za-z0-9_-]{8,}|gsk_[A-Za-z0-9]{8,}|fw_[A-Za-z0-9]{8,}|[sr]k_(test|live)_[A-Za-z0-9]{8,})/', '[key]', $text);
     }
 
     private function smtp($socket, $command = null)
