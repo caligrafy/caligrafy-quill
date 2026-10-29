@@ -41,6 +41,13 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.9.0** - Install to home screen: web app manifest, optional offline service worker (`PWA_SERVICE_WORKER`),
+  `modules/install.pug` (Chrome/Edge/Android install button, iOS hint), doctor web app check. Face login security:
+  `FaceDetector.liveness()` challenges, `Caligrafy\FaceLogin` single-use nonces and anti-replay checks, passkeys
+  (`Caligrafy\Passkey` on lbuchs/webauthn, `public/js/services/passkey.js`); recipe rewritten. Agent providers:
+  Groq, Together, Fireworks, OpenRouter, Ollama and custom OpenAI-compatible endpoints (`AGENT_PROVIDER`,
+  `AGENT_MODEL`...), `Agent::models()`, doctor `agent` check; Llama examples. G40, G42, G17/G33, API reference,
+  recipes, new-app skill and reviewer updated.
 - **1.8.1** - G38: the QA suite runs the new PHPUnit unit tests of the framework core (`qa/unit`, `vendor/bin/phpunit`).
 - **1.8.0** - `php caligrafer.php doctor` (`.bin/caligrafer doctor`): read-only health check of the project and of the
   services in `.env` (database, OpenAI and Groq keys and models, Stripe mode, Coinbase, Watson, SMTP EHLO) with masked

@@ -145,6 +145,11 @@ grep -qF "nav(class='horizontal row g-0')" framework/settings/application/views/
     && grep -qF 'body:where(#gesturize, .caligrafy-layout) header nav.horizontal.row > h1' public/css/theme.css \
     && ok "theme.css gives the signed-in header columns the Bootstrap 3 15px padding and keeps the title next to the menu icon" \
     || ko "the signed-in header lost its Bootstrap 3 column padding or title position in theme.css"
+BADENV=""
+for f in framework/settings/.env.example .env.example framework/settings/.env.docker; do
+    [ -f "$f" ] && ! php -r 'exit(@parse_ini_file($argv[1]) === false ? 1 : 0);' "$f" && BADENV="$BADENV $f"
+done
+[ -z "$BADENV" ] && ok ".env templates parse (no text after true/false values, no parentheses in unquoted values)" || ko ".env templates do not parse with parse_ini_file" "$BADENV"
 BADJS=""
 for f in framework/plugins/*/scripts/*.js public/js/services/app.js; do node --check "$f" 2>/dev/null || BADJS="$BADJS $f"; done
 [ -z "$BADJS" ] && ok "client scaffold scripts parse (node --check)" || ko "node --check" "$BADJS"
