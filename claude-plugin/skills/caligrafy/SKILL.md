@@ -141,7 +141,8 @@ block content
 ```
 Pug variables are PHP variables (`$books`, `$book->title`); `$home` is set by `master/layout.pug`. `layoutblocks` defines the blocks
 `headers`, `navigation_default`, `navigation_authorized`, `content`, `footer`, `scripts` (`additional_preload_scripts`, `additional_scripts`).
-Pass `'authorized' => authorized()` to show the logged-in navigation.
+Pass `'authorized' => authorized()` to show the logged-in navigation, `'install' => true` to invite visitors to install the app
+(Install button / iOS Share hint; the layout always links `public/manifest.webmanifest`; offline page with `PWA_SERVICE_WORKER=true`).
 
 ### Vue client app with a page route and data routes
 ```bash

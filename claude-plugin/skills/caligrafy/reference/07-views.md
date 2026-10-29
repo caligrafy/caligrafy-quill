@@ -152,6 +152,36 @@ class HelloController extends Controller {
        return view('helloworld', array('sentence' => 'This is our first view using a route'));
    }
 ```
+## Mobile: install to home screen
+Browsers can install a Caligrafy application on a phone, a tablet or a computer: it opens from its own icon, full screen, without the browser bar. The default layout (`default/master/layoutblocks.pug`) links the web app manifest `public/manifest.webmanifest`, which gives browsers the name, the black and white colors and the icons of the app (`public/images/resources/icon-192x192.png`, `icon-512x512.png` and the Apple touch icons). Its `start_url` and `scope` are `../`, relative to the manifest: they always point to the root of your application, whatever `APP_ROOT` is. Change `name`, `short_name` and the icons in that file to brand your app (keep a 192x192 and a 512x512 PNG: Chrome needs both). Installation needs HTTPS (or `localhost`).
+
+> This replaces the add-to-homescreen library of older versions (the `add_to_home` scripts keys and the old `default/modules/install.pug`), see [Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
+
+### Install button and iOS hint
+Send `install` to the views where you want to invite visitors to install the app:
+```php
+return view('default/index', array('install' => true));
+```
+The layout then includes `default/modules/install.pug`, in plain JavaScript:
++ On Chrome, Edge and Android, an **Install** button (`btn-primary`) appears when the browser fires `beforeinstallprompt`, and opens the browser's own install prompt. **Not now** (`btn-secondary`) hides it.
++ On iOS and iPadOS Safari, which have no install prompt, a short hint says to tap Share, then Add to Home Screen. **Got it** hides it.
++ Nothing is shown once the app is installed (standalone mode) or after the visitor dismissed it: the choice is kept in `localStorage` (`caligrafy-install-dismissed`).
+
+The box is a white card fixed at the bottom of the screen with the Caligrafy black and white buttons. Its styles are scoped to `.caligrafy-install` in the module, so you can restyle it in your own CSS.
+
+### Offline page (optional service worker)
+Add `PWA_SERVICE_WORKER=true` to the `.env` to register the service worker `public/sw.js` (it is off by default). It does one thing: when a page cannot be loaded because the device is offline, it shows `public/offline.html` instead of the browser error. It never caches pages, API routes, POST requests or signed-in pages: they always go to the network, so users never see stale or private data. Edit `offline.html` to change the message (it must stay self-contained, without external files) and change `CACHE` in `sw.js` when you do, so installed apps get the new copy. Setting `PWA_SERVICE_WORKER` back to `false` unregisters it on the next visit.
+
+The service worker lives in `public/` but controls the whole application: the root `.htaccess` sends `Service-Worker-Allowed` for `public/sw.js` and the `application/manifest+json` type for `.webmanifest` files (both work with `AllowOverride FileInfo`). `php caligrafer.php doctor` checks that the manifest is valid and that its icons exist, and, when the service worker is on, that its files exist and production uses HTTPS.
+
+### Client apps in `public/<app>`
+Client apps that do not use the Pug layout link the manifest themselves in their `<head>`:
+```html
+<link rel="manifest" href="<?php echo session('public').'manifest.webmanifest'; ?>">
+<meta name="theme-color" content="#ffffff">
+```
+This installs the whole application (it opens on its home page). To install a client app on its own, copy `public/manifest.webmanifest` into `public/<app>/manifest.webmanifest`, set `"start_url": "./"`, `"scope": "./"`, `"id": "./"` and its own `name`, prefix the icons with `../` (`"../images/resources/icon-192x192.png"`) and link that copy instead. For a Vue single page app, put the copy and its icons in the app's own `public/` folder, with icon paths relative to the manifest (Vite copies them to `dist/`), and link it from `index.html` with `<link rel="manifest" href="manifest.webmanifest">`.
+
 > The use of the `View` in this framework is very straightforward. Most of the effort should be in understanding the syntax of the `Pug` language.It is a simple language to pick up especially if you are familiar with HTML. 
 > Learn Pug and Phug [here](https://www.phug-lang.com/#language-reference)
 
