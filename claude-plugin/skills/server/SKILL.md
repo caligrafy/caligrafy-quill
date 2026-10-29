@@ -52,7 +52,7 @@ Use `stop`, never `down`, unless the user explicitly wants containers removed: t
 
 Run the read-only health check first: `docker-compose exec dev-box php caligrafer.php doctor` (inside the container, so
 that `DB_HOST=mysql` resolves and the network is the app's; `php caligrafer.php doctor` without Docker). It reports
-PHP/extensions, `.env`, keys (masked), the database, OpenAI/Groq keys and models, Stripe, Coinbase, Watson and SMTP, with
+PHP/extensions, `.env`, keys (masked), the database, OpenAI/Groq keys and models, the Agent provider (`AGENT_PROVIDER`; Ollama on the host is `http://host.docker.internal:11434/v1` from the container), Stripe, Coinbase, Watson and SMTP, with
 one fix per problem and hints for TLS, DNS and timeout errors. `--only openai,groq` limits it, `--json` for parsing.
 Never paste its output's masked keys back into `.env`.
 

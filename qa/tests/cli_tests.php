@@ -706,6 +706,136 @@ qa_test('transcribe() uses whisper-large-v3 and returns JSON text', function () 
     qa_equals('whisper-large-v3', json_decode(qa_groq_requests()[0]['body'], true)['model']);
 });
 
+qa_section('Agent providers (OpenAI-compatible mock)');
+
+const QA_AGENT_SETTINGS = ['AGENT_PROVIDER', 'AGENT_API_KEY', 'AGENT_API_BASE', 'AGENT_MODEL', 'AGENT_VISION_MODEL', 'GROQ_MODEL', 'GROQ_VISION_MODEL',
+                           'TOGETHER_API_KEY', 'FIREWORKS_API_KEY', 'OPENROUTER_API_KEY'];
+function qa_agent($env = [], ...$args)
+{
+    foreach (QA_AGENT_SETTINGS as $name) unset($_ENV[$name]);
+    foreach ($env as $name => $value) $_ENV[$name] = $value;
+    @unlink(sys_get_temp_dir() . '/qa_groq_mock.log');
+    return new Caligrafy\Agent(...$args);
+}
+function qa_last_request()
+{
+    $requests = qa_groq_requests();
+    $r = end($requests);
+    return $r + ['json' => json_decode($r['body'], true)];
+}
+$mockBase = 'http://127.0.0.1:8768';
+$png = tempnam(sys_get_temp_dir(), 'qa') . '.png';
+file_put_contents($png, base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNk+M9QDwADhgGAWjR9awAAAABJRU5ErkJggg=='));
+
+qa_test('Groq stays the default provider and GROQ_* settings keep working', function () {
+    $agent = qa_agent([], 'gsk_qa');
+    qa_equals('groq', $agent->provider());
+    qa_equals(GROQ_DEFAULT_MODEL, $agent->model());
+    qa_equals(GROQ_DEFAULT_VISION_MODEL, $agent->visionModel());
+    qa_equals('openai/gpt-oss-20b', qa_agent(['GROQ_MODEL' => 'openai/gpt-oss-20b'], 'gsk_qa')->model(), 'GROQ_MODEL');
+    qa_equals('qa/vision', qa_agent(['GROQ_VISION_MODEL' => 'qa/vision'], 'gsk_qa')->visionModel(), 'GROQ_VISION_MODEL');
+    qa_equals('openai/gpt-oss-20b', qa_agent(['AGENT_PROVIDER' => 'groq', 'AGENT_MODEL' => 'openai/gpt-oss-20b', 'GROQ_MODEL' => 'x'], 'gsk_qa')->model(), 'AGENT_MODEL wins');
+    $r = qa_agent(['AGENT_MODEL' => 'openai/gpt-oss-20b'], 'gsk_qa')->delegate(messages: [['role' => 'user', 'content' => 'Hi']]);
+    qa_equals(['api_success' => true, 'response' => 'echo: Hi'], $r);
+    qa_equals('openai/gpt-oss-20b', qa_last_request()['json']['model']);
+    qa_contains('/openai/v1/', qa_last_request()['uri'], 'GROQ_API_BASE still used by groq-php');
+});
+
+qa_test('configure() parameters are sent with every request (Groq and the others)', function () use ($mockBase) {
+    qa_agent([], 'gsk_qa')->configure(['temperature' => 0.2])->delegate(messages: [['role' => 'user', 'content' => 'x']]);
+    qa_equals(0.2, qa_last_request()['json']['temperature'] ?? null, 'groq');
+    qa_agent(['AGENT_API_BASE' => "$mockBase/together/v1"], 'k', 'together')->configure(['max_tokens' => 50])->delegate(messages: [['role' => 'user', 'content' => 'x']]);
+    qa_equals(50, qa_last_request()['json']['max_tokens'] ?? null, 'together');
+});
+
+qa_test('Together AI: provider key, default model, bare model list', function () use ($mockBase) {
+    $agent = qa_agent(['AGENT_PROVIDER' => 'together', 'TOGETHER_API_KEY' => 'tg_qa_key', 'AGENT_API_BASE' => "$mockBase/together/v1"]);
+    qa_equals('together', $agent->provider());
+    $r = $agent->delegate(messages: [['role' => 'user', 'content' => 'Hello']]);
+    qa_equals(['api_success' => true, 'response' => 'echo: Hello'], $r);
+    $req = qa_last_request();
+    qa_equals('/together/v1/chat/completions', $req['uri']);
+    qa_equals('openai/gpt-oss-120b', $req['json']['model']);
+    qa_equals('Bearer tg_qa_key', $req['auth']);
+    qa_equals(['api_success' => true, 'response' => ['Qwen/Qwen3.5-9B', 'meta-models/Muse-Glimmer-30B', 'openai/gpt-oss-120b']], $agent->models());
+});
+
+qa_test('OpenRouter: AGENT_API_KEY, Llama defaults, streaming and vision', function () use ($mockBase, $png) {
+    $agent = qa_agent(['AGENT_PROVIDER' => 'OpenRouter', 'AGENT_API_KEY' => 'sk-or-v1-qa', 'AGENT_API_BASE' => "$mockBase/openrouter/api/v1/"]);
+    qa_equals('meta-llama/llama-3.3-70b-instruct', $agent->model());
+    qa_equals('meta-llama/llama-4-maverick', $agent->visionModel());
+    $r = $agent->delegate(messages: [['role' => 'user', 'content' => 'stream me']], stream: true);
+    qa_equals(['api_success' => true, 'response' => 'echo: stream me'], $r, 'stream chunks joined');
+    qa_equals('Bearer sk-or-v1-qa', qa_last_request()['auth']);
+    $r = $agent->visualize($png, 'What is this?');
+    qa_equals(['api_success' => true, 'response' => 'image of 2 parts'], $r);
+    $req = qa_last_request()['json'];
+    qa_equals('meta-llama/llama-4-maverick', $req['model']);
+    qa_contains('data:image/png;base64,', $req['messages'][0]['content'][1]['image_url']['url']);
+    qa_contains('meta-llama/llama-4-maverick', implode(',', $agent->models()['response']));
+});
+
+qa_test('Fireworks AI through the constructor arguments', function () use ($mockBase) {
+    $agent = qa_agent([], 'fw_qa_key', 'fireworks', "$mockBase/fireworks/inference/v1");
+    qa_equals('accounts/fireworks/models/gpt-oss-120b', $agent->model());
+    qa_equals('accounts/fireworks/models/glm-5p3-flash', $agent->visionModel());
+    qa_equals(true, $agent->delegate(messages: [['role' => 'user', 'content' => 'x']])['api_success']);
+    qa_equals('/fireworks/inference/v1/chat/completions', qa_last_request()['uri']);
+});
+
+qa_test('Ollama: no key, local defaults, models pulled, audio is Groq only', function () use ($mockBase) {
+    $agent = qa_agent(['AGENT_PROVIDER' => 'ollama', 'AGENT_API_BASE' => "$mockBase/ollama/v1"]);
+    qa_equals('llama3.2', $agent->model());
+    qa_equals('llama3.2-vision', $agent->visionModel());
+    qa_equals('echo: Hi', $agent->delegate(messages: [['role' => 'user', 'content' => 'Hi']])['response']);
+    qa_equals(['llama3.2-vision:latest', 'llama3.2:latest'], $agent->models()['response']);
+    foreach (['transcribe', 'translate'] as $method) {
+        try { $agent->$method('x.mp3'); qa_assert(false, "$method should throw"); }
+        catch (Exception $e) { qa_contains('needs Groq', $e->getMessage()); }
+    }
+    $default = Caligrafy\Agent::settings(function ($n) { return $n === 'AGENT_PROVIDER' ? 'ollama' : ''; });
+    qa_equals('http://localhost:11434/v1', $default['base']);
+});
+
+qa_test('Agent errors: unknown provider, missing key or base, rejected key, unknown model, unreachable server', function () use ($mockBase, $png) {
+    $messages = [['role' => 'user', 'content' => 'x']];
+    foreach ([[['AGENT_PROVIDER' => 'llama'], "Unknown AGENT_PROVIDER 'llama'"], [['AGENT_PROVIDER' => 'custom'], 'needs AGENT_API_BASE'],
+              [['AGENT_PROVIDER' => 'together'], 'TOGETHER_API_KEY']] as [$env, $expected]) {
+        try { qa_agent($env); qa_assert(false, "no exception for $expected"); }
+        catch (Exception $e) { qa_contains($expected, $e->getMessage()); }
+    }
+    $r = qa_agent(['AGENT_API_BASE' => "$mockBase/together/v1"], 'invalid-key', 'together')->delegate(messages: $messages);
+    qa_equals(['api_success' => false, 'response' => 'Together AI error 401: Invalid API Key'], $r);
+    $r = qa_agent(['AGENT_API_BASE' => "$mockBase/together/v1"], 'invalid-key', 'together')->models();
+    qa_equals(false, $r['api_success']);
+    $r = qa_agent(['AGENT_API_BASE' => "$mockBase/fireworks/inference/v1"], 'k', 'fireworks')->delegate('qa-missing', $messages);
+    qa_contains('does not exist', $r['response']);
+    $r = qa_agent(['AGENT_PROVIDER' => 'ollama', 'AGENT_API_BASE' => 'http://127.0.0.1:9/v1'])->delegate(messages: $messages);
+    qa_equals(false, $r['api_success']);
+    qa_contains('host.docker.internal', $r['response']);
+    $custom = qa_agent(['AGENT_PROVIDER' => 'custom', 'AGENT_API_KEY' => 'k', 'AGENT_API_BASE' => "$mockBase/custom/v1"]);
+    qa_contains('set AGENT_MODEL', $custom->delegate(messages: $messages)['response']);
+    qa_contains('AGENT_VISION_MODEL', $custom->visualize($png)['response']);
+    qa_equals('echo: x', $custom->delegate('qa/custom-model', $messages)['response']);
+    $keyless = qa_agent(['AGENT_PROVIDER' => 'custom', 'AGENT_API_BASE' => "$mockBase/custom/v1", 'AGENT_MODEL' => 'qa/custom-model']);
+    qa_equals('echo: x', $keyless->delegate(messages: $messages)['response'], 'custom endpoint without a key');
+    $r = qa_agent([], 'k', 'together', "$mockBase/together/v1")->visualize('/nope.png');
+    qa_equals(['api_success' => false, 'response' => 'Image file not found: /nope.png'], $r);
+    $text = tempnam(sys_get_temp_dir(), 'qa');
+    file_put_contents($text, 'not an image');
+    $r = qa_agent([], 'k', 'together', "$mockBase/together/v1")->visualize($text);
+    qa_contains('Not an image file', $r['response']);
+});
+
+qa_test('Agent::modelIds() reads the model lists of every provider', function () {
+    qa_equals(['a', 'b'], Caligrafy\Agent::modelIds(['data' => [['id' => 'b'], ['id' => 'a'], ['id' => 'old', 'active' => false]]]));
+    qa_equals(['a'], Caligrafy\Agent::modelIds([['id' => 'a', 'type' => 'chat']]));
+    qa_equals(['llama3.2:latest'], Caligrafy\Agent::modelIds(['models' => [['name' => 'llama3.2:latest', 'size' => 1]]]));
+    qa_equals(null, Caligrafy\Agent::modelIds(['error' => 'x']));
+});
+
+foreach (QA_AGENT_SETTINGS as $name) unset($_ENV[$name]);
+
 proc_terminate($groqMock);
 unset($_ENV['GROQ_API_BASE']);
 

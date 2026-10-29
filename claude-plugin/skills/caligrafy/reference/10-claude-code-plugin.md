@@ -78,7 +78,7 @@ Scaffolds a client app in `public/<name>` using Caligrafer and wires its page an
 + `ml`: ML Core (ml5 and p5)
 
 For two common projects the plugin carries complete recipes that Claude follows:
-+ **AI chat apps**: an OpenAI or Groq chat with the conversation history, live model lists, image generation and Groq image analysis, behind your own controller and a Vue chat page (learn more about [OpenAI](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E) and [Groq agents](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.)))
++ **AI chat apps**: an OpenAI chat or an open model chat (Groq, or Llama on OpenRouter or a local Ollama) with the conversation history, live model lists, image generation and image analysis, behind your own controller and a Vue chat page (learn more about [OpenAI](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E) and [open source agents](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.)))
 + **Face login**: enrolment and login with FaceDetector face prints, encrypted in the database and compared on the server, with a lockout after repeated failures. Face prints have no liveness check (a photo can pass): use face login as a convenience or a second factor, not as the only protection
 
 App names cannot use the reserved folder names `app`, `bot`, `__bots__`, `css`, `facedetect`, `fonts`, `images`, `js`, `ml`, `resources` and `uploads`.

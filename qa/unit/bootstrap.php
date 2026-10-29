@@ -10,7 +10,7 @@ putenv('APP_KEY=' . APP_KEY);
 $root = dirname(__DIR__, 2);
 require $root . '/vendor/autoload.php';
 require $root . '/framework/helpers/corehelpers.php';
-foreach (['Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Doctor'] as $class) {
+foreach (['Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor'] as $class) {
     require_once $root . "/framework/core/$class.php";
 }
 require __DIR__ . '/fixtures/controllers.php';
