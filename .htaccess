@@ -23,9 +23,18 @@
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule \.(sql|log|bak|ini|sh|env)$ - [NC,F,L]
 
+    # Web app manifest and service worker (public/manifest.webmanifest, public/sw.js): the service worker lives in
+    # public/ but controls the whole application, so it is allowed the scope of the site.
+    RewriteRule ^public/sw\.js$ - [E=CALIGRAFY_SW:1]
+    Header set Service-Worker-Allowed "/" env=CALIGRAFY_SW
+
     # Handle Front Controller...
     RewriteCond %{REQUEST_FILENAME} !-d
     RewriteCond %{REQUEST_FILENAME} !-f
     RewriteRule ^(.+)$ index.php?uri=$1 [L,QSA]
     
+</IfModule>
+
+<IfModule mod_mime.c>
+    AddType application/manifest+json .webmanifest
 </IfModule>

@@ -146,6 +146,41 @@ BADJS=""
 for f in framework/plugins/*/scripts/*.js public/js/services/app.js; do node --check "$f" 2>/dev/null || BADJS="$BADJS $f"; done
 [ -z "$BADJS" ] && ok "client scaffold scripts parse (node --check)" || ko "node --check" "$BADJS"
 
+# --- install to home screen (web app manifest, service worker, install module) -------------------
+OUT=$(php -r '
+$m = json_decode(file_get_contents("public/manifest.webmanifest"), true);
+if (!is_array($m)) { echo "public/manifest.webmanifest is not valid JSON: " . json_last_error_msg(); exit(1); }
+foreach (["name", "short_name", "start_url", "scope", "display", "theme_color", "background_color"] as $k) if (empty($m[$k])) echo "no $k\n";
+if (($m["start_url"] ?? "") !== "../" || ($m["scope"] ?? "") !== "../") echo "start_url and scope must be ../ (the application root, whatever APP_ROOT is)\n";
+$sizes = [];
+foreach ($m["icons"] ?? [] as $icon) {
+    $file = "public/" . $icon["src"];
+    if (!is_file($file)) { echo "icon not found: $file\n"; continue; }
+    [$w, $h] = getimagesize($file);
+    if ("{$w}x{$h}" !== $icon["sizes"]) echo "$file is {$w}x{$h}, the manifest says {$icon["sizes"]}\n";
+    $sizes[] = $icon["sizes"];
+}
+foreach (["192x192", "512x512"] as $s) if (!in_array($s, $sizes)) echo "no $s icon\n";
+preg_match_all("#public/images/resources/[^\"]+\.png#", file_get_contents("framework/settings/application/views/default/modules/touchicons.pug"), $t);
+foreach ($t[0] as $f) if (!is_file($f)) echo "touch icon not found: $f\n";
+' 2>&1)
+[ -z "$OUT" ] && ok "public/manifest.webmanifest is valid JSON, its icons exist with the declared sizes (192, 512) and the touch icons exist" || ko "web app manifest" "$OUT"
+L=framework/settings/application/views/default/master/layoutblocks.pug
+grep -qF "link(rel='manifest', href=\"{\$home}public/manifest.webmanifest\")" $L && grep -qF 'include ../modules/serviceworker' $L \
+    && grep -qF 'include ../modules/install' $L && [ -f framework/settings/application/views/default/modules/install.pug ] \
+    && ok "the layout links the manifest and includes the service worker and install modules" || ko "layoutblocks.pug does not link the manifest or the PWA modules"
+SW=public/sw.js
+node --check $SW 2>/dev/null && grep -qF "request.method !== 'GET' || request.mode !== 'navigate'" $SW && ! grep -q 'cache\.put\|\.addAll' $SW \
+    && [ -f public/offline.html ] && grep -q '^PWA_SERVICE_WORKER=' framework/settings/.env.example \
+    && ok "public/sw.js parses, only answers GET navigations and caches nothing but offline.html (PWA_SERVICE_WORKER in .env.example)" \
+    || ko "public/sw.js caches more than the offline page, or PWA_SERVICE_WORKER is not documented"
+grep -qF 'AddType application/manifest+json .webmanifest' .htaccess && grep -qF 'Header set Service-Worker-Allowed "/" env=CALIGRAFY_SW' .htaccess \
+    && ok ".htaccess serves the manifest type and allows the service worker the site scope" || ko ".htaccess misses the manifest type or Service-Worker-Allowed"
+INSTALL=framework/settings/application/views/default/modules/install.pug
+grep -q 'beforeinstallprompt' $INSTALL && grep -q 'localStorage' $INSTALL && grep -q 'btn btn-primary' $INSTALL && grep -q 'btn btn-secondary' $INSTALL \
+    && ! grep -q 'addToHomescreen\|add_to_home' $INSTALL framework/settings/coresettings.php \
+    && ok "install module uses beforeinstallprompt, remembers dismissal and Caligrafy buttons (no add-to-homescreen.js)" || ko "install module"
+
 # --- Vue SPA template builds, including common/app.js ---------------------------------------
 if [ "${QA_SKIP_SPA:-0}" = 1 ]; then
     echo "  SKIP Vue SPA build (QA_SKIP_SPA=1)"

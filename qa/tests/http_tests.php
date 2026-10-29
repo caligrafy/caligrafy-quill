@@ -107,6 +107,61 @@ qa_test('public assets are still served', function () use ($guest) {
 });
 
 // ---------------------------------------------------------------------------
+qa_section('Install to home screen (web app manifest, service worker)');
+
+qa_test('the manifest is served as application/manifest+json and its icons resolve from its URL', function () use ($guest, $BASE) {
+    $r = $guest->get('/public/manifest.webmanifest');
+    qa_equals(200, $r['status']);
+    qa_assert(preg_match('#^Content-Type:\s*application/manifest\+json#mi', $r['headers']) === 1, 'Content-Type: ' . $r['headers']);
+    $manifest = json_decode($r['body'], true);
+    qa_assert(is_array($manifest) && !empty($manifest['icons']), 'not a manifest: ' . substr($r['body'], 0, 200));
+    foreach ($manifest['icons'] as $icon) {
+        // icon, start_url and scope URLs are relative to the manifest URL: ../ is the application root
+        $icon = $guest->get('/public/' . $icon['src']);
+        qa_equals(200, $icon['status'], $icon['status'] . ' for ' . $icon['src']);
+        qa_assert(preg_match('#^Content-Type:\s*image/png#mi', $icon['headers']) === 1, 'icon is not a PNG');
+    }
+    qa_equals('../', $manifest['start_url']);
+});
+
+qa_test('the layout links the manifest; the service worker and the install module are off by default', function () use ($guest, $BASE) {
+    $body = $guest->get('/')['body'];
+    qa_contains('<link rel="manifest" href="' . $BASE . '/public/manifest.webmanifest">', $body);
+    qa_not_contains('serviceWorker.register', $body);
+    qa_not_contains('id="caligrafy-install"', $body);
+});
+
+qa_test("'install' => true adds the install module (beforeinstallprompt button and iOS hint)", function () use ($guest) {
+    $r = $guest->get('/qa/install');
+    qa_equals(200, $r['status']);
+    qa_contains('id="caligrafy-install"', $r['body']);
+    qa_contains('beforeinstallprompt', $r['body']);
+    qa_contains('Add to Home Screen', $r['body']);
+});
+
+qa_test('public/sw.js is served with Service-Worker-Allowed and the offline page is self-contained', function () use ($guest) {
+    $r = $guest->get('/public/sw.js');
+    qa_equals(200, $r['status']);
+    qa_assert(preg_match('#^Content-Type:\s*(text|application)/javascript#mi', $r['headers']) === 1, 'Content-Type of sw.js');
+    qa_assert(preg_match('#^Service-Worker-Allowed:\s*/\s*$#mi', $r['headers']) === 1, 'no Service-Worker-Allowed header');
+    qa_assert(preg_match('#^Service-Worker-Allowed:#mi', $guest->get('/public/js/script.js')['headers']) === 0, 'Service-Worker-Allowed on other files');
+    $offline = $guest->get('/public/offline.html');
+    qa_equals(200, $offline['status']);
+    qa_not_contains('<link', $offline['body']);
+    qa_not_contains('<script src', $offline['body']);
+});
+
+qa_test('PWA_SERVICE_WORKER=true registers the service worker with the application root as scope', function () use ($guest, $BASE, $ROOT) {
+    $file = "$ROOT/.env";
+    $orig = file_get_contents($file);
+    qa_assert(preg_match('/^PWA_SERVICE_WORKER=/m', $orig) === 1, 'PWA_SERVICE_WORKER is not in the QA .env (framework/settings/.env.example)');
+    file_put_contents($file, preg_replace('/^PWA_SERVICE_WORKER=.*$/m', 'PWA_SERVICE_WORKER=true', $orig));
+    try { $body = $guest->get('/')['body']; } finally { file_put_contents($file, $orig); }
+    qa_contains("navigator.serviceWorker.register('$BASE/public/sw.js', { scope: '$BASE/' })", $body);
+    qa_contains("serviceWorker.getRegistrations", $guest->get('/')['body']); // turned off again: unregisters it
+});
+
+// ---------------------------------------------------------------------------
 qa_section('Sensitive files are not served');
 
 foreach (['/.env', '/.git/HEAD', '/composer.json', '/composer.lock', '/caligrafer.php', '/docker-compose.yaml',

@@ -120,6 +120,8 @@ class Doctor
         elseif (!is_writable($uploads)) $this->add('project', 'public/uploads', 'WARN', 'not writable by ' . get_current_user(), 'chmod -R 777 public/uploads');
         else $this->add('project', 'public/uploads', 'OK', 'writable');
 
+        $this->webApp();
+
         if (!is_dir($this->root . '/application')) {
             $this->add('project', 'Templates', 'FAIL', 'application/ not found', 'php caligrafer.php initialize');
             return;
@@ -133,6 +135,49 @@ class Doctor
                 'php caligrafer.php upgrade (dry run), then php caligrafer.php upgrade --apply');
         } else {
             $this->add('project', 'Templates', 'OK', 'application/ is up to date with the framework templates' . (isset($statuses['customized'])? " ({$statuses['customized']} customized)" : ''));
+        }
+    }
+
+    /**
+     * Install to home screen: public/manifest.webmanifest is valid and its icons exist (paths are relative to public/),
+     * and the optional service worker (PWA_SERVICE_WORKER) has its files and HTTPS in production
+     */
+    private function webApp()
+    {
+        $public = $this->root . '/public/';
+        $name = 'public/manifest.webmanifest';
+        if (!is_file($public . 'manifest.webmanifest')) {
+            $this->add('project', $name, 'WARN', 'missing: browsers will not offer to install the app', 'copy public/manifest.webmanifest from the framework');
+        } else {
+            $manifest = json_decode((string)file_get_contents($public . 'manifest.webmanifest'), true);
+            if (!is_array($manifest)) {
+                $this->add('project', $name, 'WARN', 'not valid JSON: ' . json_last_error_msg(), 'fix the JSON (compare with the framework copy)');
+            } else {
+                $missing = [];
+                $sizes = [];
+                foreach (is_array($manifest['icons'] ?? null)? $manifest['icons'] : [] as $icon) {
+                    $src = (string)($icon['src'] ?? '');
+                    if ($src === '' || preg_match('#^/|^\w+:#', $src)) continue; // absolute URLs are not checked
+                    if (is_file($public . parse_url($src, PHP_URL_PATH))) $sizes = array_merge($sizes, explode(' ', (string)($icon['sizes'] ?? '')));
+                    else $missing[] = $src;
+                }
+                $absent = array_diff(['name', 'start_url'], array_keys(array_filter($manifest)));
+                $sizesMissing = array_diff(['192x192', '512x512'], $sizes);
+                if ($missing) $this->add('project', $name, 'WARN', 'icon(s) not found: ' . implode(', ', array_unique($missing)), 'icon paths are relative to public/');
+                elseif ($absent) $this->add('project', $name, 'WARN', 'no ' . implode(', ', $absent), 'browsers need a name and a start_url to install the app');
+                elseif ($sizesMissing) $this->add('project', $name, 'WARN', 'no ' . implode(' or ', $sizesMissing) . ' icon', 'Chrome needs a 192x192 and a 512x512 icon to install the app');
+                else $this->add('project', $name, 'OK', count($manifest['icons']) . ' icon(s) found');
+            }
+        }
+
+        if (!filter_var($this->env('PWA_SERVICE_WORKER'), FILTER_VALIDATE_BOOLEAN)) return;
+        $absentFiles = array_filter(['sw.js', 'offline.html'], function ($f) use ($public) { return !is_file($public . $f); });
+        if ($absentFiles) {
+            $this->add('project', 'Service worker', 'WARN', 'PWA_SERVICE_WORKER=true but public/' . implode(', public/', $absentFiles) . ' missing', 'copy them from the framework');
+        } elseif (strtolower($this->env('APP_ENV')) === 'production' && strtolower($this->env('APP_PROTOCOL')) !== 'https') {
+            $this->add('project', 'Service worker', 'WARN', 'browsers only register service workers over HTTPS (or on localhost)', 'APP_PROTOCOL=https in production');
+        } else {
+            $this->add('project', 'Service worker', 'OK', 'public/sw.js registered by the layout (offline page only)');
         }
     }
 
