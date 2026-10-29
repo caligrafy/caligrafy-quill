@@ -34,7 +34,8 @@
         "claviska/simpleimage": "^4.4",
         "stripe/stripe-php": "^22.0",
         "phpmailer/phpmailer": "^7.1",
-        "lucianotonet/groq-php": "^1.4"
+        "lucianotonet/groq-php": "^1.4",
+        "lbuchs/webauthn": "^2.2"
     },
     "config": {
         "allow-plugins": {

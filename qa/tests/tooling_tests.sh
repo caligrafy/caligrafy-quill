@@ -103,6 +103,9 @@ if node --check framework/plugins/facedetect/scripts/main.js 2>/dev/null && grep
 else
     ko "facedetect scaffold (markRaw / syntax)"
 fi
+OUT=$(node qa/tests/liveness_tests.js 2>&1) && grep -q 'async liveness' public/js/services/detect.js \
+    && ok "FaceDetector liveness logic (eye aspect ratio, head yaw, smile, challenge order) and passkey encoding (node qa/tests/liveness_tests.js)" \
+    || ko "FaceDetector liveness / passkey client tests" "$OUT"
 if grep -q "scripts('vue')" framework/plugins/bot/index.php && ! grep -rqi 'botui\|vue@2' framework/plugins/bot public/js/services 2>/dev/null; then ok "bot scaffold uses Vue 3 without BotUI"; else ko "bot scaffold still references Vue 2 or BotUI"; fi
 
 # --- front-end libraries --------------------------------------------------------------------
