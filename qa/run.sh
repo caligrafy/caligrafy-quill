@@ -65,6 +65,7 @@ $s = preg_replace("#^(\s*)// (Auth::authentication|Route::)#m", "$1$2", $s);
 $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n"
     . "    Route::get(\"/qa/missing\", \"QaController@nope\");\n    Route::get(\"/qa/fatal\", \"QaController@fatal\");\n    Route::get(\"/qa/boom\", \"QaController@boom\");\n"
     . "    Route::post(\"/qa/upload\", \"QaController@upload\");\n"
+    . "    Route::get(\"/qa/install\", \"QaController@install\");\n"
     . "    Route::get(\"/qa/own-ai\", \"AIController@mine\");\n    Route::get(\"/qa/old-apps/{appName}\", \"ClientController\");\n"
     . "    Route::get(\"/qa/shop/{id}\", \"Shop\\\\OrderController@show\");\n    Route::get(\"/qa/shop-root/{id}\", \"\\\\Shop\\\\OrderController@show\");\n"
     . "    Route::get(\"/qa/shop-missing\", \"Shop\\\\MissingController@show\");\n"
@@ -133,6 +134,9 @@ for check in "/helloworld 200" "/ 200" "/public/css/styles.css 200" "/.env 403" 
     if [ "$CODE" = "$2" ]; then echo "  PASS $1 -> $CODE"; else echo "  FAIL $1 -> $CODE (expected $2)"; STATUS=1; fi
 done
 rm -f public/uploads/qa_probe.php
+if curl -sI "$QA_BASE/public/sw.js" | grep -qi '^Service-Worker-Allowed: /' && curl -sI "$QA_BASE/public/manifest.webmanifest" | grep -qi '^Content-Type: application/manifest+json'; then
+    echo "  PASS public/sw.js keeps Service-Worker-Allowed and the manifest its type"
+else echo "  FAIL public/sw.js Service-Worker-Allowed or the manifest type is lost"; STATUS=1; fi
 $COMPOSE exec -T web sh -c "sed -i 's/AllowOverride FileInfo/AllowOverride All/' /etc/apache2/conf-enabled/docker-php.conf && apachectl -k graceful" >/dev/null 2>&1
 sleep 2
 

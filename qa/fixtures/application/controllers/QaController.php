@@ -16,6 +16,12 @@ class QaController extends Controller {
         return api(array('ok' => true, 'id' => $this->request->fetch('id')));
     }
 
+    // the home page with the install to home screen module
+    public function install()
+    {
+        return view('default/index', array('install' => true));
+    }
+
     // a PHP fatal error (class redeclared at compile time)
     public function fatal()
     {

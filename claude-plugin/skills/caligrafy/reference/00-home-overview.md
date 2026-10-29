@@ -232,6 +232,7 @@ We have created a rigorous documentation to help you understand the basics of th
     > + [Getting Started with Views](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#viewsstartup)
     > + [Simple View](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#simpleview)
     > + [View with parameters](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#parameterview)
+    > + [Mobile: install to home screen](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#install)
 8. [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)
     > + [Getting Started with Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)
     > + [Creating a Controller](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#createcontroller)

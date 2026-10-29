@@ -1,0 +1,68 @@
+//- Install to home screen (included by the layout when the view gets 'install' => true)
+//- Chrome, Edge and Android: an Install button that opens the browser's own install prompt (beforeinstallprompt).
+//- iOS and iPadOS Safari: a short "Share, then Add to Home Screen" hint (Safari has no install prompt).
+//- Nothing is shown in the installed app, or once the visitor dismissed it (remembered in localStorage).
+//- Needs the web app manifest linked in the headers (public/manifest.webmanifest) and HTTPS (or localhost).
+style.
+    .caligrafy-install { position: fixed; left: 0; right: 0; bottom: 20px; z-index: 1050; margin: 0 auto; padding: 15px 20px;
+        width: calc(100% - 30px); max-width: 420px; background-color: #ffffff; color: #333333;
+        border: 1px solid #d9d9d9; border-radius: 7px; box-shadow: 0 2px 12px rgba(0, 0, 0, 0.15); }
+    .caligrafy-install[hidden] { display: none; }
+    .caligrafy-install p { margin: 0 0 12px; text-align: left; }
+    .caligrafy-install .caligrafy-install-actions { display: flex; justify-content: flex-end; gap: 10px; }
+    .caligrafy-install svg { width: 16px; height: 16px; margin: 0 2px 0 4px; vertical-align: -2px; }
+
+div(id='caligrafy-install', class='caligrafy-install', role='dialog', aria-live='polite', aria-label='Install this app', hidden)
+    p(id='caligrafy-install-text') Install this app on your device for quick access.
+    p(id='caligrafy-install-ios', hidden)
+        | To install this app, tap Share
+        svg(viewBox='0 0 16 16', aria-hidden='true', fill='none', stroke='currentColor', stroke-width='1.5')
+            path(d='M8 1.5v9M4.75 4.75 8 1.5l3.25 3.25M5 7H3.5v7.5h9V7H11')
+        |  then Add to Home Screen.
+    .caligrafy-install-actions
+        button(type='button', id='caligrafy-install-dismiss', class='btn btn-secondary') Not now
+        button(type='button', id='caligrafy-install-button', class='btn btn-primary') Install
+
+script.
+    (function () {
+        var KEY = 'caligrafy-install-dismissed';
+        var box = document.getElementById('caligrafy-install');
+        var installButton = document.getElementById('caligrafy-install-button');
+        var deferredPrompt = null;
+
+        function remembered() { try { return localStorage.getItem(KEY) === '1'; } catch (e) { return false; } }
+        function remember() { try { localStorage.setItem(KEY, '1'); } catch (e) {} }
+        function hide() { box.hidden = true; }
+        var installed = window.navigator.standalone === true || (window.matchMedia && window.matchMedia('(display-mode: standalone)').matches);
+        if (installed || remembered()) return;
+
+        document.getElementById('caligrafy-install-dismiss').addEventListener('click', function () { remember(); hide(); });
+
+        // Chrome, Edge, Android: the browser fires beforeinstallprompt when the site can be installed
+        window.addEventListener('beforeinstallprompt', function (event) {
+            event.preventDefault();
+            deferredPrompt = event;
+            box.hidden = false;
+        });
+        installButton.addEventListener('click', function () {
+            if (!deferredPrompt) return;
+            deferredPrompt.prompt();
+            deferredPrompt.userChoice.then(function (choice) {
+                if (choice.outcome === 'dismissed') remember();
+                deferredPrompt = null;
+                hide();
+            });
+        });
+        window.addEventListener('appinstalled', hide);
+
+        // iOS and iPadOS (iPadOS reports a Mac with a touch screen): no install prompt, show the Share hint
+        var ua = window.navigator.userAgent;
+        var ios = /iPhone|iPad|iPod/.test(ua) || (window.navigator.platform === 'MacIntel' && window.navigator.maxTouchPoints > 1);
+        if (ios && /Safari/.test(ua) && !/CriOS|FxiOS|EdgiOS/.test(ua)) {
+            document.getElementById('caligrafy-install-text').hidden = true;
+            document.getElementById('caligrafy-install-ios').hidden = false;
+            installButton.hidden = true;
+            document.getElementById('caligrafy-install-dismiss').textContent = 'Got it';
+            box.hidden = false;
+        }
+    })();

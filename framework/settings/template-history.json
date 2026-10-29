@@ -126,7 +126,8 @@
         "79a30a4c2575a9e79fc4998dd56f9f44a91987805d9880aec02b3667072dc71d",
         "9cceeeb3c38c13a5102ca9846fee59772e06a0dbaed34b87997bfe04fe3ad4ef",
         "a06bd6388826960393fef74a7239c35f09bff3bb2b4e59d50ed99976108d69bc",
-        "c61ad4bdf402a7a07b3d2dd7e5ab6356fa90e9063aed6fb752db12aa94a2fce3"
+        "c61ad4bdf402a7a07b3d2dd7e5ab6356fa90e9063aed6fb752db12aa94a2fce3",
+        "f01218a8cca127b572517fcfa6ed927212061560b3f5b35a98ae8798e2450ac7"
     ],
     "views/default/modules/ach.pug": [
         "abd68d07a18095c9185cdd103d7d333f2fad54cff793e2dd0a817cc970a50031",
@@ -142,6 +143,7 @@
         "082990b002890a3eb24cb811bcf6f33c32f39b952dbfa742d641f7c6a2917797"
     ],
     "views/default/modules/install.pug": [
+        "2cf0d3206b40e39c6ba8c9d5d8e78f01c68b9813ca12a8a52df0588e31218dd8",
         "f4fb9c7ee54f9efcebdd4c8acb9f13b035088d27e2f73742348c696e8a5ab559"
     ],
     "views/default/modules/messaging.pug": [
@@ -154,6 +156,9 @@
     "views/default/modules/metadata_body.pug": [
         "311ef350d4e4c620106298bbbaae42ff622543d2d57858c9b279e4dd9b273565",
         "437972121376d3577044eee168869009909be9d4549dbb7c392cb5012e136772"
+    ],
+    "views/default/modules/serviceworker.pug": [
+        "74e9f3006289a09419ee4341b684aaa7fc2ece124c026adc93ee2b0fdc68e5bc"
     ],
     "views/default/modules/social.pug": [
         "208cc3a56bfbfba683b4d5149d52c8309aeb7b7091966f18af363dd0efd91be4"

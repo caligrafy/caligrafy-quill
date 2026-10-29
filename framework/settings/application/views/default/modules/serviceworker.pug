@@ -1,0 +1,20 @@
+//- Service worker (public/sw.js): registered when PWA_SERVICE_WORKER=true in .env, removed again when it is turned off.
+//- It only shows public/offline.html when a page cannot be loaded offline; it never caches pages, API routes or POST requests.
+- $service_worker_on = defined('PWA_SERVICE_WORKER') && filter_var(PWA_SERVICE_WORKER, FILTER_VALIDATE_BOOLEAN);
+if $service_worker_on
+    script.
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('#{$home}public/sw.js', { scope: '#{$home}' });
+            });
+        }
+else
+    script.
+        if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+            navigator.serviceWorker.getRegistrations().then(function (registrations) {
+                registrations.forEach(function (registration) {
+                    var worker = registration.active || registration.waiting || registration.installing;
+                    if (worker && worker.scriptURL === '#{$home}public/sw.js') registration.unregister();
+                });
+            });
+        }

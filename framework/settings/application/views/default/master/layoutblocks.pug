@@ -7,6 +7,8 @@ block headers
         meta(name="viewport", content="width=device-width, initial-scale=1, maximum-scale=1")
         meta(name='apple-mobile-web-app-capable', content='yes')
         meta(name='apple-mobile-web-app-status-bar-style', content='black')/
+        meta(name='theme-color', content='#ffffff')
+        link(rel='manifest', href="{$home}public/manifest.webmanifest")
         if $metadata
             include ../modules/metadata
         link(rel='shortcut icon', href=scripts('favicon'), type='image/x-icon')
@@ -75,4 +77,7 @@ block scripts
     block additional_preload_scripts
     script(src=scripts('script'))
     include ../modules/standalone
+    include ../modules/serviceworker
+    if $install
+        include ../modules/install
     block additional_scripts
