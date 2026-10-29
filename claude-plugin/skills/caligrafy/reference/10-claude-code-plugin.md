@@ -21,7 +21,7 @@ The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligraf
 
 The plugin also knows the Caligrafer maintenance commands and uses them: `php caligrafer.php doctor` (read-only health check of the project, its keys and its services) to diagnose problems first, and `php caligrafer.php upgrade` to bring an existing project up to date with the framework templates.
 
-Current version: **1.9.0**. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7), `doctor` (1.8) the PHPUnit unit tests of the framework core in the QA suite (1.8.1), and install to home screen, face login liveness and passkeys, and open-model providers such as Llama on OpenRouter or Ollama (1.9).
+Current version: **1.9.1**. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: the library upgrade (1.2), FaceDetector camera control (1.3), AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7), `doctor` (1.8), the PHPUnit unit tests of the framework core in the QA suite (1.8.1), install to home screen, face login liveness and passkeys, and open-model providers such as Llama on OpenRouter or Ollama (1.9), and the release notes and Testing Caligrafy pages (1.9.1). The [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#plugin) map each version to the framework change it follows.
 
 ## Installing the plugin
 
@@ -126,9 +126,9 @@ A typical first session:
 ```
 
 ## How the plugin's knowledge is maintained
-+ `skills/caligrafy/reference/0*.md` mirror the pages of this wiki, with a link to the source page at the top of each. They are refreshed with `python3 claude-plugin/scripts/sync-wiki.py <wiki clone>` (`--check` reports stale mirrors).
++ `skills/caligrafy/reference/0*.md`, `1*.md` and `wiki-sidebar.md` mirror the pages of this wiki (including the release notes and Testing Caligrafy), with a link to the source page at the top of each. They are refreshed with `python3 claude-plugin/scripts/sync-wiki.py <wiki clone>` (`--check` reports stale mirrors).
 + `api-reference.md` and `gotchas.md` are written from the framework source. When the two disagree, the source-verified files take precedence over the wiki.
-+ When `framework/` changes, these files need to be updated, the [QA suite](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#qa) run (`./qa/run.sh`, which also runs the PHPUnit unit tests in `qa/unit` with `vendor/bin/phpunit`) and the `version` in `claude-plugin/.claude-plugin/plugin.json` bumped. Claude also knows that projects created with an older framework keep older copies of the authentication module and client-app files in `application/` (see [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading)).
++ When `framework/` changes, these files need to be updated, the [QA suite](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy#qa) run (`./qa/run.sh`, which also runs the PHPUnit unit tests in `qa/unit` with `vendor/bin/phpunit`) and the `version` in `claude-plugin/.claude-plugin/plugin.json` bumped (see the [release process](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy#release)). Claude also knows that projects created with an older framework keep older copies of the authentication module and client-app files in `application/` (see [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading)).
 
 For plugin development, load it locally with `claude --plugin-dir ./claude-plugin` and validate it with `claude plugin validate ./claude-plugin --strict`.
 
@@ -136,4 +136,4 @@ For plugin development, load it locally with `claude --plugin-dir ./claude-plugi
 > + `php caligrafer.php initialize` deletes the `.git` folder. Claude asks before running it in a git repository.
 > + Claude never prints or commits the secrets in your `.env` file.
 
-**This the end of the documentation and the beginning of your journey!**
+**This is the end of the documentation and the beginning of your journey!**

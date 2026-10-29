@@ -19,23 +19,26 @@ Route::delete($uri, $callback);
 Keep the following rules in mind when you define routes:
 + A request matches a route when the HTTP method is the same and the path has the same number of segments, each fixed segment being identical. `{variables}` match any single segment.
 + The routes are evaluated in the order they are defined and the first match wins.
-+ When no route matches (an unknown URL or a wrong HTTP method), **the first route defined in the file is executed**. Caligrafy does not return a 404 by itself: keep `Route::get('/', ...)` as the first route.
-+ `Route::run();` must always be the last statement of the file.
++ When no route matches (an unknown URL or a wrong HTTP method), **the first route defined in the file is executed**. An unmatched URL does not return a 404: keep `Route::get('/', ...)` as the first route (the `/` route is only reached through this fallback).
++ `Route::run();` must always be the last statement inside the `try` block of the file.
 
 Your first reaction might be that HTML `forms` do not support `PUT` and `DELETE`. True that and the framework is capable of doing that work for you. You can check [here](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#htmlformmethods) how it is done.
 
 ## "Hello World" Route
-The most basic route provides a simple way to execute any method (through Closure) upon the definition of the route.
+The most basic route provides a simple way to execute any method (through Closure) upon the definition of the route. `application/config/routing/web.php` already has one `try` block, and the template already defines this route: add yours inside the `try`, before `Route::run();`.
 ```php
 try {
+    // ...
     Route::get('helloworld', function() {
             echo 'Hello World';
     });
+
+    Route::run();
 } catch (Exception $e) {
     Errors::handle($e);   // HTTP status code (404, 401, 403, 500...) with the error text, or JSON for API calls
 }
 ```
-You should be able to access it by navigating to `http://your-app/helloworld` in your browser. If you have not changed the name of the app folder `caligrafy` then you could use `http://localhost/caligrafy/helloworld`.
+You should be able to access it by navigating to `http://your-app/helloworld` in your browser: `http://localhost/caligrafy-quill/helloworld` on a local server where the folder is `caligrafy-quill`, or `http://localhost:8080/helloworld` with Docker.
 
 > #### (video) [Basic Routing](https://www.youtube.com/watch?v=VUxL2lVgs4E&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)
 >
@@ -68,7 +71,7 @@ This route would call the method `read` from `BookController`.
 
 Controllers can be namespaced: `Route::get('orders/{id}', 'Shop\OrderController@show');` (a leading backslash is accepted). A short name that is not a declared class falls back to the example controllers of `Caligrafy\Controllers` (`'ClientController'`, `'AuthController@login'`...), and a controller or action that does not exist returns a `404`. Learn more in [Namespaced controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#namespacedcontrollers).
 
-> Routes that point to a controller (`'BookController'` or `'BookController@read'`) are protected for API calls: a request that asks for JSON (`Accept: application/json`) must carry the `API_KEY` as a Bearer token. Routes defined with a closure (`function() {...}`) do not check the API key. Learn more about the [REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#restapi).
+> Routes that point to a controller (`'BookController'` or `'BookController@read'`) are protected for API calls: a request that asks for JSON (`Accept: application/json`) must carry the `API_KEY` as a Bearer token (the template enables the API with `Auth::activateAPI();` at the top of `web.php`: without it, every API call to a controller answers `401`). Routes defined with a closure (`function() {...}`) do not check the API key. Learn more about the [REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#restapi).
 Later on, you will learn how to create controllers.
 
 > #### (video) [Advanced Routing](https://www.youtube.com/watch?v=32UvcK2bSzo&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)

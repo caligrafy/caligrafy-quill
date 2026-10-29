@@ -15,7 +15,7 @@ Most of the concepts that we covered thus far - `Routing`, `Request`, `Models`, 
 + All the controllers that you create should be in the `/application/controllers` folder. In this folder, you can organize the controllers to your convenience. If you prefer to have your controllers in a different folder, you can always do that for as long as it is within the `/application` folder.
 
 + There is no formal naming convention for a controller. We do recommend that you remain consistent.
-> Learn more about naming conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#frameworkfundamentals)
+> Learn more about naming conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#fundamentals)
 
 + Every PHP file of `/application` is loaded on each request, so two classes with the same fully qualified name are a fatal error. The example controllers that come with Caligrafy (`application/controllers/core/`: `AIController`, `AdminController`, `AuthController`, `ClientController`, `WatsonController`) live in the `Caligrafy\Controllers` namespace, so you can give one of your controllers the same short name without a collision.
 
@@ -45,7 +45,7 @@ class BookController extends Controller {
 }
 ```
 
-+ The controllers that you create need to have at the very least, an `index` method. The `index` method gets called by default when no method is specified in the `Route`.
++ The `index` method gets called by default when no method is specified in the `Route`. The base `Controller` has an empty `index()`: override it in your controller.
 ```php
 
 use Caligrafy\Controller;
@@ -131,7 +131,7 @@ class MyController extends Controller {
      }
      public function addPublisher()
      {
-       // associate the controller with the Book model and the books table
+       // associate the controller with the Publisher model and the publishers table
        $this->associate('Publisher', 'publishers'); 
 
        // all controller methods executed below will be in the context of Publisher
@@ -198,7 +198,7 @@ public function save($inputs, $id = null); // saves an input Array or Model to t
 
 public function delete($id = null); // delete a specific entry. When id is not provided it is fetched from the requested URI
 
-public function search(String $scope = null, String $keywords = null); 
+public function search($scope = null, $keywords = null); // defaults to the scope and keywords of the request
 /* returns all entries in a Model with an attribute that matches the keyword search
  * $scope lists the columns, separated by commas. The keywords are bound, never inserted in the SQL
  * There are two wildcards that can be passed on with keywords:

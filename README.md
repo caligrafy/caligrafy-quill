@@ -15,73 +15,27 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 <br/>
 
-## 🎉 New release: Claude + Caligrafy Quill
+## 🎉 What's new (October 2026)
 
-Caligrafy Quill now ships with its own **[Claude Code](https://code.claude.com) plugin**. Open a Quill project in Claude Code and Claude knows the framework inside out: routes, controllers, models, relationships, validation, Pug views, the REST API, authentication, payments, Vue apps, bots, FaceDetect, machine learning and the OpenAI/Groq integrations.
++ **Current libraries and services:** PHP 8.3+ (Docker on PHP 8.5 and MySQL 8.4), Bootstrap 5 without jQuery (the Caligrafy look is kept), Vue 3.5 and a Vite 8 + Pinia SPA template, OpenAI GPT-6 and gpt-image-2, Assistants on the Responses API, the Stripe Payment Element, Coinbase Business, ml5 1.4 and @vladmandic/face-api.
++ **New tools:** `php caligrafer.php upgrade` brings an existing project up to date, `php caligrafer.php doctor` checks `.env`, the database and every configured service.
++ **New features:** real HTTP status codes and JSON errors, namespaced controllers, install to home screen, face login with liveness checks and passkeys, open models (Llama) on Groq, Together, Fireworks, OpenRouter or Ollama.
++ **Claude + Caligrafy Quill:** the framework ships with its own [Claude Code](https://code.claude.com) plugin: the complete documentation, a source-verified API reference, scaffolding commands and a code reviewer ([learn more](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)).
 
-**What the `caligrafy-quill` plugin gives Claude**
+**New projects** get everything automatically. **Existing projects:** follow the upgrade checklist of the **[Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026)**, which also lists every change and what can break.
 
-+ **The complete Caligrafy documentation**: every page of the [wiki](https://github.com/caligrafy/caligrafy-quill/wiki), bundled with the plugin
-+ **A source-verified API reference**: the exact signatures of `Controller`, `Model`, `Request`, `Route`, `Auth`, `Database`, the helpers and the AI/payment classes
-+ **Known gotchas**: framework behaviors and documentation errata checked against the source (API headers vs. CSRF, safe queries, Docker `.env` settings, port clashes and more)
-+ **Scaffolding and tooling commands**:
-    + `/caligrafy-quill:new-resource` - SQL script, Model, Controller and REST routes for a new entity
-    + `/caligrafy-quill:new-app` - Vue, SPA, bot, face detection or machine learning client apps, with their routes
-    + `/caligrafy-quill:server` - start/stop the Docker server after checking ports and `.env`
-    + `/caligrafy-quill:db` - run your `create_db.sql` scripts in the MySQL container
-+ **End-to-end recipes**: OpenAI and Groq chat apps (live model lists, image generation and understanding) and face login on `FaceDetector`
-+ **Troubleshooting**: `php caligrafer.php doctor` first, then the Docker notes (port clashes, corporate TLS proxies); `php caligrafer.php upgrade` for existing projects
-+ **A `caligrafy-reviewer` agent** that reviews your Caligrafy code, and a hook that runs `php -l` on every PHP file Claude edits
+<br/>
 
-### Get the plugin
+## Claude Code plugin
 
-**Automatic (recommended)**: create or clone a Quill project, open it in Claude Code and accept the "trust this folder" prompt. The project's `.claude/settings.json` registers the plugin's marketplace and enables it for you.
-
-```bash
-composer create-project -s dev caligrafy/caligrafy-quill my-app   # or: git clone https://github.com/caligrafy/caligrafy-quill.git my-app
-cd my-app
-claude
-```
-
-**Manual**: in any Claude Code session
-
-```
-/plugin marketplace add caligrafy/caligrafy-quill
-/plugin install caligrafy-quill@caligrafy
-```
-
-or from your terminal
+Open a Quill project in [Claude Code](https://code.claude.com) and accept the "trust this folder" prompt: the project's `.claude/settings.json` registers the plugin's marketplace and enables the `caligrafy-quill` plugin. To install it by hand:
 
 ```bash
 claude plugin marketplace add caligrafy/caligrafy-quill
 claude plugin install caligrafy-quill@caligrafy
 ```
 
-On Claude Code 2.1.275 or later you can also install in one step: `/plugin install caligrafy-quill --marketplace caligrafy/caligrafy-quill`.
-
-### Try it
-
-```
-/caligrafy-quill:server start
-/caligrafy-quill:new-resource Book title:string author:string publisher:fk
-/caligrafy-quill:db application/models/Book/create_db.sql
-/caligrafy-quill:new-app facedetect faceauth
-> Add login with the Caligrafy authentication module and protect /books with guard()
-> Review my BookController with the caligrafy-reviewer agent
-```
-
-The plugin lives in [`claude-plugin/`](claude-plugin/). See its [README](claude-plugin/README.md) for details.
-
-<br/>
-
-
-## 🔒 Security release
-
-This release hardens Caligrafy Quill: server files such as `.env` are no longer reachable from a browser, uploads cannot run scripts, client apps are protected against path traversal and script injection, queries are bound, and the authentication module hashes passwords. It also fixes many-to-many pivots with `UNSIGNED` ids, `DB_PORT`, Stripe checkout options, the OpenAI `COMPLETE` command and Assistant runs.
-
-It also moves Caligrafy to **current libraries and services**: PHP 8.3+ (Docker on PHP 8.5 and MySQL 8.4), Bootstrap 5 without jQuery, Vue 3.5 and a Vite 8 + Pinia SPA template, the current OpenAI models and image API, Assistants on the Responses API, the Stripe Payment Element and Checkout URLs, Coinbase Business for crypto payments, current Groq models, ml5 1.4 and p5 2.3, and @vladmandic/face-api. `theme.css` keeps the Caligrafy black and white look and layout on Bootstrap 5, and `FaceDetector` can now report camera errors (`startStream()`) and compute face prints for face login (`faceprint()`). Installed apps get a web app manifest and an optional offline page, face login adds liveness challenges, anti-replay checks and passkeys (WebAuthn), and `Agent` runs open models such as Llama on Groq, Together, Fireworks, OpenRouter or a local Ollama.
-
-**New projects** created or cloned with this release get all the fixes automatically. **Existing projects:** updating the framework does not update the copies in your `application` folder. Run `php caligrafer.php upgrade` (dry run) then `php caligrafer.php upgrade --apply`: untouched files are updated with a backup and customized ones get a `.caligrafy-new` version next to them. Then run `php caligrafer.php doctor`: a read-only health check of `.env`, the database and the services it configures (OpenAI and Groq keys and models, Stripe, Coinbase, Watson, SMTP), with a fix for each problem ([Caligrafer doctor](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#doctor)). The manual steps remain in [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading), [Upgrading to the current libraries](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#libraries) and review the [behavior changes](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#changes).
+The plugin lives in [`claude-plugin/`](claude-plugin/); its [README](claude-plugin/README.md) lists the commands, the reviewer agent and the changelog.
 
 <br/>
 
@@ -101,7 +55,7 @@ It also moves Caligrafy to **current libraries and services**: PHP 8.3+ (Docker 
 
 > #### ![](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/play.png) [Installing Caligrafy](https://youtu.be/21Lazd38FfQ)
 >
-> In this video we introduce you to the Caligrafy framework and to the different components that are used in it.
+> In this video we show you how to install Caligrafy on a local Apache/MySQL/PHP server.
 
 <br/>
 
@@ -113,19 +67,21 @@ It also moves Caligrafy to **current libraries and services**: PHP 8.3+ (Docker 
 
     ```
 
-+ Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill?tab=readme-ov-file#using-docker) 
++ Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#using-docker) 
 
-+ Run the following code in from the Caligrafy root folder to initialize the framework
++ Run the following code from the Caligrafy root folder to initialize the framework
 
     ```bash
 
-    php caligrafer.php server start
+    php caligrafer.php initialize
 
     #or
 
-    .bin/caligrafer server start
+    .bin/caligrafer initialize
 
     ``` 
+
+    It signs the project with an `APP_KEY` and an `API_KEY`, creates the `application` folder, sets `APP_ROOT` to the name of the folder and deletes the `.git` folder.
 
     <br />
 
@@ -165,21 +121,16 @@ This method requires Docker to be installed on your local machine. With Docker, 
 + Run the following code from the Caligrafy root folder to start the Caligrafy server
 
     ```bash
-    
-    #if you have php
-    php caligrafer.php server start
-
-    #in all cases
     .bin/caligrafer server start
-
     ``` 
 
-+ Add/Modify the following to the .env file if not accurate: `APP_ROOT=''` (leave blank)
+    + **With PHP and Composer on your machine**, `.bin/caligrafer` installs the dependencies and initializes the project when needed, then starts the `dev-box` container with your folder mounted into it. Check that `.env` has `APP_ROOT=` (blank). The site is at `http://localhost:8080`.
+    + **Without PHP**, it starts the `prod-box` container: the code is copied into the image and `.env` comes from `framework/settings/.env.docker`. The site is at `http://localhost:8080/caligrafy-quill`.
 
 + Run `server stop` instead of `server start` to stop the server at all time
 
 **Testing the Installation**
-+ Once started, you can access the website locally via `http://localhost:8080`
++ Once started, you can access the website locally via `http://localhost:8080` (`http://localhost:8080/caligrafy-quill` with `prod-box`)
 
 **Testing the Database provided in Docker**
 + In both commands, a `phpmyadmin` instance  has been added and can be accessible at `http://localhost:8077/`
@@ -198,7 +149,7 @@ This method requires Docker to be installed on your local machine. With Docker, 
 + Change the other values in .env file to match your local or production server settings
 + Run `composer install` to get all the dependencies needed
 + Initialize the application folder by running the following `cp -r framework/settings/application ./application`
-+ Make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `sudo chmod -R 777 /public/uploads`
++ Make the folder `/public/uploads/` writable if you intend to allow uploads in your application. You will need to run the command `chmod -R 777 public/uploads` from the Caligrafy root
 + You are good to go!
 
 ### Testing the Installation
@@ -220,7 +171,7 @@ composer install
 ./qa/run.sh            # add --keep to leave the stack running for debugging
 ```
 
-It needs Docker, PHP with curl and Node.js, and refuses to run when an `application` folder or a `.env` file that it did not create is present (use a clean checkout of the framework).
+It needs Docker, PHP with curl and Node.js, and refuses to run when an `application` folder or a `.env` file that it did not create is present (use a clean checkout of the framework). It also runs the PHPUnit unit tests of `qa/unit` (`vendor/bin/phpunit` runs them alone, without Docker), and `QA_NO_BUILD=1 ./qa/run.sh` reuses an existing image when the Docker image cannot be built on your network. Learn more in [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy).
 
 <br />
 
@@ -260,6 +211,7 @@ This framework uses several third-party librairies that are included in the dist
 + claviska/SimpleImage is used to provide the ability to do server-side manipulations on images
 + stripe/stripe-php 22 is used for payment features (Stripe.js Payment Element on the client)
 + PHPMailer 7 sends emails, lucianotonet/groq-php connects to Groq
++ lbuchs/webauthn 2 verifies passkeys (WebAuthn); PHPUnit 12 runs the unit tests of the framework (development only)
 + Bootstrap 5.3, Vue 3.5 and axios 1.20 (pinned CDN versions) power the default views and client apps; jQuery is no longer required
 + Cryptocurrency payments use the Coinbase Business Checkouts API (no SDK needed)
 
@@ -291,7 +243,7 @@ We have created a rigorous documentation to help you understand the basics of th
 4. [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models)
     > + [Relational Databases](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models)
     > + [Model Fundamentals](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models#modelfundamentals)
-    > + [Interfacing with the Model](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models#modelfundamentals)
+    > + [Interfacing with the Model](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models#modelinterface)
     > + [Model Methods](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models#modelmethods)
 5. [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships)
     > + [One-to-One Relationship](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships)
@@ -325,6 +277,11 @@ We have created a rigorous documentation to help you understand the basics of th
 12. [Metadata & Rich Cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards)
 13. [Search Referencing and Analytics](https://github.com/caligrafy/caligrafy-quill/wiki/9.4-Search-Referencing-and-Analytics)
 14. [Security and Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading)
+
+### Release notes and contributing
+
++ [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026): every change of October 2026, with an upgrade checklist for existing projects
++ [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy): the QA suite, the unit tests and the release process, for contributors
 
 ### Caligrafy and Vue.js
 

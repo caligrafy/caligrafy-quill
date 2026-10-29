@@ -4,7 +4,7 @@ Gives Claude Code full knowledge of the [Caligrafy Quill](https://github.com/cal
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 35 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G48) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 37 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G49) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + Controller (filter/validate CRUD) + REST routes |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
@@ -29,7 +29,7 @@ Local development: `claude --plugin-dir ./claude-plugin`, and `claude plugin val
 
 ## Updating the knowledge
 
-The files in `skills/caligrafy/reference/0*.md`, `10-claude-code-plugin.md` and `wiki-sidebar.md` mirror the wiki
+The files in `skills/caligrafy/reference/0*.md`, `1*.md` and `wiki-sidebar.md` mirror the wiki
 (https://github.com/caligrafy/caligrafy-quill/wiki) with a source link at the top of each. Refresh them from a wiki clone:
 ```
 git clone https://github.com/caligrafy/caligrafy-quill.wiki.git ../caligrafy-quill.wiki
@@ -41,6 +41,12 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.9.1** - Documentation of the October 2026 changes: new wiki pages "Release notes: October 2026" (upgrade
+  checklist, every change with what to do in new and existing projects, compatibility summary) and "Testing Caligrafy"
+  (QA phases, `qa/unit`, mocks, adding tests, release process), mirrored as `11-release-notes-october-2026.md` and
+  `12-testing-caligrafy.md` and listed in the skill index. Wiki pages reviewed against the source (installation commands,
+  Vue 3 examples, AI method signatures, error status codes, payments, authentication paths) and mirrors synced.
+  G25: `initialize` always rewrites `APP_ROOT`; server skill: `APP_ROOT=` for dev-box. Skill: PHP >= 8.3.
 - **1.9.0** - Install to home screen: web app manifest, optional offline service worker (`PWA_SERVICE_WORKER`),
   `modules/install.pug` (Chrome/Edge/Android install button, iOS hint), doctor web app check. Face login security:
   `FaceDetector.liveness()` challenges, `Caligrafy\FaceLogin` single-use nonces and anti-replay checks, passkeys
