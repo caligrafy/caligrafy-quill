@@ -42,7 +42,7 @@ $defaultMsg = "\n Available Functions:
 				\n - initialize: Initializes and signs your project
 				\n - upgrade [--apply] [--force <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
-				\n - server <start | stop>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker)
+				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
 				\n - create <project_name>: scaffolds a Vue project
@@ -56,6 +56,15 @@ $defaultMsg = "\n Available Functions:
 if($argc < 2) {
     print($defaultMsg);
     exit;
+}
+
+/**
+ * Docker Compose command: the Compose v2 plugin (docker compose) when available, else the legacy docker-compose
+ */
+function caligrafyCompose()
+{
+    exec('docker compose version 2>/dev/null', $out, $code);
+    return $code === 0 ? 'docker compose' : 'docker-compose';
 }
 
 switch(strtolower($argv[1])) {
@@ -105,6 +114,10 @@ switch(strtolower($argv[1])) {
 		   file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);
 		   if (!is_dir("./application")) {
 			system('cp -r framework/settings/application ./application', $retValue);
+			if ($retValue !== 0 || !is_dir("./application")) {
+				print("\n\n Initialization failed: framework/settings/application could not be copied to ./application.\n Check that the framework folder is complete, then run 'php caligrafer.php initialize' again.\n\n");
+				exit(1);
+			}
 			// records the template versions so that 'upgrade' can tell untouched files from customized ones
 			Caligrafy\Upgrader::writeManifest('.');
 		   }
@@ -165,15 +178,22 @@ switch(strtolower($argv[1])) {
 	case 'server':
 		if (isset($argv[3])) {
 			if (isset($argv[2]) && strtolower($argv[2]) == "start") {
-				system('docker-compose up --build -d dev-box', $retValue);
+				// builds the image only the first time (or after 'server rebuild'): later starts take seconds
+				system(caligrafyCompose() . ' up -d dev-box', $retValue);
 				if ($retValue) {
 					print(" You don't have a server running.\n Start your local apache server if you have one. \n If not, check the Caligrafy documentation to run docker. \n\n");
 				} else {
 					print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
 				}
 			} 
+			elseif (isset($argv[2]) && strtolower($argv[2]) == "rebuild") {
+				// rebuilds the image (after a Dockerfile change or to update the system packages), then starts it
+				system(caligrafyCompose() . ' build --pull dev-box', $retValue);
+				if (!$retValue) system(caligrafyCompose() . ' up -d dev-box', $retValue);
+				print($retValue ? "\n\nThe Caligrafy server image could not be rebuilt.\n\n" : "\n\nCaligrafy Server rebuilt and started: http://localhost:8080\n\n");
+			}
 			elseif (isset($argv[2]) && strtolower($argv[2]) == "stop") {
-				system('docker-compose stop', $retValue);
+				system(caligrafyCompose() . ' stop', $retValue);
 				print("\n\nCaligrafy Server stopped.\n\n");
 			}
 		}

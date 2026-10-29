@@ -145,6 +145,10 @@ grep -qF "nav(class='horizontal row g-0')" framework/settings/application/views/
     && grep -qF 'body:where(#gesturize, .caligrafy-layout) header nav.horizontal.row > h1' public/css/theme.css \
     && ok "theme.css gives the signed-in header columns the Bootstrap 3 15px padding and keeps the title next to the menu icon" \
     || ko "the signed-in header lost its Bootstrap 3 column padding or title position in theme.css"
+grep -q -- '--no-install-recommends' docker/Dockerfile && grep -q 'https://deb.debian.org' docker/Dockerfile && [ -f .dockerignore ] && grep -qx 'vendor' .dockerignore && grep -qx '.git' .dockerignore \
+    && ! grep -q "up --build -d dev-box" caligrafer.php \
+    && ok "server image builds fast (slim Dockerfile over HTTPS, .dockerignore) and 'server start' does not force a rebuild" \
+    || ko "server start or the Docker build is slow again (Dockerfile, .dockerignore or --build in caligrafer.php)"
 BADENV=""
 for f in framework/settings/.env.example .env.example framework/settings/.env.docker; do
     [ -f "$f" ] && ! php -r 'exit(@parse_ini_file($argv[1]) === false ? 1 : 0);' "$f" && BADENV="$BADENV $f"

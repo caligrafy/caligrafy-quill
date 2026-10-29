@@ -37,14 +37,14 @@ if  [ $? -eq 0 ]; then
         ./caligrafer.php $MODE $COMMAND $SERVER
     elif [ -d "./vendor" ]; then
         printf "\n\nCaligrafy needs to be initialized first\n\n"
-        ./caligrafer.php initialize $SERVER
+        ./caligrafer.php initialize $SERVER || exit 1
         if [ $MODE != "initialize" ]; then
             ./caligrafer.php $MODE $COMMAND $SERVER
         fi
     else
         printf "\n\nIt seems that you have downloaded Caligrafy directly from Github.\nLet's get the dependencies first...\n\n"
         composer install
-        ./caligrafer.php initialize $SERVER
+        ./caligrafer.php initialize $SERVER || exit 1
 
         if [ $MODE != "initialize" ]; then
             ./caligrafer.php $MODE $COMMAND $SERVER

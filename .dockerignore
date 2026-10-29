@@ -1,0 +1,13 @@
+# Files Docker does not need to build the images: keeps the build context small and builds fast.
+# The dev image (dev-box) uses no project file at all: the project is mounted at /var/www/html.
+# The prod image (prod-box) copies composer.*, .htaccess, *.php, framework/, public/, .env and application/.
+.git
+.github
+vendor
+**/node_modules
+qa
+backups
+claude-plugin
+.claude
+*.log
+.DS_Store

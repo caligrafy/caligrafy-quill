@@ -394,7 +394,7 @@ Errors are caught in `web.php` by `Errors::handle($e)`: HTTP status from `Errors
 | `generateapikey` | prints an extra API key for the current `APP_KEY` |
 | `create <name>` | copies `framework/librairies/app` (Vue 3 + Vite + vue-router + vuex SPA) to `public/<name>` and runs `npm install` |
 | `app <name>` / `bot <name>` / `facedetect <name>` / `ml <name>` | copies `framework/plugins/<type>` to `public/<name>` |
-| `server start|stop` | only acts when a 3rd arg is present (`.bin/caligrafer` adds `off` if no `httpd` process): `docker-compose up --build -d dev-box` / `docker-compose stop` |
+| `server start|stop|rebuild` | only acts when a 3rd arg is present (`.bin/caligrafer` adds `off` if no `httpd` process): `docker compose up -d dev-box` (builds the image only when it does not exist) / `docker compose stop` / `build --pull` then `up -d` (Compose v2 plugin, legacy `docker-compose` as fallback) |
 Reserved app names: `app, bot, __bots__, css, facedetect, fonts, images, js, ml, resources, uploads`.
 
 `.bin/caligrafer`: if PHP and Composer exist, runs `composer install` and `initialize` when needed, then `./caligrafer.php <mode> <command> [off]` (`upgrade` and `doctor` get their arguments unchanged; `doctor` never runs `composer install` or `initialize`); without PHP it runs `.bin/server start|stop` (Docker `prod-box`, which copies the code into the image).

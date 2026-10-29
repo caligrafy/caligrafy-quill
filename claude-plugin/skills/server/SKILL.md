@@ -37,9 +37,9 @@ Report which services of this project run, their host ports, and the URLs (app `
    ```
    It only starts Docker when no local `httpd` (MAMP/LAMP) process is running; if one is, either stop it or run directly:
    ```bash
-   docker-compose up --build -d dev-box
+   docker compose up -d dev-box
    ```
-   (`dev-box` mounts the project, so code edits are live; `prod-box`, used by `.bin/server` when PHP is not installed, copies the code into the image and needs a rebuild for every change.)
+   The first start builds the image (about 5 minutes: system libraries over HTTPS, then the PHP extensions gd, intl, zip, pdo_mysql, bcmath); later starts take seconds because `server start` (`docker compose up -d`) never rebuilds an existing image. Use `.bin/caligrafer server rebuild` to rebuild on purpose. (`dev-box` mounts the project, so code edits are live; `prod-box`, used by `.bin/server` when PHP is not installed, copies the code into the image and needs a rebuild for every change.)
 7. **Verify**: `curl -s -o /dev/null -w '%{http_code}\n' http://localhost:<port>/` (expect 200) and report the app, phpMyAdmin and MySQL (`host 127.0.0.1`, port, `root`/`root`) endpoints. First MySQL start can take ~20 s; retry before declaring failure.
 
 ## stop

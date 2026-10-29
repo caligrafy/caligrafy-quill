@@ -1,22 +1,25 @@
 #!/bin/bash
 
+# Docker Compose v2 plugin when available, else the legacy docker-compose
+if docker compose version >/dev/null 2>&1; then COMPOSE="docker compose"; else COMPOSE="docker-compose"; fi
+
 
 start() {
     printf "\n\n Building the Caligrafy development server...\n\n"
-    docker-compose up --build -d prod-box
+    $COMPOSE up --build -d prod-box
     if [ $? -eq 0 ]; then
         clear
         printf "\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080/caligrafy-quill \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n"
         printf "\n\nMonitoring server changes in the application folder...\n\nPress CTRL-C at any point to exit \n\n"
-        #watch "./application" "*.*" "docker-compose up --build -d prod-box"
-        watch "" "*.*" "docker-compose up --build -d prod-box"
+        #watch "./application" "*.*" "$COMPOSE up --build -d prod-box"
+        watch "" "*.*" "$COMPOSE up --build -d prod-box"
     else
         printf "\nCaligrafy server could not be found \n\n"
     fi
 }
 
 stop() {
-    docker-compose stop
+    $COMPOSE stop
     if [ $? -eq 0 ]; then
         clear
         printf "\n\nCaligrafy Server stopped.\n\n"
@@ -88,10 +91,12 @@ if [ $? -eq 0 ]; then
     if [[ $1 == "start" ]]; then
         initialize
         start
+    elif [[  $1 == "rebuild" ]]; then
+        $COMPOSE build --pull prod-box && start
     elif [[  $1 == "stop" ]]; then
         stop
     else
-        printf "\nUse 'server start' to start the server or  'server stop' to stop it \n\n"
+        printf "\nUse 'server start' to start the server, 'server rebuild' to rebuild its image or 'server stop' to stop it \n\n"
     fi
 else
     printf "\n Docker is needed in order for Caligrafy to run locally without a php server.\n Install Docker and try again.\n\n"

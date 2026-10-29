@@ -91,9 +91,11 @@ This method requires Docker to be installed on your local machine. With Docker, 
     .bin/caligrafer server start
     ``` 
 
-    + **With PHP and Composer on your machine**, `.bin/caligrafer` installs the dependencies and initializes the project when needed, then starts the `dev-box` container with your folder mounted into it: your changes are live. Check that `.env` has `APP_ROOT=` (blank). (`php caligrafer.php server start` alone does nothing: the command is meant to be called through `.bin/caligrafer`. Without it, run `docker-compose up --build -d dev-box`.)
+    + **With PHP and Composer on your machine**, `.bin/caligrafer` installs the dependencies and initializes the project when needed, then starts the `dev-box` container with your folder mounted into it: your changes are live. Check that `.env` has `APP_ROOT=` (blank). (`php caligrafer.php server start` alone does nothing: the command is meant to be called through `.bin/caligrafer`. Without it, run `docker compose up -d dev-box`.)
     + **Without PHP**, `.bin/caligrafer` runs `.bin/server`, which starts the `prod-box` container: the code is copied into the image, `.env` is created from `framework/settings/.env.docker` (`APP_ROOT=caligrafy-quill`) and the image is rebuilt when files change. The site is then at `http://localhost:8080/caligrafy-quill`.
 
++ **How long it takes.** The first start builds the server image: it downloads a few system libraries and compiles the PHP extensions Caligrafy needs (gd, intl, zip, pdo_mysql, bcmath), which takes about 5 minutes. Every later start reuses the image and takes a few seconds; a new project on the same machine reuses Docker's build cache.
++ Run `server rebuild` to rebuild the image on purpose (after a Dockerfile change, or to update its system packages); `server start` never rebuilds an image that already exists.
 + Run `server stop` instead of `server start` to stop the server at all time
 
 **Testing the Installation**

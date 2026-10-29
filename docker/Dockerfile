@@ -1,27 +1,24 @@
 ## Build Dev
 FROM php:8.5-apache AS dev-php
-RUN apt-get update && apt-get install -y \
+# Only the libraries needed to build the extensions that php:8.5-apache does not already include
+# (curl, mbstring, openssl, xml and zlib are built in): gd (freetype, jpeg, png), intl (icu) and zip (libzip).
+# --no-install-recommends keeps the download small. The Debian mirror is used over HTTPS (much faster than plain HTTP
+# on some proxied networks), falling back to HTTP when HTTPS to the mirror fails (e.g. an untrusted proxy certificate).
+RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources \
+    && (apt-get update || (sed -i 's|https://deb.debian.org|http://deb.debian.org|g' /etc/apt/sources.list.d/debian.sources && apt-get update)) \
+    && apt-get install -y --no-install-recommends \
         libfreetype6-dev \
-        libjpeg-dev \
+        libjpeg62-turbo-dev \
         libpng-dev \
         libzip-dev \
-        libcurl4-gnutls-dev \
         libicu-dev \
-        libxml2-dev \
-        libssl-dev \
-        libonig-dev \
-        libldap2-dev \
-        zlib1g-dev \
-    && rm -r /var/lib/apt/lists/*
-RUN cp /etc/apache2/mods-available/rewrite.load /etc/apache2/mods-enabled/ && \
-    cp /etc/apache2/mods-available/headers.load /etc/apache2/mods-enabled/
+    && rm -rf /var/lib/apt/lists/*
+RUN a2enmod rewrite headers
 RUN docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j$(nproc) \
         bcmath \
-        curl \
         gd \
         intl \
-        mbstring \
         pdo_mysql \
         zip
 

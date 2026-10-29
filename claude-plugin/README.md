@@ -41,6 +41,10 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.9.2** - Fast Docker server: `server start` no longer forces a rebuild (`docker compose up -d`), new `server rebuild`,
+  slim Dockerfile (5 system libraries over HTTPS with HTTP fallback, `--no-install-recommends`, no rebuilt built-in
+  extensions), `.dockerignore`; `initialize` stops when the application template cannot be copied. Server skill,
+  API reference and Getting Started updated.
 - **1.9.1** - Documentation of the October 2026 changes: new wiki pages "Release notes: October 2026" (upgrade
   checklist, every change with what to do in new and existing projects, compatibility summary) and "Testing Caligrafy"
   (QA phases, `qa/unit`, mocks, adding tests, release process), mirrored as `11-release-notes-october-2026.md` and
