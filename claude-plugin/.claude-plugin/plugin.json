@@ -1,6 +1,6 @@
 {
   "name": "caligrafy-quill",
-  "version": "1.9.2",
+  "version": "1.9.3",
   "description": "Claude expertise for the Caligrafy Quill PHP MVC framework: the complete Caligrafy wiki plus a source-verified API reference, gotchas and end-to-end recipes (AI chat apps, face login), scaffolding skills (new-resource, new-app), Docker server and database skills, a Caligrafy code reviewer agent, and a php -l hook.",
   "author": {
     "name": "Dory Azar",

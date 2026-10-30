@@ -125,10 +125,11 @@
     * Liveness in the browser raises the bar against photos and replayed prints, it is not proof against a determined
     * attacker (a deepfake video or a modified page can pass): keep a passkey for sensitive accounts.
     * @options: Optional.
-    *   - challenges: Array of 'blink', 'turn-left', 'turn-right', 'smile' (default ['blink', 'turn-left']).
+    *   - challenges: Array of 'turn-left', 'turn-right', 'smile' (default ['turn-left', 'smile']).
     *     Left and right are the person's own left and right
     *   - timeout: Integer. ms for the whole check (default 20000)
-    *   - prints: Integer. face prints to capture (default 4, at least one per challenge when possible)
+    *   - prints: Integer. face prints to capture (default 4, at least one per challenge when possible). The check
+    *     passes only once min(prints, 3) are captured: FaceLogin::verify() wants 3 to 12 prints
     *   - printInterval: Integer. minimum ms between 2 prints (default 350)
     *   - onProgress: Function({ challenge, index, total, passed }) called when a challenge starts or passes
     *   - thresholds: Object. overrides of FaceDetector.LIVENESS_THRESHOLDS
@@ -139,7 +140,7 @@
         if (!media) {
             throw new Error('No media element to check');
         }
-        const settings = Object.assign({ challenges: ['blink', 'turn-left'], timeout: 20000, prints: 4, printInterval: 350, onProgress: null }, options);
+        const settings = Object.assign({ challenges: ['turn-left', 'smile'], timeout: 20000, prints: 4, printInterval: 350, onProgress: null }, options);
         const tracker = new LivenessTracker(settings.challenges, settings.thresholds);
         const prints = [];
         const start = Date.now();
@@ -175,7 +176,7 @@
                 }
                 if (tracker.index > before) { progress(true); }
             }
-            if (tracker.done() && prints.length >= Math.min(settings.prints, 2)) {
+            if (tracker.done() && prints.length >= Math.min(settings.prints, 3)) {
                 reason = null;
                 break;
             }
@@ -197,13 +198,6 @@
     * Pure helpers of the liveness check (also used by the QA tests in Node)
     */
 
-    // eye aspect ratio of the 6 points of one eye (68-point landmarks 36-41 or 42-47): about 0.3 open, under 0.2 closed
-    static eyeAspectRatio(eye) {
-        const d = (a, b) => Math.hypot(a.x - b.x, a.y - b.y);
-        const width = d(eye[0], eye[3]);
-        return width > 0 ? (d(eye[1], eye[5]) + d(eye[2], eye[4])) / (2 * width) : 0;
-    };
-
     // head yaw from 68-point landmarks: 0 facing the camera, > 0 turned to the person's own left, < 0 to their right
     // (in the camera image the person's left is on the right: the nose moves towards jaw point 16)
     static headYaw(points) {
@@ -212,10 +206,9 @@
         return width > 0 ? ((nose.x - left.x) / width - 0.5) * 2 : 0;
     };
 
-    // summary of one detection used by LivenessTracker: { ear, yaw, happy, at }
+    // summary of one detection used by LivenessTracker: { yaw, happy, at }
     static frameSummary(points, expressions, at) {
-        const ear = (FaceDetector.eyeAspectRatio(points.slice(36, 42)) + FaceDetector.eyeAspectRatio(points.slice(42, 48))) / 2;
-        return { ear: ear, yaw: FaceDetector.headYaw(points), happy: expressions && typeof expressions.happy === 'number' ? expressions.happy : 0, at: at };
+        return { yaw: FaceDetector.headYaw(points), happy: expressions && typeof expressions.happy === 'number' ? expressions.happy : 0, at: at };
     };
 
 
@@ -679,16 +672,14 @@
 }
 /*
  * Default thresholds of the liveness check (FaceDetector.liveness({ thresholds }) overrides them)
- * - openEar: minimum eye aspect ratio of an open eye; closedRatio / reopenRatio: a blink is an open eye, then a ratio
- *   under closedRatio x the open value, then back over reopenRatio x the open value
  * - frontalYaw / turnYaw: a turn starts facing the camera (|yaw| <= frontalYaw) and reaches |yaw| >= turnYaw
  * - neutral / smile: a smile starts with happy <= neutral and reaches happy >= smile (face-api expression scores)
  */
-FaceDetector.LIVENESS_CHALLENGES = ['blink', 'turn-left', 'turn-right', 'smile'];
-FaceDetector.LIVENESS_THRESHOLDS = { openEar: 0.18, closedRatio: 0.7, reopenRatio: 0.85, frontalYaw: 0.15, turnYaw: 0.3, neutral: 0.3, smile: 0.8 };
+FaceDetector.LIVENESS_CHALLENGES = ['turn-left', 'turn-right', 'smile'];
+FaceDetector.LIVENESS_THRESHOLDS = { frontalYaw: 0.15, turnYaw: 0.3, neutral: 0.3, smile: 0.8 };
 
 /*
- * State machine of the liveness check: feed it frame summaries ({ ear, yaw, happy, at }) with add(), it moves to the
+ * State machine of the liveness check: feed it frame summaries ({ yaw, happy, at }) with add(), it moves to the
  * next challenge when the current one is seen. Pure (no camera, no face-api): FaceDetector.liveness() feeds it
  */
 class LivenessTracker {
@@ -709,7 +700,7 @@ class LivenessTracker {
 
     // state of the current challenge
     reset() {
-        this.state = { phase: 0, peak: 0 };
+        this.state = { phase: 0 };
     }
 
     current() {
@@ -732,15 +723,6 @@ class LivenessTracker {
         const t = this.t, s = this.state;
         let passed = false;
         switch (this.current()) {
-            case 'blink':
-                // phase 0: eye open, 1: eye closed, then open again
-                if (s.phase === 0) {
-                    if (frame.ear >= t.openEar) { s.peak = Math.max(s.peak, frame.ear); }
-                    if (s.peak > 0 && frame.ear <= s.peak * t.closedRatio) { s.phase = 1; }
-                } else if (frame.ear >= s.peak * t.reopenRatio) {
-                    passed = true;
-                }
-                break;
             case 'turn-left':
             case 'turn-right': {
                 const sign = this.current() === 'turn-left' ? 1 : -1;

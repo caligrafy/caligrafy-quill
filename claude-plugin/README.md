@@ -41,6 +41,13 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.9.3** - Face login: the `blink` liveness challenge is removed (unreliable on real cameras; `liveness()` refuses it);
+  the server picks 2 of `turn-left`, `turn-right`, `smile` in a random order (`FaceLogin::$count` 2) and `liveness()`
+  passes only with the 3 prints `FaceLogin::verify()` needs. New face login UI in the recipe and the QA fixture, in the
+  Caligrafy black and white look: Sign in / Enrol tabs, oval face guide with placement hints, prompts on the video,
+  liveness started when the face is in the oval, password sign-in and account creation on the page
+  (`/facelogin/password`, `/facelogin/register`, with the lockout). Recipe, API reference, G42, new-app skill, wiki
+  9.9.2 and the October 2026 release notes updated.
 - **1.9.2** - Fast Docker server: `server start` no longer forces a rebuild (`docker compose up -d`), new `server rebuild`,
   slim Dockerfile (5 system libraries over HTTPS with HTTP fallback, `--no-install-recommends`, no rebuilt built-in
   extensions), `.dockerignore`; `initialize` stops when the application template cannot be copied. Server skill,

@@ -6,7 +6,7 @@
 > Related gotchas: G16 (`Vue.markRaw`), G42 (face-api, liveness, face prints, passkeys), G47 (controller names), G48 (error status codes).
 
 **Security first - tell the user.**
-- Face login runs in the browser. The liveness check (blink, head turns, smile, in an order chosen by the server) stops
+- Face login runs in the browser. The liveness check (head turns and a smile, in an order chosen by the server) stops
   photos; the single-use nonce and the rule "prints must differ and never have been used before" stop replayed
   requests. It is **not** proof against a determined attacker: a deepfake video fed through a virtual camera, or a
   modified page that sends made-up prints, can pass. Browser-side checks raise the bar, they do not prove a live person.
@@ -26,8 +26,11 @@ Policies (`FaceLoginController::PASSKEY_POLICY`, for accounts that registered a 
 Accounts without a passkey log in with the face alone under every policy. To protect them, make a passkey a
 condition of enrolment (for example: enrol() refuses accounts with `permissions >= 1` until they have a passkey).
 
-End result: a `facedetect` client app (`/caligrafy-quill:new-app facedetect facelogin`) where a user who logged in with
-their password enrols their face (with a liveness check) and adds a passkey, then logs in with the face, the passkey, or both.
+End result: a `facedetect` client app (`/caligrafy-quill:new-app facedetect facelogin`) in the Caligrafy black and white
+look, with two tabs. **Enrol your face**: the user signs in with their password (or creates an account) on the page,
+scans their face (liveness check) and can add a passkey. **Sign in**: the camera shows an oval guide with placement hints;
+when the face is in the oval the liveness check starts by itself, with the prompts on the video, then the face is
+matched (and the passkey asked for, for accounts that have one). A passkey button is always offered.
 
 ## 1. Tables
 
@@ -89,8 +92,10 @@ The MySQL container runs in UTC, so `CURRENT_TIMESTAMP` defaults are UTC: write 
 ## 2. Routes
 
 ```php
-// application/config/routing/web.php - Auth::authentication('User', 'users') and the Auth routes (/login, /register) enabled
+// application/config/routing/web.php - Auth::authentication('User', 'users') enabled (user(), authorized())
 // the page: /apps/facelogin (generic route)
+Route::post('/facelogin/password', 'FaceLoginController@password');   // password sign-in from the page (before enrolment)
+Route::post('/facelogin/register', 'FaceLoginController@register');   // new account from the page
 Route::post('/facelogin/start', 'FaceLoginController@start');
 Route::post('/facelogin/enroll', 'FaceLoginController@enroll');
 Route::post('/facelogin/login', 'FaceLoginController@login');
@@ -107,11 +112,16 @@ need https, except on localhost.
 
 ## 3. Flow
 
-1. `POST /facelogin/start` -> `FaceLogin::challenge($username)`: a 64-hex nonce and 3 of `blink`, `turn-left`,
-   `turn-right`, `smile` in a random order, kept in the session with their expiry (60 s). A new start replaces the old one.
-2. Browser: `await detector.liveness({ challenges })` prompts each challenge, follows the eye aspect ratio (blink), the
-   head yaw (turns, the person's own left and right) and the `happy` expression (smile) frame by frame, and captures
-   4 face prints while the person moves.
+0. Enrolment only: `POST /facelogin/password { username, password }` (or `/facelogin/register` for a new account, same
+   rules as the authentication module's `/register`: letters and digits, 8 to 72 characters) signs the user in. Failures
+   count for the same lockout as face login (5 -> 60 s, 429); an unknown username costs the same bcrypt work as a wrong
+   password. Then `POST /facelogin/start { enroll: true }` + `/facelogin/enroll` as below.
+1. `POST /facelogin/start` -> `FaceLogin::challenge($username)`: a 64-hex nonce and 2 of `turn-left`, `turn-right`,
+   `smile` in a random order (6 possible sequences; `FaceLogin::$count`, 1 to 3), kept in the session with their expiry
+   (60 s). A new start replaces the old one.
+2. Browser: `await detector.liveness({ challenges })` prompts each challenge, follows the head yaw (turns, the person's
+   own left and right) and the `happy` expression (smile) frame by frame, and captures 4 face prints while the person
+   moves (it passes only with at least 3, the minimum of `verify()`).
 3. `POST /facelogin/login { nonce, liveness, prints }` -> `FaceLogin::verify()`. The nonce is consumed (single use,
    even when the check fails; unknown, expired, from another session or for another username: 401). The liveness result
    must list the requested challenges in order (422). The 3-12 prints must be the same face (all within 0.6) and
@@ -134,7 +144,8 @@ use Caligrafy\Passkey;
 
 /**
  * Face login with a liveness check (FaceDetector.liveness() + Caligrafy\FaceLogin) for the users of the
- * authentication module. Enrolment needs a logged-in user (password first).
+ * authentication module. Enrolment: a password sign-in (or a new account) first, then a liveness check.
+ * Login: a liveness check (the challenges chosen by start()), then the face is matched.
  */
 class FaceLoginController extends Controller {
     const MAX_FAILURES = 5;
@@ -147,6 +158,28 @@ class FaceLoginController extends Controller {
     const PENDING = '__face_pending';      // face checked, passkey expected
 
     private function fail($code, $message) { http_response_code($code); return api(['error' => $message]); }
+
+    // lockout after MAX_FAILURES (kept outside users): [locked?, function($code, $message) recording a failure]
+    private function guard($key) {
+        $now = gmdate('Y-m-d H:i:s');
+        $attempt = Database::toArray(Database::execute('SELECT * FROM face_login_attempts WHERE attempt_key = ?', [$key]))[0] ?? null;
+        $locked = $attempt && $attempt['locked_until'] && $attempt['locked_until'] > $now;
+        $failed = function ($code, $message) use ($attempt, $key, $now) {
+            $failures = ($attempt && (!$attempt['locked_until'] || $attempt['locked_until'] <= $now) ? (int)$attempt['failures'] : 0) + 1;
+            $lock = $failures >= self::MAX_FAILURES ? gmdate('Y-m-d H:i:s', time() + self::LOCK_SECONDS) : null;
+            Database::execute('INSERT INTO face_login_attempts (attempt_key, failures, locked_until, modified_at) VALUES (?, ?, ?, ?)
+                               ON DUPLICATE KEY UPDATE failures = VALUES(failures), locked_until = VALUES(locked_until), modified_at = VALUES(modified_at)',
+                              [$key, $lock ? 0 : $failures, $lock, $now]);
+            return $this->fail($code, $message);
+        };
+        return [$locked, $failed];
+    }
+
+    private function signIn($user, $factors) {
+        session_regenerate_id(true);                              // new session id on every login (fixation)
+        Auth::authorize($user);
+        return api(['user' => ['username' => $user->username], 'factors' => $factors, 'enrolled' => count($this->enrolled((int)$user->id)) > 0]);
+    }
 
     private function username($p) {
         $username = trim((string)($p['username'] ?? ''));
@@ -190,25 +223,49 @@ class FaceLoginController extends Controller {
         return api(['enrolled' => min(5, count($prints))]);
     }
 
+    // POST /facelogin/password { username, password } - password sign-in before enrolment
+    public function password() {
+        $p = $this->request->parameters();
+        $username = $this->username($p);
+        if (!$username) { return $this->fail(422, 'Enter a valid username'); }
+        $key = 'pw|' . ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . strtolower($username);
+        [$locked, $failed] = $this->guard($key);
+        if ($locked) { return $this->fail(429, 'Too many failed attempts: wait a minute'); }
+        $user = (new User('users'))->findByUsername($username);
+        if (!$user) {
+            // same work as a real check so that response times do not reveal which usernames exist
+            password_verify((string)($p['password'] ?? ''), '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG');
+        }
+        if (!$user || !$user->verifyPassword((string)($p['password'] ?? ''))) {
+            return $failed(401, 'Invalid username or password');
+        }
+        Database::execute('DELETE FROM face_login_attempts WHERE attempt_key = ?', [$key]);
+        return $this->signIn($user, ['password']);
+    }
+
+    // POST /facelogin/register { username, password } - creates the account and signs it in, ready to enrol
+    // (the rules of the authentication module's /register: letters and digits, passwords of 8 to 72 characters)
+    public function register() {
+        $p = $this->request->parameters();
+        $username = trim((string)($p['username'] ?? ''));
+        $password = (string)($p['password'] ?? '');
+        if (!preg_match('/^[A-Za-z0-9]{1,100}$/', $username)) { return $this->fail(422, 'Usernames use letters and digits (up to 100)'); }
+        if (strlen($password) < 8 || strlen($password) > 72) { return $this->fail(422, 'Passwords need 8 to 72 characters'); }
+        $users = new User('users');
+        if ($users->findByUsername($username)) { return $this->fail(409, 'This username is taken'); }
+        Database::execute('INSERT INTO users (username, passcode) VALUES (?, ?)', [$username, User::hashPassword($password)]);
+        http_response_code(201);
+        return $this->signIn($users->findByUsername($username), ['password']);
+    }
+
     // POST /facelogin/login { username?, nonce, liveness, prints }
     public function login() {
         $p = $this->request->parameters();
         $username = $this->username($p);
         if ($username === null) { return $this->fail(422, 'Invalid username'); }
         $key = ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . ($username !== '' ? strtolower($username) : '*');
-        $now = gmdate('Y-m-d H:i:s');
-        $attempt = Database::toArray(Database::execute('SELECT * FROM face_login_attempts WHERE attempt_key = ?', [$key]))[0] ?? null;
-        if ($attempt && $attempt['locked_until'] && $attempt['locked_until'] > $now) {
-            return $this->fail(429, 'Too many failed attempts: wait a minute');
-        }
-        $failed = function ($code, $message) use ($attempt, $key, $now) {
-            $failures = ($attempt && (!$attempt['locked_until'] || $attempt['locked_until'] <= $now) ? (int)$attempt['failures'] : 0) + 1;
-            $lock = $failures >= self::MAX_FAILURES ? gmdate('Y-m-d H:i:s', time() + self::LOCK_SECONDS) : null;
-            Database::execute('INSERT INTO face_login_attempts (attempt_key, failures, locked_until, modified_at) VALUES (?, ?, ?, ?)
-                               ON DUPLICATE KEY UPDATE failures = VALUES(failures), locked_until = VALUES(locked_until), modified_at = VALUES(modified_at)',
-                              [$key, $lock ? 0 : $failures, $lock, $now]);
-            return $this->fail($code, $message);
-        };
+        [$locked, $failed] = $this->guard($key);
+        if ($locked) { return $this->fail(429, 'Too many failed attempts: wait a minute'); }
 
         try {
             $prints = FaceLogin::verify($p, $username);           // nonce (single use), liveness, prints
@@ -238,12 +295,13 @@ class FaceLoginController extends Controller {
             $_SESSION[self::PENDING] = ['user' => (string)$user->id, 'expires' => time() + 120];
             return api(['step' => 'passkey', 'options' => $passkey->authenticationOptions($user->id)]);
         }
-        session_regenerate_id(true);                              // new session id on every login (fixation)
-        Auth::authorize($user);
-        return api(['user' => ['username' => $user->username], 'factors' => ['face']]);
+        return $this->signIn($user, ['face']);
     }
 
-    public function me() { return authorized() ? api(['user' => ['username' => user()->username ?? null]]) : $this->fail(401, 'Not logged in'); }
+    public function me() {
+        if (!authorized()) { return $this->fail(401, 'Not logged in'); }
+        return api(['user' => ['username' => user()->username ?? null], 'enrolled' => count($this->enrolled((int)user()->id)) > 0]);
+    }
     public function signout() { Auth::unauthorize(); session_regenerate_id(true); return api(['loggedOut' => true]); }
 }
 ```
@@ -314,7 +372,7 @@ class PasskeyController extends Controller {
 Notes:
 - The descriptors are encrypted, so SQL cannot compare them: 1:N login decrypts every print, fine for hundreds of
   users. For more, require the username (1:1).
-- Thresholds are static properties (`FaceLogin::$match` 0.5, `$spread` 0.6, `$distinct` 0.001, `$ttl` 60, `$count` 3,
+- Thresholds are static properties (`FaceLogin::$match` 0.5, `$spread` 0.6, `$distinct` 0.001, `$ttl` 60, `$count` 2,
   `$minPrints` 3, `$maxPrints` 12). Never loosen 0.5.
 - Rotating `APP_KEY` makes every stored print unreadable: users must enrol again (passkeys keep working).
 - Never return descriptors or public keys from a route, never log them.
@@ -323,55 +381,332 @@ Notes:
 
 ## 5. Client (facedetect app)
 
-`public/facelogin/index.php`: the facedetect scaffold page with `passkey.js` loaded after `detect.js`:
-```html
-<script src="<?php echo APP_SERVICE_ROOT.'face-api.min.js'; ?>"></script>
-<script src="<?php echo APP_SERVICE_ROOT.'detect.js'; ?>"></script>
-<script src="<?php echo APP_SERVICE_ROOT.'passkey.js'; ?>"></script>
+Scaffold the app with `/caligrafy-quill:new-app facedetect facelogin`, then replace its three files with the ones
+below (the facedetect scaffold's own look is not used). The page loads `theme.css` for the Caligrafy black and white
+look and `passkey.js` after `detect.js`.
+```php
+<!-- public/facelogin/index.php -->
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta http-equiv="content-type" content="text/html; charset=UTF-8">
+        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <title>Face Login</title>
+
+        <link rel="shortcut icon" href="<?php echo scripts('favicon'); ?>" type="image/x-icon" />
+        <link rel="stylesheet" type="text/css" href="<?php echo scripts('css'); ?>" />
+        <link rel="stylesheet" href="<?php echo scripts('bootstrap_css'); ?>" />
+        <link rel="stylesheet" href="<?php echo session('public').'css/theme.css';?>">
+        <link rel="stylesheet" href="<?php echo session('public').end(request()->uriComponents).'/css/styles.css';?>">
+    </head>
+
+    <body>
+        <div id="app" v-cloak>
+            <header class="color0 caligrafy-header">
+                <nav class="horizontal">
+                    <h1 class="large-text horizontal-center"><span class="semibold">Cali</span>grafy</h1>
+                </nav>
+            </header>
+
+            <main class="facelogin-page">
+                <div class="card dropshadow color0 facelogin-card">
+
+                    <!-- flow switch -->
+                    <div class="tabs" role="tablist">
+                        <button role="tab" :class="{ active: tab === 'login' }" :aria-selected="tab === 'login'" @click="show('login')">Sign in</button>
+                        <button role="tab" :class="{ active: tab === 'enroll' }" :aria-selected="tab === 'enroll'" @click="show('enroll')">Enrol your face</button>
+                    </div>
+
+                    <!-- camera, shared by both flows -->
+                    <div class="viewport" v-show="cameraVisible" :class="viewportState">
+                        <video id="detection" width="640" height="480" autoplay muted playsinline></video>
+                        <div class="guide"></div>
+                        <div class="overlay-prompt" v-if="overlay">{{ overlay }}</div>
+                    </div>
+                    <p class="error" v-if="cameraError && cameraVisible">{{ cameraError }}</p>
+
+                    <!-- ============ SIGN IN ============ -->
+                    <section v-if="tab === 'login'" class="flow">
+                        <template v-if="!signedIn">
+                            <h2 class="flow-title">Sign in with your face</h2>
+                            <p class="flow-status" :class="loginState">{{ loginMessage }}</p>
+                            <div class="flow-actions">
+                                <button class="btn btn-primary" v-if="loginState === 'failed'" @click="scan()">Try again</button>
+                                <button class="btn btn-secondary" v-if="passkeys" @click="passkeyLogin()" :disabled="busy">Use a passkey</button>
+                            </div>
+                            <p class="flow-note">No face enrolled yet? <a href="#" @click.prevent="show('enroll')">Enrol your face</a></p>
+                        </template>
+
+                        <div v-else class="done">
+                            <div class="done-mark">&#10003;</div>
+                            <h2 class="flow-title">Welcome, {{ user }}</h2>
+                            <p class="flow-note">Signed in with {{ factors.join(' + ') }}</p>
+                            <div class="flow-actions">
+                                <button class="btn btn-secondary" @click="logout()" :disabled="busy">Log out</button>
+                            </div>
+                        </div>
+                    </section>
+
+                    <!-- ============ ENROL ============ -->
+                    <section v-if="tab === 'enroll'" class="flow">
+                        <ol class="steps">
+                            <li :class="stepClass(1)"><span>1</span>Account</li>
+                            <li :class="stepClass(2)"><span>2</span>Face scan</li>
+                            <li :class="stepClass(3)"><span>3</span>Done</li>
+                        </ol>
+
+                        <!-- step 1: password sign-in or new account -->
+                        <form v-if="enrollStep === 1" @submit.prevent="account()" class="account-form">
+                            <h2 class="flow-title">{{ newAccount ? 'Create your account' : 'Confirm it is you' }}</h2>
+                            <p class="flow-note">{{ newAccount ? 'Choose a username and a password.' : 'Sign in with your password before enrolling your face.' }}</p>
+                            <label class="default-text textcolor5" for="username">Username</label>
+                            <input id="username" class="form-control" v-model.trim="form.username" autocomplete="username" required>
+                            <label class="default-text textcolor5" for="password">Password</label>
+                            <input id="password" class="form-control" type="password" v-model="form.password" :autocomplete="newAccount ? 'new-password' : 'current-password'" :minlength="newAccount ? 8 : null" required>
+                            <div class="flow-actions">
+                                <button class="btn btn-primary" type="submit" :disabled="busy">{{ newAccount ? 'Create' : 'Continue' }}</button>
+                            </div>
+                            <p class="flow-note">
+                                <a href="#" @click.prevent="newAccount = !newAccount; error = ''">{{ newAccount ? 'I already have an account' : 'Create a new account' }}</a>
+                            </p>
+                        </form>
+
+                        <!-- step 2: liveness scan -->
+                        <div v-if="enrollStep === 2">
+                            <h2 class="flow-title">Scan your face</h2>
+                            <p class="flow-note">Signed in as <strong>{{ user }}</strong>. Center your face in the oval, then follow the prompts on the video (turn your head, smile).</p>
+                            <div class="flow-actions">
+                                <button class="btn btn-primary" @click="enroll()" :disabled="busy || !!cameraError">{{ busy ? 'Scanning…' : 'Start scan' }}</button>
+                                <button class="btn btn-secondary" @click="logout()" :disabled="busy">Not you?</button>
+                            </div>
+                        </div>
+
+                        <!-- step 3: enrolled -->
+                        <div v-if="enrollStep === 3" class="done">
+                            <div class="done-mark">&#10003;</div>
+                            <h2 class="flow-title">Your face is enrolled</h2>
+                            <p class="flow-note">{{ user }} can now sign in with their face: center it in the oval and follow the prompts.</p>
+                            <div class="flow-actions">
+                                <button class="btn btn-primary" @click="tryLogin()" :disabled="busy">Try it</button>
+                                <button class="btn btn-secondary" v-if="passkeys" @click="passkeyRegister()" :disabled="busy">Add a passkey</button>
+                                <button class="btn btn-secondary" @click="enrollStep = 2; status = ''">Re-scan</button>
+                            </div>
+                            <p class="flow-note">A passkey makes face sign-in a two-step login: the face, then this device's fingerprint, face unlock or PIN.</p>
+                        </div>
+                    </section>
+
+                    <p class="flow-success" v-if="status">{{ status }}</p>
+                    <p class="error" v-if="error">{{ error }}</p>
+                </div>
+            </main>
+        </div>
+
+        <script src="<?php echo scripts('vue'); ?>"></script>
+        <script src="<?php echo scripts('axios'); ?>"></script>
+        <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
+        <script src="<?php echo APP_SERVICE_ROOT.'face-api.min.js'; ?>"></script>
+        <script src="<?php echo APP_SERVICE_ROOT.'detect.js'; ?>"></script>
+        <script src="<?php echo APP_SERVICE_ROOT.'passkey.js'; ?>"></script>
+        <script>loadEnvironment(`<?php echo $env; ?>`);</script>
+        <script>loadVue({ scripts: ['main'] });</script>
+    </body>
+</html>
 ```
-```html
-<div id="app">
-    <header><h1>Face Login</h1></header>
-    <section id="detector">
-        <video id="detection" width="480" height="360" autoplay muted playsinline></video>
-    </section>
-    <section class="controls container">
-        <p class="error" v-if="cameraError">{{ cameraError }}</p>
-        <p id="prompt" class="default-text">{{ prompt }}</p>
-        <input class="form-control" v-model="username" placeholder="Username (optional)">
-        <button id="login" class="btn btn-primary" @click="login()" :disabled="busy">Log in with my face</button>
-        <button id="passkeyLogin" class="btn btn-primary" v-if="passkeys" @click="passkeyLogin()" :disabled="busy">Log in with a passkey</button>
-        <button id="enroll" class="btn btn-primary" @click="enroll()" :disabled="busy">Enrol my face</button>
-        <button id="passkeyRegister" class="btn btn-primary" v-if="passkeys" @click="passkeyRegister()" :disabled="busy">Add a passkey</button>
-        <p id="status">{{ status }}</p>
-        <p id="error" class="error" v-if="error">{{ error }}</p>
-    </section>
-</div>
+```css
+/* public/facelogin/css/styles.css */
+/* Face login app (recipes-face-login.md): the Caligrafy black and white look comes from theme.css */
+
+[v-cloak] { display: none; }
+
+body { background: #f7f7f7; }
+
+/* the Caligrafy header is fixed (styles.css): the page starts below it and centers the card */
+.facelogin-page {
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 110px 16px 40px;
+}
+
+html .card.facelogin-card {
+  width: 100%;
+  min-width: 0;                   /* theme.css sets min-width: auto on cards: in this flex row it would grow to the 640px video */
+  align-self: flex-start;         /* styles.css centers cards vertically: the card would jump between tabs */
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0 24px;
+  overflow: hidden;
+}
+
+/* flow switch */
+.tabs {
+  display: flex;
+  border-bottom: 1px solid #e5e5e5;
+}
+.tabs button {
+  flex: 1;
+  padding: 16px 8px;
+  background: #fafafa;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: #888;
+  font-weight: 600;
+  cursor: pointer;
+}
+.tabs button.active {
+  background: #fff;
+  color: #000;
+  border-bottom-color: #000;
+}
+
+/* camera with the face guide */
+.viewport {
+  position: relative;
+  margin: 24px 24px 0;
+  aspect-ratio: 4 / 3;
+  background: #111;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.viewport video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);          /* mirror, like a selfie camera */
+}
+.viewport canvas { display: none; }
+.guide {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: 78%;
+  transform: translate(-50%, -50%);
+  border: 3px dashed rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);   /* dims everything outside the oval */
+  transition: border-color 0.2s;
+  pointer-events: none;
+}
+.viewport.aligned .guide { border-style: solid; border-color: #ffffff; }
+.viewport.scanning .guide { border-style: solid; border-color: #3fb950; }
+.viewport.success .guide { border-style: solid; border-color: #3fb950; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); }
+.viewport.failed .guide { border-style: solid; border-color: #e5534b; }
+
+.overlay-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
+}
+
+/* flows */
+.flow { padding: 0 24px; text-align: center; }
+.flow-title { font-size: 1.25em; font-weight: 600; margin: 20px 0 8px; }
+.flow-status { min-height: 1.5em; margin: 0 0 12px; color: #333; }
+.flow-status.failed { color: #b42318; }
+.flow-status.success { color: #1a7f37; }
+.flow-note { color: #777; font-size: 0.9em; margin: 8px 0; }
+.flow-note a { color: #000; text-decoration: underline; }
+.flow-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 12px 0; }
+.flow-success { margin: 12px 24px 0; text-align: center; color: #1a7f37; }
+.facelogin-card > p.error { margin: 12px 24px 0; text-align: center; }
+
+.account-form { max-width: 340px; margin: 0 auto; text-align: left; }
+.account-form .flow-title, .account-form .flow-note { text-align: center; }
+.account-form .form-control { margin-bottom: 12px; }
+
+/* enrolment steps */
+.steps {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+  color: #aaa;
+  font-size: 0.85em;
+}
+.steps li { display: flex; align-items: center; gap: 6px; padding: 0; }
+.steps span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+}
+.steps li.current { color: #000; font-weight: 600; }
+.steps li.current span { background: #000; border-color: #000; color: #fff; }
+.steps li.complete { color: #1a7f37; }
+.steps li.complete span { border-color: #1a7f37; }
+
+.done-mark {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 56px;
+  height: 56px;
+  margin-top: 24px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  font-size: 28px;
+}
+
+@media (max-width: 480px) {
+  .viewport { margin: 16px 16px 0; }
+  .flow { padding: 0 16px; }
+  .steps { gap: 12px; }
+}
 ```
 ```js
 // public/facelogin/scripts/main.js
-// Face login with liveness + passkeys (recipe: claude-plugin/skills/caligrafy/reference/recipes-face-login.md)
-const PROMPTS = { 'blink': 'Blink', 'turn-left': 'Turn your head to your left', 'turn-right': 'Turn your head to your right', 'smile': 'Smile' };
+// Face login: enrolment (password, then a liveness scan) and sign-in (face in the oval, then a liveness scan),
+// passkeys alone or after the face (recipe: claude-plugin/skills/caligrafy/reference/recipes-face-login.md)
+const PROMPTS = { 'turn-left': 'Turn your head to your left', 'turn-right': 'Turn your head to your right', 'smile': 'Smile' };
+const sleep = (ms) => new Promise(resolve => setTimeout(resolve, ms));
 
 const app = Vue.createApp({
   data() {
     return {
-      env: env, detector: null, cameraError: '', username: '', prompt: 'Look at the camera', status: '', error: '', busy: false,
+      env: env, detector: null, cameraError: '', camera: null,
+      tab: 'login', user: null, factors: [], enrolled: false,
+      enrollStep: 1, newAccount: false, form: { username: '', password: '' },
+      loginState: 'waiting', loginMessage: 'Starting the camera…', overlay: '', scanToken: 0,
+      status: '', error: '', busy: false,
       passkeys: PasskeyClient.supported(),
       config: { headers: { 'Authorization': 'Bearer ' + apiKey, 'Accept': 'application/json', 'Content-Type': 'application/json' }, timeout: 30000 }
     };
   },
+  computed: {
+    signedIn() { return !!this.user; },
+    cameraVisible() { return this.tab === 'login' ? !this.signedIn : this.enrollStep === 2; },
+    viewportState() { return this.tab === 'login' ? this.loginState : (this.busy ? 'scanning' : ''); }
+  },
   methods: {
-    async startCamera() {
+    startCamera() {
       // markRaw: a reactive FaceDetector breaks face-api (G16); autoStart false so camera errors reach us (G42)
       this.detector = Vue.markRaw(new FaceDetector('detection', { autoStart: false }));
-      try {
+      this.camera = (async () => {
         await this.detector.ready;
-        await this.detector.startStream({ video: { facingMode: 'user' }, audio: false });
-      } catch (e) {
+        await this.detector.startStream({ video: { facingMode: 'user', width: 640, height: 480 }, audio: false });
+      })().catch((e) => {
         this.cameraError = e.name === 'NotAllowedError' ? 'Camera access is blocked: allow it in the browser settings'
                          : e.name === 'NotFoundError' ? 'No camera found' : e.message;
-      }
+        throw e;
+      });
+      return this.camera;
     },
     post(path, body) {
       return axios.post(this.env.home + path, body, this.config).then(({ data }) => {
@@ -379,61 +714,178 @@ const app = Vue.createApp({
         return data;
       });
     },
+    message(e) {
+      const err = e.response?.data?.error;
+      return (typeof err === 'object' ? err?.message : err) || e.message;
+    },
+    async run(task) {
+      this.busy = true; this.error = ''; this.status = '';
+      try { await task(); }
+      catch (e) { this.error = this.message(e); }
+      finally { this.busy = false; this.overlay = ''; }
+    },
+    signedInAs(data) {
+      this.user = data.user.username;
+      this.factors = data.factors || [];
+      if (data.enrolled !== undefined) this.enrolled = data.enrolled;
+    },
+    async refreshUser() {
+      try {
+        const { data } = await axios.get(this.env.home + 'facelogin/me', this.config);
+        this.signedInAs(Object.assign({ factors: ['an earlier session'] }, data));
+        this.enrollStep = this.enrolled ? 3 : 2;
+      } catch (e) {
+        this.user = null;
+      }
+    },
+
+    // switch between the two flows
+    show(tab) {
+      this.tab = tab; this.error = ''; this.status = '';
+      this.scanToken++;                                    // stops a running scan
+      if (tab === 'login' && !this.signedIn) this.scan();
+    },
+    stepClass(n) { return n === this.enrollStep ? 'current' : n < this.enrollStep ? 'complete' : ''; },
+
+    // ---------- sign-in: the face in the oval starts the liveness scan, then the face is recognized ----------
+    // where the face is in the frame: 'none', 'many', 'off', 'far', 'near' or 'ok'
+    placement(print) {
+      const media = this.detector.media;
+      const w = media.videoWidth || media.width, h = media.videoHeight || media.height;
+      const box = print.detection.box;
+      const cx = (box.x + box.width / 2) / w, cy = (box.y + box.height / 2) / h, size = box.width / w;
+      if (Math.abs(cx - 0.5) > 0.15 || Math.abs(cy - 0.5) > 0.2) return 'off';
+      if (size < 0.2) return 'far';
+      if (size > 0.7) return 'near';
+      return 'ok';
+    },
+    async scan() {
+      const token = ++this.scanToken;
+      const live = () => token === this.scanToken && this.tab === 'login' && !this.signedIn;
+      this.error = '';
+      this.loginState = 'waiting'; this.loginMessage = 'Starting the camera…';
+      try { await this.camera; } catch (e) { this.loginState = 'failed'; this.loginMessage = 'The camera is needed to sign in with your face'; return; }
+
+      while (live()) {
+        let print = null, where = 'none';
+        try { print = await this.detector.faceprint(); where = this.placement(print); }
+        catch (e) { where = e.message === 'More than one face found' ? 'many' : 'none'; }
+        if (!live()) return;
+
+        if (where !== 'ok') {
+          this.loginState = 'waiting';
+          this.loginMessage = { none: 'Place your face inside the oval', many: 'Only one face, please', off: 'Center your face in the oval', far: 'Move a little closer', near: 'Move back a little' }[where];
+          await sleep(150);
+          continue;
+        }
+
+        // the face is placed: liveness challenges chosen by the server, then the prints are matched
+        this.loginState = 'scanning'; this.loginMessage = 'Follow the prompts on the video';
+        try {
+          const response = await this.check({});
+          if (!live()) return;                                         // the user left the tab during the scan
+          const data = await this.post('facelogin/login', response);
+          if (data.step === 'passkey') {                              // step-up: this account also needs its passkey
+            this.loginMessage = 'Face recognized: confirm with your passkey';
+            await this.finishPasskey(data.options);
+          } else {
+            this.signedInAs(data);
+          }
+          this.loginState = 'success';
+        } catch (e) {
+          if (live()) this.scanFailed(this.message(e));
+        } finally {
+          this.overlay = '';
+        }
+        return;
+      }
+    },
+    scanFailed(message) {
+      this.loginState = 'failed';
+      this.loginMessage = message === 'Face not recognized' ? 'Face not recognized. Is it enrolled?' : message;
+    },
+    async finishPasskey(options) {
+      this.signedInAs(await this.post('passkey/login', await PasskeyClient.get(options)));
+    },
+    passkeyLogin() {
+      this.scanToken++;
+      return this.run(async () => {
+        try { await this.finishPasskey(await this.post('passkey/login/options', {})); }
+        catch (e) { this.scanFailed(this.message(e)); }
+      });
+    },
+
+    // ---------- enrolment ----------
+    account() {
+      return this.run(async () => {
+        const data = await this.post(this.newAccount ? 'facelogin/register' : 'facelogin/password', { username: this.form.username, password: this.form.password });
+        this.form.password = '';
+        this.signedInAs(data);
+        this.enrollStep = this.enrolled ? 3 : 2;
+      });
+    },
     // server challenge -> liveness on the camera -> { nonce, liveness, prints } for the server
     async check(start) {
+      await this.camera;
       const challenge = await this.post('facelogin/start', start);
       const result = await this.detector.liveness({
         challenges: challenge.challenges,
         timeout: Math.min(20000, challenge.expires_in * 1000 - 2000),
-        onProgress: (p) => { this.prompt = p.challenge ? `${p.index + 1}/${p.total}: ${PROMPTS[p.challenge]}` : 'Done'; }
+        onProgress: (p) => { this.overlay = p.challenge ? `${p.index + 1}/${p.total} · ${PROMPTS[p.challenge]}` : 'Done'; }
       });
-      if (!result.passed) throw new Error(result.reason);
+      if (!result.passed) throw new Error('The scan did not complete (' + result.reason + '): try again');
+      this.overlay = 'Checking…';
       return { nonce: challenge.nonce, liveness: { passed: true, challenges: result.challenges }, prints: result.prints.map(p => p.descriptor) };
-    },
-    async run(task) {
-      this.busy = true; this.error = ''; this.status = '';
-      try { await task(); } catch (e) { this.error = e.response?.data?.error || e.message; } finally { this.busy = false; this.prompt = 'Look at the camera'; }
     },
     enroll() {
       return this.run(async () => {
-        const data = await this.post('facelogin/enroll', await this.check({ enroll: true }));
-        this.status = `Face enrolled (${data.enrolled} prints)`;
+        this.overlay = 'Look at the camera';
+        await this.post('facelogin/enroll', await this.check({ enroll: true }));
+        this.enrolled = true;
+        this.enrollStep = 3;
       });
-    },
-    login() {
-      return this.run(async () => {
-        const username = this.username || undefined;
-        const data = await this.post('facelogin/login', Object.assign({ username: username }, await this.check({ username: username })));
-        if (data.step === 'passkey') {                                  // step-up: this account also needs its passkey
-          this.prompt = 'Confirm with your passkey';
-          return this.finishPasskey(data.options);
-        }
-        this.status = 'Welcome ' + data.user.username;
-      });
-    },
-    async finishPasskey(options) {
-      const data = await this.post('passkey/login', await PasskeyClient.get(options));
-      this.status = `Welcome ${data.user.username} (${data.factors.join(' + ')})`;
-    },
-    passkeyLogin() {
-      return this.run(async () => this.finishPasskey(await this.post('passkey/login/options', {})));
     },
     passkeyRegister() {
       return this.run(async () => {
         const options = await this.post('passkey/register/options', {});
         await this.post('passkey/register', Object.assign({ name: 'This device' }, await PasskeyClient.create(options)));
-        this.status = 'Passkey added';
+        this.status = 'Passkey added: face sign-in on this account now confirms with it';
+      });
+    },
+    async tryLogin() {
+      await this.logout();
+      this.show('login');
+    },
+    logout() {
+      return this.run(async () => {
+        await this.post('facelogin/logout', {});
+        this.user = null; this.factors = []; this.enrolled = false;
+        this.enrollStep = 1;
+        if (this.tab === 'login') this.$nextTick(() => this.scan());
       });
     }
   },
-  mounted() { this.startCamera(); },
-  beforeUnmount() { if (this.detector) this.detector.stopStream(); this.detector = null; }
+  async mounted() {
+    this.startCamera().catch(() => {});
+    await this.refreshUser();
+    this.show(this.tab);           // keeps a tab the user picked while the page was loading
+  },
+  beforeUnmount() { this.scanToken++; if (this.detector) this.detector.stopStream(); this.detector = null; }
 });
 app.mount('#app');
 ```
+- Sign in: `scan()` loops on `detector.faceprint()` (SSD, one face) and `placement()` until the face box is centered
+  and 20-70% of the frame width, then runs `check({})`: the server challenge, `detector.liveness()` with the prompts on
+  the video (`onProgress`), then `POST /facelogin/login`. A failure stops the loop (`Try again`), so the server lockout is
+  not reached by a loop; switching tabs stops it too (`scanToken`).
 - `detector.liveness()` resolves (it does not reject) with `{ passed, reason, challenges, prints, frames, duration }`;
   only a missing media element or models reject. `onProgress({ challenge, index, total, passed })` drives the prompt.
-- Keep `@click="login()"` with parentheses: without them Vue passes the click event as the first argument.
+- The video is mirrored with CSS (`scaleX(-1)`, like a selfie camera). The prompts say the person's own left and right,
+  which the mirror does not change; `detect.js` measures the unmirrored stream.
+- Layout: the Caligrafy header is fixed (`styles.css`), so the page has a top padding; `theme.css` gives `.card`
+  `min-width: auto` and `styles.css` `align-self: center`: the card in this flex row needs `min-width: 0` (or the 640px
+  video widens it) and `align-self: flex-start` (or it moves when the tab content changes height).
+- Keep `@click="scan()"` / `@click="enroll()"` with parentheses: without them Vue passes the click event as the first argument.
 - `PasskeyClient.create()` rejects with `InvalidStateError` when the device already has a passkey for this account and
   with `NotAllowedError` when the user cancels: show a message, do not retry in a loop.
 
@@ -446,19 +898,22 @@ app.mount('#app');
   img.onload = () => setInterval(() => c.getContext('2d').drawImage(img, 0, 0, 640, 480), 50);
   navigator.mediaDevices.getUserMedia = async () => c.captureStream(15);
   ```
-  `faceprint()` works on it; `liveness()` must **fail** (a photo does not blink or turn): that is the photo attack test.
+  `faceprint()` works on it, so the Sign in tab gets past the placement hints; `liveness()` must **fail** (a photo does
+  not turn or start to smile: `Challenge not completed: ...` after the timeout): that is the photo attack test.
 - Passkeys: Chrome DevTools > More tools > WebAuthn > "Enable virtual authenticator environment" (internal transport,
   resident keys, user verification) registers and logs in without a device. On the server, the QA suite uses a
   software authenticator (`qa/unit/fixtures/SoftAuthenticator.php`, EC P-256, "none" attestation).
-- Only real devices show: the blink and turn thresholds on real faces and cameras (tune `thresholds`), Touch ID /
+- Only real devices show: the turn and smile thresholds on real faces and cameras (tune `thresholds`), Touch ID /
   Windows Hello / Android prompts, synced passkeys (sign count 0) and attestation formats other than "none".
 
 ## Checklist
 - [ ] Controllers not named after an example controller unless namespaced (G47); `php -l`; SQL run with the db skill.
-- [ ] Enrolment only for a logged-in user, with a liveness check; a face already enrolled on another account refused.
+- [ ] Enrolment only for a logged-in user (password sign-in or new account, with the lockout), with a liveness check;
+      a face already enrolled on another account refused.
 - [ ] Login: `FaceLogin::verify()` (nonce, liveness, prints), then `FaceLogin::match()`, used-print hashes, lockout outside `users`.
 - [ ] Prints encrypted with `encryptDecrypt` (APP_KEY), compared on the server, never returned.
 - [ ] Passkey policy chosen and explained; `PASSKEY_RP_ID` / `PASSKEY_ORIGIN` set in production; https.
 - [ ] `session_regenerate_id(true)` + `Auth::authorize()` only after every required factor.
-- [ ] Client: `Vue.markRaw`, `autoStart: false` + `startStream()` errors, challenges from the server, `@click="login()"`.
+- [ ] Client: `Vue.markRaw`, `autoStart: false` + `startStream()` errors, challenges from the server (no `blink`),
+      sign-in loop stopped on failure and on tab change, `theme.css` + Caligrafy header.
 - [ ] User told: browser liveness raises the bar but is not proof; passkeys for sensitive accounts.

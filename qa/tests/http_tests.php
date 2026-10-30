@@ -584,8 +584,11 @@ $SEED = 1000;
 qa_test('the face login app and the facedetect scaffold load, with their scripts and models', function () use ($guest) {
     $r = $guest->get('/apps/qafacelogin');
     qa_equals(200, $r['status']);
-    foreach (['face-api.min.js', 'detect.js', 'passkey.js', 'loadEnvironment('] as $s) { qa_contains($s, $r['body']); }
-    qa_equals(200, $guest->get('/public/qafacelogin/scripts/main.js')['status']);
+    foreach (['face-api.min.js', 'detect.js', 'passkey.js', 'loadEnvironment(', 'css/theme.css', 'caligrafy-header', 'class="guide"', 'id="detection"'] as $s) { qa_contains($s, $r['body']); }
+    $js = $guest->get('/public/qafacelogin/scripts/main.js');
+    qa_equals(200, $js['status']);
+    qa_not_contains("'blink'", $js['body']);
+    qa_equals(200, $guest->get('/public/qafacelogin/css/styles.css')['status']);
     $r = $guest->get('/apps/qafacedetect');
     qa_equals(200, $r['status']);
     qa_contains('id="detection"', $r['body']);
@@ -599,13 +602,14 @@ qa_test('the face login app and the facedetect scaffold load, with their scripts
     }
 });
 
-qa_test('start issues a nonce and 3 random challenges', function () {
+qa_test('start issues a nonce and 2 random challenges (no blink)', function () {
     $orders = [];
     for ($i = 0; $i < 12; $i++) {
         $c = qa_face(new QaBrowser(), '/facelogin/start', (object)[])['json'];
         qa_assert(preg_match('/^[0-9a-f]{64}$/', $c['nonce'] ?? ''), json_encode($c));
-        qa_equals(3, count($c['challenges']));
-        qa_equals([], array_diff($c['challenges'], ['blink', 'turn-left', 'turn-right', 'smile']));
+        qa_equals(2, count($c['challenges']));
+        qa_equals(2, count(array_unique($c['challenges'])));
+        qa_equals([], array_diff($c['challenges'], ['turn-left', 'turn-right', 'smile']));
         $orders[implode(',', $c['challenges'])] = true;
     }
     qa_assert(count($orders) > 1, 'the challenges are always the same');
@@ -615,6 +619,28 @@ qa_test('enrolment needs a password login first', function () use ($FACE, &$SEED
     $b = new QaBrowser();
     qa_equals(401, qa_face($b, '/facelogin/start', ['enroll' => true])['status']);
     qa_equals(401, qa_face($b, '/facelogin/enroll', ['nonce' => 'x'])['status']);
+});
+
+qa_test('the app signs in with a password and creates accounts (JSON, before enrolment)', function () {
+    $b = new QaBrowser();
+    $r = qa_face($b, '/facelogin/password', ['username' => 'faceqa', 'password' => 'Passw0rdQa']);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_equals(['password'], $r['json']['factors']);
+    qa_equals(false, $r['json']['enrolled']);
+    qa_equals('faceqa', qa_face($b, '/facelogin/me')['json']['user']['username']);
+    qa_equals(401, qa_face(new QaBrowser(), '/facelogin/password', ['username' => 'faceqa', 'password' => 'wrong-password'])['status']);
+    qa_equals(401, qa_face(new QaBrowser(), '/facelogin/password', ['username' => 'nobodyqa', 'password' => 'Passw0rdQa'])['status']);
+    $n = new QaBrowser();
+    $r = qa_face($n, '/facelogin/register', ['username' => 'facenewqa', 'password' => 'Passw0rdQa']);
+    qa_equals(201, $r['status'], $r['body']);
+    qa_equals('facenewqa', qa_face($n, '/facelogin/me')['json']['user']['username']);
+    qa_assert(strpos(qa_sql("SELECT passcode FROM users WHERE username = 'facenewqa'"), '$2y$') === 0, 'the password must be hashed');
+    qa_equals(409, qa_face(new QaBrowser(), '/facelogin/register', ['username' => 'facenewqa', 'password' => 'Passw0rdQa'])['status']);
+    qa_equals(422, qa_face(new QaBrowser(), '/facelogin/register', ['username' => 'short', 'password' => 'short'])['status']);
+    qa_equals(422, qa_face(new QaBrowser(), '/facelogin/register', ['username' => 'bad name', 'password' => 'Passw0rdQa'])['status']);
+    for ($i = 0; $i < 5; $i++) { qa_face(new QaBrowser(), '/facelogin/password', ['username' => 'facenewqa', 'password' => 'wrong-' . $i]); }
+    qa_equals(429, qa_face(new QaBrowser(), '/facelogin/password', ['username' => 'facenewqa', 'password' => 'Passw0rdQa'])['status'], '5 failures lock the password sign-in');
+    qa_sql('DELETE FROM face_login_attempts');
 });
 
 qa_test('a logged-in user enrols with a liveness check', function () use ($faceUser, $FACE, &$SEED) {
@@ -642,6 +668,7 @@ qa_test('face login with liveness logs in (1:N and 1:1)', function () use ($FACE
     qa_equals('faceqa', $r['json']['user']['username']);
     qa_equals(['face'], $r['json']['factors']);
     qa_equals('faceqa', qa_face($b, '/facelogin/me')['json']['user']['username']);
+    qa_equals(true, qa_face($b, '/facelogin/me')['json']['enrolled']);
     $b2 = new QaBrowser();
     $r = qa_face($b2, '/facelogin/login', ['username' => 'faceqa'] + qa_face_check($b2, qa_face_frames($FACE, $SEED++), ['username' => 'faceqa']));
     qa_equals(200, $r['status'], $r['body']);

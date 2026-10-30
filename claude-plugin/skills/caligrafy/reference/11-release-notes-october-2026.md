@@ -302,8 +302,8 @@ Learn more: [Mobile: install to home screen](https://github.com/caligrafy/caligr
 ## Face login security and passkeys
 
 **What changed.**
-+ `FaceDetector.liveness({ challenges })` asks the person to blink, turn left, turn right or smile, in an order chosen by the server, and captures face prints while they move.
-+ `Caligrafy\FaceLogin` (server side): `FaceLogin::challenge($username)` issues a single-use nonce and a random order of challenges, kept in the session (3 challenges, 60 seconds by default). `FaceLogin::verify($response, $username)` consumes the nonce (single use), even when the check fails, and checks the liveness result and the prints: 3 to 12 prints of one face that are not identical (a replayed static print). `FaceLogin::match($prints, $enrolled)` finds the matching account.
++ `FaceDetector.liveness({ challenges })` asks the person to turn left, turn right or smile, in an order chosen by the server, and captures face prints while they move. (A `blink` challenge was in the first version: it was removed because it did not detect blinks reliably on real cameras.)
++ `Caligrafy\FaceLogin` (server side): `FaceLogin::challenge($username)` issues a single-use nonce and a random order of challenges, kept in the session (2 of the 3 challenges, 60 seconds by default). `FaceLogin::verify($response, $username)` consumes the nonce (single use), even when the check fails, and checks the liveness result and the prints: 3 to 12 prints of one face that are not identical (a replayed static print). `FaceLogin::match($prints, $enrolled)` finds the matching account.
 + `Caligrafy\Passkey` (WebAuthn, on lbuchs/webauthn) and `public/js/services/passkey.js` (`PasskeyClient.create()`, `PasskeyClient.get()`): passkey registration and login with credentials in a `passkeys` table, single-use challenges, an exact origin check and user verification.
 
 **Why.** Face prints are computed in the browser: logging in with a single print accepts a photo or a replayed request. Liveness and single-use nonces stop photos, naive replays and stolen requests; only a passkey resists an attacker who controls the browser.
@@ -315,7 +315,8 @@ Learn more: [Mobile: install to home screen](https://github.com/caligrafy/caligr
     PASSKEY_ORIGIN=https://www.example.com
     ```
     Without them the request host is used, with `APP_PROTOCOL` as the scheme, which is fine in development. Passkeys need HTTPS, except on `localhost`.
-+ **Note:** `liveness()` can finish with 2 prints when the challenges are done quickly, while `FaceLogin::verify()` needs at least 3: check `result.prints.length` before posting, and keep the liveness `timeout` within the `expires_in` of the challenge.
++ **Note:** keep the liveness `timeout` within the `expires_in` of the challenge. `liveness()` passes only with at least 3 prints, the minimum of `FaceLogin::verify()`.
++ **Projects that used `blink`:** remove it from the challenges you pass to `liveness()` and from your prompts; `liveness()` refuses it as an unknown challenge, and `FaceLogin::challenge()` no longer issues it.
 
 Learn more: [Face login](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition#face-login), [Passkeys](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition#passkeys).
 
