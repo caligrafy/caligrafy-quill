@@ -11,7 +11,7 @@
 /**
  * Face login checks used with FaceDetector.liveness() (public/js/services/detect.js)
  *
- * 1. challenge($username) issues a nonce and a random order of liveness challenges, kept in the session
+ * 1. challenge($username) issues a nonce and $count of the CHALLENGES in a random order, kept in the session
  * 2. the browser runs detector.liveness({ challenges }) and posts { nonce, liveness, prints }
  * 3. verify($response, $username) consumes the nonce (single use, short lived) and checks the liveness result and the
  *    prints: enough of them, consistent with each other (same face) and not identical (a replayed static print)
@@ -30,14 +30,14 @@ class FaceLoginException extends \Exception {}
 class FaceLogin extends \stdClass {
 
     const SESSION_KEY = '__face_challenge';
-    const CHALLENGES = ['blink', 'turn-left', 'turn-right', 'smile'];
+    const CHALLENGES = ['turn-left', 'turn-right', 'smile'];
 
     public static $match = 0.5;      // a print matches an account when it is closer than this to one of its prints
     public static $spread = 0.6;     // prints of one check must all be within this of each other (same face)
     public static $distinct = 0.001; // ... and further apart than this: identical prints are a replay, not a live face
     public static $minPrints = 3;
     public static $maxPrints = 12;
-    public static $count = 3;        // challenges per check
+    public static $count = 2;        // challenges per check: 2 of the 3, in a random order (6 possible sequences)
     public static $ttl = 60;         // seconds to complete a check
     public static $clock = null;     // callable returning the time (tests)
 
@@ -49,7 +49,7 @@ class FaceLogin extends \stdClass {
     /**
      * Issues a new challenge and keeps it in the session (it replaces any previous one)
      * @param string|null $username the account the check is for (null: 1:N login)
-     * @param int|null $count number of challenges (1 to 4)
+     * @param int|null $count number of challenges (1 to 3, default self::$count)
      * @return array ['nonce' => string, 'challenges' => [...], 'expires_in' => seconds]
     */
     public static function challenge($username = null, $count = null, $ttl = null)

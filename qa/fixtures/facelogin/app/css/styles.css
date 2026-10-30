@@ -1,100 +1,155 @@
-@import url('https://fonts.googleapis.com/css?family=IBM+Plex+Sans&display=swap');
+/* Face login app (recipes-face-login.md): the Caligrafy black and white look comes from theme.css */
 
-body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  font-family: 'IBM Plex Sans', sans-serif;    
-  font-weight: lighter;
-  font-size: 16px;
-}
+[v-cloak] { display: none; }
 
-header, h1 {
+body { background: #f7f7f7; }
+
+/* the Caligrafy header is fixed (styles.css): the page starts below it and centers the card */
+.facelogin-page {
   display: flex;
   justify-content: center;
-  align-items: center;
-  font-size: 1.5em;
+  align-items: flex-start;
+  min-height: 100vh;
+  padding: 110px 16px 40px;
 }
 
-#detector {
+html .card.facelogin-card {
+  width: 100%;
+  min-width: 0;                   /* theme.css sets min-width: auto on cards: in this flex row it would grow to the 640px video */
+  align-self: flex-start;         /* styles.css centers cards vertically: the card would jump between tabs */
+  max-width: 520px;
+  margin: 0 auto;
+  padding: 0 0 24px;
+  overflow: hidden;
+}
+
+/* flow switch */
+.tabs {
   display: flex;
-  justify-content: center;
-  align-items: center;
+  border-bottom: 1px solid #e5e5e5;
 }
-
-canvas {
-  /* will overlay the video and therefore its position will be handled in an absolute way */
-  position: absolute;
-}
-
-
-#apps {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    margin-top: 25px;
-}
-
-#apps button {
-  color: white;
-  padding: 15px 32px;
-  font-size: 16px;
-  margin: 4px 2px;
+.tabs button {
+  flex: 1;
+  padding: 16px 8px;
+  background: #fafafa;
+  border: 0;
+  border-bottom: 3px solid transparent;
+  color: #888;
+  font-weight: 600;
   cursor: pointer;
-  background-color: white;
-  color: black;
-  border: 2px solid #555555;
+}
+.tabs button.active {
+  background: #fff;
+  color: #000;
+  border-bottom-color: #000;
 }
 
+/* camera with the face guide */
+.viewport {
+  position: relative;
+  margin: 24px 24px 0;
+  aspect-ratio: 4 / 3;
+  background: #111;
+  border-radius: 8px;
+  overflow: hidden;
+}
+.viewport video {
+  display: block;
+  width: 100%;
+  max-width: 100%;
+  height: 100%;
+  object-fit: cover;
+  transform: scaleX(-1);          /* mirror, like a selfie camera */
+}
+.viewport canvas { display: none; }
+.guide {
+  position: absolute;
+  left: 50%;
+  top: 50%;
+  width: 46%;
+  height: 78%;
+  transform: translate(-50%, -50%);
+  border: 3px dashed rgba(255, 255, 255, 0.85);
+  border-radius: 50%;
+  box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.45);   /* dims everything outside the oval */
+  transition: border-color 0.2s;
+  pointer-events: none;
+}
+.viewport.aligned .guide { border-style: solid; border-color: #ffffff; }
+.viewport.scanning .guide { border-style: solid; border-color: #3fb950; }
+.viewport.success .guide { border-style: solid; border-color: #3fb950; box-shadow: 0 0 0 9999px rgba(0, 0, 0, 0.6); }
+.viewport.failed .guide { border-style: solid; border-color: #e5534b; }
 
-#infobar button {
-    display: block;
-    cursor: pointer;
-    color: white;
-    background-color: black;
-    font-size: 1em;
-    border: none;
-    width: 20em;
-    height: 3em;
-    text-align: center;
-    margin: 2em auto;
+.overlay-prompt {
+  position: absolute;
+  left: 50%;
+  bottom: 14px;
+  transform: translateX(-50%);
+  padding: 6px 14px;
+  border-radius: 16px;
+  background: rgba(0, 0, 0, 0.75);
+  color: #fff;
+  font-weight: 600;
+  white-space: nowrap;
 }
 
-#infobar input {
-    display: block;
-    width: 20em;
-    height: 2em;
-    margin: 1em 0;
-    font-size: 1em;
+/* flows */
+.flow { padding: 0 24px; text-align: center; }
+.flow-title { font-size: 1.25em; font-weight: 600; margin: 20px 0 8px; }
+.flow-status { min-height: 1.5em; margin: 0 0 12px; color: #333; }
+.flow-status.failed { color: #b42318; }
+.flow-status.success { color: #1a7f37; }
+.flow-note { color: #777; font-size: 0.9em; margin: 8px 0; }
+.flow-note a { color: #000; text-decoration: underline; }
+.flow-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; margin: 12px 0; }
+.flow-success { margin: 12px 24px 0; text-align: center; color: #1a7f37; }
+.facelogin-card > p.error { margin: 12px 24px 0; text-align: center; }
+
+.account-form { max-width: 340px; margin: 0 auto; text-align: left; }
+.account-form .flow-title, .account-form .flow-note { text-align: center; }
+.account-form .form-control { margin-bottom: 12px; }
+
+/* enrolment steps */
+.steps {
+  display: flex;
+  justify-content: center;
+  gap: 24px;
+  list-style: none;
+  padding: 0;
+  margin: 20px 0 0;
+  color: #aaa;
+  font-size: 0.85em;
+}
+.steps li { display: flex; align-items: center; gap: 6px; padding: 0; }
+.steps span {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 22px;
+  height: 22px;
+  border-radius: 50%;
+  border: 1px solid #ccc;
+}
+.steps li.current { color: #000; font-weight: 600; }
+.steps li.current span { background: #000; border-color: #000; color: #fff; }
+.steps li.complete { color: #1a7f37; }
+.steps li.complete span { border-color: #1a7f37; }
+
+.done-mark {
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+  width: 56px;
+  height: 56px;
+  margin-top: 24px;
+  border-radius: 50%;
+  background: #000;
+  color: #fff;
+  font-size: 28px;
 }
 
-
-#infobar label {
-    display: block;
-    width: 20em;
-    font-weight: bold;
-}
-
-/* Eliminating the bullets from the unordered list */
-ul {
-    display: flex;
-    list-style-type: none;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-}
-
-li {
-    padding: 0 15px;
-}
-
-.show {
-    visibility: visible
-}
-
-.hide {
-    visibility: hidden
+@media (max-width: 480px) {
+  .viewport { margin: 16px 16px 0; }
+  .flow { padding: 0 16px; }
+  .steps { gap: 12px; }
 }

@@ -42,14 +42,24 @@ final class FaceLoginTest extends TestCase
     {
         $c = FaceLogin::challenge('Alice');
         $this->assertMatchesRegularExpression('/^[0-9a-f]{64}$/', $c['nonce']);
-        $this->assertCount(3, $c['challenges']);
+        $this->assertCount(2, $c['challenges']);   // default: 2 of turn-left, turn-right, smile
         $this->assertSame($c['challenges'], array_values(array_unique($c['challenges'])));
         $this->assertEmpty(array_diff($c['challenges'], FaceLogin::CHALLENGES));
         $this->assertSame('alice', $_SESSION[FaceLogin::SESSION_KEY]['username']);
         $orders = [];
         for ($i = 0; $i < 30; $i++) { $orders[implode(',', FaceLogin::challenge(null, 4)['challenges'])] = true; }
         $this->assertGreaterThan(3, count($orders), 'the order of the challenges must vary');
+        $this->assertCount(3, explode(',', array_key_first($orders)), 'count is capped at the 3 challenges');
+        $pairs = [];
+        for ($i = 0; $i < 60; $i++) { $pairs[implode(',', FaceLogin::challenge()['challenges'])] = true; }
+        $this->assertGreaterThan(3, count($pairs), 'the default pairs and their order must vary');
         $this->assertNotSame($c['nonce'], FaceLogin::challenge()['nonce']);
+    }
+
+    public function testBlinkIsNoLongerAChallenge(): void
+    {
+        $this->assertSame(['turn-left', 'turn-right', 'smile'], FaceLogin::CHALLENGES);
+        $this->assertSame(2, FaceLogin::$count);
     }
 
     public function testVerifyAcceptsALiveResponseOnce(): void

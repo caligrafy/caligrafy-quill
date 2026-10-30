@@ -9,7 +9,8 @@ use Caligrafy\Passkey;
 
 /**
  * Face login with a liveness check (FaceDetector.liveness() + Caligrafy\FaceLogin) for the users of the
- * authentication module. Enrolment needs a logged-in user (password first).
+ * authentication module. Enrolment: a password sign-in (or a new account) first, then a liveness check.
+ * Login: a liveness check (the challenges chosen by start()), then the face is matched.
  */
 class FaceLoginController extends Controller {
     const MAX_FAILURES = 5;
@@ -22,6 +23,28 @@ class FaceLoginController extends Controller {
     const PENDING = '__face_pending';      // face checked, passkey expected
 
     private function fail($code, $message) { http_response_code($code); return api(['error' => $message]); }
+
+    // lockout after MAX_FAILURES (kept outside users): [locked?, function($code, $message) recording a failure]
+    private function guard($key) {
+        $now = gmdate('Y-m-d H:i:s');
+        $attempt = Database::toArray(Database::execute('SELECT * FROM face_login_attempts WHERE attempt_key = ?', [$key]))[0] ?? null;
+        $locked = $attempt && $attempt['locked_until'] && $attempt['locked_until'] > $now;
+        $failed = function ($code, $message) use ($attempt, $key, $now) {
+            $failures = ($attempt && (!$attempt['locked_until'] || $attempt['locked_until'] <= $now) ? (int)$attempt['failures'] : 0) + 1;
+            $lock = $failures >= self::MAX_FAILURES ? gmdate('Y-m-d H:i:s', time() + self::LOCK_SECONDS) : null;
+            Database::execute('INSERT INTO face_login_attempts (attempt_key, failures, locked_until, modified_at) VALUES (?, ?, ?, ?)
+                               ON DUPLICATE KEY UPDATE failures = VALUES(failures), locked_until = VALUES(locked_until), modified_at = VALUES(modified_at)',
+                              [$key, $lock ? 0 : $failures, $lock, $now]);
+            return $this->fail($code, $message);
+        };
+        return [$locked, $failed];
+    }
+
+    private function signIn($user, $factors) {
+        session_regenerate_id(true);                              // new session id on every login (fixation)
+        Auth::authorize($user);
+        return api(['user' => ['username' => $user->username], 'factors' => $factors, 'enrolled' => count($this->enrolled((int)$user->id)) > 0]);
+    }
 
     private function username($p) {
         $username = trim((string)($p['username'] ?? ''));
@@ -65,25 +88,49 @@ class FaceLoginController extends Controller {
         return api(['enrolled' => min(5, count($prints))]);
     }
 
+    // POST /facelogin/password { username, password } - password sign-in before enrolment
+    public function password() {
+        $p = $this->request->parameters();
+        $username = $this->username($p);
+        if (!$username) { return $this->fail(422, 'Enter a valid username'); }
+        $key = 'pw|' . ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . strtolower($username);
+        [$locked, $failed] = $this->guard($key);
+        if ($locked) { return $this->fail(429, 'Too many failed attempts: wait a minute'); }
+        $user = (new User('users'))->findByUsername($username);
+        if (!$user) {
+            // same work as a real check so that response times do not reveal which usernames exist
+            password_verify((string)($p['password'] ?? ''), '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG');
+        }
+        if (!$user || !$user->verifyPassword((string)($p['password'] ?? ''))) {
+            return $failed(401, 'Invalid username or password');
+        }
+        Database::execute('DELETE FROM face_login_attempts WHERE attempt_key = ?', [$key]);
+        return $this->signIn($user, ['password']);
+    }
+
+    // POST /facelogin/register { username, password } - creates the account and signs it in, ready to enrol
+    // (the rules of the authentication module's /register: letters and digits, passwords of 8 to 72 characters)
+    public function register() {
+        $p = $this->request->parameters();
+        $username = trim((string)($p['username'] ?? ''));
+        $password = (string)($p['password'] ?? '');
+        if (!preg_match('/^[A-Za-z0-9]{1,100}$/', $username)) { return $this->fail(422, 'Usernames use letters and digits (up to 100)'); }
+        if (strlen($password) < 8 || strlen($password) > 72) { return $this->fail(422, 'Passwords need 8 to 72 characters'); }
+        $users = new User('users');
+        if ($users->findByUsername($username)) { return $this->fail(409, 'This username is taken'); }
+        Database::execute('INSERT INTO users (username, passcode) VALUES (?, ?)', [$username, User::hashPassword($password)]);
+        http_response_code(201);
+        return $this->signIn($users->findByUsername($username), ['password']);
+    }
+
     // POST /facelogin/login { username?, nonce, liveness, prints }
     public function login() {
         $p = $this->request->parameters();
         $username = $this->username($p);
         if ($username === null) { return $this->fail(422, 'Invalid username'); }
         $key = ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . ($username !== '' ? strtolower($username) : '*');
-        $now = gmdate('Y-m-d H:i:s');
-        $attempt = Database::toArray(Database::execute('SELECT * FROM face_login_attempts WHERE attempt_key = ?', [$key]))[0] ?? null;
-        if ($attempt && $attempt['locked_until'] && $attempt['locked_until'] > $now) {
-            return $this->fail(429, 'Too many failed attempts: wait a minute');
-        }
-        $failed = function ($code, $message) use ($attempt, $key, $now) {
-            $failures = ($attempt && (!$attempt['locked_until'] || $attempt['locked_until'] <= $now) ? (int)$attempt['failures'] : 0) + 1;
-            $lock = $failures >= self::MAX_FAILURES ? gmdate('Y-m-d H:i:s', time() + self::LOCK_SECONDS) : null;
-            Database::execute('INSERT INTO face_login_attempts (attempt_key, failures, locked_until, modified_at) VALUES (?, ?, ?, ?)
-                               ON DUPLICATE KEY UPDATE failures = VALUES(failures), locked_until = VALUES(locked_until), modified_at = VALUES(modified_at)',
-                              [$key, $lock ? 0 : $failures, $lock, $now]);
-            return $this->fail($code, $message);
-        };
+        [$locked, $failed] = $this->guard($key);
+        if ($locked) { return $this->fail(429, 'Too many failed attempts: wait a minute'); }
 
         try {
             $prints = FaceLogin::verify($p, $username);           // nonce (single use), liveness, prints
@@ -113,11 +160,12 @@ class FaceLoginController extends Controller {
             $_SESSION[self::PENDING] = ['user' => (string)$user->id, 'expires' => time() + 120];
             return api(['step' => 'passkey', 'options' => $passkey->authenticationOptions($user->id)]);
         }
-        session_regenerate_id(true);                              // new session id on every login (fixation)
-        Auth::authorize($user);
-        return api(['user' => ['username' => $user->username], 'factors' => ['face']]);
+        return $this->signIn($user, ['face']);
     }
 
-    public function me() { return authorized() ? api(['user' => ['username' => user()->username ?? null]]) : $this->fail(401, 'Not logged in'); }
+    public function me() {
+        if (!authorized()) { return $this->fail(401, 'Not logged in'); }
+        return api(['user' => ['username' => user()->username ?? null], 'enrolled' => count($this->enrolled((int)user()->id)) > 0]);
+    }
     public function signout() { Auth::unauthorize(); session_regenerate_id(true); return api(['loggedOut' => true]); }
 }
