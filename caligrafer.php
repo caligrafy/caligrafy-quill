@@ -46,11 +46,13 @@ $restricted = ['app', 'bot', '__bots__', 'css', 'facedetect', 'fonts', 'images',
 Caligrafer::run();
 
 $defaultMsg = "\n Available Functions: 
+				\n - quickstart [--example] [--yes]: sets up a fresh project in one step (database, framework tables, /capabilities and /mcp); --example adds the Tasks example. With Docker: .bin/caligrafer quickstart
 				\n - version: prints the version of Caligrafy Quill
 				\n - initialize: Initializes and signs your project
 				\n - upgrade [--apply] [--force <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
+				\n - sql <file.sql>: runs a SQL script on the database of .env
 				\n - platform install: creates the framework tables (personal access tokens, audit log)
 				\n - token <create | list | revoke>: personal access tokens for REST and MCP clients (scoped, revocable)
 				\n - audit [--limit 50] [--capability <name>]: the latest capability calls
@@ -80,6 +82,20 @@ function caligrafyConnect()
 {
     if (!Caligrafy\Database::connect()) {
         throw new Exception('The database is not active: set DB_ACTIVATE=true and the DB_* settings in .env');
+    }
+}
+
+/**
+ * Runs the statements of a .sql file on the database of .env (comments removed, split on ;)
+ */
+function caligrafySqlFile($path)
+{
+    if (!is_file($path)) {
+        throw new Exception("No such file: $path");
+    }
+    $sql = preg_replace(array('#/\*.*?\*/#s', '/^\s*--.*$/m'), '', file_get_contents($path));
+    foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
+        Caligrafy\Database::execute($statement);
     }
 }
 
@@ -161,6 +177,26 @@ switch(strtolower($argv[1])) {
         }
 		break;
 
+	case 'quickstart':
+		// php caligrafer.php quickstart [--example] [--yes]: from a fresh project to a working build-once application
+		exit((new Caligrafy\Quickstart('.'))->run(array('example' => in_array('--example', $argv), 'yes' => in_array('--yes', $argv))));
+
+	case 'sql':
+		// php caligrafer.php sql <file.sql>: runs a SQL script on the database of .env
+		if (!isset($argv[2])) {
+			print("\n Usage: php caligrafer.php sql <file.sql>\n\n");
+			exit(1);
+		}
+		try {
+			caligrafyConnect();
+			caligrafySqlFile($argv[2]);
+			print("\n " . $argv[2] . " run on " . DB_DATABASE . "\n\n");
+		} catch (Throwable $e) {
+			print("\n " . $argv[2] . " could not be run: " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
+		break;
+
 	case 'platform':
 		if (strtolower($argv[2] ?? '') !== 'install') {
 			print("\n Usage: php caligrafer.php platform install\n Creates the framework tables (personal access tokens, audit log) from framework/settings/platform.sql\n\n");
@@ -168,10 +204,7 @@ switch(strtolower($argv[1])) {
 		}
 		try {
 			caligrafyConnect();
-			$sql = preg_replace('/^\s*--.*$/m', '', file_get_contents('framework/settings/platform.sql'));
-			foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
-				Caligrafy\Database::execute($statement);
-			}
+			caligrafySqlFile('framework/settings/platform.sql');
 			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit\n\n");
 		} catch (Throwable $e) {
 			print("\n The framework tables could not be created: " . $e->getMessage() . "\n Check DB_ACTIVATE and the DB_* settings in .env (php caligrafer.php doctor --only database)\n\n");

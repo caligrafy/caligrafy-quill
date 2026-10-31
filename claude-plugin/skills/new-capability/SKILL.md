@@ -19,7 +19,9 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
    exists. On an older framework, say so and suggest updating the framework first (`git pull` + `composer update` +
    `php caligrafer.php upgrade`).
 2. The framework tables: `php caligrafer.php doctor --only database` shows `Framework tables: ... installed`; if not,
-   run `php caligrafer.php platform install` (in Docker: `docker compose exec dev-box php caligrafer.php platform install`).
+   run `php caligrafer.php platform install` (in Docker: `docker compose exec dev-box php caligrafer.php platform install`),
+   or `.bin/caligrafer quickstart` for a project that was never set up (database, tables, `/capabilities` and `/mcp` routes).
+   Run a model's `create_db.sql` with `php caligrafer.php sql application/models/<Folder>/create_db.sql`.
 3. The model and table the capability works on exist (else use `/caligrafy-quill:new-resource` first, models only).
    `php caligrafer.php capabilities` lists the existing names: never reuse one.
 

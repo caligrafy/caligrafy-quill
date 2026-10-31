@@ -6,6 +6,22 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.2.0] - 2026-10-31
+
+One command from a fresh project to a working build-once application, and documentation that starts there.
+
+### Added
+- `.bin/caligrafer quickstart [--example]`, with Docker only (Composer runs in Docker): installs the libraries, starts
+  the server, initializes the project (it asks before deleting `.git`), points `.env` at the Docker database, creates
+  the database and the framework tables, and adds `Route::capabilities('/capabilities')` and `Route::mcp('/mcp')`.
+  `php caligrafer.php quickstart` does the same on your own server. Every step can be run again.
+- `--example`: the Tasks example (`framework/settings/examples/tasks`): five capabilities, a page built with the page
+  components, REST routes, the table and the JS client; a web page, `curl` and an AI agent use the same tasks.
+- `php caligrafer.php sql <file.sql>` runs a SQL script on the database of `.env`.
+- Documentation: a new README and wiki Home, a sidebar organized by what you want to do, and three Start here pages
+  (Quickstart, How Caligrafy works, Your first capability); every core page says where it fits.
+- Claude Code plugin 1.13.0.
+
 ## [2.1.3] - 2026-10-31
 
 ### Added
@@ -95,6 +111,7 @@ every change, what can break and the upgrade checklist for existing projects.
 - `.env` and the server files are no longer served, uploads are limited to an allow-list of extensions, and
   scripts never run from `public/uploads`.
 
+[2.2.0]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.2.0
 [2.1.3]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.3
 [2.1.2]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.2
 [2.1.1]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.1

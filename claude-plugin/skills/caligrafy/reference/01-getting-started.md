@@ -7,6 +7,8 @@
 > - Under Docker, `.env` overrides docker-compose environment (Dotenv `createUnsafeMutable`): set `DB_HOST=mysql` and `APP_ROOT=` in `.env`. Ports 8080/8077/3306 may clash with other projects (gotchas G11/G12).
 > - `caligrafer initialize` keeps the keys of a signed project but still deletes `.git` (G25). `app` = Vue as a library, `create` = Vite SPA.
 
+> **New to Caligrafy?** Start with the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): with Git and Docker, one command (`.bin/caligrafer quickstart --example`) sets everything up, and you use one feature from a web page, over REST and from an AI agent in 5 minutes. This page is the reference for every other way to install, for the configuration and for the Caligrafer commands.
+
 > ## Requirements
 > + PHP 8.3 or higher (8.5 recommended)
 > + MySQL 8.4 (or another database supported by PDO)
@@ -27,6 +29,16 @@
 > + **facebook Caligrafy Group:** Joining our Caligrafy group on facebook gives you more ways to interact with the community and to share success stories. [Join our facebook group](https://www.facebook.com/groups/caligrafy/)
 
 ## Installation
+
+### Quickstart (recommended)
+
+With [Git](https://git-scm.com/) and [Docker Desktop](https://www.docker.com/products/docker-desktop/):
+```bash
+git clone https://github.com/caligrafy/caligrafy-quill.git myapp
+cd myapp
+.bin/caligrafer quickstart          # add --example for the Tasks example
+```
+It installs the libraries (Composer in Docker), starts the server, initializes the project, points `.env` at the Docker database, creates the database and the framework tables, and adds the `/capabilities` and `/mcp` routes. Every step can be run again. Details and troubleshooting: [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart). The options below are for your own Apache, MySQL and PHP, or for full control.
 
 ### Quick Installation (MAMP/LAMP/XAMP)
 
@@ -146,6 +158,8 @@ After updating the framework of an existing project, run ```php caligrafer.php u
 + **Version:** run ```php caligrafer.php version``` (or `.bin/caligrafer version`) from the Caligrafy root to print the version of Caligrafy Quill that the project runs, for example `Caligrafy Quill 2.0.0`. It works before `composer install` and `initialize`, and creates nothing. In code, the version is `Caligrafy\Framework::VERSION`, and `doctor` shows it on its first line. Caligrafy follows [semantic versioning](https://semver.org): every release is a git tag `v<version>`, listed with its changes in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
 
 + **Build once commands** (learn more in [11. Build Once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)):
+    + ```php caligrafer.php quickstart [--example] [--yes]```: sets up a project in one step (with Docker: `.bin/caligrafer quickstart`)
+    + ```php caligrafer.php sql <file.sql>```: runs a SQL script (a `create_db.sql`) on the database of `.env`
     + ```php caligrafer.php platform install```: creates the framework tables (personal access tokens, audit log)
     + ```php caligrafer.php service Books/CreateBook --scope books:write```: creates a capability in `application/services/`
     + ```php caligrafer.php capabilities```: lists the capabilities (`--json`, `--markdown`)

@@ -15,6 +15,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 
 | Topic | Read |
 | - | - |
+| **Start here**: set up a project in one command (`.bin/caligrafer quickstart`), the ideas, a complete first feature | [15-quickstart.md](reference/15-quickstart.md), [16-how-caligrafy-works.md](reference/16-how-caligrafy-works.md), [17-your-first-capability.md](reference/17-your-first-capability.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
 | Verified pitfalls and wiki errata (G1-G60) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
@@ -172,7 +173,7 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 
 ## Workflow rules for Claude
 
-1. Before editing, confirm it is a Quill project and whether `application/` and `.env` exist (if not, `php caligrafer.php initialize` or `.bin/caligrafer` is needed - it deletes `.git`, so ask first when the folder is a git repo the user cares about).
+1. Before editing, confirm it is a Quill project and whether `application/` and `.env` exist (a project that was never set up: offer `.bin/caligrafer quickstart`, which asks before deleting `.git`) (if not, `php caligrafer.php initialize` or `.bin/caligrafer` is needed - it deletes `.git`, so ask first when the folder is a git repo the user cares about).
 2. Read the relevant reference file; prefer the source in `framework/core/` when in doubt.
 3. New server code goes in `application/` (never `framework/` unless the user asks to change the framework). Client code goes in `public/`.
 4. Use bound `Database::execute()` queries for anything built from user input (G2, G8). Filter then validate (G6).

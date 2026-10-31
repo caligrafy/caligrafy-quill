@@ -35,6 +35,26 @@ foreach ($t as $g => $vals) { if (!is_array($vals)) continue; foreach ($vals as 
 echo implode(", ", $bad);')
 [ -z "$OUT" ] && ok "public/css/tokens.css matches tokens.json" || ko "design tokens disagree" "$OUT"
 
+# --- quickstart without a database: project, routes, Tasks example; a second run changes nothing; .git needs --yes ----
+mkdir -p "$TMP/quick/.git" && cd "$TMP/quick"
+cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads public/js public/css
+STOP=$(php caligrafer.php quickstart --example 2>&1); STOPCODE=$?
+OUT=$(php caligrafer.php quickstart --example --yes 2>&1)
+cp application/config/routing/web.php "$TMP/quick-web.php"
+AGAIN=$(php caligrafer.php quickstart --example 2>&1)
+if [ "$STOPCODE" = 1 ] && echo "$STOP" | grep -q "deletes the .git folder" \
+    && echo "$OUT" | grep -q "SKIP  Database" && echo "$OUT" | grep -q "Example: 9 file(s) added" \
+    && [ -f application/services/Tasks/CreateTask.php ] && [ -f public/js/tasks.js ] && grep -q "export const createTask" public/js/capabilities.js \
+    && grep -q "Route::mcp('/mcp');" application/config/routing/web.php && grep -q "Route::capability('POST', '/api/tasks', 'create_task');" application/config/routing/web.php \
+    && cmp -s application/config/routing/web.php "$TMP/quick-web.php" && echo "$AGAIN" | grep -q "0 file(s) added, 9 already there"; then
+    ok "quickstart: asks before deleting .git, sets up routes and the Tasks example, and a second run changes nothing"
+else
+    ko "quickstart" "stop ($STOPCODE): $STOP
+first: $OUT
+again: $AGAIN"
+fi
+cd "$ROOT"
+
 # --- page components: every .cq- class the UI guidelines teach exists in public/css/tokens.css -----------------
 OUT=$(php -r '
 preg_match_all("/\\.(cq-[a-z0-9-]+)/", file_get_contents("claude-plugin/skills/caligrafy/reference/ui-guidelines.md"), $m);

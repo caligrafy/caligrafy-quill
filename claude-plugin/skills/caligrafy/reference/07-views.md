@@ -3,6 +3,8 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
+> **Where this fits.** Views are the web experience of your application. New pages are built with the [page components](#pagecomponents) (a card, a form, tabs, a list: the Caligrafy look with no CSS to write) and get their data from your capabilities, through a controller (`$this->call()`) or the JS client.
+
 Views are the front-end layer of your application. This is what gets displayed on the screen for your users.
 In an MVC structure, the `View` interfaces with the `Controller` and the `Controller` determines what gets displayed to the `View`.
 

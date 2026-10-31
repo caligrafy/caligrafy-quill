@@ -7,6 +7,8 @@
 > - `create()/update()/save()` keep `0`, `''` and `false` and skip only `null`; `search()` binds the keywords; `all()` clauses are raw SQL (include the keywords) and accept `'bindings'` for `?` placeholders (gotchas G7, G2, G8). Projects on an older framework still have the old behavior.
 > - FK constraint names must be unique per database and FK columns must match the parent id type (G10).
 
+> **Where this fits.** A model is the data layer under your capabilities: one class per table. Capabilities use models in `handle()` (`(new Book('books'))->create($input)`), and every experience reaches the data through them. Create a table with its `create_db.sql` and `php caligrafer.php sql`, as in [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#table).
+
 This framework is agnostic and does not engage in creating databases and database tables. The database for your application should be created using the language of your choice. This framework uses a PDO adapter to interface with your database tables. We recommend using MySQL given its tight integration with PHP but other databases can be used at your own discretion.
 
 > #### (video) [CRUD operations on a database](https://www.youtube.com/watch?v=kNdoaSi6pcE&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)

@@ -7,6 +7,8 @@
 > - `check()` returns an ARRAY both on success with filters (the filtered data) and on failure (errors). Prefer `filter()` then `validate()` (gotchas G6).
 > - Rules other than `required` are skipped for empty values (verified by the QA suite).
 
+> **Where this fits.** These GUMP rules and filters are what you write in the `$rules` and `$filters` of a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service): the framework applies them on every call, and pages, REST and AI agents all get the same message for each field. The rules also become the input schema that agents and the JS client see. Controllers can still use them directly, as below.
+
 Data validation is key to the success of any application. This framework provides a tight integration with GUMP - a third party library that makes data validation easy and painless.
 
 > Learn more about GUMP [here](https://github.com/Wixel/GUMP)

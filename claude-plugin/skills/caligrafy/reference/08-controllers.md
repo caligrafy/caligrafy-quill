@@ -3,6 +3,8 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
+> **Where this fits.** In Caligrafy, the rules of a feature live in a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service), and a controller is the web experience of it: it calls the capability (`$this->call('create_book')`, see [Calling a capability](#callcapability)) and chooses the view. Write logic in a controller only when it belongs to one page.
+
 ## Getting Started with Controllers
 A `Controller` is a key entity in an MVC architecture. It is the layer that is responsible for interfacing with both the `Model` and the `View`. It takes its input from a `View`, interfaces with the `Model` to either get information or add to the information, it calls upon any other logic that needs to be applied to the information and finally sends it back to the `View` to be displayed. 
 

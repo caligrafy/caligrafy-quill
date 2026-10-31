@@ -18,6 +18,9 @@ Pug views) and `public/<app>/` (client apps). `framework/` is the framework itse
 - Step-by-step procedures: `claude-plugin/skills/<new-resource | new-capability | new-app | server | db>/SKILL.md`.
 
 ## Build once, experience everywhere
+A project that was never set up: `.bin/caligrafer quickstart` (database, framework tables, `/capabilities` and `/mcp`;
+`--example` adds the Tasks example). It asks before `initialize` deletes `.git`.
+
 A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI agents) is a **capability**:
 `php caligrafer.php service <Folder>/<Name> --scope <resource:action>` creates a `Caligrafy\Service` with
 `#[Capability]` in `application/services/`. Declare every input in `$rules`, return data from `handle()`, refuse with

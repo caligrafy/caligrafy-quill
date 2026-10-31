@@ -7,6 +7,8 @@
 > - `redirect()` does not exit (G5); `guard()` defaults are `$loginUrl='/login'`, `$notAuthorized='/notAuthorized'` and it exits.
 > - API calls need BOTH `Authorization: Bearer <API_KEY>` and `Accept: application/json` (gotchas G1). The `API_KEY` is exposed to client apps (G27).
 
+> **Where this fits.** For a new API, write the feature as a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#rest) and route it with `Route::capability()`: the same code then serves your pages, your Vue apps and AI agents, with personal access tokens. The helpers, forms and controller APIs below are the building blocks underneath.
+
 This framework provides a certain number of capabilities that are meant to accelerate, to some extent, some of the basic logic that is redundant in every project. Some of those are global helper methods that can be used across the framework, others are specific to HTML Forms. Last but not least, we will show how this framework is already prebuilt to handle api calls without any extra coding.
 
 ## Helpers

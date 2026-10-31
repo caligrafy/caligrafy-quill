@@ -6,6 +6,8 @@
 > **Verified against framework source (see gotchas.md):**
 > - Unmatched URLs do not 404: they run the FIRST route registered in web.php (gotchas G4).
 
+> **Where this fits.** Routes connect URLs to what answers them. For a feature written as a capability, one line is enough: `Route::capability('POST', '/books', 'create_book')` for REST, and `Route::capabilities()` and `Route::mcp()` (added by the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart)) for the Vue apps and AI agents: see [Capability Routes](#capabilityroutes). The rest of this page covers page routes and controller routes.
+
 The very first thing that you need to do when building your application is structuring your URIs in a flexible and scalable way that is agnostic of how your application files are structured. This framework does it all for you. What you need to focus your effort on is planning where the URIs should go.
 
 ## Defining Routes

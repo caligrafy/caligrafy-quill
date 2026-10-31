@@ -7,6 +7,8 @@
 > - `parameters` is a property AND `parameters()` a method; `fetch` is an object property (`$this->request->fetch->id`) AND a method (`fetch('id')`). See api-reference.md > Request.
 > - JSON/API calls must send `Accept: application/json` (without text/html) to skip CSRF; see gotchas G1.
 
+> **Where this fits.** Controllers and closure routes read the request directly. A [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service) never does: it receives its inputs already checked and a `Context` that says who is calling, which is what lets the same capability answer pages, REST and AI agents.
+
 The `Request` class provides you with the flexibility to get all the information needed about a request made to your application. The `Request` class exists in the context of a successful route. In other words, if the routing is not successful then there is no easy way to have access to the `Request` class and to leverage its powerful functionalities.
 > Learn more about `Routing` [here](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing)
 

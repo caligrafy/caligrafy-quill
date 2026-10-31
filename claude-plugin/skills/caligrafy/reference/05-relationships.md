@@ -7,6 +7,8 @@
 > - `belongsTo()` is implemented as `hasMany()` (returns an array of rows whose FK points at this model) - for the inverse of one-to-many use `hasOne()` (gotchas G9).
 > - `hasOne()` reads `<model>_id` on the CALLING model's table. `belongsToMany()` pivots copy the referenced id types and use unique constraint names (G10, fixed in the security release).
 
+> **Where this fits.** Relationships live in the models, so a capability can return a book with its author (`$book->author()`) and every experience gets the same data.
+
 In relational databases, tables are related to one another. There are several types of relationships that can be defined. This framework makes it easy to define and use relationships without having to write extensive code.
 There are 3 types of relationships defined in this framework: `One-to-One`, `One-to-Many` and `Many-to-Many`.
 

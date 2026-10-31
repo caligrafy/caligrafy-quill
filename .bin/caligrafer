@@ -14,6 +14,32 @@ else
     COMMAND=""
 fi
 
+# quickstart: a fresh project to a working application with Docker only (no PHP or Composer needed on this computer)
+if [ "$MODE" = "quickstart" ]; then
+    cd "$(dirname "$0")/.." || exit 1
+    COMPOSE="docker compose"
+    $COMPOSE version >/dev/null 2>&1 || COMPOSE="docker-compose"
+    if ! docker info >/dev/null 2>&1; then
+        printf "\nDocker is not running: start Docker Desktop, then run .bin/caligrafer quickstart again.\n\n"; exit 1
+    fi
+    if [ -d .git ] && [ ! -d application ] && [[ " $* " != *" --yes "* ]]; then
+        printf "\nquickstart initializes the project, which deletes the .git folder of the framework (your project starts its own history).\n"
+        read -r -p "Continue? [y/N] " ANSWER
+        [ "$ANSWER" = "y" ] || [ "$ANSWER" = "Y" ] || exit 1
+        set -- "$@" --yes
+    fi
+    if [ ! -f vendor/autoload.php ]; then
+        printf "\nInstalling the PHP libraries (Composer in Docker)...\n"
+        if command -v composer >/dev/null 2>&1; then composer install --no-interaction || exit 1
+        else docker run --rm -v "$PWD":/app -w /app composer:2 install --no-interaction --ignore-platform-reqs || exit 1; fi
+    fi
+    [ -f .env ] || cp framework/settings/.env.example .env
+    printf "\nStarting the server (the first start builds the PHP image: a few minutes)...\n"
+    $COMPOSE up -d dev-box || exit 1
+    $COMPOSE exec -T dev-box php caligrafer.php quickstart "${@:2}"
+    exit $?
+fi
+
 # Calling the right service based on PHP and Composer presence
 
 printf "Checking if server is running..."
