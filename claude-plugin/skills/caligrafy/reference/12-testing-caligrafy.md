@@ -195,12 +195,18 @@ Make the check fail first (break the code it protects), then make it pass. Never
     python3 claude-plugin/scripts/sync-wiki.py ../caligrafy-quill.wiki --check    # exit 1 when a mirror is stale
     ```
     A new wiki page needs a line in the `PAGES` table of `sync-wiki.py` (and in the reference map of `skills/caligrafy/SKILL.md`). `api-reference.md` and `gotchas.md` are written by hand from the source: update them when `framework/` changes.
-4. **Plugin version.** Bump `version` in `claude-plugin/.claude-plugin/plugin.json` (minor for new framework features, patch for documentation) and add a line to the changelog of `claude-plugin/README.md`. Validate it:
+4. **Framework version.** For a release, set `Caligrafy\Framework::VERSION` in `framework/core/Framework.php` ([semantic versioning](https://semver.org): major when projects can break, minor for features, patch for fixes) and add its section at the top of `CHANGELOG.md`. The tooling phase fails when `php caligrafer.php version`, `CHANGELOG.md` and a release tag on the checked-out commit disagree, and the `VersionTest` unit test checks the format and the changelog.
+5. **Plugin version.** Bump `version` in `claude-plugin/.claude-plugin/plugin.json` (minor for new framework features, patch for documentation) and add a line to the changelog of `claude-plugin/README.md`. Validate it:
     ```bash
     claude plugin validate ./claude-plugin --strict
     claude plugin validate . --strict             # the marketplace
     ```
-5. **Run the whole suite** with the wiki clone: `QA_WIKI=../caligrafy-quill.wiki ./qa/run.sh`.
-6. Open the pull request (see `CONTRIBUTING.md`).
+6. **Run the whole suite** with the wiki clone: `QA_WIKI=../caligrafy-quill.wiki ./qa/run.sh`.
+7. Open the pull request (see `CONTRIBUTING.md`).
+8. **Tag the release** on `master` after the merge, and push the tag. Packagist picks it up; create the GitHub Release from the tag with the `CHANGELOG.md` section as its notes:
+    ```bash
+    git tag -a v2.0.0 -m "Caligrafy Quill 2.0.0"
+    git push origin v2.0.0
+    ```
 
 >[Back to the Release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026)

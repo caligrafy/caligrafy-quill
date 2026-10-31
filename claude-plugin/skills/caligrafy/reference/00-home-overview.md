@@ -45,9 +45,11 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
     ```bash
 
-    composer create-project -s dev caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
+    composer create-project caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
 
     ```
+
+    This installs the latest release (see the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md)). Add `-s dev` to get the unreleased `master` branch instead.
 
 + Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#using-docker) 
 

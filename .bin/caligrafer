@@ -26,7 +26,9 @@ fi
 printf "Checking PHP and composer..."
 php --version && composer --version
 if  [ $? -eq 0 ]; then
-    if [ "$MODE" = "doctor" ]; then
+    if [ "$MODE" = "version" ] || [ "$MODE" = "--version" ] || [ "$MODE" = "-v" ]; then
+        ./caligrafer.php version; exit $?
+    elif [ "$MODE" = "doctor" ]; then
         # read-only: never initializes or installs anything; options are passed as typed
         if [ -d "./vendor" ]; then ./caligrafer.php doctor "${@:2}"; exit $?; fi
         printf "\n\nFAIL vendor/ is missing: run composer install first\n\n"; exit 1

@@ -38,9 +38,11 @@
 
     ```bash
 
-    composer create-project -s dev caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
+    composer create-project caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
 
     ```
+
+    This installs the latest release (see the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md)). Add `-s dev` to get the unreleased `master` branch instead.
 
 + Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#using-docker) 
 
@@ -140,6 +142,8 @@ Caligrafer is a command line tool that comes prepackaged with several tools and 
 + **Framework Initialization:** `.bin/caligrafer` initializes the project the first time you use it.
 You can also run ```php caligrafer.php initialize``` from the Caligrafy root. It signs the project with an `APP_KEY` and an `API_KEY` (an already signed project keeps its keys), creates the `application` folder and **deletes the `.git` folder**.
 After updating the framework of an existing project, run ```php caligrafer.php upgrade``` (dry run) then ```php caligrafer.php upgrade --apply``` to bring the template files of `application` up to date: untouched files are replaced after a backup in `backups/caligrafy-upgrade-<timestamp>/`, customized files are kept and get a `<file>.caligrafy-new` version next to them, and `php caligrafer.php upgrade --force <application/path>` replaces one customized file (see [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading)).
+
++ **Version:** run ```php caligrafer.php version``` (or `.bin/caligrafer version`) from the Caligrafy root to print the version of Caligrafy Quill that the project runs, for example `Caligrafy Quill 2.0.0`. It works before `composer install` and `initialize`, and creates nothing. In code, the version is `Caligrafy\Framework::VERSION`, and `doctor` shows it on its first line. Caligrafy follows [semantic versioning](https://semver.org): every release is a git tag `v<version>`, listed with its changes in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
 
 + **Project health check:** run ```php caligrafer.php doctor``` (or `.bin/caligrafer doctor`) from the Caligrafy root. It is read-only: it checks PHP and its extensions, `vendor/`, `.env`, the `APP_KEY`/`API_KEY`, `public/uploads`, the web app manifest and its icons (and the service worker files when `PWA_SERVICE_WORKER=true`), whether `application` is up to date with the framework templates, the database connection (when `DB_ACTIVATE=true`) and every service configured in `.env`: OpenAI and Groq (the key is accepted and the configured models are available for it), the provider of the open source `Agent` (`AGENT_PROVIDER`: Together AI, Fireworks AI, OpenRouter, a custom endpoint, or Ollama: the server answers and the models are pulled, with the `host.docker.internal` hint when PHP runs in Docker), Stripe (key accepted, test or live mode), Coinbase Business, Watson and the SMTP server (connect and `EHLO` only, no mail is sent). Each line is `OK`, `WARN`, `FAIL` or `SKIP` (not configured) with a one-line fix. Secrets are never printed (at most `sk-proj-…EZ8A`), and a key pasted with spaces or a missing `-`/`_` after its prefix is reported. Network errors are explained: a `self-signed certificate in certificate chain` error means a corporate TLS inspection proxy (see the Claude plugin `server` skill for the Docker fix).
     + `--only openai,groq` limits the checks (`project`, `database`, `openai`, `groq`, `agent`, `stripe`, `coinbase`, `watson`, `mail`), `--json` prints machine-readable results, `--env .env.production` checks another environment file. The exit code is `1` when a check fails.

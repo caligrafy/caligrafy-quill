@@ -3,9 +3,9 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-This page lists every change made to Caligrafy Quill in October 2026, after the security release (`7dce1e4`, see [Security and Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading)). For each change it explains what changed, why, what you need to do in a new and in an existing project, and what can break. The detailed documentation lives in the pages linked from each section.
+This page lists every change made to Caligrafy Quill in October 2026, released as **v2.0.0**, the first tagged release, after the security release (`7dce1e4`, see [Security and Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading)). For each change it explains what changed, why, what you need to do in a new and in an existing project, and what can break. The detailed documentation lives in the pages linked from each section.
 
-> **New projects have nothing to do.** A project created with `composer create-project -s dev caligrafy/caligrafy-quill`, or cloned and initialized with `php caligrafer.php initialize`, gets every change below. The "Existing projects" steps only apply to projects initialized with an earlier version.
+> **New projects have nothing to do.** A project created with `composer create-project caligrafy/caligrafy-quill`, or cloned and initialized with `php caligrafer.php initialize`, gets every change below. The "Existing projects" steps only apply to projects initialized with an earlier version.
 
 ## Upgrade checklist for existing projects
 
@@ -50,6 +50,7 @@ If your project predates the security release, first follow the database steps o
 | [`php caligrafer.php upgrade`](#upgrade) | Existing projects | Run it |
 | [Namespaced controllers](#controllers) | Controllers | None (code that extends an example controller: use its full name) |
 | [`php caligrafer.php doctor`](#doctor) | Everyone | Run it when something fails |
+| [Versioned releases](#version) | Everyone | Optional: require `caligrafy/caligrafy-quill:^2.0` instead of `dev-master` |
 | [Install to home screen](#install) | Pug layout | `'install' => true`, optional `PWA_SERVICE_WORKER` |
 | [Face login security and passkeys](#facelogin) | Face login | Use `FaceLogin::verify()`; passkeys for sensitive accounts |
 | [Agent providers](#agent) | Open model agents | Optional `AGENT_PROVIDER` |
@@ -282,6 +283,22 @@ The checks are `project` (PHP version and extensions, `vendor/`, `.env`, `APP_KE
 **Why.** Most support questions were configuration problems (a key with a leading space, a model the key cannot use, a retired model, a closed SMTP port) that the code reported as `null` or a generic error.
 
 Learn more: [Caligrafer doctor](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#doctor).
+
+## Versioned releases
+
+**What changed.** Caligrafy Quill has releases: this one is **v2.0.0**, a git tag on [GitHub](https://github.com/caligrafy/caligrafy-quill/tags) and a version on [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill). The version follows [semantic versioning](https://semver.org) (a major version can break projects, a minor one adds features, a patch only fixes bugs) and every release is listed in [`CHANGELOG.md`](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
+
+```bash
+php caligrafer.php version     # Caligrafy Quill 2.0.0
+```
+
+In code the version is `Caligrafy\Framework::VERSION`, and `php caligrafer.php doctor` shows it on its first line (`"version"` in `--json`).
+
+**Why.** Before, the only version was `dev-master`: a project could not say which framework it ran, and `composer create-project` needed `-s dev`.
+
+**Existing projects.** Nothing to do. `composer create-project caligrafy/caligrafy-quill` now installs the latest release; `-s dev` still gets the unreleased `master`.
+
+Learn more: [Version](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#version).
 
 ## Install to home screen
 

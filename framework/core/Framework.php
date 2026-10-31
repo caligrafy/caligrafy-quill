@@ -17,6 +17,11 @@
 namespace Caligrafy;
 
 class Framework extends \stdClass {
+
+  /**
+   * Version of Caligrafy Quill (semantic versioning: the git tag is v<VERSION>, the changes are in CHANGELOG.md)
+   */
+  const VERSION = '2.0.0';
     
   /**
    * Framework main 

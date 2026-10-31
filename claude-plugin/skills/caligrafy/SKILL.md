@@ -174,7 +174,8 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 4. Use bound `Database::execute()` queries for anything built from user input (G2, G8). Filter then validate (G6).
 5. After editing PHP, `php -l <file>`; after changing routes, hit them with curl (JSON + Bearer) or the browser. When you change `framework/` or `framework/settings/application`, run `./qa/run.sh` (G38) and add a test for the change.
 6. In a project initialized with an older framework, run `php caligrafer.php upgrade` (dry run, safe) to see which `application/` copies are outdated or customized before assuming the current behavior; apply with `--apply` only when the user agrees (G39).
-7. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the Agent provider (Ollama reachable, models pulled), the database and the services, with a fix per line.
-8. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
-9. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
-10. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.
+7. To know which framework version a project runs, use `php caligrafer.php version` (or `Caligrafy\Framework::VERSION`; releases are git tags `v<version>`, changes in `CHANGELOG.md`). Releases start at v2.0.0; a project with no `version` command predates it.
+8. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the Agent provider (Ollama reachable, models pulled), the database and the services, with a fix per line.
+9. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
+10. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
+11. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.

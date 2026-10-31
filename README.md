@@ -18,6 +18,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 ## 🎉 What's new (October 2026)
 
 + **Current libraries and services:** PHP 8.3+ (Docker on PHP 8.5 and MySQL 8.4), Bootstrap 5 without jQuery (the Caligrafy look is kept), Vue 3.5 and a Vite 8 + Pinia SPA template, OpenAI GPT-6 and gpt-image-2, Assistants on the Responses API, the Stripe Payment Element, Coinbase Business, ml5 1.4 and @vladmandic/face-api.
++ **Versioned releases:** v2.0.0 is the first tagged release. Every release is listed in the [changelog](CHANGELOG.md), and `php caligrafer.php version` prints the version of a project.
 + **New tools:** `php caligrafer.php upgrade` brings an existing project up to date, `php caligrafer.php doctor` checks `.env`, the database and every configured service.
 + **New features:** real HTTP status codes and JSON errors, namespaced controllers, install to home screen, face login with liveness checks and passkeys, open models (Llama) on Groq, Together, Fireworks, OpenRouter or Ollama.
 + **Claude + Caligrafy Quill:** the framework ships with its own [Claude Code](https://code.claude.com) plugin: the complete documentation, a source-verified API reference, scaffolding commands and a code reviewer ([learn more](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)).
@@ -63,9 +64,11 @@ The plugin lives in [`claude-plugin/`](claude-plugin/); its [README](claude-plug
 
     ```bash
 
-    composer create-project -s dev caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
+    composer create-project caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
 
     ```
+
+    This installs the latest release (see the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md)). Add `-s dev` to get the unreleased `master` branch instead.
 
 + Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#using-docker) 
 
