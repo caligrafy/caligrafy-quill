@@ -6,6 +6,42 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.3.0] - 2026-10-31
+
+What upgrading a real site (caligrafy.com, from a September 2025 project) and building the course on 2.2.0 uncovered.
+
+### Added
+- `php caligrafer.php call <capability> ['{"json"}' | key=value ...] [--token <token>] [--guest]`: calls a capability
+  from the command line and prints the same JSON as REST. The quickest way to try a capability before any route.
+- `upgrade --keep <application/path>`: keeps a page that is an untouched copy of an older template (a default page that
+  became a page of your site, such as the home page). The new version is written next to it, and the choice is
+  remembered in the manifest.
+- `upgrade` also reports, without changing anything: the settings of `framework/settings/.env.example` missing from
+  `.env` and the obsolete ones (`CRYPTO_PAY_KEY`), and the views and client apps that still use Bootstrap 3 classes
+  (`col-xs-`, `pull-left`, `btn-default`...) that break under Bootstrap 5.
+- `doctor` warns about `APP_DEBUG=true` on a site served over HTTPS, and about a `CRYPTO_PAY_KEY` left from Coinbase
+  Commerce (closed on March 31, 2026).
+- `DB_TIMEZONE`: by default the MySQL session now uses `SERVER_TIMEZONE`, like PHP, so `NOW()`, `CURRENT_TIMESTAMP`
+  columns and the audit log share one clock; `DB_TIMEZONE=server` keeps the database server's own time zone.
+
+### Fixed
+- The payment page template (`views/default/pages/payment.pug`): the Stripe Payment Element overflowed its box and
+  `stripe_global.css` styled the whole page. The payment and checkout templates are now built with the page components.
+- Several `.cq-card` in one `.cq-page` now stack (they sat side by side on wide screens).
+- The Vue app template (`php caligrafer.php app`) calls the capabilities through the generated JS client instead of
+  axios with the shared API key, which `LEGACY_API_KEY=false` refuses.
+- `php caligrafer.php create` no longer says the packages were installed when `npm` is missing (the Docker `dev-box`
+  has no Node.js) or failed: it says how to install them.
+- The bot template says when the assistant cannot be reached, or that the address needs `?botSkillId=`.
+- The face detection template shows its buttons at once (enabled when the models are loaded) and says when the camera
+  is blocked.
+- Claude Code plugin 1.14.0.
+
+### Upgrading
+`php caligrafer.php upgrade` (read its new reports), then `upgrade --apply`. Copy `public/css/tokens.css` and
+`public/js/services/detect.js` from the release: they are not templates. Existing rows keep their times; new rows use
+`SERVER_TIMEZONE` unless you set `DB_TIMEZONE=server`.
+
 ## [2.2.0] - 2026-10-31
 
 One command from a fresh project to a working build-once application, and documentation that starts there.
@@ -112,6 +148,7 @@ every change, what can break and the upgrade checklist for existing projects.
 - `.env` and the server files are no longer served, uploads are limited to an allow-list of extensions, and
   scripts never run from `public/uploads`.
 
+[2.3.0]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.3.0
 [2.2.0]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.2.0
 [2.1.3]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.3
 [2.1.2]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.2

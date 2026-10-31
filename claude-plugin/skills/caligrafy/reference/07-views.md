@@ -253,7 +253,7 @@ block content
 
 | Part | Classes |
 | --- | --- |
-| Page and card | `main.cq-page` (starts below the fixed header, centers) > `.cq-card` (640px; `.cq-page--wide` for 960px). One card per page: in 2.2.0 two `.cq-card` in the same `.cq-page` sit side by side on wide screens; put more content in `.cq-section` parts of the same card |
+| Page and card | `main.cq-page` (starts below the fixed header, centers) > `.cq-card` (640px; `.cq-page--wide` for 960px). Several cards stack, with a gap (since 2.3.0; in 2.2.0 they sat side by side: copy `public/css/tokens.css` from 2.3.0) |
 | Header | `.cq-card-head > h2.cq-title + p.cq-note` |
 | Form | `form.cq-form > .cq-fields` (`--2`, `--3` columns from 576px up) `> div > label + .form-control`, `button.btn.btn-primary.cq-submit` |
 | Messages | `p.cq-error` for errors, `p.cq-empty` for empty lists, `.cq-foot` for a footer line |

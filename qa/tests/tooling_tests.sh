@@ -55,6 +55,32 @@ again: $AGAIN"
 fi
 cd "$ROOT"
 
+# --- caligrafer call: the JSON of a capability, its refusals, and a visitor (--guest) who is refused a non-public one ----
+cd "$TMP/quick"
+mkdir -p application/services/QaCall
+printf '%s\n' '<?php' 'use Caligrafy\Capability; use Caligrafy\Context; use Caligrafy\Service;' \
+  "#[Capability(name: 'qa_greet', description: 'Greets someone.', scope: 'qa:read', readOnly: true)]" \
+  "class QaGreet extends Service { public \$rules = array('name' => 'required|max_len,20'); public function handle(array \$input, Context \$context) { return array('hello' => \$input['name']); } }" \
+  > application/services/QaCall/QaGreet.php
+OK=$(php caligrafer.php call qa_greet name=Ada 2>&1); OKCODE=$?
+JSONIN=$(php caligrafer.php call qa_greet '{"name": "Grace"}' 2>&1)
+BAD=$(php caligrafer.php call qa_greet 2>&1); BADCODE=$?
+GUEST=$(php caligrafer.php call qa_greet name=Ada --guest 2>&1)
+NONE=$(php caligrafer.php call no_such_thing 2>&1)
+if [ "$OKCODE" = 0 ] && echo "$OK" | grep -q '"hello": "Ada"' && echo "$JSONIN" | grep -q '"hello": "Grace"' \
+    && [ "$BADCODE" = 1 ] && echo "$BAD" | grep -q '"code": "invalid"' && echo "$GUEST" | grep -q '"code": "unauthenticated"' \
+    && echo "$NONE" | grep -q '"code": "not_found"'; then
+    ok "caligrafer call: key=value and JSON inputs, 422/404 answers as JSON, --guest is refused a non-public capability"
+else
+    ko "caligrafer call" "ok ($OKCODE): $OK
+json: $JSONIN
+bad ($BADCODE): $BAD
+guest: $GUEST
+none: $NONE"
+fi
+rm -rf application/services/QaCall
+cd "$ROOT"
+
 # --- page components: every .cq- class the UI guidelines teach exists in public/css/tokens.css -----------------
 OUT=$(php -r '
 preg_match_all("/\\.(cq-[a-z0-9-]+)/", file_get_contents("claude-plugin/skills/caligrafy/reference/ui-guidelines.md"), $m);

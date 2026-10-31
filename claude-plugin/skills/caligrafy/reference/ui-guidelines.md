@@ -12,7 +12,7 @@ no `.cq-page` rule, it predates 2.1.3: copy the file from the framework (or upda
 | Part | Markup | Notes |
 | --- | --- | --- |
 | Page | `main.cq-page` | Starts below the fixed header (120px), centers the card. `.cq-page--wide` for 960px cards |
-| Card | `.cq-card` | White, rounded, shadowed, 640px max, full width on phones. **One card per page**: in 2.2.0 `.cq-page` is a row flexbox, so a second `.cq-card` sits beside the first on wide screens; put more content in `.cq-section` parts of the same card |
+| Card | `.cq-card` | White, rounded, shadowed, 640px max, full width on phones. Several cards stack with a gap (2.3.0+; in a 2.2.0 project keep one card per page, G61) |
 | Card header | `.cq-card-head > h2.cq-title + p.cq-note` | The title says what the page is; the note one line of context |
 | Form | `form.cq-form > .cq-fields > div > label + input.form-control` | `.cq-fields--2` / `--3`: columns from 576px up, one column on phones. Every field has a `label` |
 | Submit | `button.btn.btn-primary.cq-submit` | Full-width black button (Bootstrap's `w-100` is overridden by the theme: use `cq-submit`) |
@@ -109,7 +109,7 @@ own parts (the FaceDetect camera, a chat thread) but sit in a `.cq-card` with a 
 
 ## Checklist before you say a page is done
 
-- [ ] `main.cq-page > .cq-card` (one card), with a `.cq-card-head` (title + note); nothing hidden under the header
+- [ ] `main.cq-page > .cq-card` (one card in 2.2.0 projects), with a `.cq-card-head` (title + note); nothing hidden under the header
 - [ ] every input has a `label`; the primary action is `btn btn-primary cq-submit`; errors go to `.cq-error`
 - [ ] lists use `.cq-list > .cq-item` with `.cq-actions`; an empty state says what to do next
 - [ ] no Bootstrap color classes, no hard-coded colors, no page-level `style` block unless a part has no component

@@ -12,7 +12,8 @@ namespace Caligrafy;
  * Class Upgrader
  * Compares application/ with framework/settings/application and reports or applies the template updates.
  * Only template files are touched; files you created, .env, public/uploads and vendor are never read or written.
- * Client apps in public/ created from framework/plugins are reported only.
+ * Client apps in public/ created from framework/plugins are reported only, and so are .env (new and obsolete settings)
+ * and the views or apps that still use Bootstrap 3 classes (the framework uses Bootstrap 5).
  */
 class Upgrader
 {
@@ -27,16 +28,31 @@ class Upgrader
     // client app type => marker found in its index.php or scripts/main.js (checked in this order)
     const PLUGIN_MARKERS = ['facedetect' => 'new FaceDetector', 'ml' => 'new MlCore', 'bot' => '__bots__', 'app' => 'loadVue('];
 
+    // Bootstrap 3 classes that Bootstrap 5 dropped: a page that uses them loses its layout
+    const BOOTSTRAP3 = '/\\b(col-xs-\\d+|pull-(left|right)|img-responsive|btn-default|panel-(heading|body|default)|hidden-(xs|sm|md|lg)|visible-(xs|sm|md|lg)|center-block|input-group-addon|label-default)\\b/';
+
+    // settings that no longer do anything => what replaces them
+    const OBSOLETE_SETTINGS = ['CRYPTO_PAY_KEY' => 'Coinbase Commerce closed on March 31, 2026: use COINBASE_API_KEY_NAME and COINBASE_API_KEY_SECRET (Coinbase Business)'];
+
     private $root;
     private $apply;
     private $force;
     private $backupDir = null;
+    private $keep = [];
 
-    public function __construct($root = '.', $apply = false, $force = null)
+    /**
+     * @param array $keep application/ paths to keep even though they are untouched copies of an older template
+     *                    (a default page that became a page of the site, like the home page): the new version is
+     *                    written next to them, as for customized files
+     */
+    public function __construct($root = '.', $apply = false, $force = null, $keep = array())
     {
         $this->root = rtrim($root, '/');
         $this->apply = $apply;
         $this->force = $force === null? null : preg_replace('#^(\./)?(application/)?#', '', $force);
+        foreach ((array) $keep as $path) {
+            $this->keep[] = preg_replace('#^(\./)?(application/)?#', '', $path);
+        }
     }
 
     /**
@@ -59,7 +75,7 @@ class Upgrader
     /**
      * Writes application/.caligrafy-manifest.json (called by initialize after copying the templates)
      */
-    public static function writeManifest($root = '.', $files = null)
+    public static function writeManifest($root = '.', $files = null, $kept = array())
     {
         $root = rtrim($root, '/');
         $template = self::hashes("$root/" . self::TEMPLATE);
@@ -71,6 +87,7 @@ class Upgrader
             'updated' => date('c'),
             'files' => $files
         ];
+        if ($kept) $manifest['kept'] = array_values(array_unique($kept));   // pages kept with --keep: never replaced by --apply
         file_put_contents("$root/application/" . self::MANIFEST, json_encode($manifest, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
     }
 
@@ -90,7 +107,9 @@ class Upgrader
             if ($current === null) $status = 'missing';
             elseif ($current === $hash) $status = 'identical';
             elseif ($path === self::ROUTES) $status = 'routes';
-            elseif (($manifest['files'][$path] ?? null) === $current || in_array($current, $history[$path] ?? [], true)) $status = 'outdated';
+            elseif (($manifest['files'][$path] ?? null) === $current || in_array($current, $history[$path] ?? [], true)) {
+                $status = in_array($path, $manifest['kept'] ?? [], true)? 'kept' : 'outdated';
+            }
             else $status = 'customized';
             $plan[$path] = ['status' => $status, 'template' => $hash, 'current' => $current];
         }
@@ -120,7 +139,10 @@ class Upgrader
         $files = $manifest['files'] ?? [];
         $counts = array_fill_keys(['missing', 'identical', 'outdated', 'customized', 'routes'], 0);
         foreach ($plan as $path => $item) {
-            $counts[$item['status']]++;
+            if ($item['status'] === 'outdated' && in_array($path, $this->keep, true)) {
+                $item['status'] = $plan[$path]['status'] = 'kept';
+            }
+            $counts[$item['status']] = ($counts[$item['status']] ?? 0) + 1;
             $forced = $this->force === $path;
             $new = $this->app($path) . self::NEW_SUFFIX;
             switch ($item['status']) {
@@ -137,10 +159,11 @@ class Upgrader
                     if ($this->apply || $forced) $this->copy($path);
                     break;
                 case 'customized':
+                case 'kept':
                 case 'routes':
                     if (!$forced) {
                         // listed below; the new version of a customized file is written next to it
-                        if ($this->apply && $item['status'] === 'customized') $this->copy($path, $new);
+                        if ($this->apply && $item['status'] !== 'routes') $this->copy($path, $new);
                         continue 2;
                     }
                     $this->copy($path);
@@ -155,19 +178,26 @@ class Upgrader
         }
         // customized files and routes are listed after the files that change
         foreach ($plan as $path => $item) {
-            if (in_array($item['status'], ['customized', 'routes']) && $this->force !== $path) {
+            if (in_array($item['status'], ['customized', 'kept', 'routes']) && $this->force !== $path) {
                 printf("  %-11s application/%s: %s\n", $item['status'], $path, $item['status'] === 'routes'? "your routes: never replaced"
                     : ($this->apply? "kept, new version written to application/$path" . self::NEW_SUFFIX
                         : "kept, new version will be written to application/$path" . self::NEW_SUFFIX . " (replace it with --force application/$path)"));
             }
         }
         print("  identical  " . $counts['identical'] . " file(s)\n");
+        if ($counts['outdated'] > 0 && !$this->apply) {
+            print("\n Untouched copies are replaced by the new template. If one of them is a page of your site (for example the\n"
+                . " home page views/default/index.pug), keep it: --keep application/<path> (the new version is written next to it).\n");
+        }
 
         $this->routesPatch($plan);
         $this->clientApps();
+        $this->bootstrap3($plan);
+        $this->envReport();
 
         if ($changing) {
-            self::writeManifest($this->root, $files);
+            $kept = array_diff(array_merge($manifest['kept'] ?? [], $this->keep), (array) $this->force);
+            self::writeManifest($this->root, $files, $kept);
             print("\n Manifest application/" . self::MANIFEST . " updated.");
             if ($this->backupDir) print(" Backups: " . $this->backupName() . "/");
             print("\n\n");
@@ -201,6 +231,68 @@ class Upgrader
         $this->backup(self::ROUTES);
         file_put_contents($file, $patched);
         print("\n Routes: application/" . self::ROUTES . " catch block patched to `Errors::handle(\$e);` (backup in " . $this->backupName() . ").\n");
+    }
+
+    /**
+     * Views and client apps that still use Bootstrap 3 classes (report only): the framework uses Bootstrap 5
+     */
+    private function bootstrap3($plan)
+    {
+        $files = [];
+        $views = $this->root . '/application/views';
+        if (is_dir($views)) {
+            $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($views, \FilesystemIterator::SKIP_DOTS));
+            foreach ($it as $file) {
+                $rel = substr($file->getPathname(), strlen($this->root . '/application/'));
+                // an untouched copy that this upgrade replaces gets the Bootstrap 5 template
+                if (substr($rel, -4) === '.pug' && !(($plan[$rel]['status'] ?? '') === 'outdated')) $files[] = $file->getPathname();
+            }
+        }
+        foreach (glob($this->root . '/public/*', GLOB_ONLYDIR) as $dir) {
+            if (in_array(basename($dir), ['css', 'js', 'fonts', 'images', 'resources', 'uploads'], true)) continue;
+            $it = new \RecursiveIteratorIterator(new \RecursiveCallbackFilterIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS),
+                function ($f) { return !in_array($f->getFilename(), ['node_modules', 'dist'], true); }));
+            foreach ($it as $file) {
+                if (preg_match('/\.(php|html|vue)$/', $file->getFilename())) $files[] = $file->getPathname();
+            }
+        }
+        $lines = [];
+        foreach ($files as $file) {
+            if (preg_match_all(self::BOOTSTRAP3, (string) @file_get_contents($file), $m)) {
+                $lines[] = "  " . substr($file, strlen($this->root) + 1) . ": " . implode(', ', array_slice(array_unique($m[1]), 0, 5));
+            }
+        }
+        if ($lines) {
+            print("\n Bootstrap 3 classes (report only): the framework uses Bootstrap 5, where these classes do nothing and the layout breaks.\n"
+                . " Use .row > .col-md-6 (no col-xs-), float-start/float-end, img-fluid, btn-secondary, card, d-none... or the page components (wiki 7. Views):\n"
+                . implode("\n", $lines) . "\n");
+        }
+    }
+
+    /**
+     * .env compared with framework/settings/.env.example: new settings it lacks and obsolete ones (report only)
+     */
+    private function envReport()
+    {
+        $env = $this->root . '/.env';
+        $example = $this->root . '/framework/settings/.env.example';
+        if (!is_file($env) || !is_file($example)) return;
+        $keys = function ($file) {
+            preg_match_all('/^([A-Z][A-Z0-9_]*)=/m', (string) file_get_contents($file), $m);
+            return array_unique($m[1]);
+        };
+        $mine = $keys($env);
+        $missing = array_values(array_diff($keys($example), $mine));
+        $obsolete = array_values(array_intersect(array_keys(self::OBSOLETE_SETTINGS), $mine));
+        if (!$missing && !$obsolete) return;
+        print("\n Settings (.env, report only, never modified):\n");
+        if ($missing) {
+            print("  new        " . implode(', ', $missing) . "\n"
+                . "             not in your .env (empty means the default): copy the lines you need from framework/settings/.env.example\n");
+        }
+        foreach ($obsolete as $key) {
+            print("  obsolete   $key: " . self::OBSOLETE_SETTINGS[$key] . "\n");
+        }
     }
 
     /**

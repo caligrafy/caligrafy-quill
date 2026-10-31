@@ -60,6 +60,7 @@ PAGES = {
     '16-how-caligrafy-works.md': ('How-Caligrafy-Works.md', 'How Caligrafy works'),
     '17-your-first-capability.md': ('Your-First-Capability.md', 'Your first capability'),
     '14-release-notes-2.1.0.md': ('Release-notes:-2.1.0.md', 'Release notes: 2.1.0'),
+    '19-release-notes-2.3.0.md': ('Release-notes:-2.3.0.md', 'Release notes: 2.3.0'),
     '13-build-once-services-capabilities-mcp.md': ('11.-Build-Once:-Services,-Capabilities-and-MCP.md', '11. Build Once: Services, Capabilities and MCP'),
     'wiki-sidebar.md': ('_Sidebar.md', 'Wiki sidebar (table of contents)'),
 }

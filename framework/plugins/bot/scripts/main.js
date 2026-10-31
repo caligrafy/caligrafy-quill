@@ -118,9 +118,15 @@ const app = Vue.createApp({
         }
     },
     mounted() {
-        this.connect();
         this.addMessage("Hi there!");
         this.addAction('text', [], { "bot_name": 'Cali' });
+        // say so when the assistant cannot be reached, instead of a silent chat
+        this.connect().then(connected => {
+            if (connected) return;
+            this.addMessage(this.botId
+                ? "The assistant is not available right now. Try again later."
+                : "No assistant here: add ?botSkillId=<assistant id> to the address of this page.");
+        });
     }
 });
 

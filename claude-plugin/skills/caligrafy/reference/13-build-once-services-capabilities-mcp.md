@@ -239,7 +239,14 @@ Build each screen from the [page components](https://github.com/caligrafy/caligr
 
 ## Testing a capability
 
-A service can be run directly, without the channels, in a PHPUnit test or a script:
+From the command line, with the checks and the audit, before any route (since 2.3.0):
+```bash
+php caligrafer.php call create_book '{"title": "Dune", "author": "Frank Herbert", "publisher_id": 1}'
+php caligrafer.php call create_book title=Dune --guest     # as a visitor: refused unless public
+```
+It prints `{"data": ...}` or the `{"error": ...}` of the REST API ([Caligrafer: call](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#call)).
+
+A service can also be run directly, without the channels, in a PHPUnit test or a script:
 ```php
 $book = (new CreateBook())->run(array('title' => 'Dune', 'author' => 'Frank Herbert', 'publisher_id' => 1));
 $book = Caligrafy\Capabilities::call('create_book', $input, Caligrafy\Context::cli());   // with the checks and the audit

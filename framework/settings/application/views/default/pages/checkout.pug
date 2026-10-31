@@ -1,16 +1,16 @@
 extends ../master/layoutblocks
 - $home = session('home');
 
-block additional_css
-    link(rel="stylesheet", href=session('cssUrl').'stripe_global.css')
+//- Stripe Checkout: the controller passes the Checkout Session url ($result['url']) as $checkoutUrl; Stripe hosts the payment page
 
 block content
-    .spacer-4
-    .content-section.equally-spaced-1
-        //- The controller passes the Checkout Session url ($result['url']): Stripe hosts the whole payment page
-        if !empty($checkoutUrl)
-            .horizontal-center
-                a#checkout-button(href=$checkoutUrl)
-                    .textcolor0.medium-text Check out
-        else
-            p.horizontal-center The checkout session could not be created.
+    main.cq-page
+        .cq-card
+            .cq-card-head
+                h2.cq-title Checkout
+                p.cq-note You pay on a page hosted by Stripe.
+            .cq-section
+                if !empty($checkoutUrl)
+                    a#checkout-button.btn.btn-primary.cq-submit(href=$checkoutUrl) Check out
+                else
+                    p.cq-error(role='alert') The checkout session could not be created.

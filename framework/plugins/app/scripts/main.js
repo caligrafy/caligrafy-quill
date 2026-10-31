@@ -1,38 +1,34 @@
+/*
+ * A Vue app on the capabilities of the application (build once, experience everywhere).
+ *
+ * The generated JS client has one function per capability: php caligrafer.php client public/js/capabilities.js
+ * (run it again after adding or changing a capability; web.php needs Route::capabilities('/capabilities')).
+ * It uses the session of the visitor and the CSRF token: no key is ever in the page.
+ *
+ *   const books = await this.api.listBooks()
+ *   try { await this.api.createBook({ title: 'Dune' }) } catch (e) { if (e.name === 'CapabilityError') this.error = e.message }
+ */
 const app = Vue.createApp({
-    el: '#app',
     data () {
-      return {
-          response: null,
-          env: env,
-          config: {
-              async: true,
-              crossDomain: true,
-              headers: {
-                  "Authorization": "Bearer " + apiKey,
-                  'Content-Type': 'application/json'
-                  }
-          }
-  
-      }
-    },
-    /* Method Definition  */
-    methods: {
-        
-        // API get call using axios
-        all: function(route) {
-            axios.get(route, this.config)
-                .then(response => (this.response = response.data))
-                .catch(error => (console.log(error)));
+        return {
+            capabilities: [],
+            error: ''
         }
-        
     },
-    /* upon object load, the following will be executed */
-    mounted () {
-        this.all(this.env.home);
+    async mounted () {
+        try {
+            this.api = await import(env.home + 'public/js/capabilities.js')
+        } catch (e) {
+            this.error = 'The JS client is missing: run php caligrafer.php client public/js/capabilities.js'
+            return
+        }
+        try {
+            this.capabilities = await this.api.capabilities()   // what this visitor may call
+        } catch (e) {
+            this.error = e.message
+        }
     }
-  
-});
-
+})
 
 /* Components Definition */
 
@@ -47,8 +43,8 @@ const app = Vue.createApp({
 //			// data definitions
 //		}
 //	}
-//	
+//
 //});
 
 // Mount the app
-app.mount('#app');
+app.mount('#app')

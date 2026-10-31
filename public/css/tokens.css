@@ -50,7 +50,7 @@
  *   p.cq-empty  .cq-section (any other content)  .cq-foot
  * The page starts below the fixed Caligrafy header. Black and white only; .is-done greys an item out.
  * --------------------------------------------------------------------------------------------------------------- */
-.cq-page { display: flex; justify-content: center; align-items: flex-start; min-height: 80vh; padding: 120px 16px 48px; }
+.cq-page { display: flex; flex-direction: column; align-items: center; min-height: 80vh; padding: 120px 16px 48px; }   /* cards stack */
 .cq-card { width: 100%; max-width: 640px; margin: 0 auto; overflow: hidden; background: var(--cq-color-paper); color: var(--cq-color-text);
   border: 1px solid var(--cq-color-border); border-radius: 7px;
   box-shadow: 0 0 0 .5px rgba(50, 50, 93, .1), 0 2px 5px 0 rgba(50, 50, 93, .1), 0 1px 1.5px 0 rgba(0, 0, 0, .07); }

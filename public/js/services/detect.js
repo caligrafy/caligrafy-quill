@@ -39,8 +39,13 @@
                 // mounts (after the detector is created in the scaffolds), which detaches the element found earlier
                 this.resolveMedia(); 
                 if (this.options.autoStart && this.media && this.media.tagName.toLowerCase() == 'video' && !this.media.src && !this.media.srcObject) {
-                    // errors are kept in this.streamError
-                    this.startStream().catch(error => console.log(error));
+                    // errors are kept in this.streamError and shown in the infobar
+                    this.startStream().catch(error => {
+                        console.log(error);
+                        this.display(error && error.name === 'NotAllowedError'
+                            ? 'The camera is blocked: allow it in the address bar, then reload the page.'
+                            : 'The camera could not start: ' + (error && error.message ? error.message : error), 'camera');
+                    });
                 }
         })
         .catch((error) => { console.log(error); }); 
@@ -249,7 +254,15 @@
                 }
         };
         
-        // the recognition models need the neural networks: wait until they are loaded
+        // the button shows at once, and works once the neural networks are loaded (the recognition models need them)
+        let button = document.createElement('button');
+        button.innerHTML = app.name;
+        button.id = 'app' + app.id;
+        button.disabled = true;
+        button.title = 'Loading the face models...';
+        const apps = document.getElementById('apps');
+        if (apps) apps.appendChild(button);
+
         await this.ready;
 
         // load recognition models for use in the "Where is" app
@@ -260,11 +273,9 @@
         }
         
 
-        let button = document.createElement('button');
-        button.innerHTML = app.name;
-        button.id = 'app' + app.id;
         button.addEventListener('click', !app.custom ? this.detectFaces(app, this) : this.custom(app, this));
-        document.getElementById('apps').appendChild(button);
+        button.disabled = false;
+        button.title = '';
 
     };
     

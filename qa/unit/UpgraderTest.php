@@ -60,4 +60,44 @@ final class UpgraderTest extends TestCase
         $this->assertSame('mine v1 + my changes', file_get_contents("$this->root/application/mine.php"));
         $this->assertSame("APP_KEY=secret\n", file_get_contents("$this->root/.env"));
     }
+
+    public function testKeptPageIsNotReplacedAndStaysKept(): void
+    {
+        ob_start();
+        (new Upgrader($this->root, true, null, ['application/old.php']))->run();
+        ob_end_clean();
+        $this->assertSame('old v1', file_get_contents("$this->root/application/old.php"));
+        $this->assertSame('old v2', file_get_contents("$this->root/application/old.php" . Upgrader::NEW_SUFFIX));
+        $this->assertSame('kept', (new Upgrader($this->root))->plan()['old.php']['status']);
+        ob_start();
+        (new Upgrader($this->root, true))->run();   // a later --apply without --keep
+        ob_end_clean();
+        $this->assertSame('old v1', file_get_contents("$this->root/application/old.php"));
+    }
+
+    public function testReportListsNewAndObsoleteSettings(): void
+    {
+        $this->write('framework/settings/.env.example', "APP_KEY=\nNEW_SETTING=\n");
+        $this->write('.env', "APP_KEY=secret\nCRYPTO_PAY_KEY=old\n");
+        $out = $this->dryRun();
+        $this->assertStringContainsString('new        NEW_SETTING', $out);
+        $this->assertStringContainsString('obsolete   CRYPTO_PAY_KEY', $out);
+        $this->assertSame("APP_KEY=secret\nCRYPTO_PAY_KEY=old\n", file_get_contents("$this->root/.env"));
+    }
+
+    public function testReportListsBootstrap3Classes(): void
+    {
+        $this->write('application/views/page.pug', ".row\n    .col-xs-6.pull-right A panel of text\n");
+        $this->write('application/views/fine.pug', ".row\n    .col-md-6 A panel of text\n");
+        $out = $this->dryRun();
+        $this->assertStringContainsString('application/views/page.pug: col-xs-6, pull-right', $out);
+        $this->assertStringNotContainsString('fine.pug', $out);
+    }
+
+    private function dryRun(): string
+    {
+        ob_start();
+        (new Upgrader($this->root))->run();
+        return (string) ob_get_clean();
+    }
 }

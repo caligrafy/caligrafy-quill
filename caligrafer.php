@@ -49,7 +49,7 @@ $defaultMsg = "\n Available Functions:
 				\n - quickstart [--example] [--yes]: sets up a fresh project in one step (database, framework tables, /capabilities and /mcp); --example adds the Tasks example. With Docker: .bin/caligrafer quickstart
 				\n - version: prints the version of Caligrafy Quill
 				\n - initialize: Initializes and signs your project
-				\n - upgrade [--apply] [--force <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files
+				\n - upgrade [--apply] [--force <application/path>] [--keep <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files; also reports .env settings and Bootstrap 3 classes
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
 				\n - sql <file.sql>: runs a SQL script on the database of .env
@@ -59,6 +59,7 @@ $defaultMsg = "\n Available Functions:
 				\n - service <Name> [--scope books:write] [--read-only]: creates a capability in application/services/
 				\n - client [<file>] [--prefix /capabilities]: writes the JS client of the capabilities (default public/js/capabilities.js)
 				\n - capabilities [--json | --markdown]: the capabilities of application/services/ (what REST, MCP and the JS client can call)
+				\n - call <capability> ['{\"key\": \"value\"}' | key=value ...] [--token <token>] [--guest]: calls a capability and prints its JSON answer (full local access unless --token or --guest)
 				\n - mcp [--token <token>]: MCP server over stdio for local AI agents (Claude Code, Cursor...): php caligrafer.php mcp
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
@@ -376,11 +377,72 @@ switch(strtolower($argv[1])) {
 		}
 		break;
 
+	case 'call':
+		// Calls one capability from the command line and prints the same JSON as REST: {"data": ...} or {"error": ...}
+		// Inputs: one JSON object ('{"id": 3}') or key=value pairs. Full local access by default, like any script;
+		// --token <token> (or CALIGRAFY_TOKEN) calls it as that token, --guest as a visitor who is not signed in
+		$name = $argv[2] ?? '';
+		if ($name === '' || $name[0] === '-') {
+			print("\n Usage: php caligrafer.php call <capability> ['{\"key\": \"value\"}' | key=value ...] [--token <token>] [--guest]\n"
+				. " Lists the capabilities: php caligrafer.php capabilities\n\n");
+			exit(1);
+		}
+		$input = array();
+		$plain = getenv('CALIGRAFY_TOKEN') ?: '';
+		$guest = false;
+		for ($i = 3; $i < count($argv); $i++) {
+			$arg = $argv[$i];
+			if ($arg === '--token') { $plain = $argv[++$i] ?? ''; continue; }
+			if ($arg === '--guest') { $guest = true; continue; }
+			if (substr(ltrim($arg), 0, 1) === '{') {
+				$json = json_decode($arg, true);
+				if (!is_array($json)) {
+					fwrite(STDERR, "caligrafer call: the input is not a JSON object: $arg\n");
+					exit(1);
+				}
+				$input = array_merge($input, $json);
+			} elseif (strpos($arg, '=') !== false) {
+				list($key, $value) = explode('=', $arg, 2);
+				$input[$key] = $value;
+			} else {
+				fwrite(STDERR, "caligrafer call: '$arg' is neither JSON nor key=value\n");
+				exit(1);
+			}
+		}
+		try {
+			if ($plain !== '') {
+				if (Caligrafy\Database::connect() === null) {
+					throw new Exception('A token needs the database: set DB_ACTIVATE=true');
+				}
+				$token = Caligrafy\Tokens::verify($plain);
+				if (!$token) {
+					throw new Exception('The token is unknown, revoked or expired');
+				}
+				$context = Caligrafy\Context::forToken($token, 'cli');
+			} else {
+				$context = $guest ? Caligrafy\Context::guest('cli') : Caligrafy\Context::cli();
+			}
+			$result = array('data' => Caligrafy\Capabilities::call($name, $input, $context));
+			$status = 0;
+		} catch (Caligrafy\ServiceError $e) {
+			$result = $e->toArray();
+			$status = 1;
+		} catch (Throwable $e) {
+			fwrite(STDERR, 'caligrafer call: ' . $e->getMessage() . "\n");
+			exit(1);
+		}
+		print(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+		exit($status);
+
 	case 'upgrade':
 		$apply = in_array('--apply', $argv);
 		$forceAt = array_search('--force', $argv);
 		$force = $forceAt !== false? ($argv[$forceAt + 1] ?? '') : null;
-		exit((new Caligrafy\Upgrader('.', $apply, $force))->run());
+		$keep = array();
+		foreach ($argv as $i => $arg) {
+			if ($arg === '--keep' && isset($argv[$i + 1])) $keep[] = $argv[$i + 1];
+		}
+		exit((new Caligrafy\Upgrader('.', $apply, $force, $keep))->run());
 
 	case 'doctor':
 		$onlyAt = array_search('--only', $argv);
@@ -392,14 +454,22 @@ switch(strtolower($argv[1])) {
 			system('cp -r framework/librairies/app ./public/'.$argv[2], $retValue);
 			print("\n Project created in the public folder.\n Type cd public/".$argv[2]. " to access it anytime\n\n");
 			chdir("public/".$argv[2]);
-			print("\n Installing packages...\n\n");
-			system('npm install');
-			print("\nVueJS project successfully created and all packages have been installed.
-					\n - You first need to go to the project folder by typing: 'cd public/".$argv[2]."'
-					\n Then,
-					\n - To run local server, type: 'npm run dev' or 'npm run serve'
-					\n - To run a build, type: 'npm run build'  
-					\n\n");
+			// npm install only where Node.js is available (the Docker dev-box has none): never claim it worked when it did not
+			$npm = trim((string) shell_exec('command -v npm 2>/dev/null'));
+			$installed = false;
+			if ($npm !== '') {
+				print("\n Installing packages...\n\n");
+				system('npm install', $npmStatus);
+				$installed = $npmStatus === 0;
+			}
+			if ($installed) {
+				print("\n VueJS project created and its packages installed.\n");
+			} else {
+				print("\n VueJS project created, but its packages are NOT installed: ".($npm === ''? "npm is not available here (the Docker dev-box has no Node.js)" : "npm install failed").".\n"
+					." Install them with Node.js 20.19+ or 22.12+ on your computer: cd public/".$argv[2]." && npm install\n");
+			}
+			print("\n - To run the development server: cd public/".$argv[2]." && npm run dev"
+				."\n - To build it for production: npm run build (in the same folder)\n\n");
 		} else {
 			print("\n The project could not be created. Please make sure you have node.js with npm installed and that the name does not conflict with existing public folders. \n\n");
 		}

@@ -92,8 +92,8 @@ feature step by step, page included.
   Ollama...), chatbots, face detection and machine learning in the browser, search and social metadata.
 + **Made for AI-assisted development:** a [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
   that knows the framework and builds features the Caligrafy way, and `AGENTS.md` for other coding agents.
-+ **Tools:** `php caligrafer.php doctor` checks your setup and services, `upgrade` updates a project, `version`
-  tells you which release you run.
++ **Tools:** `php caligrafer.php doctor` checks your setup and services, `call` tries a capability in one line,
+  `upgrade` updates a project and tells you what to check, `version` tells you which release you run.
 
 <br/>
 
@@ -106,7 +106,7 @@ feature step by step, page included.
 | Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course): build a complete application in 14 lessons, capabilities first, by hand or with Claude |
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
 | Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
-| See what changed | [Changelog](CHANGELOG.md) and the [release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0) |
+| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
 | Contribute | [Contributing](CONTRIBUTING.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
 
 Other ways to install (your own Apache, MySQL and PHP; `composer create-project`) are in

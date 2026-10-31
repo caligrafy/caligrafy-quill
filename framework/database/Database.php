@@ -41,10 +41,27 @@ class Database extends \stdClass {
             self::$connection = new PDO(self::dsn(self::$db_adapter, self::$host, self::$db_name, $port), self::$username, self::$password);
             self::$connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
             self::$connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
+            self::alignTimeZone(self::$connection, self::$db_adapter);
         }
         return self::$connection;
     }
 
+
+    /**
+     * MySQL session time zone = PHP's (SERVER_TIMEZONE), so that NOW(), CURRENT_TIMESTAMP columns and the times PHP
+     * writes (the audit log) use the same clock. DB_TIMEZONE=server keeps the database server's own time zone.
+     */
+    public static function alignTimeZone($connection, $adapter)
+    {
+        if (strtolower((string) $adapter) !== 'mysql' || strtolower((string) getenv('DB_TIMEZONE')) === 'server') {
+            return;
+        }
+        try {
+            $connection->exec("SET time_zone = '" . date('P') . "'");   // the current offset, e.g. -04:00
+        } catch (\Throwable $e) {
+            // a server that refuses it keeps its own time zone
+        }
+    }
 
     /**
      * Builds the PDO DSN from the DB_* settings

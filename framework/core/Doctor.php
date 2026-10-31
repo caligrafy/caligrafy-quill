@@ -120,6 +120,11 @@ class Doctor
         $legacy = strtolower(trim((string) $this->env('LEGACY_API_KEY')));
         in_array($legacy, ['false', '0', 'off', 'no'], true) ? $this->add('project', 'Legacy API key', 'OK', 'off: API clients use personal access tokens')
             : $this->add('project', 'Legacy API key', 'OK', 'allowed (every generated key is the same key: full access, no revocation); set LEGACY_API_KEY=false once clients use tokens');
+        // error details are for development: on a site served over HTTPS they show file paths and SQL to visitors
+        $debug = in_array(strtolower(trim((string) $this->env('APP_DEBUG'))), ['true', '1', 'on', 'yes'], true);
+        if ($debug && strtolower(trim((string) $this->env('APP_PROTOCOL'))) === 'https') {
+            $this->add('project', 'APP_DEBUG', 'WARN', 'true on a site served over HTTPS: visitors see error details', 'set APP_DEBUG=false in .env');
+        }
         $leftover = array_values(array_filter(defined('FRAMEWORK_MOVED_FILES') ? FRAMEWORK_MOVED_FILES : array(), function ($file) { return is_file($this->root . '/framework/' . $file); }));
         if ($leftover) {
             $this->add('project', 'Framework files', 'WARN', 'old copies of files that moved to framework/interfaces in 2.1.2: framework/' . implode(', framework/', $leftover) . ' (never loaded)',
@@ -425,6 +430,10 @@ class Doctor
     {
         $name = $this->env('COINBASE_API_KEY_NAME', false);
         $secret = $this->env('COINBASE_API_KEY_SECRET', false);
+        if (trim((string) $this->env('CRYPTO_PAY_KEY', false)) !== '') {
+            $this->add('coinbase', 'CRYPTO_PAY_KEY', 'WARN', 'Coinbase Commerce closed on March 31, 2026: this key no longer works',
+                'create a Coinbase Business key (COINBASE_API_KEY_NAME and COINBASE_API_KEY_SECRET) on https://portal.cdp.coinbase.com, then remove CRYPTO_PAY_KEY');
+        }
         if (trim($name) === '' && trim($secret) === '') { $this->add('coinbase', 'Coinbase', 'SKIP', 'COINBASE_API_KEY_NAME is not set'); return; }
         if (trim($name) === '' || trim($secret) === '') {
             $this->add('coinbase', 'Coinbase', 'FAIL', 'set both COINBASE_API_KEY_NAME and COINBASE_API_KEY_SECRET', 'create a Secret API key on https://portal.cdp.coinbase.com');

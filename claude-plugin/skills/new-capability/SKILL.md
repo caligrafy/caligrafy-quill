@@ -52,6 +52,7 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
    `claude mcp add <app> -- php caligrafer.php mcp` (Docker: `-- docker compose exec -T dev-box php caligrafer.php mcp`).
 5. **Verify every channel** with the server running (`/caligrafy-quill:server status`):
    - `php caligrafer.php capabilities` lists it with the right scope and flags.
+   - `php caligrafer.php call <name> key=value` (2.3.0+) returns its `{"data": ...}`; an invalid input returns the `invalid` error with field messages; `--guest` is refused unless the capability is public.
    - REST: `curl -s -H "Accept: application/json" -H "Authorization: Bearer $TOKEN" ...` -> 200/201 `{"data": ...}`;
      the same call with a missing input -> 422 with `fields`; with a token without the scope -> 403.
    - MCP: `tools/list` shows it for a token with the scope only; `tools/call` returns `isError: false`, and invalid

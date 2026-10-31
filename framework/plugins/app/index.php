@@ -17,25 +17,45 @@
     </head>
     
     <body>
-        <!-- Beginning of the app -->
+        <!-- Beginning of the app: the page components of tokens.css, the Caligrafy header -->
         <div id="app" v-cloak>
-            {{ response }}
+            <header class="color0 caligrafy-header">
+                <nav class="horizontal">
+                    <h1 class="large-text horizontal-center"><span class="semibold">Cali</span>grafy</h1>
+                </nav>
+            </header>
+            <main class="cq-page">
+                <div class="cq-card">
+                    <div class="cq-card-head">
+                        <h2 class="cq-title">My Vue app</h2>
+                        <p class="cq-note">The capabilities this visitor may call, through the generated JS client (public/js/capabilities.js).</p>
+                    </div>
+                    <p class="cq-error" role="alert" v-if="error">{{ error }}</p>
+                    <ul class="cq-list">
+                        <li class="cq-item" v-for="capability in capabilities" :key="capability.name">
+                            <div class="cq-item-body">
+                                <p class="cq-item-title">{{ capability.name }}</p>
+                                <p class="cq-item-meta">{{ capability.description }}</p>
+                            </div>
+                        </li>
+                    </ul>
+                    <p class="cq-empty" v-if="!error && !capabilities.length">No capability yet: write one with php caligrafer.php service, then run php caligrafer.php client public/js/capabilities.js.</p>
+                </div>
+            </main>
         </div>
-		
-		
-		<!-- TEMPLATES FOR VUE COMPONENTS -->
-	
-		<!--
-		<script type='text/x-template' id='template'>
-			<div>
-				<!-- code here
-			</div>	
-		</script>
-		-->
-        
+
+        <!-- TEMPLATES FOR VUE COMPONENTS -->
+
+        <!--
+        <script type='text/x-template' id='template'>
+            <div>
+                <!-- code here
+            </div>
+        </script>
+        -->
+
         <!-- Initialization scripts -->
         <script src="<?php echo scripts('vue'); ?>"></script>
-        <script src="<?php echo scripts('axios'); ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
         <script>loadEnvironment(`<?php echo $env; ?>`);</script>
         <script> 

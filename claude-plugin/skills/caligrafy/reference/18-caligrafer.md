@@ -25,6 +25,7 @@
 | [`version`](#version) | Prints the version of Caligrafy Quill |
 | [`service`](#service) | Creates a capability in `application/services/` |
 | [`capabilities`](#capabilities) | Lists the capabilities and their inputs |
+| [`call`](#call) | Calls a capability and prints its JSON answer |
 | [`client`](#client) | Writes the JavaScript client of the capabilities |
 | [`app`, `create`, `facedetect`, `ml`, `bot`](#apps) | Creates a client app in `public/` |
 | [`sql`](#sql) | Runs a SQL script on the database |
@@ -95,6 +96,16 @@ Lists the capabilities of `application/services/`: name, who may use them (`publ
  list_books                   books:read     read      Lists every book of the catalog, newest first, with its id, title and author.
 ```
 
+### `call`
+```bash
+php caligrafer.php call list_books                          # no input
+php caligrafer.php call get_book id=3                       # key=value inputs
+php caligrafer.php call create_book '{"title": "Kindred", "published_year": 1979, "author_id": 2}'
+php caligrafer.php call create_book title=Kindred --guest   # as a visitor who is not signed in
+php caligrafer.php call create_book title=Kindred --token cq_...   # as a token (or CALIGRAFY_TOKEN=cq_...)
+```
+Calls one capability and prints the same JSON as the REST API: `{"data": ...}`, or `{"error": {"code": "invalid", "message": "...", "fields": {...}}}` with exit code `1`. It is the quickest way to try a capability you just wrote, before any route or page. Without `--token` or `--guest` it has full local access, like any script you run (channel `cli` in the audit log); `--guest` and `--token` show what a visitor or a token may do. With Docker: `docker compose exec dev-box php caligrafer.php call ...`. *(Since 2.3.0.)*
+
 ### `client`
 ```bash
 php caligrafer.php client                                   # public/js/capabilities.js
@@ -111,7 +122,7 @@ php caligrafer.php facedetect faces       # face detection and face login:  http
 php caligrafer.php ml lab                 # machine learning in the browser: http://localhost:8080/ml/lab
 php caligrafer.php bot helper             # a Watson chatbot:                http://localhost:8080/bot/helper?botSkillId=<id>
 ```
-Each one copies a template into `public/<name>`. The name must be new (the command does not replace an existing folder) and cannot be one of the folders Caligrafy uses in `public/` (`app`, `bot`, `css`, `facedetect`, `fonts`, `images`, `js`, `ml`, `resources`, `uploads`). `create` also runs `npm install`; start it with `npm run dev` in `public/<name>`. Learn more: [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library), [the single page application](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application), [face detection](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition), [machine learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning), [chatbots](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.1-Creating-Bots-with-Watson).
+Each one copies a template into `public/<name>`. The name must be new (the command does not replace an existing folder) and cannot be one of the folders Caligrafy uses in `public/` (`app`, `bot`, `css`, `facedetect`, `fonts`, `images`, `js`, `ml`, `resources`, `uploads`). `create` also runs `npm install` when Node.js is available; in the Docker `dev-box`, which has no Node.js, it says so and you run `npm install` in `public/<name>` on your computer. Start it with `npm run dev` in `public/<name>`. Learn more: [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library), [the single page application](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application), [face detection](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition), [machine learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning), [chatbots](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.1-Creating-Bots-with-Watson).
 
 ## Data
 
@@ -168,7 +179,7 @@ php caligrafer.php doctor --only database          # some checks: project, datab
 php caligrafer.php doctor --env .env.production    # another environment file
 php caligrafer.php doctor --json                   # for scripts
 ```
-A read-only health check: PHP and its extensions, `vendor/`, `.env` and the keys, the legacy API key setting, `public/uploads`, the web app manifest, whether `application/` is up to date, the database and the framework tables, and every service configured in `.env` (OpenAI, Groq and the open-model providers, Stripe, Coinbase, Watson, mail). Each line is `OK`, `WARN`, `FAIL` or `SKIP` (not configured), with a fix. Secrets are never printed. It exits with `1` when a check fails. With Docker, run it in the container so that the database host resolves. Run it first whenever something does not work.
+A read-only health check: PHP and its extensions, `vendor/`, `.env` and the keys, the legacy API key setting, `APP_DEBUG` on a site served over HTTPS, `public/uploads`, the web app manifest, whether `application/` is up to date, the database and the framework tables, and every service configured in `.env` (OpenAI, Groq and the open-model providers, Stripe, Coinbase, Watson, mail). Each line is `OK`, `WARN`, `FAIL` or `SKIP` (not configured), with a fix. Secrets are never printed. It exits with `1` when a check fails. With Docker, run it in the container so that the database host resolves. Run it first whenever something does not work.
 + Billing and credits cannot be checked without spending: an OpenAI `429 insufficient_quota` on the first request means the account has no credits.
 + Network errors are explained: `self-signed certificate in certificate chain` means a company TLS inspection proxy (the Claude plugin's `server` skill has the Docker fix).
 + Optional overrides for tests, proxies or regional endpoints: `OPENAI_API_BASE`, `GROQ_API_BASE`, `AGENT_API_BASE`, `STRIPE_API_BASE`, `COINBASE_API_BASE`; `WATSON_ASSISTANT_ID` lets doctor check the assistant.
@@ -177,9 +188,10 @@ A read-only health check: PHP and its extensions, `vendor/`, `.env` and the keys
 ```bash
 php caligrafer.php upgrade                                     # dry run: what would change
 php caligrafer.php upgrade --apply                             # update the files you never changed
-php caligrafer.php upgrade --force application/views/default/index.pug   # replace one file you changed
+php caligrafer.php upgrade --force application/views/Auth/login.pug   # replace one file you changed
+php caligrafer.php upgrade --apply --keep application/views/default/index.pug   # keep a default page that is now yours
 ```
-After you update the framework of a project (`git pull`, or a new release copied over `framework/`), `upgrade` compares your `application/` with the framework's templates. Files you never changed are updated (with a backup in `backups/caligrafy-upgrade-<time>/`); files you changed are kept, and the new version is written next to them as `<file>.caligrafy-new` for you to merge; your routes are never replaced. It also reports client apps in `public/` that differ from their template, without changing them. Learn more in [Security and upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
+After you update the framework of a project (`git pull`, or a new release copied over `framework/`), `upgrade` compares your `application/` with the framework's templates. Files you never changed are updated (with a backup in `backups/caligrafy-upgrade-<time>/`); files you changed are kept, and the new version is written next to them as `<file>.caligrafy-new` for you to merge; your routes are never replaced. `--keep` keeps a page that is an untouched copy of an older template (a default page that became a page of your site, like the home page): the new version is written next to it, and later upgrades remember it. It also reports, without changing anything: client apps in `public/` that differ from their template, settings of `framework/settings/.env.example` missing from your `.env` and obsolete ones (`CRYPTO_PAY_KEY`), and views or apps that still use Bootstrap 3 classes (`col-xs-`, `pull-left`, `btn-default`...), which break under Bootstrap 5. Learn more in [Security and upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
 
 ### `generatekeys`, `generateapikey`
 ```bash
