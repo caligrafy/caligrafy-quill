@@ -13,7 +13,7 @@
    - `framework/helpers/initialize.php`: sets timezone (`SERVER_TIMEZONE`), `session_start()`, creates `$_SESSION['token']` (CSRF token), defines path constants and the session URLs (`base`, `home`, `public`, `uploadsUrl`, `jsUrl`, `cssUrl`, `imagesUrl`, `appClient`, `appService`, `appResources`) plus constants `APP_CLIENT`, `APP_SERVICE_ROOT`, `APP_RESOURCES`.
    - loads `corehelpers.php`, then `loadConstantFromArray($_ENV)`: **every `.env` key becomes a PHP constant** (string values).
    - `framework/settings/coresettings.php`: `ROUTE_ARG_PATTERN` (`#\{+(.*?)\}+#`), default `scripts()`, `metadata()`, `keywords()`, `copyright()`.
-   - registers an autoloader that, on the first unknown class, `require_once`s **every `.php` file** under `framework/core`, `framework/database`, `application/` and `tests/` (max depth 5).
+   - registers an autoloader that, on the first unknown class, `require_once`s **every `.php` file** under `framework/core`, `framework/database`, `framework/interfaces` (since 2.1.2; old copies listed in `FRAMEWORK_MOVED_FILES` are skipped), `application/` and `tests/` (max depth 5).
    - `include application/config/config.php`, then `require_once application/config/routing/web.php`.
 3. `web.php` declares routes then calls `Route::run()`, wrapped in `try { ... } catch (Exception $e) { Errors::handle($e); }` (older projects: `echo $e->getMessage();`, see Errors below).
 
@@ -368,7 +368,7 @@ getContextVariable($variable); getConversation(); getLastExchange(); getResponse
 ```
 URLs: `{WATSON_URL}/v2/assistants/{assistant_id}[/environments/{environment_id}]/sessions[/{session}/message]?version={WATSON_API_VERSION|2024-08-25}`, basic auth `apikey:{WATSON_API_KEY}`.
 
-## Build once: services and capabilities (Quill 2.1, `framework/core/{Service,ServiceError,Capability,Capabilities,Context,Tokens,Audit,Rest,Client}.php`, `Mcp/{Server,Http}.php`)
+## Build once: services and capabilities (Quill 2.1, `framework/core/{Service,ServiceError,Capability,Capabilities,Context,Tokens,Audit}.php`, `framework/interfaces/{Rest,Client}.php`, `framework/interfaces/Mcp/{Server,Http}.php` since 2.1.2)
 - `abstract class Service`: `public $rules = []` (input => GUMP rules; only these keys reach `handle()`, `''` = no rule), `$filters`, `$descriptions`; `abstract handle(array $input, Context $context)` returns data; `validate(array $input)` (array_intersect_key, GUMP `run()`, throws `ServiceError::invalid($errors)`); `run(array $input, ?Context $c = null)` = validate + handle without checks or audit (tests).
 - `#[Capability(name, description = '', scope = '', level = 0, readOnly = false, destructive = false, public = false)]` on the class; `name` must match `/^[a-z][a-z0-9_]{0,63}$/`.
 - `ServiceError($kind, $message = '', array $fields = [])`, kinds `invalid` 422, `unauthenticated` 401, `forbidden` 403, `not_found` 404, `conflict` 409; factories `invalid($fields)`, `unauthenticated()`, `forbidden()`, `notFound($m)`, `conflict($m)`; `status()`, `toArray()` = `['error' => ['code', 'message', 'fields'?]]`; `$kind`, `$fields`.

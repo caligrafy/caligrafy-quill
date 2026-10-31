@@ -120,6 +120,11 @@ class Doctor
         $legacy = strtolower(trim((string) $this->env('LEGACY_API_KEY')));
         in_array($legacy, ['false', '0', 'off', 'no'], true) ? $this->add('project', 'Legacy API key', 'OK', 'off: API clients use personal access tokens')
             : $this->add('project', 'Legacy API key', 'OK', 'allowed (every generated key is the same key: full access, no revocation); set LEGACY_API_KEY=false once clients use tokens');
+        $leftover = array_values(array_filter(defined('FRAMEWORK_MOVED_FILES') ? FRAMEWORK_MOVED_FILES : array(), function ($file) { return is_file($this->root . '/framework/' . $file); }));
+        if ($leftover) {
+            $this->add('project', 'Framework files', 'WARN', 'old copies of files that moved to framework/interfaces in 2.1.2: framework/' . implode(', framework/', $leftover) . ' (never loaded)',
+                'delete them: rm ' . implode(' ', array_map(function ($f) { return 'framework/' . $f; }, $leftover)));
+        }
         $uploads = $this->root . '/public/uploads';
         if (!is_dir($uploads)) $this->add('project', 'public/uploads', 'WARN', 'missing', 'mkdir -p public/uploads && chmod -R 777 public/uploads');
         elseif (!is_writable($uploads)) $this->add('project', 'public/uploads', 'WARN', 'not writable by ' . get_current_user(), 'chmod -R 777 public/uploads');

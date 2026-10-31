@@ -177,3 +177,4 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G57. `Database::execute()` connects on first use.** Before 2.1 only `Controller`'s constructor connected, so a closure route that used a model threw `[ERROR 2003]`. Now `execute()` calls `Database::connect()` when there is no connection yet (and `DB_ACTIVATE=true`).
 
+**G58. The channel classes moved to `framework/interfaces/` (2.1.2).** `Rest.php`, `Client.php` and `Mcp/{Server,Http}.php` left `framework/core/`; class names and namespaces are unchanged (`Caligrafy\Rest`, `Caligrafy\Mcp\Server`). A framework copied over 2.1.0/2.1.1 keeps the old copies: `Framework`/`Caligrafer` skip them (`FRAMEWORK_MOVED_FILES` in `initialize.php`), so no class is declared twice, and `doctor` warns `Framework files: old copies ...` with the `rm` command. `git pull` removes them by itself.

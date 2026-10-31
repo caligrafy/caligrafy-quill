@@ -34,6 +34,10 @@ define("MODEL_PATH", APP_PATH . "models" . DS);
 define("VIEW_PATH", APP_PATH . "views" . DS);
 define("CORE_PATH", FRAMEWORK_PATH . "core" . DS);
 define('DB_PATH', FRAMEWORK_PATH . "database" . DS);
+define("INTERFACES_PATH", FRAMEWORK_PATH . "interfaces" . DS);
+// Files that moved to framework/interfaces in 2.1.2: a framework copied over an older one still has them, and loading
+// them twice would declare their classes twice. The loaders skip them and doctor asks to delete them.
+define("FRAMEWORK_MOVED_FILES", array('core/Rest.php', 'core/Client.php', 'core/Mcp/Server.php', 'core/Mcp/Http.php'));
 define("LIB_PATH", FRAMEWORK_PATH . "librairies" . DS);
 define("HELPER_PATH", FRAMEWORK_PATH . "helpers" . DS);
 define("UPLOAD_PATH", PUBLIC_PATH . "uploads" . DS);

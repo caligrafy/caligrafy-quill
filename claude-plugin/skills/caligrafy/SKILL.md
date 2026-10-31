@@ -16,7 +16,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Topic | Read |
 | - | - |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G57) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G58) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -29,7 +29,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Helpers, HTML forms, CSRF, REST API + Postman | [09-helpers-forms-rest-api.md](reference/09-helpers-forms-rest-api.md) |
 | Authentication module | [09.1-authentication.md](reference/09.1-authentication.md) |
 | Production checklist, server-file protection, upgrading old projects, behavior changes | [09.5-security-and-upgrading.md](reference/09.5-security-and-upgrading.md) |
-| Build once: services, `#[Capability]`, REST (`Route::capability`), the JS client, personal access tokens, MCP for agents, audit log, design tokens | [13-build-once-services-capabilities-mcp.md](reference/13-build-once-services-capabilities-mcp.md), [api-reference.md](reference/api-reference.md) (Build once section), G50-G57 |
+| Build once: services, `#[Capability]`, REST (`Route::capability`), the JS client, personal access tokens, MCP for agents, audit log, design tokens | [13-build-once-services-capabilities-mcp.md](reference/13-build-once-services-capabilities-mcp.md), [api-reference.md](reference/api-reference.md) (Build once section), G50-G58 |
 | This Claude Code plugin (commands, agent, install) | [10-claude-code-plugin.md](reference/10-claude-code-plugin.md) |
 | Upgrading a project to 2.1 (build once): checklist, what is new, behavior changes, the legacy API key | [14-release-notes-2.1.0.md](reference/14-release-notes-2.1.0.md) |
 | Every change of October 2026: upgrade checklist for existing projects, what can break, `.env` settings | [11-release-notes-october-2026.md](reference/11-release-notes-october-2026.md) |
@@ -59,7 +59,7 @@ application/                 # YOUR server code - every .php here is auto-requir
   services/                  # capabilities: Service classes with #[Capability] (php caligrafer.php service <Folder/Name>); empty in a new project
   views/                     # .pug templates (default/, Auth/, AI/, Client/app.pug)
 public/                      # browser-facing: css, js, images, uploads, client apps public/<appName>/
-framework/                   # core (rarely edited); framework/settings/application is the template for application/
+framework/                   # rarely edited: core/ (framework + Service, Capability, Context...), interfaces/ (Rest, Mcp/, Client), database/; framework/settings/application is the template for application/
 .env                         # every key becomes a PHP constant
 caligrafer.php, .bin/        # CLI
 docker-compose.yaml, docker/ # dev server (8080), phpmyadmin (8077), mysql (3306)

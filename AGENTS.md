@@ -11,7 +11,7 @@ Pug views) and `public/<app>/` (client apps). `framework/` is the framework itse
 ## Read before writing code
 - `claude-plugin/skills/caligrafy/SKILL.md`: the index of the framework knowledge and the workflow rules.
 - `claude-plugin/skills/caligrafy/reference/api-reference.md`: exact signatures, verified against the source.
-- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G57 (read the relevant ones).
+- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G58 (read the relevant ones).
 - `claude-plugin/skills/caligrafy/reference/13-build-once-services-capabilities-mcp.md`: capabilities, tokens, MCP.
 - `ARCHITECTURE.md`: how a request runs and the build-once design.
 - Step-by-step procedures: `claude-plugin/skills/<new-resource | new-capability | new-app | server | db>/SKILL.md`.

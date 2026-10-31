@@ -85,6 +85,7 @@ class Caligrafer extends \stdClass {
     {
         self::_require_all(CORE_PATH);
         self::_require_all(DB_PATH);
+        self::_require_all(INTERFACES_PATH);
     }
 
     /**
@@ -106,6 +107,19 @@ class Caligrafer extends \stdClass {
      * @param string  $dir
      * @param int     $depth (optional)
      */
+    /**
+     * Whether a path is an old copy of a file that moved (FRAMEWORK_MOVED_FILES): it is never loaded
+     */
+    private static function movedFile($path)
+    {
+        foreach (defined('FRAMEWORK_MOVED_FILES') ? FRAMEWORK_MOVED_FILES : array() as $moved) {
+            if (realpath($path) === realpath(FRAMEWORK_PATH . $moved)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
     private static function _require_all($dir, $depth=0) {
         if ($depth > 5) {
             return;
@@ -114,6 +128,9 @@ class Caligrafer extends \stdClass {
         $scan = glob("$dir" . DIRECTORY_SEPARATOR . "*");
         foreach ($scan as $path) {
             if (preg_match('/\.php$/', $path)) {
+                if (self::movedFile($path)) {
+                    continue;
+                }
                 require_once $path;
             }
             elseif (is_dir($path)) {

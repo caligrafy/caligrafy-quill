@@ -6,6 +6,16 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.1.2] - 2026-10-31
+
+### Changed
+- The classes that expose capabilities to the world moved to `framework/interfaces/`: `Rest`, `Client` and
+  `Mcp\Server`, `Mcp\Http`. `framework/core/` keeps the framework and what a capability is. Class names, routes
+  and projects do not change.
+- A framework copied over 2.1.0 or 2.1.1 keeps old copies in `framework/core/`: they are never loaded, and
+  `php caligrafer.php doctor` asks to delete them.
+- `ARCHITECTURE.md` describes where the code lives.
+
 ## [2.1.1] - 2026-10-31
 
 ### Fixed
@@ -75,6 +85,7 @@ every change, what can break and the upgrade checklist for existing projects.
 - `.env` and the server files are no longer served, uploads are limited to an allow-list of extensions, and
   scripts never run from `public/uploads`.
 
+[2.1.2]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.2
 [2.1.1]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.1
 [2.1.0]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.0
 [2.0.0]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.0.0

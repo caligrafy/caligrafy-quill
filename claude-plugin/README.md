@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 39 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G57) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 39 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G58) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + Controller (filter/validate CRUD) + REST routes |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
@@ -44,6 +44,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.11.2** - Caligrafy Quill 2.1.2: `framework/interfaces/` (Rest, Client, Mcp) in the API reference and the
+  project layout; gotcha G58 (old copies of the moved files are skipped, doctor warns); G1-G58.
 - **1.11.1** - Caligrafy Quill 2.1.1: `application/services/` in the project layout (shipped empty by the template,
   added by `upgrade --apply`) and in the API reference; the plugin, marketplace and wiki descriptions present
   Caligrafy as the "Build Once, Experience Everywhere" framework, with its banner; wiki mirrors synced.

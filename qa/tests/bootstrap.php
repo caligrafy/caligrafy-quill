@@ -22,7 +22,7 @@ loadConstantFromArray($_ENV);
 require_once 'framework/settings/coresettings.php';
 
 spl_autoload_register(function () {
-    foreach ([CORE_PATH, DB_PATH, APP_PATH] as $dir) {
+    foreach ([CORE_PATH, DB_PATH, INTERFACES_PATH, APP_PATH] as $dir) {
         $it = new RecursiveIteratorIterator(new RecursiveDirectoryIterator($dir, FilesystemIterator::SKIP_DOTS));
         foreach ($it as $file) {
             // never load the routes (web.php) or config: they would dispatch a request

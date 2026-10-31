@@ -35,6 +35,21 @@ foreach ($t as $g => $vals) { if (!is_array($vals)) continue; foreach ($vals as 
 echo implode(", ", $bad);')
 [ -z "$OUT" ] && ok "public/css/tokens.css matches tokens.json" || ko "design tokens disagree" "$OUT"
 
+# --- a framework copied over 2.1.0/2.1.1 keeps old copies of the files that moved to framework/interfaces --------
+mkdir -p "$TMP/moved" && cd "$TMP/moved"
+cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads
+cp framework/settings/.env.example .env && php caligrafer.php initialize off >/dev/null 2>&1
+mkdir -p framework/core/Mcp && cp framework/interfaces/Rest.php framework/interfaces/Client.php framework/core/ && cp framework/interfaces/Mcp/*.php framework/core/Mcp/
+OUT=$(printf '%s\n' '{"jsonrpc":"2.0","id":1,"method":"ping"}' | php caligrafer.php mcp 2>&1)
+DOC=$(php caligrafer.php doctor --only project 2>&1)
+if echo "$OUT" | grep -q '"result":{}' && echo "$DOC" | grep -q "WARN  Framework files: old copies" && echo "$DOC" | grep -q "rm framework/core/Rest.php"; then
+    ok "old copies of the moved files are never loaded (no class declared twice) and doctor asks to delete them"
+else
+    ko "moved framework files" "mcp: $OUT
+doctor: $DOC"
+fi
+cd "$ROOT"
+
 # --- caligrafer initialize is idempotent for the keys ---------------------------------------
 mkdir -p "$TMP/init" && cd "$TMP/init"
 cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads

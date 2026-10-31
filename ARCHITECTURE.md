@@ -21,6 +21,27 @@ channel is an adapter around the same services:
 So a rule written once (validation, permission, an event) behaves the same whether a person, a device or an agent
 invokes it, and the QA suite proves it with cross-channel tests.
 
+## Where the code lives
+
+```
+framework/
+├── core/          the framework: Route, Request, Controller, Model, View, Auth, Errors, Caligrafer...
+│                  and what a capability is: Service, ServiceError, Capability, Capabilities, Context, Tokens, Audit
+├── interfaces/    how the world reaches a capability: Rest (REST routes), Mcp/ (Server, Http: AI agents),
+│                  Client (the generated JS client of the Vue apps)
+├── database/      Database (PDO)
+├── helpers/       initialize.php, corehelpers.php
+├── settings/      the application/ template, platform.sql, .env templates
+├── librairies/    the Vite SPA template        plugins/    the client app templates (app, bot, facedetect, ml)
+application/
+├── services/      capabilities: each feature once (empty in a new project)
+├── controllers/   models/   views/   config/
+public/<app>/      one app per experience, responsive across devices, sharing public/css/tokens.css
+```
+There is no `application/mcp/tools/` folder: agent tools are generated from the capabilities, so a feature is never
+written twice. There are no runtime adapters either: PHP is the only runtime, and contracts for a second one would
+be maintained without anyone using them.
+
 ## How a request runs today (v2.0.0)
 
 1. `index.php` loads `framework/core/Framework.php`, Composer's autoloader and `.env`, then `Framework::run()`.
@@ -29,7 +50,7 @@ invokes it, and the QA suite proves it with cross-channel tests.
      (`$_SESSION['token']`) and writes the application URLs into the session (`base`, `home`, `public`...).
    - `corehelpers.php` (the global helpers), every `.env` value becomes a constant, `coresettings.php`.
 3. `autoload()` registers one autoloader that, on the first unknown class, requires every PHP file of
-   `framework/core`, `framework/database`, `application/` and `tests/` (5 levels deep). There is no PSR-4 mapping:
+   `framework/core`, `framework/database`, `framework/interfaces`, `application/` and `tests/` (5 levels deep). There is no PSR-4 mapping:
    application classes are global or namespaced by hand.
 4. `dispatch()` includes `application/config/config.php` and `application/config/routing/web.php`, whose routes end
    with `Route::run()`.
