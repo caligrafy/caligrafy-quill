@@ -19,7 +19,8 @@ One command from a fresh project to a working build-once application, and docume
   components, REST routes, the table and the JS client; a web page, `curl` and an AI agent use the same tasks.
 - `php caligrafer.php sql <file.sql>` runs a SQL script on the database of `.env`.
 - Documentation: a new README and wiki Home, a sidebar organized by what you want to do, and three Start here pages
-  (Quickstart, How Caligrafy works, Your first capability); every core page says where it fits.
+  (Quickstart, How Caligrafy works, Your first capability); a Caligrafer page with every command in one place;
+  every core page says where it fits.
 - Claude Code plugin 1.13.0.
 
 ## [2.1.3] - 2026-10-31

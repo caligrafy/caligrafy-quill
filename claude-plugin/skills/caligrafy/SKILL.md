@@ -16,6 +16,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Topic | Read |
 | - | - |
 | **Start here**: set up a project in one command (`.bin/caligrafer quickstart`), the ideas, a complete first feature | [15-quickstart.md](reference/15-quickstart.md), [16-how-caligrafy-works.md](reference/16-how-caligrafy-works.md), [17-your-first-capability.md](reference/17-your-first-capability.md) |
+| Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
 | Verified pitfalls and wiki errata (G1-G60) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |

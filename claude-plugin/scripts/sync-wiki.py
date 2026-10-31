@@ -55,6 +55,7 @@ PAGES = {
     '10-claude-code-plugin.md': ('10.-Claude-Code-Plugin.md', '10. Claude Code Plugin'),
     '11-release-notes-october-2026.md': ('Release-notes:-October-2026.md', 'Release notes: October 2026'),
     '12-testing-caligrafy.md': ('Testing-Caligrafy.md', 'Testing Caligrafy (contributors)'),
+    '18-caligrafer.md': ('Caligrafer.md', 'Caligrafer: every command'),
     '15-quickstart.md': ('Quickstart.md', 'Quickstart'),
     '16-how-caligrafy-works.md': ('How-Caligrafy-Works.md', 'How Caligrafy works'),
     '17-your-first-capability.md': ('Your-First-Capability.md', 'Your first capability'),

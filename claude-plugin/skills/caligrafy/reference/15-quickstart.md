@@ -71,7 +71,7 @@ The Tasks feature is five small files in `application/services/Tasks/` (one per 
 
 + **Build your own feature:** [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) adds a Books catalog with its page, its API and its agent tools.
 + **Keep the example or remove it:** delete `application/services/Tasks`, `application/models/Tasks`, `application/views/Tasks`, `public/js/tasks.js` and the `TASKS EXAMPLE` routes of `application/config/routing/web.php`.
-+ **Check your setup at any time:** `docker compose exec dev-box php caligrafer.php doctor`.
++ **Check your setup at any time:** `docker compose exec dev-box php caligrafer.php doctor`. Every command of Caligrafer, the command line tool, is on the [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) page.
 + **Every day:** `docker compose up -d dev-box` starts the server, `docker compose stop` stops it. phpMyAdmin is at http://localhost:8077 (user `root`, password `root`).
 
 ## If something does not work

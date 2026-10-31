@@ -105,6 +105,7 @@ feature step by step, page included.
 | Understand the idea | [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
 | Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course): build a complete application in 15 lessons |
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
+| Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
 | See what changed | [Changelog](CHANGELOG.md) and the [release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0) |
 | Contribute | [Contributing](CONTRIBUTING.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
 

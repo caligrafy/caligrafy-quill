@@ -100,6 +100,8 @@ class CreateBook extends Service
 
 + **A service never renders a view, redirects, prints or reads the request or the session.** The channel does that. The `Context` tells it who calls: `$context->user` (the signed-in user or the owner of the token), `$context->token`, `$context->channel` (`web`, `rest`, `mcp`, `cli`) and `$context->allows('books:write', 1)`.
 
+The commands used on this page (`service`, `capabilities`, `client`, `token`, `mcp`, `audit`, `platform install`) are all described on the [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) page.
+
 List what the application offers:
 ```bash
 php caligrafer.php capabilities              # a table

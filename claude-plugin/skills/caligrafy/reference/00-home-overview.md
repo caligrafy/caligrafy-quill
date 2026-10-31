@@ -108,6 +108,7 @@ feature step by step, page included.
 | Take payments, add AI, face login... | the **Built-in features** of the sidebar |
 | Build with Claude | [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) |
 | Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course) |
+| Use the command line (set up, create, tokens, check, upgrade) | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
 | Install another way, configure, upgrade | [Installation and configuration](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started), [Security and upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading) |
 
 ## Community and support

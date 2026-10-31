@@ -147,53 +147,23 @@ If you decide to place the Caligrafy repo in subfolders within the Server Docume
 + Change/Add `APP_ROOT` entry in the `.env` file to the `full path leading to the caligrafy root folder from server document root`
 
 ### Caligrafer
-Caligrafer is a command line tool that comes prepackaged with several tools and utilities that help accelerate your work, here are some of the commands:
+Caligrafer is the command line tool of Caligrafy: `php caligrafer.php <command>` (with Docker: `docker compose exec dev-box php caligrafer.php <command>`). **Every command is described on one page: [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer).** The ones you use most:
 
-+ **Caligrafer help:** At all time you can know what commands are available to you by running ```php caligrafer.php``` from the Caligrafy root.
+| Command | What it does |
+| --- | --- |
+| `quickstart [--example]` | sets up a project in one step ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#quickstart)) |
+| `initialize` | prepares a fresh copy of the framework; deletes `.git` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#initialize)) |
+| `service <Name>` | creates a capability ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#service)) |
+| `client` | writes the JavaScript client of the capabilities ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#client)) |
+| `token create <name> --scopes ...` | a token for a program or an AI agent ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#token)) |
+| `app`, `create`, `facedetect`, `ml`, `bot` | creates a client app in `public/` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#apps)) |
+| `sql <file.sql>` | runs a SQL script on the database ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#sql)) |
+| `doctor` | checks the project and its services ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#doctor)) |
+| `upgrade` | updates a project's templates after a framework update ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#upgrade)) |
 
-+ **Framework Initialization:** `.bin/caligrafer` initializes the project the first time you use it.
-You can also run ```php caligrafer.php initialize``` from the Caligrafy root. It signs the project with an `APP_KEY` and an `API_KEY` (an already signed project keeps its keys), creates the `application` folder and **deletes the `.git` folder**.
-After updating the framework of an existing project, run ```php caligrafer.php upgrade``` (dry run) then ```php caligrafer.php upgrade --apply``` to bring the template files of `application` up to date: untouched files are replaced after a backup in `backups/caligrafy-upgrade-<timestamp>/`, customized files are kept and get a `<file>.caligrafy-new` version next to them, and `php caligrafer.php upgrade --force <application/path>` replaces one customized file (see [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading)).
-
-+ **Version:** run ```php caligrafer.php version``` (or `.bin/caligrafer version`) from the Caligrafy root to print the version of Caligrafy Quill that the project runs, for example `Caligrafy Quill 2.0.0`. It works before `composer install` and `initialize`, and creates nothing. In code, the version is `Caligrafy\Framework::VERSION`, and `doctor` shows it on its first line. Caligrafy follows [semantic versioning](https://semver.org): every release is a git tag `v<version>`, listed with its changes in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
-
-+ **Build once commands** (learn more in [11. Build Once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)):
-    + ```php caligrafer.php quickstart [--example] [--yes]```: sets up a project in one step (with Docker: `.bin/caligrafer quickstart`)
-    + ```php caligrafer.php sql <file.sql>```: runs a SQL script (a `create_db.sql`) on the database of `.env`
-    + ```php caligrafer.php platform install```: creates the framework tables (personal access tokens, audit log)
-    + ```php caligrafer.php service Books/CreateBook --scope books:write```: creates a capability in `application/services/`
-    + ```php caligrafer.php capabilities```: lists the capabilities (`--json`, `--markdown`)
-    + ```php caligrafer.php client```: writes the JS client of the capabilities for the Vue apps (`public/js/capabilities.js` by default)
-    + ```php caligrafer.php token create <name> --scopes books:read```, `token list`, `token revoke <id>`: personal access tokens
-    + ```php caligrafer.php mcp```: an MCP server over stdio for AI agents on your machine
-    + ```php caligrafer.php audit```: the latest capability calls
-
-+ **Project health check:** run ```php caligrafer.php doctor``` (or `.bin/caligrafer doctor`) from the Caligrafy root. It is read-only: it checks PHP and its extensions, `vendor/`, `.env`, the `APP_KEY`/`API_KEY`, `public/uploads`, the web app manifest and its icons (and the service worker files when `PWA_SERVICE_WORKER=true`), whether `application` is up to date with the framework templates, the database connection (when `DB_ACTIVATE=true`) and every service configured in `.env`: OpenAI and Groq (the key is accepted and the configured models are available for it), the provider of the open source `Agent` (`AGENT_PROVIDER`: Together AI, Fireworks AI, OpenRouter, a custom endpoint, or Ollama: the server answers and the models are pulled, with the `host.docker.internal` hint when PHP runs in Docker), Stripe (key accepted, test or live mode), Coinbase Business, Watson and the SMTP server (connect and `EHLO` only, no mail is sent). Each line is `OK`, `WARN`, `FAIL` or `SKIP` (not configured) with a one-line fix. Secrets are never printed (at most `sk-proj-…EZ8A`), and a key pasted with spaces or a missing `-`/`_` after its prefix is reported. Network errors are explained: a `self-signed certificate in certificate chain` error means a corporate TLS inspection proxy (see the Claude plugin `server` skill for the Docker fix).
-    + `--only openai,groq` limits the checks (`project`, `database`, `openai`, `groq`, `agent`, `stripe`, `coinbase`, `watson`, `mail`), `--json` prints machine-readable results, `--env .env.production` checks another environment file. The exit code is `1` when a check fails.
-    + With Docker, run it in the container so that `DB_HOST=mysql` resolves and the network is the one of the app: `docker-compose exec dev-box php caligrafer.php doctor`.
-    + Billing and credits cannot be checked without spending: an OpenAI `429 insufficient_quota` on the first request means the account has no credits.
-    + Optional overrides (tests, proxies, regional endpoints): `OPENAI_API_BASE`, `GROQ_API_BASE`, `AGENT_API_BASE`, `STRIPE_API_BASE`, `COINBASE_API_BASE`; `WATSON_ASSISTANT_ID` lets doctor check the assistant id.
-
-+ **Create a Vue app (Vue as a library):** Scaffolds a simple Vue 3 app in the `public` folder for you to use immediately.
-You can run ```php caligrafer.php app <app_name>``` from the Caligrafy root. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library).
-
-+ **Create a Vue project (Single Page Application):** Scaffolds a Vite 8 + Vue 3 project with Vue Router 5 and Pinia in the `public` folder.
-You can run ```php caligrafer.php create <app_name>``` from the Caligrafy root. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application).
-
-+ **Create a Bot app:** Scaffolds a Bot app for you to use immediately.
-You can run ```php caligrafer.php bot <app_name>``` from the Caligrafy root.
-
-+ **Create a Face Detection and Recognition app:** Scaffolds a ready to use face detection and recognition app.
-You can run ```php caligrafer.php facedetect <app_name>``` from the Caligrafy root.
-
-+ **Create a Machine Learning app:** Scaffolds a ready-to-use machine learning app for you to explore.
-You can run ```php caligrafer.php ml <app_name>``` from the Caligrafy root.
-
-+ **Generate Keys:** Generate keys will generate an APP_KEY and an API_KEY that you can add to the ```.env``` file you created before.
-You can run ```php caligrafer.php generatekeys``` from the Caligrafy root. 
-
-+ **Generate API key:** Generate a new unique API key every single time that you can distribute to third-parties.
-You can run ```php caligrafer.php generateapikey``` from the Caligrafy root.
++ The version of a project: `php caligrafer.php version` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#version)).
++ Capabilities, tokens, MCP and the audit log: `service`, `capabilities`, `client`, `platform install`, `token`, `mcp`, `audit` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#service)).
++ Something does not work: `php caligrafer.php doctor` checks the project, the database and every service in `.env`, with a fix for each problem ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#doctor)).
 
 ### Virtual Hosts
 Creating a virtual host is optional. Caligrafy does not need the creation of virtual hosts to operate. However, any virtual host used will need to ensure to `AllowOverride All`, otherwise Caligrafy may not function properly.

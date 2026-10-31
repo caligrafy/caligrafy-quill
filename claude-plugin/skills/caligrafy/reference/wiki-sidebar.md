@@ -58,6 +58,7 @@
 
 ## Reference
 
++ [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer)
 + [Installation, configuration and Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started)
 + [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing) · [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request) · [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers) · [Views](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views)
 + [Vue: flow of information](https://github.com/caligrafy/caligrafy-quill/wiki/9.7-Understanding-the-flow-of-information) · [routes](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.2-Routes) · [validations](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.5-Validations)
