@@ -1,0 +1,18 @@
+# What the production image (Dockerfile) never contains: secrets, local libraries, development and test files
+.env
+.env.*
+!.env.example
+.git
+.github
+vendor
+**/node_modules
+qa
+tests
+backups
+claude-plugin
+.claude
+.claude-plugin
+*.log
+.DS_Store
+public/uploads/*
+!public/uploads/.gitignore
