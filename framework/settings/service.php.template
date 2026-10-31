@@ -1,0 +1,42 @@
+<?php
+/**
+ * {{class}}: a capability, written once and served to web pages, REST, the JS client and AI agents (MCP)
+ * Created by php caligrafer.php service
+ */
+
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Service;
+use Caligrafy\ServiceError;
+
+#[Capability(
+    name: '{{name}}',
+    description: 'Describe in one or two sentences what this does and what it returns: AI agents read it to choose the tool.',
+    scope: '{{scope}}',
+    readOnly: {{readOnly}}
+)]
+class {{class}} extends Service
+{
+    // Inputs: GUMP rules (https://github.com/Wixel/GUMP#star-available-validators). Only these inputs reach handle().
+    public $rules = array(
+        // 'title' => 'required|max_len,255',
+    );
+
+    // Filters applied before validation
+    public $filters = array(
+        // 'title' => 'trim|sanitize_string',
+    );
+
+    // What each input is, for the JSON Schema that clients and agents see
+    public $descriptions = array(
+        // 'title' => 'The title of the book',
+    );
+
+    public function handle(array $input, Context $context)
+    {
+        // Do the work and return data (an array, a model, a list). Never render, redirect or print here.
+        // Refuse with: throw ServiceError::notFound('No such book'); ServiceError::invalid(['title' => '...']);
+        // ServiceError::forbidden(); ServiceError::conflict('...'). $context->user is the signed-in user, if any.
+        return array();
+    }
+}

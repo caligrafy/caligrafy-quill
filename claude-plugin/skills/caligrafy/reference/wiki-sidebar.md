@@ -3,8 +3,23 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/_Sidebar
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
+## Build once, experience everywhere
+
+Caligrafy is the framework where a feature is built once and experienced everywhere: web, tablet, mobile, APIs and AI agents.
+
+1. [Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)
+    > + [How it fits together](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#overview)
+    > + [Write a capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service)
+    > + [REST](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#rest)
+    > + [Personal access tokens](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#tokens)
+    > + [Vue apps: the JS client](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#client)
+    > + [AI agents: MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#mcp)
+    > + [The audit log](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#audit)
+
 ## What's new
 
++ [Release notes: 2.1.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)
+    > + [Upgrade checklist](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0#checklist)
 + [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026)
     > + [Upgrade checklist](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#checklist)
     > + [Compatibility summary](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#compatibility)
@@ -14,6 +29,7 @@
 1. [Getting Started](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started)
     > + [Installation](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started)
     > + [Understanding MVC architecture](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#architecture)
+    > + [Build once, experience everywhere](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#buildonce)
     > + [Framework fundamentals](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#fundamentals)
     > + [File Structure](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#filestructure)
     > + [Caligrafer doctor](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#doctor)
@@ -23,6 +39,7 @@
     > + ["Hello World" Route](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#basicroute)
     > + [Routing with parameters](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#parameterroute)
     > + [Controller Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#controllerroute)
+    > + [Capability Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#capabilityroutes)
     > + [HTML Form Methods](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#htmlformmethods)
 
 3. [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)
@@ -53,6 +70,7 @@
     > + [Simple View](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#simpleview)
     > + [View with parameters](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#parameterview)
     > + [Mobile: install to home screen](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#install)
+    > + [One look on every device](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#designtokens)
 8. [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)
     > + [Getting Started with Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)
     > + [Creating a Controller](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#createcontroller)
@@ -60,6 +78,7 @@
     > + [Controller Context](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#controllercontext)
     > + [Controller Methods](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#controllermethods)
     > + [Namespaced controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#namespacedcontrollers)
+    > + [Calling a capability](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)
 9. [Helpers, Forms & REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API)
     > + [Helpers](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#helpers)
     > + [HTML Forms](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#forms)
@@ -96,12 +115,13 @@
 
 ## AI in Caligrafy
 
-1. [Creating Bots with Watson](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.1-Creating-Bots-with-Watson)
-2. [Face Detection and Recognition](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition)
-3. [Machine Learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning)
-4. [OpenAI: ChatGPT, GPTs, DALL.E](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E)
-5. [OpenAI: Assistants](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.5-Open-AI:-Assistants)
-6. [Open Source Agents (llama, Mistral, etc.)](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.))
+1. [AI agents use your application (MCP)](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#mcp)
+2. [Creating Bots with Watson](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.1-Creating-Bots-with-Watson)
+3. [Face Detection and Recognition](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition)
+4. [Machine Learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning)
+5. [OpenAI: ChatGPT, GPTs, DALL.E](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E)
+6. [OpenAI: Assistants](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.5-Open-AI:-Assistants)
+7. [Open Source Agents (llama, Mistral, etc.)](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.))
 
 ## Caligrafy and Claude
 

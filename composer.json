@@ -1,6 +1,6 @@
 {
     "name": "caligrafy/caligrafy-quill",
-    "description": "PHP + VueJS MVC framework",
+    "description": "Build once, experience everywhere: a PHP MVC framework that serves one capability to web pages, Vue apps, REST APIs and AI agents (MCP)",
     "keywords": [
         "php",
         "vuejs",
@@ -14,7 +14,10 @@
         "ai",
         "bot",
         "payment",
-        "cryptocurrency"
+        "cryptocurrency",
+        "mcp",
+        "ai-agents",
+        "build-once"
     ],
     "type": "framework",
     "license": "MIT",

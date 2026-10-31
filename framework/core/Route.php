@@ -267,6 +267,46 @@ class Route extends \stdClass
     }
     
     /**
+     * Maps a route to a capability (REST): Route::capability('POST', '/books', 'create_book')
+     * The route variables ({id}) become inputs of the capability. See Caligrafy\Rest for the request and response format.
+     * @param string $method GET, POST, PUT or DELETE
+     * @param string $route the uri
+     * @param string $name the capability name
+    */
+    public static function capability($method, $route, $name)
+    {
+        $method = strtolower((string) $method);
+        if (!in_array($method, array('get', 'post', 'put', 'delete'), true)) {
+            throw new \InvalidArgumentException("Route::capability: unknown method '$method'");
+        }
+        self::$method($route, function () use ($name) { Rest::respond($name); });
+    }
+
+    /**
+     * Exposes every capability under a prefix: GET {prefix} lists what the caller may call (with the input schemas),
+     * POST {prefix}/{name} calls one. The JS client of the Vue apps and the SPA (php caligrafer.php client) uses it.
+     * @param string $prefix the uri prefix
+    */
+    public static function capabilities($prefix = '/capabilities')
+    {
+        $prefix = '/' . trim((string) $prefix, '/');
+        self::get($prefix, function () { Rest::listing(); });
+        self::post($prefix . '/{__capability}', function () { Rest::respond((string) (currentBind()['__capability'] ?? '')); });
+    }
+
+    /**
+     * Exposes the capabilities to AI agents over MCP (Streamable HTTP) at a uri: Route::mcp('/mcp')
+     * Agents authenticate with a personal access token and see the capabilities its scopes allow.
+     * @param string $route the uri of the MCP endpoint
+    */
+    public static function mcp($route = '/mcp')
+    {
+        self::post($route, function () { Mcp\Http::respond(); });
+        self::get($route, function () { Mcp\Http::methodNotAllowed(); });
+        self::delete($route, function () { Mcp\Http::methodNotAllowed(); });
+    }
+
+    /**
      * Private mthod that sets the routes at runtime
      * @param string $route defines the uri
      * @param object $method defines the method to be used, it could be a String or a callback function

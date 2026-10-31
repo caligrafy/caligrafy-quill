@@ -28,6 +28,13 @@ else
 fi
 cd "$ROOT"
 
+# --- design tokens: tokens.css defines every value of tokens.json -----------------------------
+OUT=$(php -r '
+$t = json_decode(file_get_contents("public/css/tokens.json"), true); $css = file_get_contents("public/css/tokens.css"); $bad = [];
+foreach ($t as $g => $vals) { if (!is_array($vals)) continue; foreach ($vals as $k => $v) { if (strpos($css, "--cq-$g-$k: $v;") === false) $bad[] = "--cq-$g-$k: $v"; } }
+echo implode(", ", $bad);')
+[ -z "$OUT" ] && ok "public/css/tokens.css matches tokens.json" || ko "design tokens disagree" "$OUT"
+
 # --- caligrafer initialize is idempotent for the keys ---------------------------------------
 mkdir -p "$TMP/init" && cd "$TMP/init"
 cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads

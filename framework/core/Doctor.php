@@ -117,6 +117,9 @@ class Doctor
             else $this->secret('project', $key, $value);
         }
 
+        $legacy = strtolower(trim((string) $this->env('LEGACY_API_KEY')));
+        in_array($legacy, ['false', '0', 'off', 'no'], true) ? $this->add('project', 'Legacy API key', 'OK', 'off: API clients use personal access tokens')
+            : $this->add('project', 'Legacy API key', 'OK', 'allowed (every generated key is the same key: full access, no revocation); set LEGACY_API_KEY=false once clients use tokens');
         $uploads = $this->root . '/public/uploads';
         if (!is_dir($uploads)) $this->add('project', 'public/uploads', 'WARN', 'missing', 'mkdir -p public/uploads && chmod -R 777 public/uploads');
         elseif (!is_writable($uploads)) $this->add('project', 'public/uploads', 'WARN', 'not writable by ' . get_current_user(), 'chmod -R 777 public/uploads');
@@ -201,6 +204,12 @@ class Doctor
             $pdo = new \PDO(\Caligrafy\Database::dsn($driver, $host, $this->env('DB_DATABASE'), $this->env('DB_PORT') ?: null),
                 $this->env('DB_USERNAME'), $this->env('DB_PASSWORD'), [\PDO::ATTR_TIMEOUT => 5, \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
             $this->add('database', 'Database', 'OK', "connected to $where (server " . $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION) . ')');
+            $missing = [];
+            foreach (['caligrafy_tokens', 'caligrafy_audit'] as $table) {
+                try { $pdo->query("SELECT 1 FROM $table LIMIT 1"); } catch (\PDOException $e) { $missing[] = $table; }
+            }
+            $missing ? $this->add('database', 'Framework tables', 'SKIP', implode(', ', $missing) . ' not installed (needed for tokens, the audit log and MCP)', 'php caligrafer.php platform install')
+                : $this->add('database', 'Framework tables', 'OK', 'caligrafy_tokens and caligrafy_audit installed');
         } catch (\PDOException $e) {
             $message = $this->scrub($e->getMessage());
             $fix = 'check the DB_* values in .env';

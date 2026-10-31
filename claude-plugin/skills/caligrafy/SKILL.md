@@ -1,12 +1,12 @@
 ---
 name: caligrafy
-description: Expert knowledge of the Caligrafy Quill PHP MVC framework (Caligrafy\Controller, Caligrafy\Model, Route, Request, Auth, Pug/Phug views, GUMP validation, caligrafer CLI, Docker dev server, Vue client apps, Stripe/Coinbase payments, OpenAI/Groq/Watson AI, open models (Llama) through Together, Fireworks, OpenRouter or Ollama, FaceDetect, ML). Use whenever code touches a Caligrafy Quill project - application/config/routing/web.php, application/controllers, application/models, application/views/*.pug, public/<app>/, .env, caligrafer.php or .bin/caligrafer.
-when_to_use: The working directory contains caligrafer.php, framework/core/Controller.php or application/config/routing/web.php; the user mentions Caligrafy, Quill, caligrafer, Phug/pug views, Caligrafy Vue apps, FaceDetect or MlCore; or asks to add routes, controllers, models, REST APIs, auth, payments, AI features, or to debug [ERROR 1001/1004/2003/3000] messages.
+description: Expert knowledge of the Caligrafy Quill PHP MVC framework (Caligrafy\Controller, Caligrafy\Model, Route, Request, Auth, Pug/Phug views, GUMP validation, caligrafer CLI, Docker dev server, Vue client apps, Stripe/Coinbase payments, OpenAI/Groq/Watson AI, open models (Llama) through Together, Fireworks, OpenRouter or Ollama, FaceDetect, ML, and the build-once layer: services and capabilities served to web pages, REST, the JS client and AI agents over MCP, with personal access tokens and an audit log). Use whenever code touches a Caligrafy Quill project - application/config/routing/web.php, application/controllers, application/models, application/views/*.pug, public/<app>/, .env, caligrafer.php or .bin/caligrafer.
+when_to_use: The working directory contains caligrafer.php, framework/core/Controller.php or application/config/routing/web.php; the user mentions Caligrafy, Quill, caligrafer, Phug/pug views, Caligrafy Vue apps, FaceDetect or MlCore; or asks to add routes, controllers, models, REST APIs, capabilities, MCP tools for agents, tokens, auth, payments, AI features, or to debug [ERROR 1001/1004/2003/3000] messages.
 ---
 
 # Caligrafy Quill
 
-Caligrafy Quill is a PHP MVC framework (PHP >= 8.3, MySQL via PDO) with Pug templates (Phug), GUMP validation,
+Caligrafy Quill is the "Build Once, Experience Everywhere" framework: a PHP MVC framework (PHP >= 8.3, MySQL via PDO) with Pug templates (Phug), GUMP validation,
 a REST API built into every route, and Vue 3 client apps. This skill is an index: read the reference file
 for the topic before writing code, and check [gotchas.md](reference/gotchas.md) whenever behavior surprises you.
 Signatures in [api-reference.md](reference/api-reference.md) are copied from the source and win over the wiki.
@@ -16,7 +16,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Topic | Read |
 | - | - |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G49) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G57) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -29,7 +29,9 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Helpers, HTML forms, CSRF, REST API + Postman | [09-helpers-forms-rest-api.md](reference/09-helpers-forms-rest-api.md) |
 | Authentication module | [09.1-authentication.md](reference/09.1-authentication.md) |
 | Production checklist, server-file protection, upgrading old projects, behavior changes | [09.5-security-and-upgrading.md](reference/09.5-security-and-upgrading.md) |
+| Build once: services, `#[Capability]`, REST (`Route::capability`), the JS client, personal access tokens, MCP for agents, audit log, design tokens | [13-build-once-services-capabilities-mcp.md](reference/13-build-once-services-capabilities-mcp.md), [api-reference.md](reference/api-reference.md) (Build once section), G50-G57 |
 | This Claude Code plugin (commands, agent, install) | [10-claude-code-plugin.md](reference/10-claude-code-plugin.md) |
+| Upgrading a project to 2.1 (build once): checklist, what is new, behavior changes, the legacy API key | [14-release-notes-2.1.0.md](reference/14-release-notes-2.1.0.md) |
 | Every change of October 2026: upgrade checklist for existing projects, what can break, `.env` settings | [11-release-notes-october-2026.md](reference/11-release-notes-october-2026.md) |
 | Changing the framework itself: QA suite phases, PHPUnit tests in `qa/unit`, mocks, adding a test, release process | [12-testing-caligrafy.md](reference/12-testing-caligrafy.md) |
 | Stripe and Coinbase payments | [09.2-stripe-crypto-payment.md](reference/09.2-stripe-crypto-payment.md) |
@@ -174,8 +176,9 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 4. Use bound `Database::execute()` queries for anything built from user input (G2, G8). Filter then validate (G6).
 5. After editing PHP, `php -l <file>`; after changing routes, hit them with curl (JSON + Bearer) or the browser. When you change `framework/` or `framework/settings/application`, run `./qa/run.sh` (G38) and add a test for the change.
 6. In a project initialized with an older framework, run `php caligrafer.php upgrade` (dry run, safe) to see which `application/` copies are outdated or customized before assuming the current behavior; apply with `--apply` only when the user agrees (G39).
-7. To know which framework version a project runs, use `php caligrafer.php version` (or `Caligrafy\Framework::VERSION`; releases are git tags `v<version>`, changes in `CHANGELOG.md`). Releases start at v2.0.0; a project with no `version` command predates it.
-8. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the Agent provider (Ollama reachable, models pulled), the database and the services, with a fix per line.
-9. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
-10. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
-11. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.
+7. A feature that more than one channel needs (pages and a Vue app, an API, an AI agent) is a capability: a `Service` in `application/services/` with `#[Capability]`, called by `$this->call()`, `Route::capability()`, the JS client and MCP (`/caligrafy-quill:new-capability`). Never put an API key or a token in a page or a bundle (G50): browser clients use the session through the generated client.
+8. To know which framework version a project runs, use `php caligrafer.php version` (or `Caligrafy\Framework::VERSION`; releases are git tags `v<version>`, changes in `CHANGELOG.md`). Releases start at v2.0.0; a project with no `version` command predates it.
+9. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the Agent provider (Ollama reachable, models pulled), the database and the services, with a fix per line.
+10. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
+11. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
+12. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.

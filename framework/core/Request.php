@@ -120,6 +120,11 @@ class Request extends \stdClass {
     */
     public $parameters;
 
+    /**
+     * @var array|null the personal access token of the request, once authorizeApiRequest() or Context::fromRequest() checked it
+     */
+    public $token;
+
     
     public function __construct() 
     {
@@ -149,19 +154,55 @@ class Request extends \stdClass {
     
     /**
      * Checks if API requests are authorized
+     * - a personal access token (Bearer cq_...) that grants $scope; the controller routes of web.php ask for '*',
+     *   so they accept the tokens that grant everything, as the legacy key did
+     * - the legacy API key (any key generated for this APP_KEY), unless LEGACY_API_KEY=false
+     * @param string $scope the scope the route needs
      */
-    public function authorizeApiRequest()
+    public function authorizeApiRequest($scope = '*')
     {
-        $result = false;
-        $apiKey = isset($this->authorization)? $this->authorization : null;
-        $matches = array();
-        if ($apiKey) {
-            preg_match('/Bearer\s(\S+)/', $apiKey, $matches);
-            if(!empty($matches) && isset($matches[1])) {
-                $result = encryptDecrypt('decrypt', $matches[1]) == getenv('APP_KEY')?? false;
-            }
+        $bearer = $this->bearer();
+        if ($bearer === null) {
+            return false;
         }
-        return $result;
+        if (Tokens::looksLikeToken($bearer)) {
+            try {
+                $this->token = $this->token ?? Tokens::verify($bearer);
+            } catch (\Throwable $e) {
+                $this->token = null;
+            }
+            return $this->token !== null && Tokens::allows($this->token['scopes'], $scope);
+        }
+        return $this->isLegacyApiKey($bearer);
+    }
+
+    /**
+     * The bearer value of the Authorization header (null when there is none)
+     */
+    public function bearer()
+    {
+        return is_string($this->authorization) && preg_match('/^\s*Bearer\s+(\S+)/i', $this->authorization, $matches) ? $matches[1] : null;
+    }
+
+    /**
+     * Whether a value is a legacy API key of this project (encrypts APP_KEY), and legacy keys are allowed
+     */
+    public function isLegacyApiKey($key)
+    {
+        if (self::legacyKeysDisabled() || !is_string($key) || $key === '') {
+            return false;
+        }
+        $appKey = getenv('APP_KEY');
+        return is_string($appKey) && $appKey !== '' && hash_equals($appKey, (string) encryptDecrypt('decrypt', $key));
+    }
+
+    /**
+     * LEGACY_API_KEY=false in .env turns the legacy API key off (tokens only)
+     */
+    public static function legacyKeysDisabled()
+    {
+        $setting = defined('LEGACY_API_KEY') ? LEGACY_API_KEY : getenv('LEGACY_API_KEY');
+        return is_string($setting) && in_array(strtolower(trim($setting)), array('false', '0', 'off', 'no'), true);
     }
     
     /**
@@ -266,6 +307,11 @@ class Request extends \stdClass {
         // user agents listed in APPROVED_AGENTS (comma separated) skip the check. Empty entries are ignored
         // so that an empty setting never approves requests sent without a User-Agent
         $approved = defined('APPROVED_AGENTS')? array_filter(array_map('trim', explode(',', (string)APPROVED_AGENTS)), 'strlen') : array();
+
+        // a request that carries a bearer token cannot come from a cross-site form (a form cannot set Authorization)
+        if ($this->bearer() !== null) {
+            return;
+        }
 
         //if it's a form and not an API then check for CSRF
         if(!$this->wantsJson() && !in_array($this->userAgent, $approved, true)) {

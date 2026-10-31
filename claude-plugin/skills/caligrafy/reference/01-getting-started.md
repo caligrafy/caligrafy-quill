@@ -145,6 +145,15 @@ After updating the framework of an existing project, run ```php caligrafer.php u
 
 + **Version:** run ```php caligrafer.php version``` (or `.bin/caligrafer version`) from the Caligrafy root to print the version of Caligrafy Quill that the project runs, for example `Caligrafy Quill 2.0.0`. It works before `composer install` and `initialize`, and creates nothing. In code, the version is `Caligrafy\Framework::VERSION`, and `doctor` shows it on its first line. Caligrafy follows [semantic versioning](https://semver.org): every release is a git tag `v<version>`, listed with its changes in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
 
++ **Build once commands** (learn more in [11. Build Once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)):
+    + ```php caligrafer.php platform install```: creates the framework tables (personal access tokens, audit log)
+    + ```php caligrafer.php service Books/CreateBook --scope books:write```: creates a capability in `application/services/`
+    + ```php caligrafer.php capabilities```: lists the capabilities (`--json`, `--markdown`)
+    + ```php caligrafer.php client```: writes the JS client of the capabilities for the Vue apps (`public/js/capabilities.js` by default)
+    + ```php caligrafer.php token create <name> --scopes books:read```, `token list`, `token revoke <id>`: personal access tokens
+    + ```php caligrafer.php mcp```: an MCP server over stdio for AI agents on your machine
+    + ```php caligrafer.php audit```: the latest capability calls
+
 + **Project health check:** run ```php caligrafer.php doctor``` (or `.bin/caligrafer doctor`) from the Caligrafy root. It is read-only: it checks PHP and its extensions, `vendor/`, `.env`, the `APP_KEY`/`API_KEY`, `public/uploads`, the web app manifest and its icons (and the service worker files when `PWA_SERVICE_WORKER=true`), whether `application` is up to date with the framework templates, the database connection (when `DB_ACTIVATE=true`) and every service configured in `.env`: OpenAI and Groq (the key is accepted and the configured models are available for it), the provider of the open source `Agent` (`AGENT_PROVIDER`: Together AI, Fireworks AI, OpenRouter, a custom endpoint, or Ollama: the server answers and the models are pulled, with the `host.docker.internal` hint when PHP runs in Docker), Stripe (key accepted, test or live mode), Coinbase Business, Watson and the SMTP server (connect and `EHLO` only, no mail is sent). Each line is `OK`, `WARN`, `FAIL` or `SKIP` (not configured) with a one-line fix. Secrets are never printed (at most `sk-proj-…EZ8A`), and a key pasted with spaces or a missing `-`/`_` after its prefix is reported. Network errors are explained: a `self-signed certificate in certificate chain` error means a corporate TLS inspection proxy (see the Claude plugin `server` skill for the Docker fix).
     + `--only openai,groq` limits the checks (`project`, `database`, `openai`, `groq`, `agent`, `stripe`, `coinbase`, `watson`, `mail`), `--json` prints machine-readable results, `--env .env.production` checks another environment file. The exit code is `1` when a check fails.
     + With Docker, run it in the container so that `DB_HOST=mysql` resolves and the network is the one of the app: `docker-compose exec dev-box php caligrafer.php doctor`.
@@ -257,6 +266,17 @@ The framework relies on the following structures:
 + **Controller**: The controller in an MVC architecture is the brain of the application that controls how the information is displayed. It is the logic layer that is responsible for interfacing with the model and rendering the data that will be displayed in the View
 + **View**: The view is the front-end part that is responsible for displaying a user interface with the data that the controller passes on to it
 
+### Build once, experience everywhere
+
+Caligrafy adds two layers on top of MVC so that a feature is built once and experienced everywhere:
+
+| Layer | What it holds | Where |
+| --- | --- | --- |
+| **Capabilities** | the features of your application, written once: inputs and their rules, who may use them, the work, the result | `application/services/` (a `Service` with `#[Capability]`) |
+| **Experiences** | every way to reach a capability, each shaped for its audience | Pug pages, Vue apps and the SPA on desktop, tablet and phone, REST for other applications, MCP for AI agents |
+
+Models stay the data layer under the capabilities; controllers and views become one experience among others. You can start with plain MVC and move a feature to a capability as soon as a second experience needs it. Learn more in [11. Build Once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP).
+
 ## Framework Fundamentals
 
 This framework relies on several foundational concepts that are worth detailing. A good understanding of those fundamental concepts gets the developers up and running more efficiently. We will use an online catalogue of books (like Amazon) as an example throughout this documentation.
@@ -268,6 +288,12 @@ This framework relies on several foundational concepts that are worth detailing.
 + **Views**: Caligrafy has two different ways of building views. One for rapid development that uses a server-side template engine to render HTML pages. The other one uses Vue.js which is a more sophisticated client-side framework that is suitable for building more delightful user experiences.You could learn more about Pug (or Phug the PHP equivalent) [here](https://www.phug-lang.com/)
 
 + **API & JSON**: This framework relies on REST API fundamentals. Every route that is created could either be accessed from a browser or from any application capable of making requests. The Caligrafy View is intelligent to know whether to render a graphical user interface or a response in a JSON format.
+
++ **Capabilities**: a capability is one feature of the application (add a book, list the books) written once as a service: it declares its inputs with validation rules, the scope and permission level it needs, does the work and returns data. Every experience calls the same capability, so the rules never drift between the web, the apps, the API and the agents. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service).
+
++ **Experiences**: web pages, Vue apps and the single page application on any device, REST clients and AI agents (MCP) are all experiences of the same capabilities. Each one is shaped for its audience (a dense dashboard, a touch-first tablet view, a tool for an agent) without re-implementing the logic.
+
++ **Identity**: people sign in (sessions, passkeys, face login); programs and AI agents use personal access tokens with scopes, which can expire and be revoked. Every capability call, and every refusal, goes to the audit log.
 
 + **Models**: In this framework, models are meant to be an object representation of all objects/entities of an application. For example, in an online bookstore example, books need to be represented by a Book model. Every model has a table associated with it in the database. Unlike other frameworks, this framework does not implicitly associate a model with a table (like Laravel for example). Every Model needs to be explicitly associated with a table. That gives the flexibility of separating terminology concerns between database tables and their object representations in the framework. However, all the required table columns that have no default values need to be represented in the model. Pivot tables (or many-to-many database tables) don't need to be created in the database nor represented in the Model. This framework creates these tables from the moment a many-to-many relationship is defined between Models (more on this later).
 
@@ -287,7 +313,7 @@ There are 5 main folders in the structure that you should be aware of:
 1. **`/application`**: 
     This is where most of your application logic should go. This folder is where you should create the routes, models, views and controllers. You can create any classes and organize them freely in this folder without worrying about requiring them or including them: every PHP file of `application` (up to 5 folder levels deep) is loaded on each request, so two classes cannot have the same fully qualified name. 
 
-    This folder has 4 subfolders (models, views, controllers and config). The config folder is where the routes are defined. 
+    This folder has 5 subfolders: models, views, controllers, config (where the routes are defined) and services, where your capabilities live: features written once and served to every experience. 
 
     > When your logic becomes too complex to hold in a `Controller`, you can always create new classes to organize them without having to require or include them in the classes where you intend to use them.
 2. **`/framework`**: This is the underlying code for the framework. For novice programmers, you will very rarely need to change anything in this folder. However, if you need to change the way the framework operates, then this is where it can be done.

@@ -1,11 +1,12 @@
 # caligrafy-quill - Claude Code plugin
 
-Gives Claude Code full knowledge of the [Caligrafy Quill](https://github.com/caligrafy/caligrafy-quill) framework.
+Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligrafy/caligrafy-quill), the "Build Once, Experience Everywhere" framework: Claude writes a feature once as a capability and serves it to web pages, Vue apps, REST and AI agents.
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 37 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G49) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 39 pages in `skills/caligrafy/reference/`), a source-verified API reference and a list of verified gotchas/wiki errata (G1-G57) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + Controller (filter/validate CRUD) + REST routes |
+| Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
 | Skill | `/caligrafy-quill:db <script.sql\|tables\|query "...">` | Runs SQL scripts in the `mysql` container (or local MySQL), with safety checks for destructive scripts |
@@ -41,6 +42,11 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.11.0** - Build once (Caligrafy Quill 2.1.0): new `/caligrafy-quill:new-capability` skill; wiki mirrors of
+  "11. Build Once: Services, Capabilities and MCP" and "Release notes: 2.1.0"; API reference of `Service`,
+  `#[Capability]`, `Capabilities`, `Context`, `Tokens`, `Audit`, `Rest`, `Mcp\Server`/`Http`, `Client` and the new
+  Caligrafer commands; gotchas G50-G57 (the public legacy key, closure routes, service inputs, scopes vs levels,
+  the CSRF header, whole-row session check, MCP, connect on first use); reviewer check 17; SKILL.md workflow rule.
 - **1.10.0** - Caligrafy Quill v2.0.0, the first tagged release: `Caligrafy\Framework::VERSION`, `php caligrafer.php version`
   (works without `vendor/` or `.env`), the version on the first line of `doctor` (`"version"` in `--json`), `CHANGELOG.md`
   and semantic versioning; `composer create-project` without `-s dev`. API reference, SKILL.md and the wiki mirrors updated.

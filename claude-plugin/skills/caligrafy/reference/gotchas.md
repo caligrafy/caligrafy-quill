@@ -158,3 +158,22 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 - `[ERROR 2003]` DB: `DB_ACTIVATE=true`? `DB_HOST` (`mysql` in Docker)? table exists? SQL valid?
 - Blank page / home page instead of your route: route not matched (G4) - check segment count and HTTP method.
 - `403 Forbidden` on a file: it is in a denied folder or has a denied extension (G34) - move public assets to `public/`.
+
+## Build once: services, capabilities, tokens and MCP (Quill 2.1)
+
+**G50. The legacy API key is public.** `views/Client/app.pug` passes `API_KEY` to every client page and the Vite SPA builds `VITE_API_KEY` into its bundle (`framework/librairies/app/src/main.js`), while JSON requests skip the CSRF check (`Request::checkCSRF()`): anyone who opens an app page can read the key and call every JSON controller route, writes included, from anywhere. Every key from `generatekeys`/`generateapikey` encrypts the same `APP_KEY` (`Request::isLegacyApiKey()`), so none can be revoked alone. For browser clients use the session (the generated JS client, G54); for programs and agents use personal access tokens (`php caligrafer.php token create`, `Caligrafy\Tokens`); then set `LEGACY_API_KEY=false` (doctor reports the setting).
+
+**G51. Closure routes are not protected for JSON.** `Route::execute()` checks the API key only for `'Controller@action'` routes, and `Request` skips CSRF for JSON: `Route::post('/x', function () {...})` accepts a JSON post with no key and no token. Put anything sensitive behind a controller route or a capability (`Route::capability()` checks the context itself).
+
+**G52. Services return data; only declared inputs reach them.** A `Caligrafy\Service` must not call `view()`, `api()`, `redirect()`, `echo` or read `$_SESSION`/the request: the channel renders (`Controller::call()`, `Rest`, `Mcp\Server`) and `$context` says who calls. `validate()` keeps only the keys of `$rules` (`array_intersect_key`): an input without a rule must still be listed, with `''`, or it is dropped silently. `handle()` receives the filtered values (GUMP `run()`), so read `$input`, never the raw request.
+
+**G53. Scopes and levels.** `Context::allows($scope, $level)`: the CLI and the legacy key always pass; a signed-in user needs `permissions >= level` (no scopes); a token needs the scope (`books:write`, `books:*`, `*`), and when it has an owner (`token create --user <id>`) the owner needs the level too. An application token (no `--user`) is limited by its scopes only: give destructive scopes to application tokens with care. A capability with `scope: ''` is callable by any token; `public: true` by anyone.
+
+**G54. Session calls that write need `X-CSRF-Token`.** `Rest::respond()` refuses (403, "Missing or invalid CSRF token") a call that is authenticated by the session cookie, is not read-only and lacks the CSRF token in `X-CSRF-Token` (or `_token`). `GET {prefix}` of `Route::capabilities()` returns it in `csrf`. Calls with `Authorization: Bearer` (token or legacy key) need none: a cross-site form cannot set that header, and `Request::checkCSRF()` skips the form check when a bearer is present.
+
+**G55. `Auth::authorized()` compares the whole user row.** The session stores an encrypted copy of the user; `authorized()` reloads the row and compares every column (`$user == $sessionAuthUser`). Any change to the row signs the user out, including `modified_at` (`ON UPDATE now()` in the Auth `create_db.sql`) after an admin changes `permissions`. Sign in again after updating your own row, or update rows of other users only.
+
+**G56. MCP.** `Route::mcp('/mcp')` (`Caligrafy\Mcp\Http`): POST only (GET/DELETE 405), one JSON-RPC message per request (no batches), JSON answers (no SSE), personal access tokens only (the legacy key gets 401), a foreign browser `Origin` gets 403 unless listed in `MCP_ALLOWED_ORIGINS`. Tools = `Capabilities::available($context)`; a tool the token cannot see answers like an unknown one (-32602). Refusals are tool results with `isError: true` and the `ServiceError` JSON in the text. `php caligrafer.php mcp` (stdio) without `CALIGRAFY_TOKEN`/`--token` has full access (`Context::local()`). The capability `description` is the tool description: write it for an agent; mark deletes `destructive: true`.
+
+**G57. `Database::execute()` connects on first use.** Before 2.1 only `Controller`'s constructor connected, so a closure route that used a model threw `[ERROR 2003]`. Now `execute()` calls `Database::connect()` when there is no connection yet (and `DB_ACTIVATE=true`).
+

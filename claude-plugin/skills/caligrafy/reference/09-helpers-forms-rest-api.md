@@ -186,6 +186,9 @@ form(action="/books", method="POST")
 ```
 
 ## REST API
+
+> **New in 2.1:** for a new API, write a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP) and route it with `Route::capability()`: the same code then serves your pages, your Vue apps and AI agents, with field-level errors, scoped [personal access tokens](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#tokens) and an audit log. The controller API below keeps working.
+
 A REST API or more appropriately, a RESTful API uses the fundamentals of a REST (Representational State Transfer) communication protocol to break down a `transaction` received through HTTP and translate them into small modules that your application can make sense of and act on.
 
 RESTful APIs take advantage of HTTP methodologies. They use `GET` to retrieve data. They use `POST` to create a resource. They use `DELETE` to delete a resource. They use `PUT` to update a resource.

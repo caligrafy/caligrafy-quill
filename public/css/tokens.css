@@ -1,0 +1,43 @@
+/* Design tokens of the Caligrafy look: the same values as public/css/tokens.json (--cq-<group>-<name>).
+ * Shared by Pug views, the Vue apps and the Vite SPA, so every experience of an application looks the same. */
+:root {
+  --cq-color-ink: #000000;
+  --cq-color-paper: #ffffff;
+  --cq-color-page: #f6f9fc;
+  --cq-color-text: #333333;
+  --cq-color-text-muted: #535150;
+  --cq-color-text-faint: #d1d1d1;
+  --cq-color-border: #d9d9d9;
+  --cq-color-accent-red: #990000;
+  --cq-color-accent-slate: #88959e;
+  --cq-color-accent-light: #fafafa;
+  --cq-color-accent-dark: #414141;
+  --cq-color-accent-yellow: #eed461;
+  --cq-color-accent-blue: #0551a3;
+  --cq-color-accent-sky: #7ac2fb;
+  --cq-font-size: 14px;
+  --cq-font-line-height: 1.42857;
+  --cq-space-gutter: 30px;
+  --cq-space-1: 4px;
+  --cq-space-2: 8px;
+  --cq-space-3: 16px;
+  --cq-space-4: 24px;
+  --cq-space-5: 48px;
+  --cq-radius-control: 4px;
+  --cq-breakpoint-phone: 0px;
+  --cq-breakpoint-tablet: 768px;
+  --cq-breakpoint-desktop: 992px;
+  --cq-breakpoint-wide: 1200px;
+  --cq-touch-target: 44px;
+}
+
+/* Experiences: touch-first on tablets and phones, safe areas when installed to the home screen */
+@media (pointer: coarse) {
+  .btn, .form-control, .form-select, .nav-link, .page-link { min-height: var(--cq-touch-target); }
+}
+@media (display-mode: standalone) {
+  body { padding: env(safe-area-inset-top) env(safe-area-inset-right) env(safe-area-inset-bottom) env(safe-area-inset-left); }
+}
+/* .cq-split: one column on phones, list and detail side by side from tablets up */
+.cq-split { display: grid; gap: var(--cq-space-4); grid-template-columns: 1fr; }
+@media (min-width: 768px) { .cq-split { grid-template-columns: minmax(240px, 1fr) 2fr; } }

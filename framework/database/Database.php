@@ -73,6 +73,10 @@ class Database extends \stdClass {
     public static function execute($query, $args =array()) 
     {
             if (!self::$connection) {
+                // routes that are not controllers (closures, Route::capability, Route::mcp) connect on first use
+                self::connect();
+            }
+            if (!self::$connection) {
                 throw new Exception(Errors::get('2003'), 2003);
             }
             $stmt = self::$connection->prepare($query);
