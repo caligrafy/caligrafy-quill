@@ -41,6 +41,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.10.0** - Caligrafy Quill v2.0.0, the first tagged release: `Caligrafy\Framework::VERSION`, `php caligrafer.php version`
+  (works without `vendor/` or `.env`), the version on the first line of `doctor` (`"version"` in `--json`), `CHANGELOG.md`
+  and semantic versioning; `composer create-project` without `-s dev`. API reference, SKILL.md and the wiki mirrors updated.
 - **1.9.3** - Face login: the `blink` liveness challenge is removed (unreliable on real cameras; `liveness()` refuses it);
   the server picks 2 of `turn-left`, `turn-right`, `smile` in a random order (`FaceLogin::$count` 2) and `liveness()`
   passes only with the 3 prints `FaceLogin::verify()` needs. New face login UI in the recipe and the QA fixture, in the

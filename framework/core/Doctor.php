@@ -8,6 +8,8 @@
 
 namespace Caligrafy;
 
+require_once __DIR__ . '/Framework.php'; // Framework::VERSION on the first line of the report
+
 /**
  * Class Doctor
  * Every check is read-only: it lists, reads or connects, it never creates, charges or sends anything
@@ -63,9 +65,9 @@ class Doctor
         }
         $counts = array_count_values(array_column($this->results, 'status')) + ['OK' => 0, 'WARN' => 0, 'FAIL' => 0, 'SKIP' => 0];
         if ($json) {
-            print(json_encode(['results' => $this->results, 'summary' => $counts], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+            print(json_encode(['version' => Framework::VERSION, 'results' => $this->results, 'summary' => $counts], JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
         } else {
-            print("\nCaligrafy doctor (read-only)\n");
+            print("\nCaligrafy doctor (read-only): Caligrafy Quill " . Framework::VERSION . "\n");
             $section = null;
             foreach ($this->results as $r) {
                 if ($r['check'] !== $section) {

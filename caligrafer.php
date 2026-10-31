@@ -13,6 +13,13 @@ use Caligrafy\Caligrafer;
 
 error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED);
 
+// version: read-only, needs neither .env nor vendor/
+if (in_array(strtolower($argv[1] ?? ''), ['version', '--version', '-v'])) {
+	require_once 'framework/core/Framework.php';
+	print("Caligrafy Quill " . Caligrafy\Framework::VERSION . "\n");
+	exit;
+}
+
 require_once "framework/core/Caligrafer.php";
 
 // load external vendors
@@ -39,6 +46,7 @@ $restricted = ['app', 'bot', '__bots__', 'css', 'facedetect', 'fonts', 'images',
 Caligrafer::run();
 
 $defaultMsg = "\n Available Functions: 
+				\n - version: prints the version of Caligrafy Quill
 				\n - initialize: Initializes and signs your project
 				\n - upgrade [--apply] [--force <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env

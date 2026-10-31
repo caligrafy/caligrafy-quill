@@ -37,8 +37,9 @@ Run the QA suite before opening a pull request that touches `framework/`, `calig
 1. After changing a template of `framework/settings/application`, run `php qa/build-template-history.php` and commit `framework/settings/template-history.json` (`php caligrafer.php upgrade` uses it to recognize untouched files).
 2. Update the [wiki](https://github.com/caligrafy/caligrafy-quill/wiki) pages that the change affects, and the [release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026) when developers need to know about it.
 3. Refresh the wiki mirrors of the Claude plugin: `python3 claude-plugin/scripts/sync-wiki.py <wiki clone>` (a new wiki page also needs a line in its `PAGES` table). Update `claude-plugin/skills/caligrafy/reference/api-reference.md` and `gotchas.md` when `framework/` changes.
-4. Bump `version` in `claude-plugin/.claude-plugin/plugin.json`, add a line to the changelog of `claude-plugin/README.md` and run `claude plugin validate ./claude-plugin --strict`.
+4. For a framework release, set `Caligrafy\Framework::VERSION` (`framework/core/Framework.php`, [semantic versioning](https://semver.org)) and add its section at the top of `CHANGELOG.md`: the QA suite checks that they agree. Bump `version` in `claude-plugin/.claude-plugin/plugin.json`, add a line to the changelog of `claude-plugin/README.md` and run `claude plugin validate ./claude-plugin --strict`.
 5. Run `QA_WIKI=<wiki clone> ./qa/run.sh` and open the pull request.
+6. After the merge, tag the release on `master` and push the tag: `git tag -a v<version> -m "Caligrafy Quill <version>"`, then `git push origin v<version>`. Packagist picks up the tag; create the GitHub Release from it with the changelog section as its notes.
 
 The details are in the [release process](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy#release).
 

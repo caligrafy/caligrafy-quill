@@ -14,6 +14,20 @@ ko()  { FAIL=$((FAIL + 1)); echo "  FAIL $1"; [ -n "${2:-}" ] && echo "$2" | sed
 BAD=$(find framework caligrafer.php index.php -name '*.php' -not -path '*/node_modules/*' -exec php -l {} \; 2>&1 | grep -v '^No syntax errors')
 [ -z "$BAD" ] && ok "php -l on framework/, caligrafer.php and index.php" || ko "php -l" "$BAD"
 
+# --- caligrafer version: read-only, works before composer install and initialize ---------------
+mkdir -p "$TMP/version" && cd "$TMP/version"
+cp -r "$ROOT/framework" "$ROOT/caligrafer.php" .
+OUT=$(php caligrafer.php version 2>&1)
+WANT=$(sed -n "s/.*const VERSION = '\(.*\)';.*/\1/p" framework/core/Framework.php)
+TAG=$(git -C "$ROOT" describe --tags --exact-match 2>/dev/null)
+if [ -n "$WANT" ] && [ "$OUT" = "Caligrafy Quill $WANT" ] && [ ! -e .env ] && grep -q "^## \[$WANT\]" "$ROOT/CHANGELOG.md" \
+    && { [ -z "$TAG" ] || [ "$TAG" = "v$WANT" ]; }; then
+    ok "caligrafer version prints $WANT without vendor/ or .env (CHANGELOG.md and the git tag agree)"
+else
+    ko "caligrafer version" "output: $OUT; Framework::VERSION: $WANT; tag: ${TAG:-none}; .env created: $([ -e .env ] && echo yes || echo no)"
+fi
+cd "$ROOT"
+
 # --- caligrafer initialize is idempotent for the keys ---------------------------------------
 mkdir -p "$TMP/init" && cd "$TMP/init"
 cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads
