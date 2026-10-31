@@ -6,6 +6,16 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.1.3] - 2026-10-31
+
+### Added
+- Page components in `public/css/tokens.css`: the look of the sign-in and face login screens for every new page
+  (`.cq-page`, `.cq-card`, `.cq-card-head`, `.cq-form`, `.cq-fields`, `.cq-submit`, `.cq-error`, `.cq-tabs`,
+  `.cq-count`, `.cq-list`, `.cq-item`, `.cq-actions`, `.cq-empty`, `.cq-foot`...), linked by the default layout, the
+  Vue app template and the SPA template.
+- Claude Code plugin 1.12.0: UI guidelines that every scaffolding skill, the reviewer and `AGENTS.md` follow, so new
+  pages are built with the page components and checked at desktop and phone width; gotchas G59 and G60.
+
 ## [2.1.2] - 2026-10-31
 
 ### Changed
@@ -85,6 +95,7 @@ every change, what can break and the upgrade checklist for existing projects.
 - `.env` and the server files are no longer served, uploads are limited to an allow-list of extensions, and
   scripts never run from `public/uploads`.
 
+[2.1.3]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.3
 [2.1.2]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.2
 [2.1.1]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.1
 [2.1.0]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.0

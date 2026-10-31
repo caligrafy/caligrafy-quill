@@ -203,4 +203,62 @@ Experiences differ in layout (a dense page on a desktop, touch-first on a tablet
 ```
 Use the tokens in your own styles (`color: var(--cq-color-text)`) so that every experience of the application stays the same. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#experiences).
 
+## Page components: every page looks the same
+
+Since 2.1.3, `public/css/tokens.css` also holds the **page components**: the look of the sign-in and face login screens, ready for every new page. A page is one centered white card under the header, made of stacked parts:
+
+```pug
+extends ../default/master/layoutblocks
+
+block content
+    main.cq-page
+        .cq-card
+            .cq-card-head
+                h2.cq-title Tasks
+                p.cq-note Everything that has to be done.
+
+            form#new-task.cq-form(novalidate)
+                .cq-fields.cq-fields--2
+                    div
+                        label(for='task-title') * Task
+                        input#task-title.form-control(type='text', name='title', placeholder='What has to be done?')
+                    div
+                        label(for='task-notes') Notes
+                        input#task-notes.form-control(type='text', name='notes', placeholder='Optional')
+                button.btn.btn-primary.cq-submit(type='submit') Add task
+
+            p#error.cq-error(role='alert')
+
+            .cq-tabs(role='tablist')
+                button.active(type='button', role='tab', aria-selected='true') All
+                    span.cq-count 2
+                button(type='button', role='tab', aria-selected='false') Open
+                    span.cq-count 1
+
+            ul.cq-list
+                li.cq-item
+                    input.form-check-input.cq-check(type='checkbox')
+                    .cq-item-body
+                        p.cq-item-title Buy milk
+                        p.cq-item-meta 2 liters
+                    .cq-actions
+                        button.btn.btn-secondary(type='button') Edit
+                        button.btn.btn-outline-dark(type='button') Delete
+            p.cq-empty(hidden) No tasks yet: add the first one above.
+
+            .cq-foot Updates every few seconds
+```
+
+| Part | Classes |
+| --- | --- |
+| Page and card | `main.cq-page` (starts below the fixed header, centers) > `.cq-card` (640px; `.cq-page--wide` for 960px) |
+| Header | `.cq-card-head > h2.cq-title + p.cq-note` |
+| Form | `form.cq-form > .cq-fields` (`--2`, `--3` columns from 576px up) `> div > label + .form-control`, `button.btn.btn-primary.cq-submit` |
+| Messages | `p.cq-error` for errors, `p.cq-empty` for empty lists, `.cq-foot` for a footer line |
+| Tabs | `.cq-tabs > button` (`.active`) with `span.cq-count` |
+| List | `ul.cq-list > li.cq-item` (`.is-done` greys it) with `.cq-check`, `.cq-item-body` (`.cq-item-title`, `.cq-item-meta`), `.cq-actions` |
+| Anything else | `.cq-section` (same padding as the card), `.cq-split` (list and detail side by side from tablets up) |
+
+The same classes work in Vue apps and the single page application (`tokens.css` is linked there too). Keep to black and white (`btn-primary` is black, `btn-secondary` white): no Bootstrap color classes. The [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) builds every new page with these components.
+
 >[Next Section: Learn about Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)

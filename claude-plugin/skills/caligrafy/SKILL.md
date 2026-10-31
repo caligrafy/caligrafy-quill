@@ -16,7 +16,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Topic | Read |
 | - | - |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G58) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G60) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -44,6 +44,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | OpenAI chat/images, Assistants, open source agents (Groq, Together, Fireworks, OpenRouter, Ollama) | [09.9.4](reference/09.9.4-ai-openai-chatgpt-dalle.md), [09.9.5](reference/09.9.5-ai-openai-assistants.md), [09.9.6](reference/09.9.6-ai-open-source-agents-groq.md) |
 | Recipe: OpenAI/open model chat app (history, live model list, images, vision, Llama on OpenRouter/Ollama, Vue chat UI) | [recipes-ai-apps.md](reference/recipes-ai-apps.md) |
 | Recipe: face login (liveness challenges, single-use nonce, anti-replay, encrypted prints, lockout, passkeys / WebAuthn step-up) | [recipes-face-login.md](reference/recipes-face-login.md) |
+| **Any new page or client app UI**: the page components (`.cq-page`, `.cq-card`, `.cq-form`, `.cq-tabs`, `.cq-list`...), a worked example, the checklist | [ui-guidelines.md](reference/ui-guidelines.md) |
 | Wiki table of contents | [wiki-sidebar.md](reference/wiki-sidebar.md) |
 
 Online docs: https://github.com/caligrafy/caligrafy-quill/wiki
@@ -178,8 +179,9 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 5. After editing PHP, `php -l <file>`; after changing routes, hit them with curl (JSON + Bearer) or the browser. When you change `framework/` or `framework/settings/application`, run `./qa/run.sh` (G38) and add a test for the change.
 6. In a project initialized with an older framework, run `php caligrafer.php upgrade` (dry run, safe) to see which `application/` copies are outdated or customized before assuming the current behavior; apply with `--apply` only when the user agrees (G39).
 7. A feature that more than one channel needs (pages and a Vue app, an API, an AI agent) is a capability: a `Service` in `application/services/` with `#[Capability]`, called by `$this->call()`, `Route::capability()`, the JS client and MCP (`/caligrafy-quill:new-capability`). Never put an API key or a token in a page or a bundle (G50): browser clients use the session through the generated client.
-8. To know which framework version a project runs, use `php caligrafer.php version` (or `Caligrafy\Framework::VERSION`; releases are git tags `v<version>`, changes in `CHANGELOG.md`). Releases start at v2.0.0; a project with no `version` command predates it.
-9. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the Agent provider (Ollama reachable, models pulled), the database and the services, with a fix per line.
-10. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
-11. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
-12. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.
+8. Every page or client app UI you create follows [ui-guidelines.md](reference/ui-guidelines.md): `main.cq-page > .cq-card` with the page components, labeled fields, black primary button, no Bootstrap colors, no page `style` block. Open it in a browser at desktop and phone width before calling it done.
+9. To know which framework version a project runs, use `php caligrafer.php version` (or `Caligrafy\Framework::VERSION`; releases are git tags `v<version>`, changes in `CHANGELOG.md`). Releases start at v2.0.0; a project with no `version` command predates it.
+10. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the Agent provider (Ollama reachable, models pulled), the database and the services, with a fix per line.
+11. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
+12. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
+13. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.

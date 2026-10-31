@@ -41,3 +41,53 @@
 /* .cq-split: one column on phones, list and detail side by side from tablets up */
 .cq-split { display: grid; gap: var(--cq-space-4); grid-template-columns: 1fr; }
 @media (min-width: 768px) { .cq-split { grid-template-columns: minmax(240px, 1fr) 2fr; } }
+
+/* ---------------------------------------------------------------------------------------------------------------
+ * Page components: the Caligrafy look of the sign-in and face login screens, for every new page.
+ * A page = .cq-page > .cq-card, made of stacked parts:
+ *   .cq-card-head (h2.cq-title + p.cq-note)  .cq-form (.cq-fields > label + .form-control, .btn.btn-primary.cq-submit)
+ *   p.cq-error  .cq-tabs (button.active + span.cq-count)  ul.cq-list > li.cq-item (.cq-check, .cq-item-body, .cq-actions)
+ *   p.cq-empty  .cq-section (any other content)  .cq-foot
+ * The page starts below the fixed Caligrafy header. Black and white only; .is-done greys an item out.
+ * --------------------------------------------------------------------------------------------------------------- */
+.cq-page { display: flex; justify-content: center; align-items: flex-start; min-height: 80vh; padding: 120px 16px 48px; }
+.cq-card { width: 100%; max-width: 640px; margin: 0 auto; overflow: hidden; background: var(--cq-color-paper); color: var(--cq-color-text);
+  border: 1px solid var(--cq-color-border); border-radius: 7px;
+  box-shadow: 0 0 0 .5px rgba(50, 50, 93, .1), 0 2px 5px 0 rgba(50, 50, 93, .1), 0 1px 1.5px 0 rgba(0, 0, 0, .07); }
+.cq-card + .cq-card { margin-top: var(--cq-space-4); }
+.cq-page--wide .cq-card { max-width: 960px; }
+.cq-card-head { padding: 32px 32px 8px; }
+.cq-title { margin: 0 0 6px; font-size: 1.5rem; font-weight: 600; color: var(--cq-color-ink); }
+.cq-note { margin: 0; font-size: .9rem; color: var(--cq-color-text-muted); }
+.cq-note code { padding: 1px 6px; border-radius: 4px; background: #f3f3f3; color: var(--cq-color-text); }
+.cq-section { padding: 16px 32px; }
+.cq-form { padding: 16px 32px 8px; }
+.cq-form label { display: block; margin-bottom: 6px; font-size: .85rem; font-weight: 600; color: var(--cq-color-text); }
+.cq-form .form-control, .cq-form .form-select { padding: 10px 12px; }
+.cq-fields { display: grid; grid-template-columns: 1fr; gap: 16px; margin-bottom: 16px; }
+@media (min-width: 576px) { .cq-fields--2 { grid-template-columns: 3fr 2fr; } .cq-fields--3 { grid-template-columns: repeat(3, 1fr); } }
+html .cq-submit { display: block; width: 100%; max-width: none; }
+.cq-error { min-height: 1.4em; margin: 0 32px; font-size: .9rem; color: var(--cq-color-accent-red); }
+.cq-tabs { display: flex; margin-top: 16px; border-top: 1px solid #e5e5e5; border-bottom: 1px solid #e5e5e5; }
+.cq-tabs button { flex: 1; padding: 14px 8px; border: 0; border-bottom: 3px solid transparent; background: #fafafa; color: #888; font-weight: 600; cursor: pointer; }
+.cq-tabs button.active { background: var(--cq-color-paper); color: var(--cq-color-ink); border-bottom-color: var(--cq-color-ink); }
+.cq-count { display: inline-block; min-width: 22px; margin-left: 6px; padding: 0 6px; border-radius: 11px; background: #eee; color: #555; font-size: .75rem; line-height: 20px; }
+.cq-tabs button.active .cq-count { background: var(--cq-color-ink); color: var(--cq-color-paper); }
+.cq-list { margin: 0; padding: 0; list-style: none; }
+.cq-item { display: flex; align-items: flex-start; gap: 14px; padding: 16px 32px; border-bottom: 1px solid #f0f0f0; }
+.cq-item:last-child { border-bottom: 0; }
+.cq-check.form-check-input { flex: none; width: 1.25em; height: 1.25em; margin: 2px 0 0; border-color: #999; cursor: pointer; }
+.cq-check.form-check-input:checked { background-color: var(--cq-color-ink); border-color: var(--cq-color-ink); }
+.cq-item-body { flex: 1; min-width: 0; }
+.cq-item-title { margin: 0; font-weight: 600; color: var(--cq-color-ink); word-break: break-word; }
+.cq-item-meta { margin: 4px 0 0; font-size: .875rem; color: var(--cq-color-text-muted); word-break: break-word; }
+.cq-item.is-done .cq-item-title { font-weight: 400; color: #999; text-decoration: line-through; }
+.cq-actions { display: flex; flex: none; gap: 6px; }
+.cq-actions .btn { padding: 4px 10px; font-size: .8rem; }
+.cq-inline-edit { display: flex; gap: 8px; }
+.cq-empty { margin: 0; padding: 40px 32px; text-align: center; color: #888; }
+.cq-foot { padding: 12px 32px; border-top: 1px solid #e5e5e5; background: #fafafa; font-size: .8rem; text-align: center; color: #888; }
+@media (max-width: 575px) {
+  .cq-card-head, .cq-section, .cq-form, .cq-item, .cq-foot { padding-left: 20px; padding-right: 20px; }
+  .cq-error { margin: 0 20px; }
+}

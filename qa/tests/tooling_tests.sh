@@ -35,6 +35,14 @@ foreach ($t as $g => $vals) { if (!is_array($vals)) continue; foreach ($vals as 
 echo implode(", ", $bad);')
 [ -z "$OUT" ] && ok "public/css/tokens.css matches tokens.json" || ko "design tokens disagree" "$OUT"
 
+# --- page components: every .cq- class the UI guidelines teach exists in public/css/tokens.css -----------------
+OUT=$(php -r '
+preg_match_all("/\\.(cq-[a-z0-9-]+)/", file_get_contents("claude-plugin/skills/caligrafy/reference/ui-guidelines.md"), $m);
+$css = file_get_contents("public/css/tokens.css"); $bad = [];
+foreach (array_unique($m[1]) as $c) { if (!preg_match("/\\." . preg_quote($c, "/") . "(?![a-z0-9-])/", $css)) $bad[] = $c; }
+echo implode(", ", $bad);')
+[ -z "$OUT" ] && ok "every page component of ui-guidelines.md is defined in public/css/tokens.css" || ko "page components missing from tokens.css" "$OUT"
+
 # --- a framework copied over 2.1.0/2.1.1 keeps old copies of the files that moved to framework/interfaces --------
 mkdir -p "$TMP/moved" && cd "$TMP/moved"
 cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads

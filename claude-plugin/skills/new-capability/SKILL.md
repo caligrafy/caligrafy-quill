@@ -40,6 +40,9 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
      (Vite SPA) or `public/js/capabilities.js`; use `createBook(...)` and `CapabilityError` in the Vue code.
    - MCP: `Route::mcp('/mcp');`
    - Pug page: `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`
+   - Any page you build for it (Pug, or a page calling the JS client) uses the page components and the worked example of
+     [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md): `main.cq-page > .cq-card`, labeled `.cq-form`, field errors
+     in `.cq-error`, `.cq-list` rows with `.cq-actions`, an empty state. Check it at desktop and phone width.
 4. **A token for agents** (only when MCP or a program needs it): `php caligrafer.php token create "<what it is for>" --scopes <scopes>`
    (add `--user <id>` so the user's level applies, `--expires <days>`). Show the token once and tell the user to
    store it as a secret; never write it into a file of the project. Connect Claude Code:

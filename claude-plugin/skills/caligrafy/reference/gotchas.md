@@ -178,3 +178,8 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 **G57. `Database::execute()` connects on first use.** Before 2.1 only `Controller`'s constructor connected, so a closure route that used a model threw `[ERROR 2003]`. Now `execute()` calls `Database::connect()` when there is no connection yet (and `DB_ACTIVATE=true`).
 
 **G58. The channel classes moved to `framework/interfaces/` (2.1.2).** `Rest.php`, `Client.php` and `Mcp/{Server,Http}.php` left `framework/core/`; class names and namespaces are unchanged (`Caligrafy\Rest`, `Caligrafy\Mcp\Server`). A framework copied over 2.1.0/2.1.1 keeps the old copies: `Framework`/`Caligrafer` skip them (`FRAMEWORK_MOVED_FILES` in `initialize.php`), so no class is declared twice, and `doctor` warns `Framework files: old copies ...` with the `rm` command. `git pull` removes them by itself.
+
+**G59. The Caligrafy header is fixed: content starts under it.** `header` is `position: fixed` (`public/css/styles.css`, about 80px tall) and `block content` of `layoutblocks.pug` starts at the top of the page, so a page that begins with a heading or `.spacer-2` hides its title under the header. Wrap pages in `main.cq-page` (120px top padding, `tokens.css`), or `.content-section` + `.spacer-4` as the sign-in view does. See [ui-guidelines.md](ui-guidelines.md).
+
+**G60. The theme overrides some Bootstrap utilities on cards and buttons.** `styles.css` caps `.card` at 600px, adds 40px padding and centers it vertically (`align-self: center`), and the theme sizes `.btn`, so `w-100` on a button and wide `.card`s do not do what Bootstrap says. Use the page components instead: `.cq-card` (640px, `.cq-page--wide` 960px, no padding of its own) and `btn btn-primary cq-submit` (full width).
+

@@ -159,7 +159,7 @@ Insert inside the `try` block, after the existing `/` route and before `Route::r
 Make sure `Auth::activateAPI();` is present if the resource is consumed as JSON.
 
 ### 5. Views (only if the user wants HTML pages)
-`application/views/Book/index.pug` and `read.pug`, `extends ../default/master/layoutblocks`, `block content`, PHP variables (`each $book in $books`, `#{$book->title}`), forms with `=csrf()` and `=methodField('PUT')` (see the `caligrafy` skill). Without views, `view('Book/index', ...)` still works for JSON clients but browsers get a Phug error - use `api()` for JSON-only resources.
+`application/views/Book/index.pug` and `read.pug`, built with the page components of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (`main.cq-page > .cq-card`: `.cq-card-head`, `.cq-form` with labeled fields and `btn btn-primary cq-submit`, `.cq-list > .cq-item` rows with `.cq-actions`, `.cq-empty`; follow its checklist), `extends ../default/master/layoutblocks`, `block content`, PHP variables (`each $book in $books`, `#{$book->title}`), forms with `=csrf()` and `=methodField('PUT')` (see the `caligrafy` skill). Without views, `view('Book/index', ...)` still works for JSON clients but browsers get a Phug error - use `api()` for JSON-only resources.
 
 ## Finish
 1. `php -l` every new PHP file (the plugin hook also does it on save).

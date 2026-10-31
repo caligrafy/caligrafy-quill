@@ -233,7 +233,7 @@ Each row says when, who (`user`, `token`, `key`, `cli` or `guest` and its id), t
 + safe-area padding when the app is installed to the home screen,
 + `.cq-split`: one column on phones, a list and its detail side by side from tablets up.
 
-Combine it with [install to home screen](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#install) for a mobile app that uses the same capabilities as the web.
+Build each screen from the [page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents) (`main.cq-page > .cq-card`, `.cq-form`, `.cq-tabs`, `.cq-list`), the same on every experience. Combine it with [install to home screen](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#install) for a mobile app that uses the same capabilities as the web.
 
 ## Testing a capability
 
