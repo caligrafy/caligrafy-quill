@@ -183,3 +183,13 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G60. The theme overrides some Bootstrap utilities on cards and buttons.** `styles.css` caps `.card` at 600px, adds 40px padding and centers it vertically (`align-self: center`), and the theme sizes `.btn`, so `w-100` on a button and wide `.card`s do not do what Bootstrap says. Use the page components instead: `.cq-card` (640px, `.cq-page--wide` 960px, no padding of its own) and `btn btn-primary cq-submit` (full width).
 
+
+**G61. Two `.cq-card` in one page sit side by side.** In 2.2.0 `.cq-page` is `display: flex` in a row, so a second `.cq-card` lands beside the first on wide screens (the `.cq-card + .cq-card` margin does not stack them). Build one card per page and put more content in `.cq-section` parts of that card. Proof: `public/css/tokens.css` (`.cq-page`).
+
+**G62. `caligrafer create` in Docker does not install the SPA packages.** The `dev-box` image has no Node.js: `docker compose exec dev-box php caligrafer.php create <name>` copies the template, prints `sh: 1: npm: not found`, then "VueJS project successfully created and all packages have been installed" anyway. Run `cd public/<name> && npm install` on the computer (Node 20.19+ or 22.12+).
+
+**G63. A Vite SPA page keeps showing the previous item when only the route parameter changes.** Vue Router reuses the component from `#/books/1` to `#/books/3`, so `mounted()` does not run again. Use `<router-view :key="$route.fullPath">` in `App.vue` (or watch the parameter). Prefer `createWebHashHistory()`: the built app in `public/<name>/dist/` is not at the site root, and hash addresses survive a reload there.
+
+**G64. `$this->request->fetch('field')` reads route variables, not posted fields.** In a controller, a form's fields come from `$this->request->parameters()` (GET: the query string; POST/PUT/DELETE: the form or the JSON body). `fetch()` returns `''` for a posted field, so validation reports it as missing. `$this->call('<capability>')` merges both for you. Proof: `Request.php` (`fetch()`, `parameters()`).
+
+**G65. The audit time and the `created_at` of rows can differ by hours.** The audit is written with PHP's clock (`SERVER_TIMEZONE` in `.env`, America/New_York by default) while `DEFAULT CURRENT_TIMESTAMP` columns use MySQL's (UTC in the Docker `mysql` container). Not a bug in the data; compare like with like, or set the same zone on both.

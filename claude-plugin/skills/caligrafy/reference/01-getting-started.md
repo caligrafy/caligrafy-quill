@@ -235,9 +235,9 @@ class MyModel extends Model {
 
 If you would like to build your own server, you will need to go through the following setup items:
 
-1. [Prepare your machine terminal](https://github.com/caligrafy/caligrafy-course/wiki/Lecture-1.2:-Command-Line,-Git)
+1. Prepare your terminal and Git: [lesson 00 of the Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course/wiki/00-Introduction-and-Tools) installs and checks them (macOS, Linux, Windows with WSL)
 
-2. [Prepare your development environment](https://github.com/caligrafy/caligrafy-course/wiki/Lecture-1.3:-Environment-Setup,-Github)
+2. Prepare your development environment: a local Apache, MySQL and PHP 8.3+ (MAMP, LAMP, XAMPP or your own install) with the extensions listed under Requirements at the top of this page
 
 3. Download a code editor (for example [Visual Studio Code](https://code.visualstudio.com/) or [Sublime Text](https://www.sublimetext.com/))
 

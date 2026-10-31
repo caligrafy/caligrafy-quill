@@ -44,6 +44,12 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.13.1** - What building the Caligrafy course on 2.2.0 uncovered: one card per page (`ui-guidelines.md`, G61); the
+  `new-app` skill now builds Vue apps and the Vite SPA on the generated JS client instead of the template's axios +
+  shared key (refused once `LEGACY_API_KEY=false`), with the SPA's dev proxy for `/capabilities`, hash history and
+  `<router-view :key="$route.fullPath">` (G63), and says that `caligrafer create` in Docker does not install the
+  packages (G62); `fetch()` versus `parameters()` in controllers (G64) and audit versus MySQL times (G65); the skill
+  map points to the Caligrafy course; wiki mirrors of Views, SPA routing and Getting Started.
 - **1.13.0** - Caligrafy Quill 2.2.0: `.bin/caligrafer quickstart` (one command from a fresh project to a working
   build-once application, optional Tasks example) and `php caligrafer.php sql` in the API reference, the `caligrafy`
   skill, the `server` skill and `new-capability`; wiki mirrors of the new Start here pages (Quickstart, How

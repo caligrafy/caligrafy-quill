@@ -7,14 +7,14 @@ argument-hint: "<app|create|bot|facedetect|ml> <name>"
 
 # Scaffold a Caligrafy client app
 
-Arguments: `$ARGUMENTS` = `<type> <name>`. Types: `app` (Vue 3 as a library, default), `create` (Vite 8 SPA with Vue Router 5 + Pinia, needs Node 20.19+/22.12+ and runs `npm install`), `bot`, `facedetect`, `ml`.
+Arguments: `$ARGUMENTS` = `<type> <name>`. Types: `app` (Vue 3 as a library, default), `create` (Vite 8 SPA with Vue Router 5 + Pinia, needs Node 20.19+/22.12+ on the computer: the Docker `dev-box` has no Node, so `caligrafer create` run there prints `sh: 1: npm: not found` and then a false "successfully created and all packages have been installed" line; run `cd public/<name> && npm install` on the computer), `bot`, `facedetect`, `ml`.
 
 Read first: [09.7.2-vue-routes.md](../caligrafy/reference/09.7.2-vue-routes.md), [gotchas.md](../caligrafy/reference/gotchas.md) G1, G15, G16, G22, G27, G35, G36, G40-G43, and the page for the type
 (09.7.x for `app`, 09.8.x for `create`, 09.9.1 bot, 09.9.2 facedetect, 09.9.3 ml).
 
 ## Steps
 1. **Check the name.** Lowercase, letters/digits/`-`/`_`. Not reserved: `app, bot, __bots__, css, facedetect, fonts, images, js, ml, resources, uploads`. `public/<name>` must not exist.
-2. **Check the project.** `vendor/` and `application/` exist (else the project needs `composer install` + `php caligrafer.php initialize` - initialize deletes `.git`, ask first). `.env` contains `API_KEY` (client pages read it, G27).
+2. **Check the project.** `vendor/` and `application/` exist (else the project needs `composer install` + `php caligrafer.php initialize` - initialize deletes `.git`, ask first). `Route::capabilities('/capabilities');` is in web.php (quickstart adds it): apps call capabilities through the generated JS client. `.env` `API_KEY` only matters for the legacy axios + key pattern (G27).
 3. **Scaffold** from the project root:
    ```bash
    php caligrafer.php <type> <name>        # or: .bin/caligrafer <type> <name>
@@ -27,23 +27,33 @@ Read first: [09.7.2-vue-routes.md](../caligrafy/reference/09.7.2-vue-routes.md),
      Route::get('/<name>', function() { return view('Client/app', array('appName' => '<name>', 'app' => 'index')); });
      ```
      or a controller action returning `view('Client/app', ['appName' => '<name>', 'app' => 'index', ...data for env])` when the page needs server data or `authorized()` checks.
-   - `create` (Vite SPA) is served by its own dev server (`npm run dev`) and built to `public/<name>/dist`; it talks to Caligrafy only through data routes.
-5. **Data routes** for anything the app reads/writes: `'Controller@action'` routes returning `api(...)` (scaffold with `/caligrafy-quill:new-resource`). Keep `Auth::activateAPI();` in web.php.
-6. **Client code** in `public/<name>/scripts/main.js`:
+   - `create` (Vite SPA) is served by its own dev server (`npm run dev`, http://localhost:5173) and built to `public/<name>/dist` (served at `<base>/public/<name>/dist/index.html`). It talks to Caligrafy through the JS client generated into `src/capabilities.js`. In `vite.config.js` set `base: './'` and `server.proxy: { '/capabilities': 'http://localhost:8080' }` (the session cookie of localhost is shared across ports, so a user signed in on :8080 is signed in on :5173). In `src/router/index.js` use `createWebHashHistory()` (works in dev and in `dist/` from any folder) and in `App.vue` `<router-view :key="$route.fullPath">` (otherwise `#/books/1` -> `#/books/3` reuses the page and keeps showing book 1). The template's `HomePage.vue` can be deleted once the router no longer imports it.
+5. **Data** for anything the app reads/writes: prefer **capabilities** (`/caligrafy-quill:new-capability`), then generate the client: `php caligrafer.php client public/js/capabilities.js` (Vue as a library, shared with Pug pages) or `php caligrafer.php client public/<name>/src/capabilities.js` (Vite SPA); run it again after every capability change. The client uses the session and the CSRF token: no key in the page. Classic `'Controller@action'` routes returning `api(...)` (`/caligrafy-quill:new-resource`) only for legacy apps; they need `Auth::activateAPI();` and a token with the scope `*`.
+6. **Client code** in `public/<name>/scripts/main.js`. The `app` template still ships an axios + `apiKey` example: replace it, because the shared key is refused once `LEGACY_API_KEY=false` and must never be in a page. Load the generated client with a dynamic import (the template loads classic scripts):
    ```js
    const app = Vue.createApp({
-     data() {
-       return {
-         env: env,
-         config: { headers: { 'Authorization': 'Bearer ' + apiKey, 'Accept': 'application/json', 'Content-Type': 'application/json' } }
-       };
+     data () {
+       return { items: [], error: '' }
+     },
+     async mounted () {
+       this.api = await import(env.home + 'public/js/capabilities.js')   // one function per capability
+       this.items = await this.api.listBooks()
      },
      methods: {
-       load() { return axios.get(this.env.home + '<name>/items', this.config); }
+       async add (input) {
+         this.error = ''
+         try {
+           await this.api.createBook(input)
+           this.items = await this.api.listBooks()
+         } catch (e) {
+           this.error = e.name === 'CapabilityError' ? Object.values(e.fields).join(' ') || e.message : 'Something went wrong.'
+         }
+       }
      }
-   });
-   app.mount('#app');
+   })
+   app.mount('#app')
    ```
+   In the template's `index.php`, drop `axios` if unused and keep `app.js` + `loadEnvironment()` (they define `env.home`). To show only what the visitor may do, ask `await this.api.capabilities()` (the capabilities this caller may call) and hide the rest. In a Vite SPA: `import { listBooks, CapabilityError } from '../../capabilities.js'`.
    - routes: build URLs from `env.home` (includes `APP_ROOT`).
    - form posts to non-API routes: `formData.append('_token', this.env.token)`, `formData.append('_method', 'PUT')` for PUT/DELETE.
    - **facedetect**: `const detector = Vue.markRaw(new FaceDetector('detection'));` (G16) and keep the `#detector` section, media element `id="detection"`, `.controls #apps` and `#infobar` placeholders; recognition samples go in `public/<name>/recognition/<Label>/1.png..N.png` (same count per label). To tell the user that the camera is blocked or missing, create the detector with `{ autoStart: false }` and `await detector.startStream()` in a try/catch (`NotAllowedError`, `NotFoundError`; also `detector.streamError`). `await detector.faceprint(media)` gives the 128-number descriptor of the only face. Face login is never a single print: use the server challenge + `await detector.liveness({ challenges })` + `FaceLogin::verify()` (nonce, liveness, prints that differ) and offer a passkey (`Caligrafy\Passkey`, `passkey.js`) as the strong factor; tell the user browser liveness is not proof (G42). Liveness challenges are `turn-left`, `turn-right`, `smile` (the server picks 2 in a random order; there is no `blink`). Full face login (tables, password sign-in or sign-up on the page, enrolment with liveness, anti-replay, lockout, passkey step-up, and the client UI in the Caligrafy look: oval face guide with placement hints, prompts on the video, Sign in / Enrol tabs): [recipes-face-login.md](../caligrafy/reference/recipes-face-login.md) - copy its `index.php`, `css/styles.css` and `scripts/main.js` rather than restyling the facedetect scaffold.
@@ -51,7 +61,7 @@ Read first: [09.7.2-vue-routes.md](../caligrafy/reference/09.7.2-vue-routes.md),
    - **install to home screen** (only if asked): the scaffolds do not link the manifest. In `index.php` add `<link rel="manifest" href="<?php echo session('public').'manifest.webmanifest'; ?>">` + `<meta name="theme-color" content="#ffffff">` to install the whole application, or copy `public/manifest.webmanifest` to `public/<name>/manifest.webmanifest` with `start_url`/`scope`/`id` `"./"`, its own `name` and icons `../images/resources/icon-192x192.png` / `icon-512x512.png`, and link that copy to install the app on its own. Vite SPA: the copy and its icons go in the app's `public/` folder, linked from `index.html`. Never write a service worker for the app: the framework's `public/sw.js` (`PWA_SERVICE_WORKER=true`) already covers every page under the application root and never caches API or POST requests (wiki 7 #install).
    - **AI chat** (OpenAI / Groq in an `app`): follow [recipes-ai-apps.md](../caligrafy/reference/recipes-ai-apps.md) - controller not named `AIController` on projects whose example controllers are still global (G47), history filtered to user/assistant, OpenAI errors in `response['error']`, live model lists, axios timeout >= 120 s for images.
    - **ml**: load p5 and ml5 before `mlcore.js` exactly as the scaffolded `index.php` does.
-   - **create** (Vite): fix `src/common/app.js` to `import axios from 'axios'` and `import.meta.env.VITE_API_KEY` (G22).
-7. **Verify**: `php -l` any PHP you touched, open `<base>/<route>` (Docker: `http://localhost:8080/...`), check the browser console, and call one data route with curl + JSON headers.
+   - **create** (Vite): if the app keeps the legacy axios + key calls, fix `src/common/app.js` to `import axios from 'axios'` and `import.meta.env.VITE_API_KEY` (G22); with the JS client it is not needed.
+7. **Verify**: `php -l` any PHP you touched, open `<base>/<route>` (Docker: `http://localhost:8080/...`), check the browser console, and call one capability with curl (`curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" -d '{}' <base>/capabilities/<name>`; with a token for non-public ones).
 
 Report the files created, the URL to open, and any `.env` keys the type needs (`WATSON_API_KEY` for bot, none for facedetect/ml). For apps that call OpenAI, Groq, Watson, Stripe or Coinbase, have the user run `php caligrafer.php doctor` after entering the keys: it catches malformed keys and models the key cannot use before the app is tested.
