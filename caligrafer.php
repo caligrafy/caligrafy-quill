@@ -51,6 +51,9 @@ $defaultMsg = "\n Available Functions:
 				\n - upgrade [--apply] [--force <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
+				\n - platform install: creates the framework tables (personal access tokens, audit log)
+				\n - token <create | list | revoke>: personal access tokens for REST and MCP clients (scoped, revocable)
+				\n - audit [--limit 50] [--capability <name>]: the latest capability calls
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
 				\n - create <project_name>: scaffolds a Vue project
@@ -64,6 +67,16 @@ $defaultMsg = "\n Available Functions:
 if($argc < 2) {
     print($defaultMsg);
     exit;
+}
+
+/**
+ * Connects to the database of .env (DB_ACTIVATE must be true)
+ */
+function caligrafyConnect()
+{
+    if (!Caligrafy\Database::connect()) {
+        throw new Exception('The database is not active: set DB_ACTIVATE=true and the DB_* settings in .env');
+    }
 }
 
 /**
@@ -142,6 +155,86 @@ switch(strtolower($argv[1])) {
         } catch (Exception $e) {
             print($e->getMessage());
         }
+		break;
+
+	case 'platform':
+		if (strtolower($argv[2] ?? '') !== 'install') {
+			print("\n Usage: php caligrafer.php platform install\n Creates the framework tables (personal access tokens, audit log) from framework/settings/platform.sql\n\n");
+			exit(1);
+		}
+		try {
+			caligrafyConnect();
+			$sql = preg_replace('/^\s*--.*$/m', '', file_get_contents('framework/settings/platform.sql'));
+			foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
+				Caligrafy\Database::execute($statement);
+			}
+			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit\n\n");
+		} catch (Throwable $e) {
+			print("\n The framework tables could not be created: " . $e->getMessage() . "\n Check DB_ACTIVATE and the DB_* settings in .env (php caligrafer.php doctor --only database)\n\n");
+			exit(1);
+		}
+		break;
+
+	case 'token':
+		$sub = strtolower($argv[2] ?? '');
+		$option = function ($name) use ($argv) {
+			$at = array_search("--$name", $argv);
+			return $at !== false ? ($argv[$at + 1] ?? '') : null;
+		};
+		try {
+			caligrafyConnect();
+			if (!Caligrafy\Tokens::installed()) {
+				print("\n The token table does not exist yet: run php caligrafer.php platform install\n\n");
+				exit(1);
+			}
+			if ($sub === 'create' && isset($argv[3]) && strpos($argv[3], '--') !== 0) {
+				$scopes = Caligrafy\Tokens::normalizeScopes($option('scopes') ?? '');
+				if (!$scopes) {
+					print("\n A token needs scopes: --scopes books:read,books:write (or * for everything)\n\n");
+					exit(1);
+				}
+				$days = $option('expires');
+				$expires = $days !== null && $days !== '' ? date('Y-m-d H:i:s', time() + 86400 * max(1, (int) $days)) : null;
+				$user = $option('user');
+				$created = Caligrafy\Tokens::create($argv[3], $scopes, $user !== null && $user !== '' ? (int) $user : null, $expires);
+				print("\n Token #{$created['id']} \"{$argv[3]}\" created with " . implode(' ', $scopes) . ($expires ? ", expires $expires" : '') . "\n\n"
+					. " " . $created['token'] . "\n\n It is shown only now: store it as a secret (Authorization: Bearer <token>).\n\n");
+			} elseif ($sub === 'list') {
+				$tokens = Caligrafy\Tokens::all();
+				print($tokens ? "\n" : "\n No tokens yet: php caligrafer.php token create <name> --scopes <scopes>\n\n");
+				foreach ($tokens as $t) {
+					$state = $t['revoked_at'] ? 'revoked' : ($t['expires_at'] && strtotime($t['expires_at']) <= time() ? 'expired' : 'active');
+					printf(" #%-4d %-8s %-30s %s%s%s\n", $t['id'], $state, $t['name'], implode(' ', $t['scopes']),
+						$t['user_id'] ? "  user {$t['user_id']}" : '', $t['last_used_at'] ? "  last used {$t['last_used_at']}" : '  never used');
+				}
+				if ($tokens) print("\n");
+			} elseif ($sub === 'revoke' && isset($argv[3])) {
+				print(Caligrafy\Tokens::revoke((int) $argv[3]) ? "\n Token #" . (int) $argv[3] . " revoked\n\n" : "\n No active token #" . (int) $argv[3] . "\n\n");
+			} else {
+				print("\n Usage:\n php caligrafer.php token create <name> --scopes <a:read,b:write | *> [--user <id>] [--expires <days>]\n php caligrafer.php token list\n php caligrafer.php token revoke <id>\n\n");
+				exit(1);
+			}
+		} catch (Throwable $e) {
+			print("\n " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
+		break;
+
+	case 'audit':
+		try {
+			caligrafyConnect();
+			$limitAt = array_search('--limit', $argv);
+			$capabilityAt = array_search('--capability', $argv);
+			$rows = Caligrafy\Audit::latest($limitAt !== false ? (int) ($argv[$limitAt + 1] ?? 50) : 50, $capabilityAt !== false ? ($argv[$capabilityAt + 1] ?? null) : null);
+			print($rows ? "\n" : "\n The audit log is empty (or php caligrafer.php platform install was not run)\n\n");
+			foreach ($rows as $r) {
+				printf(" %s  %-5s %-6s %-12s %-28s %s%s\n", $r['occurred_at'], $r['channel'], $r['actor_type'], $r['actor_id'] ?? '-', $r['capability'], $r['outcome'], $r['detail'] ? "  {$r['detail']}" : '');
+			}
+			if ($rows) print("\n");
+		} catch (Throwable $e) {
+			print("\n " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
 		break;
 
 	case 'upgrade':

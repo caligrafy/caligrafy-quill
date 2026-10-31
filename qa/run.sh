@@ -104,6 +104,7 @@ $COMPOSE exec -T mysql mysql -uroot -proot quillqa < framework/settings/applicat
     || fail "could not create the users table"
 $COMPOSE exec -T mysql mysql -uroot -proot quillqa < qa/fixtures/books.sql 2>/dev/null || fail "could not create the books tables"
 $COMPOSE exec -T mysql mysql -uroot -proot quillqa < qa/fixtures/facelogin/create_db.sql 2>/dev/null || fail "could not create the face login tables"
+$COMPOSE exec -T web php caligrafer.php platform install >/dev/null 2>&1 || fail "php caligrafer.php platform install failed"
 # Watson mock inside the web container, used by WatsonController in the HTTP tests
 $COMPOSE exec -d web php -S 127.0.0.1:8769 qa/fixtures/watson_mock.php
 
@@ -116,6 +117,7 @@ $COMPOSE exec -T mysql mysql -uroot -proot quillqa < framework/settings/applicat
 KEPT=$($COMPOSE exec -T mysql mysql -uroot -proot quillqa -N -e "SELECT COUNT(*) FROM users WHERE username = 'keepme'" 2>/dev/null)
 if [ "$KEPT" = "1" ]; then echo "  PASS Auth create_db.sql can be re-run without deleting users"; else echo "  FAIL Auth create_db.sql deleted the users table"; STATUS=1; fi
 $COMPOSE exec -T mysql mysql -uroot -proot quillqa -e "DELETE FROM users" 2>/dev/null
+if $COMPOSE exec -T web php caligrafer.php platform install >/dev/null 2>&1; then echo "  PASS platform install can be re-run (framework tables)"; else echo "  FAIL platform install cannot be re-run"; STATUS=1; fi
 
 echo
 echo "== Framework tests (inside the web container)"

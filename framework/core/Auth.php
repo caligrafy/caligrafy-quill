@@ -72,6 +72,27 @@ class Auth extends \stdClass {
     {
         return self::$api?? false;
     }
+
+    /**
+     * Whether authentication is set up (Auth::authentication() was called in web.php)
+     */
+    public static function active()
+    {
+        return self::$authModel !== null;
+    }
+
+    /**
+     * Loads a user by id with the authentication model (null when authentication is off or the user does not exist)
+     */
+    public static function find($id)
+    {
+        if (!self::active()) {
+            return null;
+        }
+        $model = clone self::$authModel;
+        $user = $model->find($id);
+        return $user ?: null;
+    }
     
     /**
      * Method that checks if the user in session is authorized to perform actions

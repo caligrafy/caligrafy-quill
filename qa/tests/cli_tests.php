@@ -887,4 +887,45 @@ qa_test('Route::resolveController: declared classes win, short example names fal
 
 proc_terminate($watsonMock);
 
+qa_section('Personal access tokens and the audit log (caligrafy_tokens, caligrafy_audit)');
+Database::execute('DELETE FROM caligrafy_tokens');
+Database::execute('DELETE FROM caligrafy_audit');
+
+qa_test('a created token verifies once its secret matches, and only its hash is stored', function () {
+    $created = Caligrafy\Tokens::create('qa agent', 'books:read books:write');
+    qa_assert(preg_match('/^cq_\d+_[0-9a-f]{40}$/', $created['token']) === 1, 'token format: ' . $created['token']);
+    $row = Caligrafy\Tokens::verify($created['token']);
+    qa_equals(['books:read', 'books:write'], $row['scopes']);
+    qa_assert(!isset($row['token_hash']), 'the hash is not returned');
+    $stored = Database::toArray(Database::execute('SELECT token_hash, last_used_at FROM caligrafy_tokens WHERE id = ?', [$created['id']]))[0];
+    qa_equals(hash('sha256', $created['token']), $stored['token_hash']);
+    qa_assert(strpos(json_encode($stored), substr($created['token'], -40)) === false, 'the secret is never stored');
+    qa_assert($stored['last_used_at'] !== null, 'last use recorded');
+    qa_equals(null, Caligrafy\Tokens::verify(substr($created['token'], 0, -1) . (substr($created['token'], -1) === 'a' ? 'b' : 'a')));
+});
+
+qa_test('a revoked or expired token is refused', function () {
+    $revoked = Caligrafy\Tokens::create('revoked', '*');
+    qa_equals(true, Caligrafy\Tokens::revoke($revoked['id']));
+    qa_equals(false, Caligrafy\Tokens::revoke($revoked['id']));
+    qa_equals(null, Caligrafy\Tokens::verify($revoked['token']));
+    $expired = Caligrafy\Tokens::create('expired', '*', null, date('Y-m-d H:i:s', time() - 60));
+    qa_equals(null, Caligrafy\Tokens::verify($expired['token']));
+    $later = Caligrafy\Tokens::create('later', '*', null, date('Y-m-d H:i:s', time() + 3600));
+    qa_assert(Caligrafy\Tokens::verify($later['token']) !== null, 'a token that expires later works');
+});
+
+qa_test('the token list never shows secrets or hashes', function () {
+    $list = Caligrafy\Tokens::all();
+    qa_assert(count($list) >= 4, 'tokens listed');
+    qa_assert(!array_key_exists('token_hash', $list[0]), 'no hash in the list');
+});
+
+qa_test('Audit::record writes who, which channel, which capability and the outcome', function () {
+    $context = Caligrafy\Context::forToken(['id' => 42, 'scopes' => ['books:write'], 'user_id' => null], 'mcp');
+    qa_equals(true, Caligrafy\Audit::record($context, 'create_book', 'ok'));
+    $row = Caligrafy\Audit::latest(1)[0];
+    qa_equals(['token', '42', 'mcp', 'create_book', 'ok'], [$row['actor_type'], $row['actor_id'], $row['channel'], $row['capability'], $row['outcome']]);
+});
+
 qa_summary();

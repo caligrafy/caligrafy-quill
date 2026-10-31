@@ -41,4 +41,30 @@ final class RequestTest extends TestCase
         $this->assertFalse($this->request(['authorization' => encryptDecrypt('encrypt', APP_KEY)])->authorizeApiRequest());
         $this->assertFalse($this->request(['authorization' => ''])->authorizeApiRequest());
     }
+
+    public function testLegacyKeyCanBeTurnedOff(): void
+    {
+        $apiKey = encryptDecrypt('encrypt', APP_KEY);
+        putenv('LEGACY_API_KEY=false');
+        try {
+            $this->assertFalse($this->request(['authorization' => "Bearer $apiKey"])->authorizeApiRequest());
+        } finally {
+            putenv('LEGACY_API_KEY');
+        }
+        $this->assertTrue($this->request(['authorization' => "Bearer $apiKey"])->authorizeApiRequest());
+    }
+
+    public function testBearer(): void
+    {
+        $this->assertSame('abc', $this->request(['authorization' => 'Bearer abc'])->bearer());
+        $this->assertSame('abc', $this->request(['authorization' => 'bearer   abc'])->bearer());
+        $this->assertNull($this->request(['authorization' => 'Basic abc'])->bearer());
+        $this->assertNull($this->request(['authorization' => ''])->bearer());
+    }
+
+    public function testMalformedTokenIsRefusedWithoutTheDatabase(): void
+    {
+        // cq_ prefix but not the token format: refused, and never sent to the legacy key check
+        $this->assertFalse($this->request(['authorization' => 'Bearer cq_1_short'])->authorizeApiRequest());
+    }
 }
