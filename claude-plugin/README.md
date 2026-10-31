@@ -1,6 +1,6 @@
 # caligrafy-quill - Claude Code plugin
 
-Gives Claude Code full knowledge of the [Caligrafy Quill](https://github.com/caligrafy/caligrafy-quill) framework.
+Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligrafy/caligrafy-quill), the "Build Once, Experience Everywhere" framework: Claude writes a feature once as a capability and serves it to web pages, Vue apps, REST and AI agents.
 
 | Component | Name | What it does |
 | - | - | - |

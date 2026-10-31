@@ -5,6 +5,8 @@
 
 Caligrafy Quill ships with its own **[Claude Code](https://code.claude.com) plugin**. When you open a Quill project in Claude Code, Claude knows the framework inside out: routes, controllers, models, relationships, validation, Pug views, the REST API, authentication, payments, Vue apps, bots, FaceDetect, machine learning and the OpenAI/Groq integrations.
 
+It follows the Caligrafy way, **build once, experience everywhere**: asked for a feature that pages, Vue apps, an API or AI agents need, Claude writes it once as a capability (`/caligrafy-quill:new-capability`) and wires every experience to it.
+
 The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin) folder of the Caligrafy Quill repository.
 
 ## What the plugin gives Claude

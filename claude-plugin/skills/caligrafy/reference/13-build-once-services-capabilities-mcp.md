@@ -3,7 +3,7 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-Write a feature once and use it everywhere: from your Pug pages, your Vue apps, a REST API and AI agents. In Caligrafy a feature written this way is a **capability**: a small PHP class (a **service**) that validates its inputs, checks who is asking, does the work and returns data. Every way of reaching your application is a **channel** that calls the same capability, so a rule you write once behaves the same for a person, a phone or an agent.
+**Build once, experience everywhere** is what Caligrafy is for. Write a feature once and use it everywhere: from your Pug pages, your Vue apps, a REST API and AI agents. In Caligrafy a feature written this way is a **capability**: a small PHP class (a **service**) that validates its inputs, checks who is asking, does the work and returns data. Every way of reaching your application is a **channel** that calls the same capability, so a rule you write once behaves the same for a person, a phone or an agent.
 
 ## How it fits together
 

@@ -140,6 +140,28 @@ class MyController extends Controller {
 }
 ```
 
+### Calling a capability
+
+When a feature is also needed by a Vue app, an API or an AI agent, write it once as a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service) and let the controller be the web experience of it: `$this->call()` runs the capability as the signed-in user, with its validation and permissions, and the action only decides what to show.
+```php
+use Caligrafy\Controller;
+use Caligrafy\ServiceError;
+
+class BookController extends Controller {
+
+    public function store()
+    {
+        try {
+            $book = $this->call('create_book');   // inputs: the posted fields and the route variables
+            redirect('/books/' . $book['id']);
+        } catch (ServiceError $e) {
+            return view('Books/form', array('errors' => $e->fields, 'message' => $e->getMessage()));
+        }
+    }
+}
+```
+The same `create_book` then answers `POST /books` over REST, `createBook()` in a Vue app and the `create_book` tool of an AI agent, with the same rules.
+
 ## Controller Methods & Properties
 
 + Methods can be created as needed in a controller provided they don't override the built-in `Controller` methods. From the moment you override these methods, the framework could behave abnormally.

@@ -78,6 +78,16 @@ Later on, you will learn how to create controllers.
 >
 > This video explains how to create more advanced routes in Caligrafy. You will learn how to create routes with parameters and how to redirect a route to a controller or to a specific action in a controller.
 
+## Capability Routes
+
+A capability is a feature written once and served to every experience (build once, experience everywhere). Three route methods expose capabilities instead of a controller action:
+```php
+Route::capability('POST', '/books', 'create_book');   // REST: one route, one capability; {id} becomes the input "id"
+Route::capabilities('/capabilities');                  // GET lists, POST /capabilities/{name} calls: used by the JS client of the Vue apps
+Route::mcp('/mcp');                                    // AI agents: every capability their token allows becomes an MCP tool
+```
+They check who calls (a personal access token or the signed-in user), validate the inputs and answer JSON with real status codes. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#rest).
+
 ## HTML Form Methods
 
 HTML forms do not support `PUT` and `DELETE`. The framework does this for you from the moment you include a hidden `_method` field in the form with a value of `PUT` or `DELETE`. This is called **method spoofing**.

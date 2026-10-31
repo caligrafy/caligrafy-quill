@@ -3,14 +3,23 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-# Caligrafy - A Web Application Framework For Novice Developers
+# Caligrafy - Build Once, Experience Everywhere
 ![Caligrafy](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/caligrafy-vue2.png)
 
 ## What is Caligrafy
 
-Caligrafy is a new and modern MVC framework for PHP that was built from the ground up to provide easy and elegant ways for novice developers to build sophisticated and modern web applications. We've laid a solid foundation of security, social, e-commerce, analytics and machine learning features so that you focus your genius on your ideas. 
+**Caligrafy is the "Build Once, Experience Everywhere" framework.** You write a feature of your application once, as a **capability**: its rules, its permissions, its work. Caligrafy then serves that same capability to every way people and machines reach your application:
 
-Caligrafy bridges the power of server-side languages like PHP with the sophistication of client-side languages like Javascript to expose you to how the most advanced Web capabilities are built.
+| Experience | How it reaches the capability |
+| --- | --- |
+| **Web** pages (Pug) | a controller calls it: `$this->call('create_book')` |
+| **Tablet and mobile** (Vue apps, the Vite SPA, installed to the home screen) | a generated JS client: `await createBook({...})` |
+| **APIs** for other applications | a REST route: `Route::capability('POST', '/books', 'create_book')` |
+| **AI agents** such as Claude | MCP tools: `Route::mcp('/mcp')` |
+
+A rule written once behaves the same whether a person, a phone or an agent invokes it: the same validation messages, the same permissions, the same audit log. You never write the same feature twice for two channels, and the channels never drift apart.
+
+Caligrafy is built on a PHP MVC framework designed from the start for developers who are new to building web applications: one folder to start from, a readable syntax, and a foundation of security, payments, analytics, AI and machine learning already in place, so that you focus your genius on your ideas.
 
 > #### (video) [Introduction to Caligrafy](https://youtu.be/zTqbWlTPrNQ)
 >
@@ -145,29 +154,29 @@ It needs Docker, PHP with curl and Node.js, and refuses to run when an `applicat
 
 ## Why Caligrafy
 
-### 1. Full-Stack Framework
-Caligrafy is a full-stack framework that leverages the power of server-side languages such as PHP with the power of client-side languages such as Javascript to help you build powerful and sophisticated web applications.
+### 1. Build once, experience everywhere
+A capability is written once and served to web pages, Vue apps on tablets and phones, REST clients and AI agents. Validation, permissions and the audit trail live in one place, so every experience of your application behaves the same. [Learn how](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP).
 
-### 2. MVC Architecture
-Caligrafy is built with an MVC architecture pattern that separates the business logic from the presentation layers. The Caligrafy MVC established an arsenal of methods and features that ensure that the separation of concerns is maintained between business and presentation layers.
+### 2. Every experience included
+Server-rendered pages with a built-in template engine (Pug), Vue 3 as a library or a Vite single page application, installable mobile web apps, a REST API, and an MCP server for AI agents: they come with the framework and share one look through its design tokens.
 
-### 3. Modern Modular Librairies
-Caligrafy comes pre-packaged with ready-to-use modern features. In few lines, you can start accepting credit card payments, ach payments, cryptocurrency payments, building chatbots and assistants. In one line of code, your application can have rich structured data and can be ready for social sharing. In no time, your application can have a REST-API exposed for third-party applications. And many others...
+### 3. Ready for AI agents
+Every capability can be a tool for agents such as Claude, over MCP, with a description, an input schema and hints that tell the agent when to ask before acting. And Caligrafy ships with its own Claude Code plugin, so Claude builds Caligrafy applications the way the framework intends.
 
-### 4. VueJS
-Caligrafy supports VueJS as an alternative to using its template engine. VueJS complements Caligrafy in its ability to create powerful and nimble user experiences in the "View" layer of an MVC architecture. If you are a PHP developer, Caligrafy makes it easy for you to use VueJS. If you are a Javascript developer, Caligrafy makes it easy for you to not be overwhelmed by PHP.
+### 4. Secure by design
+Personal access tokens with scopes, expiry and revocation for programs and agents; the session and CSRF tokens for browsers; permission levels for users; an audit log of who did what through which channel; server files that are never served; bound SQL everywhere.
 
-### 5. AI and Machine Learning
-Caligrafy integrates machine learning capabilities at its core to help you build artificial intelligence seemlessly into your application. 
+### 5. The MVC you already know
+Routes, controllers, models and views, as in the frameworks you may have read about. Capabilities sit beside them, so you can start with plain MVC and move a feature to a capability when a second experience needs it.
 
-### 6. Template Engine
-Caligrafy has a built-in and powerful template engine that can be used to create sophisticated user experiences easily.
+### 6. Batteries included
+In a few lines, accept card, ACH and cryptocurrency payments, add face login with passkeys, build chatbots and assistants with OpenAI or open models, use machine learning in the browser, and make your pages ready for search and social sharing.
 
-### 7. Lightweight Syntax
-Caligrafy is closer to bare-bone programming than other frameworks out there. While it delivers equivalent - if not more powerful - features, it is built from the ground up with developers in mind.
+### 7. Lightweight syntax
+Caligrafy is closer to bare-bone programming than other frameworks. It delivers equivalent features while staying readable for someone who is learning.
 
-### 8. Documentation & Support
-Caligrafy is committed to providing continuous support to its community of developers through an extensive online Documentation, Online video tutorials on its youtube channel, training courses on Udemy and live help through Slack, Facebook and Github.
+### 8. Documentation, course and support
+An extensive [wiki](https://github.com/caligrafy/caligrafy-quill/wiki), a step-by-step [course](https://github.com/caligrafy/caligrafy-quill-course) that builds a complete application from an empty folder to an AI agent, video tutorials on YouTube, and help on Slack, Facebook and GitHub.
 
 ## Dependencies
 
@@ -183,6 +192,14 @@ This framework uses several third-party librairies that are included in the dist
 + Cryptocurrency payments use the Coinbase Business Checkouts API (no SDK needed)
 
 ## Documentation
+
+### Build once, experience everywhere
+
+Start here: how one capability serves every experience.
+
++ [11. Build Once: Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): write a capability, serve it to pages, Vue apps, REST and AI agents, tokens, the JS client, MCP, the audit log
++ [Release notes: 2.1.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0): what 2.1 adds and how to upgrade a project
++ [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course): build Bookshelf step by step, from a web page to an AI agent
 
 ### Learning Caligrafy
 
@@ -247,6 +264,7 @@ We have created a rigorous documentation to help you understand the basics of th
 
 ### Release notes and contributing
 
++ [Release notes: 2.1.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0): build once, experience everywhere
 + [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026): every change of October 2026, with an upgrade checklist for existing projects
 + [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy): the QA suite, the unit tests and the release process, for contributors
 
@@ -283,7 +301,7 @@ In order to build large scale applications using Vue, we need the ability to lev
 
 ### AI in Caligrafy
 
-Caligrafy provides easy ways to include Artificial Intelligence and Machine Learning to offer features such as Bots, Face Detection and Recognition. 
+Caligrafy works with AI in both directions: AI agents use your application through MCP ([learn more](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#mcp)), and your application uses AI to offer features such as bots, assistants, face detection and recognition, and machine learning.
 
 1. [Creating Bots with Watson](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.1-Creating-Bots-with-Watson)
 2. [Face Detection and Recognition](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition)
@@ -291,11 +309,6 @@ Caligrafy provides easy ways to include Artificial Intelligence and Machine Lear
 4. [OpenAI: ChatGPT, GPTs, DALL.E](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E)
 5. [OpenAI: Assistants](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.5-Open-AI:-Assistants)
 6. [Open Source Agents (llama, Mistral, etc.)](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.))
-
-### Build once, experience everywhere
-
-1. [Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): one capability for Pug pages, Vue apps, REST and AI agents
-2. [Release notes: 2.1.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)
 
 ### Caligrafy and Claude
 

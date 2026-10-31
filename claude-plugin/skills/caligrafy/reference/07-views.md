@@ -186,4 +186,21 @@ This installs the whole application (it opens on its home page). To install a cl
 > The use of the `View` in this framework is very straightforward. Most of the effort should be in understanding the syntax of the `Pug` language.It is a simple language to pick up especially if you are familiar with HTML. 
 > Learn Pug and Phug [here](https://www.phug-lang.com/#language-reference)
 
+## One look on every device
+
+Experiences differ in layout (a dense page on a desktop, touch-first on a tablet, one column on a phone) but share one look. `public/css/tokens.css` defines the Caligrafy look as CSS custom properties, from `public/css/tokens.json`: colors (`--cq-color-ink`, `--cq-color-paper`...), type, spacing (`--cq-space-1` to `--cq-space-5`), radius and breakpoints. The default layout, the Vue app template and the Vite SPA template include it, and it adds:
++ touch targets of at least `--cq-touch-target` (44px) on touch screens,
++ safe-area padding when the application is installed to the home screen,
++ `.cq-split`: one column on phones, a list and its detail side by side from tablets up.
+
+```pug
+.cq-split
+  .list
+    each book in books
+      a(href="/books/" + book.id)= book.title
+  .detail
+    block detail
+```
+Use the tokens in your own styles (`color: var(--cq-color-text)`) so that every experience of the application stays the same. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#experiences).
+
 >[Next Section: Learn about Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)
