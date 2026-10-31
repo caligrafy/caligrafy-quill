@@ -55,6 +55,8 @@ PAGES = {
     '10-claude-code-plugin.md': ('10.-Claude-Code-Plugin.md', '10. Claude Code Plugin'),
     '11-release-notes-october-2026.md': ('Release-notes:-October-2026.md', 'Release notes: October 2026'),
     '12-testing-caligrafy.md': ('Testing-Caligrafy.md', 'Testing Caligrafy (contributors)'),
+    '14-release-notes-2.1.0.md': ('Release-notes:-2.1.0.md', 'Release notes: 2.1.0'),
+    '13-build-once-services-capabilities-mcp.md': ('11.-Build-Once:-Services,-Capabilities-and-MCP.md', '11. Build Once: Services, Capabilities and MCP'),
     'wiki-sidebar.md': ('_Sidebar.md', 'Wiki sidebar (table of contents)'),
 }
 

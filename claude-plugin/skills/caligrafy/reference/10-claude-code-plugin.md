@@ -21,7 +21,7 @@ The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligraf
 
 The plugin also knows the Caligrafer maintenance commands and uses them: `php caligrafer.php doctor` (read-only health check of the project, its keys and its services) to diagnose problems first, and `php caligrafer.php upgrade` to bring an existing project up to date with the framework templates.
 
-Current version: **1.10.0**, for Caligrafy Quill v2.0.0. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: the library upgrade (1.2), FaceDetector camera control (1.3), AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7), `doctor` (1.8), the PHPUnit unit tests of the framework core in the QA suite (1.8.1), install to home screen, face login liveness and passkeys, and open-model providers such as Llama on OpenRouter or Ollama (1.9), the release notes and Testing Caligrafy pages (1.9.1), and versioned releases with `php caligrafer.php version` (1.10). The [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#plugin) map each version to the framework change it follows.
+Current version: **1.11.0**, for Caligrafy Quill v2.1.0. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: the library upgrade (1.2), FaceDetector camera control (1.3), AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7), `doctor` (1.8), the PHPUnit unit tests of the framework core in the QA suite (1.8.1), install to home screen, face login liveness and passkeys, and open-model providers such as Llama on OpenRouter or Ollama (1.9), the release notes and Testing Caligrafy pages (1.9.1), versioned releases with `php caligrafer.php version` (1.10), and the build-once layer: capabilities, tokens, MCP and the `new-capability` command (1.11). The [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#plugin) map each version to the framework change it follows.
 
 ## Installing the plugin
 
@@ -54,6 +54,13 @@ claude plugin install caligrafy-quill@caligrafy
 > The marketplace is named `caligrafy` and the plugin `caligrafy-quill`, which is why the install target is `caligrafy-quill@caligrafy`.
 
 ## Commands
+
+### `/caligrafy-quill:new-capability <capability_name> [scope]`
+Builds a feature once and serves it everywhere (learn more in [11. Build Once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)): scaffolds the service with `php caligrafer.php service`, fills its rules and its work, wires the channels you need (REST routes, the JS client for your Vue apps, a Pug page, MCP for AI agents), creates a token for agents when needed, and checks that every channel answers and refuses the same way.
+
+```
+/caligrafy-quill:new-capability create_book books:write
+```
 
 ### `/caligrafy-quill:new-resource <Entity> [field:type ...]`
 Scaffolds a complete resource following the framework conventions (learn more about [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models) and [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)):

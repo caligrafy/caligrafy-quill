@@ -18,6 +18,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 ## 🎉 What's new (October 2026)
 
++ **Build once, experience everywhere (2.1):** write a feature once as a capability and serve it to Pug pages, Vue apps, a REST API and AI agents over MCP, with personal access tokens and an audit log ([learn more](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP), [release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)).
 + **Current libraries and services:** PHP 8.3+ (Docker on PHP 8.5 and MySQL 8.4), Bootstrap 5 without jQuery (the Caligrafy look is kept), Vue 3.5 and a Vite 8 + Pinia SPA template, OpenAI GPT-6 and gpt-image-2, Assistants on the Responses API, the Stripe Payment Element, Coinbase Business, ml5 1.4 and @vladmandic/face-api.
 + **New tools:** `php caligrafer.php upgrade` brings an existing project up to date, `php caligrafer.php doctor` checks `.env`, the database and every configured service.
 + **New features:** real HTTP status codes and JSON errors, namespaced controllers, install to home screen, face login with liveness checks and passkeys, open models (Llama) on Groq, Together, Fireworks, OpenRouter or Ollama.
@@ -290,6 +291,11 @@ Caligrafy provides easy ways to include Artificial Intelligence and Machine Lear
 4. [OpenAI: ChatGPT, GPTs, DALL.E](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.4-OpenAI:-ChatGPT,-GPTs,-DALL.E)
 5. [OpenAI: Assistants](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.5-Open-AI:-Assistants)
 6. [Open Source Agents (llama, Mistral, etc.)](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.6-Open-Source-Agents-(llama,-Mistral-etc.))
+
+### Build once, experience everywhere
+
+1. [Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): one capability for Pug pages, Vue apps, REST and AI agents
+2. [Release notes: 2.1.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)
 
 ### Caligrafy and Claude
 

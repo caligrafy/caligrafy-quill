@@ -82,6 +82,9 @@ docker ps --filter name=quillqa
 
 On some slow or proxied networks, `apt-get install` in `docker/Dockerfile` grows to several GB while it retries and the build is killed ("Killed", "cannot allocate memory"). Give Docker more memory, close other containers, or build on another network. Once a `quillqa-web` image exists, run the suite with `QA_NO_BUILD=1 ./qa/run.sh`.
 
+### Build once: the cross-channel tests
+The HTTP phase proves that one capability behaves the same on every channel, with the Bookshelf capabilities of `qa/fixtures/application/services/Books`: a book created on a web page (`BookPageController`, `Controller::call()`) is the same through REST (`Route::capability`), the generic endpoint, MCP over HTTP and stdio, and the generated JS client run in Node; invalid input gets the same field errors everywhere; a token without the scope, or an owner without the level, is refused on REST and MCP alike; and the audit log names each channel. Tokens are created with `php caligrafer.php token create` inside the web container, like a user would.
+
 ## Unit tests (PHPUnit)
 
 ```bash

@@ -17,6 +17,7 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 
 ## 🎉 What's new (October 2026)
 
++ **Build once, experience everywhere (2.1):** write a feature once as a **capability** and serve it to your Pug pages, your Vue apps, a REST API and AI agents over MCP. Validation, permissions and the audit log apply the same way on every channel; programs and agents use scoped, revocable personal access tokens ([learn more](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)).
 + **Current libraries and services:** PHP 8.3+ (Docker on PHP 8.5 and MySQL 8.4), Bootstrap 5 without jQuery (the Caligrafy look is kept), Vue 3.5 and a Vite 8 + Pinia SPA template, OpenAI GPT-6 and gpt-image-2, Assistants on the Responses API, the Stripe Payment Element, Coinbase Business, ml5 1.4 and @vladmandic/face-api.
 + **Versioned releases:** v2.0.0 is the first tagged release. Every release is listed in the [changelog](CHANGELOG.md), and `php caligrafer.php version` prints the version of a project.
 + **New tools:** `php caligrafer.php upgrade` brings an existing project up to date, `php caligrafer.php doctor` checks `.env`, the database and every configured service.
@@ -24,6 +25,24 @@ Caligrafy bridges the power of server-side languages like PHP with the sophistic
 + **Claude + Caligrafy Quill:** the framework ships with its own [Claude Code](https://code.claude.com) plugin: the complete documentation, a source-verified API reference, scaffolding commands and a code reviewer ([learn more](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)).
 
 **New projects** get everything automatically. **Existing projects:** follow the upgrade checklist of the **[Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026)**, which also lists every change and what can break.
+
+<br/>
+
+## Build once, experience everywhere
+
+```php
+#[Capability(name: 'create_book', description: 'Adds a book to the catalog and returns it.', scope: 'books:write')]
+class CreateBook extends Service
+{
+    public $rules = array('title' => 'required|max_len,255', 'author' => 'required|max_len,255');
+
+    public function handle(array $input, Context $context)
+    {
+        return (new Book('books'))->create($input);
+    }
+}
+```
+One class, every channel: `$this->call('create_book')` in a Pug page controller, `Route::capability('POST', '/books', 'create_book')` for REST, `createBook()` from the generated JS client (`php caligrafer.php client`) in a Vue app, and a `create_book` tool for AI agents with `Route::mcp('/mcp')`. Start with `php caligrafer.php platform install` and `php caligrafer.php service Books/CreateBook`; the [guide](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP) explains tokens, the JS client, MCP and the audit log, and [ARCHITECTURE.md](ARCHITECTURE.md) the design.
 
 <br/>
 

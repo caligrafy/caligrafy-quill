@@ -233,19 +233,27 @@ class Capabilities
     }
 
     /**
-     * Requires every PHP file of application/services/ (the framework autoloader loads them on demand on the web;
-     * the CLI and tests need them declared before the registry is built)
+     * Requires the PHP files of application/ before the registry is built: the services, and the classes they use
+     * (models, helpers next to the controllers). The web autoloader does the same on the first unknown class; the CLI
+     * (php caligrafer.php capabilities, mcp, client) does not. config/ (web.php would dispatch a route) and views/ are skipped.
      */
     private static function loadServices()
     {
         if (!defined('APP_PATH') || !is_dir(APP_PATH . 'services')) {
             return;
         }
-        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(APP_PATH . 'services', \FilesystemIterator::SKIP_DOTS));
+        $skip = array(APP_PATH . 'config' . DIRECTORY_SEPARATOR, APP_PATH . 'views' . DIRECTORY_SEPARATOR);
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(APP_PATH, \FilesystemIterator::SKIP_DOTS));
+        $paths = array();
         foreach ($files as $file) {
-            if (substr($file, -4) === '.php') {
-                require_once $file;
+            $path = (string) $file;
+            if (substr($path, -4) === '.php' && strpos($path, $skip[0]) !== 0 && strpos($path, $skip[1]) !== 0) {
+                $paths[] = $path;
             }
+        }
+        sort($paths);
+        foreach ($paths as $path) {
+            require_once $path;
         }
     }
 

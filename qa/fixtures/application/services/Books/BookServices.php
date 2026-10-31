@@ -33,7 +33,7 @@ class GetBook extends Service
 #[Capability(name: 'create_book', description: 'Adds a book to the catalog and returns it with its id.', scope: 'books:write')]
 class CreateBook extends Service
 {
-    public $rules = array('title' => 'required|max_len,255', 'author' => 'required|max_len,255', 'publisher_id' => 'required|integer');
+    public $rules = array('title' => BookRules::TITLE, 'author' => 'required|max_len,255', 'publisher_id' => 'required|integer');
     public $filters = array('title' => 'trim', 'author' => 'trim');
     public $descriptions = array('title' => 'The title', 'author' => 'The author', 'publisher_id' => 'The id of the publisher (1 = Penguin)');
 
