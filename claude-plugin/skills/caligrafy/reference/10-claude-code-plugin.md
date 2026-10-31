@@ -14,6 +14,7 @@ The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligraf
 | Component | Name | What it does |
 | - | - | - |
 | Skill (automatic) | `caligrafy` | The complete Caligrafy documentation (every page of this wiki), a source-verified API reference, a list of verified gotchas, security notes and documentation errata, and end-to-end recipes for OpenAI/Groq chat apps and face login. Loads automatically whenever Claude works in a Quill project |
+| Command | `/caligrafy-quill:new-capability` | Builds a feature once as a capability and serves it to every experience: the service, its REST routes, the JS client for Vue apps, a Pug page, MCP for AI agents and a token, then checks that every channel answers and refuses the same way |
 | Command | `/caligrafy-quill:new-resource` | Creates the SQL script, Model, Controller (validated CRUD actions) and REST routes for a new entity |
 | Command | `/caligrafy-quill:new-app` | Scaffolds a client app with Caligrafer (Vue as a library, Vue SPA, bot, face detection or machine learning) and wires its routes |
 | Command | `/caligrafy-quill:server` | Starts, stops or checks the Docker development server after checking ports and `.env` |

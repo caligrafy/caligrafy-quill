@@ -4,12 +4,12 @@
     "name": "Dory Azar",
     "url": "https://github.com/caligrafy"
   },
-  "description": "Official Claude Code plugins for the Caligrafy framework",
+  "description": "Official Claude Code plugins for Caligrafy, the Build Once, Experience Everywhere framework",
   "plugins": [
     {
       "name": "caligrafy-quill",
       "source": "./claude-plugin",
-      "description": "Caligrafy Quill expertise for Claude Code: full documentation, verified API reference, scaffolding, server, database and review tools.",
+      "description": "Caligrafy Quill expertise for Claude Code: build a feature once as a capability and serve it to web pages, Vue apps, REST and AI agents (MCP); full documentation, verified API reference, scaffolding, server, database and review tools.",
       "category": "development",
       "tags": ["php", "mvc", "caligrafy", "vue"]
     }

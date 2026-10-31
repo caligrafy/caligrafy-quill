@@ -1,7 +1,7 @@
 {
   "name": "caligrafy-quill",
   "version": "1.11.0",
-  "description": "Claude expertise for the Caligrafy Quill PHP MVC framework: the complete Caligrafy wiki plus a source-verified API reference, gotchas and end-to-end recipes (AI chat apps, face login), scaffolding skills (new-resource, new-app, new-capability: one capability served to web pages, REST, Vue apps and AI agents over MCP), Docker server and database skills, a Caligrafy code reviewer agent, and a php -l hook.",
+  "description": "Claude expertise for Caligrafy Quill, the Build Once, Experience Everywhere framework (PHP MVC): features written once as capabilities and served to web pages, Vue apps, REST and AI agents over MCP. The complete Caligrafy wiki plus a source-verified API reference, gotchas and end-to-end recipes (AI chat apps, face login), scaffolding skills (new-resource, new-app, new-capability: one capability served to web pages, REST, Vue apps and AI agents over MCP), Docker server and database skills, a Caligrafy code reviewer agent, and a php -l hook.",
   "author": {
     "name": "Dory Azar",
     "url": "https://github.com/caligrafy"
@@ -9,5 +9,5 @@
   "homepage": "https://github.com/caligrafy/caligrafy-quill/wiki",
   "repository": "https://github.com/caligrafy/caligrafy-quill",
   "license": "MIT",
-  "keywords": ["caligrafy", "quill", "php", "mvc", "framework", "vue", "pug", "phug", "mysql"]
+  "keywords": ["caligrafy", "build-once", "mcp", "capabilities", "quill", "php", "mvc", "framework", "vue", "pug", "phug", "mysql"]
 }
