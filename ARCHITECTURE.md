@@ -69,7 +69,8 @@ invokes it, and the QA suite proves it with cross-channel tests.
   JSON route of the project, writes included, from anywhere.
 - **Closure routes are unprotected** for JSON: no API key check and no CSRF check.
 - **Sessions.** `Auth::authorize()` stores the whole user record, encrypted, in the session; `authorized()` reloads it
-  from the database and compares every column. `guard($attribute, $level)` compares one integer column
+  from the database and compares every column, so any change to the user's row (including a timestamp column
+  updated automatically) signs the user out. `guard($attribute, $level)` compares one integer column
   (`permissions`) and **redirects** (`/login`, `/notAuthorized`): an API caller gets a redirect, not a 401 or 403.
 - Passkeys (`Passkey`) and face login (`FaceLogin`) end in the same session login.
 

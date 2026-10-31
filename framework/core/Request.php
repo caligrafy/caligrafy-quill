@@ -308,6 +308,11 @@ class Request extends \stdClass {
         // so that an empty setting never approves requests sent without a User-Agent
         $approved = defined('APPROVED_AGENTS')? array_filter(array_map('trim', explode(',', (string)APPROVED_AGENTS)), 'strlen') : array();
 
+        // a request that carries a bearer token cannot come from a cross-site form (a form cannot set Authorization)
+        if ($this->bearer() !== null) {
+            return;
+        }
+
         //if it's a form and not an API then check for CSRF
         if(!$this->wantsJson() && !in_array($this->userAgent, $approved, true)) {
             $token = $_POST['_token']?? null;

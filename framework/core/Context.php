@@ -41,6 +41,9 @@ class Context
     /** @var bool true for the CLI and the legacy API key */
     protected $full = false;
 
+    /** @var string|null the actor written to the audit log for a full-access context (cli) */
+    protected $actor = null;
+
     public function __construct($channel = 'cli', $user = null, $token = null, $full = false)
     {
         if (!in_array($channel, self::CHANNELS, true)) {
@@ -58,6 +61,16 @@ class Context
     public static function cli()
     {
         return new self('cli', null, null, true);
+    }
+
+    /**
+     * Full access through another channel for a local process (php caligrafer.php mcp without a token)
+     */
+    public static function local($channel)
+    {
+        $context = new self($channel, null, null, true);
+        $context->actor = 'cli';
+        return $context;
     }
 
     /**
@@ -173,7 +186,7 @@ class Context
             return 'user';
         }
         if ($this->full) {
-            return $this->channel === 'cli' ? 'cli' : 'key';
+            return $this->actor ?? ($this->channel === 'cli' ? 'cli' : 'key');
         }
         return 'guest';
     }

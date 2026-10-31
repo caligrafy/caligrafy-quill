@@ -54,6 +54,9 @@ $defaultMsg = "\n Available Functions:
 				\n - platform install: creates the framework tables (personal access tokens, audit log)
 				\n - token <create | list | revoke>: personal access tokens for REST and MCP clients (scoped, revocable)
 				\n - audit [--limit 50] [--capability <name>]: the latest capability calls
+				\n - service <Name> [--scope books:write] [--read-only]: creates a capability in application/services/
+				\n - capabilities [--json | --markdown]: the capabilities of application/services/ (what REST, MCP and the JS client can call)
+				\n - mcp [--token <token>]: MCP server over stdio for local AI agents (Claude Code, Cursor...): php caligrafer.php mcp
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
 				\n - create <project_name>: scaffolds a Vue project
@@ -234,6 +237,93 @@ switch(strtolower($argv[1])) {
 		} catch (Throwable $e) {
 			print("\n " . $e->getMessage() . "\n\n");
 			exit(1);
+		}
+		break;
+
+	case 'mcp':
+		// MCP over stdio for local agents: one JSON-RPC message per line on stdin, one answer per line on stdout
+		// CALIGRAFY_TOKEN (or --token) acts as that token; without one, full local access like any script
+		ini_set('display_errors', 'stderr');
+		$tokenAt = array_search('--token', $argv);
+		$plain = $tokenAt !== false ? ($argv[$tokenAt + 1] ?? '') : (getenv('CALIGRAFY_TOKEN') ?: '');
+		try {
+			if (Caligrafy\Database::connect() === null && $plain !== '') {
+				throw new Exception('A token needs the database: set DB_ACTIVATE=true');
+			}
+			if ($plain !== '') {
+				$token = Caligrafy\Tokens::verify($plain);
+				if (!$token) {
+					throw new Exception('The token is unknown, revoked or expired');
+				}
+				$context = Caligrafy\Context::forToken($token, 'mcp');
+			} else {
+				$context = Caligrafy\Context::local('mcp');
+				fwrite(STDERR, "caligrafer mcp: no token, full local access (set CALIGRAFY_TOKEN to limit it)\n");
+			}
+		} catch (Throwable $e) {
+			fwrite(STDERR, 'caligrafer mcp: ' . $e->getMessage() . "\n");
+			exit(1);
+		}
+		$server = new Caligrafy\Mcp\Server($context);
+		while (($line = fgets(STDIN)) !== false) {
+			if (trim($line) === '') {
+				continue;
+			}
+			$response = $server->handleJson($line);
+			if ($response !== null) {
+				fwrite(STDOUT, json_encode($response, JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+			}
+		}
+		exit(0);
+
+	case 'service':
+		// php caligrafer.php service Books/CreateBook [--scope books:write] [--read-only]
+		$path = trim(str_replace('\\', '/', $argv[2] ?? ''), '/');
+		if (!preg_match('#^([A-Z][A-Za-z0-9]*/)*[A-Z][A-Za-z0-9]*$#', $path)) {
+			print("\n Usage: php caligrafer.php service <Name> [--scope <resource:action>] [--read-only]\n Name in PascalCase, optionally in folders: Books/CreateBook\n\n");
+			exit(1);
+		}
+		$class = basename($path);
+		$file = "application/services/$path.php";
+		if (!is_dir('application')) {
+			print("\n application/ not found: run php caligrafer.php initialize first\n\n");
+			exit(1);
+		}
+		if (file_exists($file)) {
+			print("\n $file already exists\n\n");
+			exit(1);
+		}
+		$name = strtolower(preg_replace('/(?<!^)[A-Z]/', '_$0', $class));
+		$scopeAt = array_search('--scope', $argv);
+		$scope = $scopeAt !== false ? ($argv[$scopeAt + 1] ?? '') : '';
+		$readOnly = in_array('--read-only', $argv) ? 'true' : 'false';
+		$template = file_get_contents('framework/settings/service.php.template');
+		$code = strtr($template, array('{{class}}' => $class, '{{name}}' => $name, '{{scope}}' => $scope, '{{readOnly}}' => $readOnly));
+		@mkdir(dirname($file), 0755, true);
+		file_put_contents($file, $code);
+		print("\n Created $file: capability '$name'" . ($scope ? " (scope $scope)" : '') . "\n Fill in \$rules and handle(), then call it from a controller (\$this->call('$name')), REST (Route::capability) or MCP (Route::mcp)\n\n");
+		break;
+
+	case 'capabilities':
+		$list = Caligrafy\Capabilities::describe();
+		if (in_array('--json', $argv)) {
+			print(json_encode($list, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
+		} elseif (in_array('--markdown', $argv)) {
+			print("| Capability | What it does | Scope | Inputs |\n| --- | --- | --- | --- |\n");
+			foreach ($list as $c) {
+				$inputs = array();
+				foreach ((array) $c['input']['properties'] as $field => $p) {
+					$inputs[] = '`' . $field . '`' . (in_array($field, $c['input']['required'] ?? array(), true) ? ' (required)' : '');
+				}
+				printf("| `%s`%s | %s | %s | %s |\n", $c['name'], $c['readOnly'] ? ' (read-only)' : ($c['destructive'] ? ' (destructive)' : ''),
+					str_replace('|', '\\|', $c['description']), $c['public'] ? 'public' : ($c['scope'] !== '' ? '`' . $c['scope'] . '`' : 'signed in'), implode(', ', $inputs) ?: '-');
+			}
+		} else {
+			print($list ? "\n" : "\n No capabilities yet: php caligrafer.php service <Name> creates one in application/services/\n\n");
+			foreach ($list as $c) {
+				printf(" %-28s %-14s %-9s %s\n", $c['name'], $c['public'] ? 'public' : ($c['scope'] ?: 'signed in'), $c['readOnly'] ? 'read' : ($c['destructive'] ? 'destroys' : 'writes'), $c['description']);
+			}
+			if ($list) print("\n");
 		}
 		break;
 

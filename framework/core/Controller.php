@@ -173,6 +173,21 @@ class Controller extends \stdClass
     {
         return api($viewData);
     }
+
+    /**
+     * Calls a capability as the signed-in user (web pages): the same rules as REST and MCP
+     *   try { $book = $this->call('create_book'); redirect('/books/' . $book['id']); }
+     *   catch (ServiceError $e) { return view('Books/form', ['errors' => $e->fields]); }
+     * @param string $name the capability
+     * @param array|null $input the inputs (default: the request parameters and the route variables)
+     * @return mixed plain data
+     * @throws ServiceError
+     */
+    public function call($name, $input = null)
+    {
+        $input = $input ?? array_merge((array) ($this->request->currentBind ?? array()), (array) ($this->request->parameters ?? array()));
+        return Capabilities::call($name, $input, Context::fromRequest($this->request, 'web'));
+    }
     
     
 }

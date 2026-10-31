@@ -766,4 +766,222 @@ qa_test('a passkey alone logs in; a wrong origin or a forged signature is refuse
     qa_equals(401, qa_face($c, '/facelogin/me')['status']);
 });
 
+qa_section('Build once: the Bookshelf capabilities through a web page, REST, the generic endpoint and MCP');
+
+function qa_cli($args, $stdin = null)
+{
+    $cmd = 'docker compose -f ' . escapeshellarg(dirname(__DIR__) . '/docker-compose.yml') . ' exec -T web php caligrafer.php ' . $args . ' 2>&1';
+    if ($stdin === null) {
+        return (string) shell_exec($cmd);
+    }
+    $proc = proc_open($cmd, [0 => ['pipe', 'r'], 1 => ['pipe', 'w']], $pipes);
+    fwrite($pipes[0], $stdin);
+    fclose($pipes[0]);
+    $out = stream_get_contents($pipes[1]);
+    proc_close($proc);
+    return (string) $out;
+}
+
+function qa_new_token($name, $scopes, $user = null)
+{
+    $out = qa_cli('token create ' . escapeshellarg($name) . ' --scopes ' . escapeshellarg($scopes) . ($user ? ' --user ' . (int) $user : ''));
+    preg_match('/\b(cq_\d+_[0-9a-f]{40})\b/', $out, $m);
+    qa_assert(!empty($m[1]), "token create: $out");
+    return $m[1];
+}
+
+// JSON request with a token (or the session of $b when $token is null), optional CSRF header
+function qa_json($method, $path, $body = null, $token = null, $b = null, $headers = [])
+{
+    $b = $b ?? new QaBrowser();
+    $h = array_merge(['Accept: application/json', 'Content-Type: application/json'], $token ? ["Authorization: Bearer $token"] : [], $headers);
+    $r = $b->request($method, $path, ['headers' => $h] + ($body === null ? [] : ['form' => json_encode($body)]));
+    $r['json'] = json_decode($r['body'], true);
+    return $r;
+}
+
+$MCP_ID = 0;
+function qa_mcp($token, $method, $params = [], $headers = [])
+{
+    global $MCP_ID;
+    $h = array_merge(['Accept: application/json, text/event-stream', 'Content-Type: application/json'], $token ? ["Authorization: Bearer $token"] : [], $headers);
+    $r = (new QaBrowser())->request('POST', '/mcp', ['headers' => $h, 'form' => json_encode(['jsonrpc' => '2.0', 'id' => ++$MCP_ID, 'method' => $method, 'params' => (object) $params])]);
+    $r['json'] = json_decode($r['body'], true);
+    return $r;
+}
+
+function qa_tool($token, $name, $arguments = [])
+{
+    $r = qa_mcp($token, 'tools/call', ['name' => $name, 'arguments' => (object) $arguments]);
+    qa_equals(200, $r['status'], $r['body']);
+    $result = $r['json']['result'] ?? null;
+    qa_assert(is_array($result), 'tools/call result: ' . $r['body']);
+    $result['data'] = json_decode($result['content'][0]['text'] ?? 'null', true);
+    return $result;
+}
+
+// the CSRF token of a session, as browser clients get it: GET /capabilities
+function qa_csrf($b)
+{
+    $csrf = qa_json('GET', '/capabilities', null, null, $b)['json']['csrf'] ?? null;
+    qa_assert(is_string($csrf) && strlen($csrf) === 64, 'csrf from GET /capabilities');
+    return $csrf;
+}
+
+$WRITER = qa_new_token('qa writer', 'books:read,books:write');
+$READER = qa_new_token('qa reader', 'books:read');
+$shelf = new QaBrowser();
+
+qa_test('caligrafer capabilities lists the five Bookshelf capabilities with their schema', function () {
+    $list = array_column(json_decode(qa_cli('capabilities --json'), true) ?? [], null, 'name');
+    foreach (['list_books', 'get_book', 'create_book', 'update_book', 'delete_book'] as $name) {
+        qa_assert(isset($list[$name]), "$name listed");
+    }
+    qa_equals(['title', 'author', 'publisher_id'], $list['create_book']['input']['required']);
+    qa_equals(true, $list['delete_book']['destructive']);
+    qa_contains('| `create_book` |', qa_cli('capabilities --markdown'));
+});
+
+qa_test('a book created by a signed-in user on a web page is the same book through REST and MCP', function () use ($shelf, $WRITER) {
+    $shelf->post('/register', ['_token' => $shelf->token('/register'), 'username' => 'shelfqa', 'passcode' => 'Passw0rdQa', 'confirmpasscode' => 'Passw0rdQa']);
+    qa_contains('/home', $shelf->login('shelfqa', 'Passw0rdQa')['location']);
+    $r = $shelf->post('/bookshelf/books', ['_token' => qa_csrf($shelf), 'title' => '  Dune  ', 'author' => 'Frank Herbert', 'publisher_id' => '1']);
+    qa_equals(200, $r['status'], $r['body']);
+    preg_match('/created book #(\d+): Dune$/', trim($r['body']), $m);
+    qa_assert(!empty($m[1]), 'web page result: ' . $r['body']);
+    $rest = qa_json('GET', "/v2/books/{$m[1]}", null, $WRITER);
+    qa_equals(200, $rest['status'], $rest['body']);
+    qa_equals(['Dune', 'Frank Herbert'], [$rest['json']['data']['title'], $rest['json']['data']['author']]);
+    qa_assert(!array_key_exists('table', $rest['json']['data']), 'model internals are not exposed');
+    $tool = qa_tool($WRITER, 'get_book', ['id' => (int) $m[1]]);
+    qa_equals(false, $tool['isError']);
+    qa_equals($rest['json']['data'], $tool['data']);
+    qa_equals($rest['json']['data'], $tool['structuredContent']);
+});
+
+qa_test('a book an agent creates and updates through MCP is the same through REST and the generic endpoint', function () use ($WRITER, $shelf) {
+    $created = qa_tool($WRITER, 'create_book', ['title' => 'Ubik', 'author' => 'P. K. Dick', 'publisher_id' => 1]);
+    qa_equals(false, $created['isError'], json_encode($created));
+    $id = $created['data']['id'];
+    qa_equals(false, qa_tool($WRITER, 'update_book', ['id' => (int) $id, 'author' => 'Philip K. Dick'])['isError']);
+    qa_equals('Philip K. Dick', qa_json('GET', "/v2/books/$id", null, $WRITER)['json']['data']['author']);
+    $titles = array_column(qa_json('GET', '/v2/books', null, $WRITER)['json']['data'], 'title');
+    qa_assert(in_array('Ubik', $titles, true) && in_array('Dune', $titles, true), 'list: ' . implode(', ', $titles));
+    $generic = qa_json('POST', '/capabilities/get_book', ['id' => (int) $id], $WRITER);
+    qa_equals(200, $generic['status'], $generic['body']);
+    qa_equals('Ubik', $generic['json']['data']['title']);
+    // the signed-in user of the web page reads it through the session, the way the Vue apps do
+    qa_equals('Ubik', qa_json('POST', '/capabilities/get_book', ['id' => (int) $id], null, $shelf)['json']['data']['title']);
+});
+
+qa_test('invalid input gets the same field errors on the web page, REST, the generic endpoint and MCP', function () use ($shelf, $WRITER) {
+    $web = $shelf->post('/bookshelf/books', ['_token' => qa_csrf($shelf), 'author' => 'Nobody', 'publisher_id' => '99']);
+    qa_equals(422, $web['status'], $web['body']);
+    qa_contains('title:', $web['body']);
+    $rest = qa_json('POST', '/v2/books', ['author' => 'Nobody', 'publisher_id' => 99], $WRITER);
+    qa_equals(422, $rest['status'], $rest['body']);
+    qa_equals('invalid', $rest['json']['error']['code']);
+    qa_assert(isset($rest['json']['error']['fields']['title']), $rest['body']);
+    qa_equals($rest['json'], qa_json('POST', '/capabilities/create_book', ['author' => 'Nobody', 'publisher_id' => 99], $WRITER)['json']);
+    $tool = qa_tool($WRITER, 'create_book', ['author' => 'Nobody', 'publisher_id' => 99]);
+    qa_equals(true, $tool['isError']);
+    qa_equals($rest['json'], $tool['data']);
+    // a rule in handle() (the publisher must exist) is the same everywhere too
+    $noPublisher = ['title' => 'X', 'author' => 'Y', 'publisher_id' => 99];
+    qa_equals('There is no such publisher', qa_json('POST', '/v2/books', $noPublisher, $WRITER)['json']['error']['fields']['publisher_id']);
+    qa_equals('There is no such publisher', qa_tool($WRITER, 'create_book', $noPublisher)['data']['error']['fields']['publisher_id']);
+});
+
+qa_test('a token without the scope is refused on REST and does not see the tool on MCP', function () use ($READER) {
+    $r = qa_json('POST', '/v2/books', ['title' => 'X', 'author' => 'Y', 'publisher_id' => 1], $READER);
+    qa_equals(403, $r['status'], $r['body']);
+    qa_contains('books:write', $r['json']['error']['message']);
+    $tools = array_column(qa_mcp($READER, 'tools/list')['json']['result']['tools'], 'name');
+    qa_assert(in_array('list_books', $tools, true) && !in_array('create_book', $tools, true), 'reader tools: ' . implode(', ', $tools));
+    qa_equals(-32602, qa_mcp($READER, 'tools/call', ['name' => 'create_book', 'arguments' => (object) []])['json']['error']['code']);
+    qa_equals(200, qa_json('GET', '/v2/books', null, $READER)['status']);
+});
+
+qa_test('the permission level of a token owner applies on REST and MCP alike; an application token has its scopes only', function () use ($WRITER) {
+    $userId = (int) qa_sql("SELECT id FROM users WHERE username = 'shelfqa'");
+    qa_assert($userId > 0, 'shelfqa exists');
+    $owned = qa_new_token('owned by shelfqa', 'books:*', $userId);
+    $id = qa_tool($WRITER, 'create_book', ['title' => 'Emma', 'author' => 'Jane Austen', 'publisher_id' => 1])['data']['id'];
+    qa_equals(403, qa_json('DELETE', "/v2/books/$id", null, $owned)['status']);
+    qa_assert(!in_array('delete_book', array_column(qa_mcp($owned, 'tools/list')['json']['result']['tools'], 'name'), true), 'level 0 owner: no delete tool');
+    qa_sql("UPDATE users SET permissions = 1 WHERE id = $userId");
+    $tool = qa_tool($owned, 'delete_book', ['id' => (int) $id]);
+    qa_equals(false, $tool['isError'], json_encode($tool));
+    qa_equals(['deleted' => (int) $id], $tool['data']);
+    qa_equals(404, qa_json('GET', "/v2/books/$id", null, $WRITER)['status']);
+    qa_sql("UPDATE users SET permissions = 0 WHERE id = $userId");
+});
+
+qa_test('without credentials: 401 with WWW-Authenticate on REST and MCP; MCP refuses the legacy key', function () use ($API_KEY) {
+    $r = qa_json('GET', '/v2/books');
+    qa_equals(401, $r['status'], $r['body']);
+    qa_contains('WWW-Authenticate: Bearer', $r['headers']);
+    qa_equals('unauthenticated', $r['json']['error']['code']);
+    $m = qa_mcp(null, 'tools/list');
+    qa_equals(401, $m['status'], $m['body']);
+    qa_contains('WWW-Authenticate: Bearer', $m['headers']);
+    qa_equals(401, qa_mcp($API_KEY, 'tools/list')['status']);
+    // the legacy key keeps working on REST, as it did on every JSON route
+    qa_equals(200, qa_json('GET', '/v2/books', null, $API_KEY)['status']);
+});
+
+qa_test('session calls that write need the CSRF header; token calls do not', function () use ($shelf) {
+    // the previous test changed the user row: Auth::authorized() compares the whole row, so sign in again
+    qa_contains('/home', $shelf->login('shelfqa', 'Passw0rdQa')['location']);
+    $body = ['title' => 'Kindred', 'author' => 'Octavia E. Butler', 'publisher_id' => 1];
+    $r = qa_json('POST', '/v2/books', $body, null, $shelf);
+    qa_equals(403, $r['status'], $r['body']);
+    qa_contains('CSRF', $r['json']['error']['message']);
+    $r = qa_json('POST', '/v2/books', $body, null, $shelf, ['X-CSRF-Token: ' . qa_csrf($shelf)]);
+    qa_equals(201, $r['status'], $r['body']);
+    qa_equals('Kindred', $r['json']['data']['title']);
+});
+
+qa_test('a revoked token stops working on REST and MCP at once', function () {
+    $token = qa_new_token('to revoke', 'books:read');
+    qa_equals(200, qa_json('GET', '/v2/books', null, $token)['status']);
+    preg_match('/^cq_(\d+)_/', $token, $m);
+    qa_contains('revoked', qa_cli('token revoke ' . $m[1]));
+    qa_equals(401, qa_json('GET', '/v2/books', null, $token)['status']);
+    qa_equals(401, qa_mcp($token, 'tools/list')['status']);
+    qa_contains('revoked', qa_cli('token list'));
+});
+
+qa_test('MCP over HTTP: initialize, notifications, a foreign Origin, GET', function () use ($WRITER) {
+    $init = qa_mcp($WRITER, 'initialize', ['protocolVersion' => '2025-06-18', 'capabilities' => (object) [], 'clientInfo' => ['name' => 'qa', 'version' => '1']]);
+    qa_equals(200, $init['status'], $init['body']);
+    qa_equals('2025-06-18', $init['json']['result']['protocolVersion']);
+    qa_contains('application/json', $init['headers']);
+    $n = (new QaBrowser())->request('POST', '/mcp', ['headers' => ['Accept: application/json, text/event-stream', 'Content-Type: application/json', "Authorization: Bearer $WRITER"],
+        'form' => json_encode(['jsonrpc' => '2.0', 'method' => 'notifications/initialized'])]);
+    qa_equals(202, $n['status'], $n['body']);
+    qa_equals(403, qa_mcp($WRITER, 'tools/list', [], ['Origin: https://evil.example'])['status']);
+    qa_equals(405, (new QaBrowser())->get('/mcp', ['headers' => ['Accept: application/json']])['status']);
+});
+
+qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per message with the token', function () use ($READER) {
+    $in = json_encode(['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => ['protocolVersion' => '2025-06-18']]) . "\n"
+        . json_encode(['jsonrpc' => '2.0', 'method' => 'notifications/initialized']) . "\n"
+        . json_encode(['jsonrpc' => '2.0', 'id' => 2, 'method' => 'tools/list']) . "\n";
+    $lines = array_values(array_filter(explode("\n", qa_cli('mcp --token ' . escapeshellarg($READER), $in))));
+    $answers = array_values(array_filter(array_map(fn ($l) => json_decode($l, true), $lines)));
+    qa_equals(2, count($answers), implode("\n", $lines));
+    qa_equals('2025-06-18', $answers[0]['result']['protocolVersion']);
+    $tools = array_column($answers[1]['result']['tools'], 'name');
+    qa_assert(in_array('get_book', $tools, true) && !in_array('create_book', $tools, true), 'stdio tools: ' . implode(', ', $tools));
+});
+
+qa_test('the audit log names the web page, REST and MCP calls and the refusals', function () {
+    $out = qa_cli('audit --capability create_book --limit 100');
+    foreach (['web   user', 'rest  token', 'mcp   token', 'invalid', 'forbidden'] as $needle) {
+        qa_contains($needle, $out);
+    }
+    qa_contains('delete_book', qa_cli('audit --limit 100'));
+});
+
 qa_summary();

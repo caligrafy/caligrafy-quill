@@ -81,7 +81,11 @@ $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n"
     . "    Route::post(\"/facelogin/login\", \"FaceLoginController@login\");\n    Route::get(\"/facelogin/me\", \"FaceLoginController@me\");\n"
     . "    Route::post(\"/facelogin/logout\", \"FaceLoginController@signout\");\n"
     . "    Route::post(\"/passkey/register/options\", \"PasskeyController@registerOptions\");\n    Route::post(\"/passkey/register\", \"PasskeyController@register\");\n"
-    . "    Route::post(\"/passkey/login/options\", \"PasskeyController@loginOptions\");\n    Route::post(\"/passkey/login\", \"PasskeyController@login\");\n";
+    . "    Route::post(\"/passkey/login/options\", \"PasskeyController@loginOptions\");\n    Route::post(\"/passkey/login\", \"PasskeyController@login\");\n"
+    . "    Route::capabilities(\"/capabilities\");\n    Route::mcp(\"/mcp\");\n"
+    . "    Route::capability(\"GET\", \"/v2/books\", \"list_books\");\n    Route::capability(\"GET\", \"/v2/books/{id}\", \"get_book\");\n"
+    . "    Route::capability(\"POST\", \"/v2/books\", \"create_book\");\n    Route::capability(\"PUT\", \"/v2/books/{id}\", \"update_book\");\n"
+    . "    Route::capability(\"DELETE\", \"/v2/books/{id}\", \"delete_book\");\n    Route::post(\"/bookshelf/books\", \"BookPageController@store\");\n";
 $s = str_replace("    Route::run();", $qa . "    Route::run();", $s);
 file_put_contents($f, $s);
 '
