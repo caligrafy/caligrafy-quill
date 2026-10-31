@@ -24,8 +24,8 @@ RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-a
 COPY . .
 RUN composer dump-autoload --optimize --no-dev \
     && mkdir -p public/uploads backups \
-    && chown -R www-data:www-data public/uploads \
-    && chmod +x docker/production-start.sh
+    && chown -R www-data:www-data public/uploads
 
 EXPOSE 80
-CMD ["docker/production-start.sh"]
+# prepare the database (it waits for it), then serve: a database that is not ready does not keep the site down
+CMD ["sh", "-c", "php caligrafer.php deploy --wait ${CALIGRAFY_DEPLOY_WAIT:-60} || echo 'caligrafer deploy: the database is not prepared (see above)'; exec apache2-foreground"]

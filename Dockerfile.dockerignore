@@ -16,3 +16,4 @@ claude-plugin
 .DS_Store
 public/uploads/*
 !public/uploads/.gitignore
+.caligrafy

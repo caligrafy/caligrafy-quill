@@ -47,7 +47,9 @@ class Mail extends \stdClass {
 		$this->mailer->isSMTP();
 		$this->mailer->Mailer = "smtp";
         // .env values are strings: 'false' must turn the debug output off
-        $this->mailer->SMTPDebug = defined('APP_DEBUG') && filter_var(APP_DEBUG, FILTER_VALIDATE_BOOLEAN)? 1 : 0;   
+        $this->mailer->SMTPDebug = defined('APP_DEBUG') && filter_var(APP_DEBUG, FILTER_VALIDATE_BOOLEAN)? 1 : 0;
+        // the SMTP log goes to the server log, never into the page or the JSON answer of an API call
+        $this->mailer->Debugoutput = 'error_log';
 		$this->mailer->SMTPAuth = true;
 		$this->mailer->Port = $this->mailPort;   
 		if ($this->mailPort == 465) {

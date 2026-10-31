@@ -61,6 +61,7 @@ $defaultMsg = "\n Available Functions:
 				\n - capabilities [--json | --markdown]: the capabilities of application/services/ (what REST, MCP and the JS client can call)
 				\n - call <capability> ['{\"key\": \"value\"}' | key=value ...] [--token <token>] [--guest]: calls a capability and prints its JSON answer (full local access unless --token or --guest)
 				\n - deploy [--wait <seconds>]: prepares the database in production: framework tables and every new or changed application/models/<folder>/create_db.sql (never one that drops or deletes data twice)
+				\n - cloud <login | create | deploy | apps | status | logs | extend | credits | secret | delete>: puts the project online at https://<name>.caligrafy.com with Caligrafy Cloud (cloud help)
 				\n - mcp [--token <token>]: MCP server over stdio for local AI agents (Claude Code, Cursor...): php caligrafer.php mcp
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
@@ -377,6 +378,10 @@ switch(strtolower($argv[1])) {
 			if ($list) print("\n");
 		}
 		break;
+
+	case 'cloud':
+		// Caligrafy Cloud: put the project online at https://<name>.caligrafy.com (php caligrafer.php cloud help)
+		exit((new Caligrafy\CloudClient('.'))->run(array_slice($argv, 2)));
 
 	case 'deploy':
 		// What the production image runs at start: waits for the database, framework tables, new or changed create_db.sql
