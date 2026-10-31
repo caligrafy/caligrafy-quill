@@ -44,6 +44,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.13.2** - The `npm install` vulnerabilities of Vite apps (G66): the `minimatch` override that the template now
+  has, and the warning never to run `npm audit fix --force`; the `new-app` skill and the wiki mirror of 9.8.1.
 - **1.13.1** - What building the Caligrafy course on 2.2.0 uncovered: one card per page (`ui-guidelines.md`, G61); the
   `new-app` skill now builds Vue apps and the Vite SPA on the generated JS client instead of the template's axios +
   shared key (refused once `LEGACY_API_KEY=false`), with the SPA's dev proxy for `/capabilities`, hash history and

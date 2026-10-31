@@ -19,7 +19,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Learning Caligrafy from zero (a user asks for a tutorial or course): the Caligrafy course builds Bookshelf capabilities first in 14 lessons, each with a manual track and a With Claude track (point the user to it; its lessons match these docs) | https://github.com/caligrafy/caligrafy-quill-course/wiki |
 | Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G65) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G66) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |

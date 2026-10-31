@@ -7,7 +7,7 @@ argument-hint: "<app|create|bot|facedetect|ml> <name>"
 
 # Scaffold a Caligrafy client app
 
-Arguments: `$ARGUMENTS` = `<type> <name>`. Types: `app` (Vue 3 as a library, default), `create` (Vite 8 SPA with Vue Router 5 + Pinia, needs Node 20.19+/22.12+ on the computer: the Docker `dev-box` has no Node, so `caligrafer create` run there prints `sh: 1: npm: not found` and then a false "successfully created and all packages have been installed" line; run `cd public/<name> && npm install` on the computer), `bot`, `facedetect`, `ml`.
+Arguments: `$ARGUMENTS` = `<type> <name>`. Types: `app` (Vue 3 as a library, default), `create` (Vite 8 SPA with Vue Router 5 + Pinia, needs Node 20.19+/22.12+ on the computer: the Docker `dev-box` has no Node, so `caligrafer create` run there prints `sh: 1: npm: not found` and then a false "successfully created and all packages have been installed" line; run `cd public/<name> && npm install` on the computer; if it reports 10 moderate vulnerabilities, see G66: never `npm audit fix --force`), `bot`, `facedetect`, `ml`.
 
 Read first: [09.7.2-vue-routes.md](../caligrafy/reference/09.7.2-vue-routes.md), [gotchas.md](../caligrafy/reference/gotchas.md) G1, G15, G16, G22, G27, G35, G36, G40-G43, and the page for the type
 (09.7.x for `app`, 09.8.x for `create`, 09.9.1 bot, 09.9.2 facedetect, 09.9.3 ml).
