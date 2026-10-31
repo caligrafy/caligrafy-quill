@@ -12,6 +12,7 @@
         <link rel="stylesheet" type="text/css" href="<?php echo scripts('css'); ?>" />
         <link rel="stylesheet" href="<?php echo scripts('bootstrap_css'); ?>" />
         <link rel="stylesheet" href="<?php echo session('public').'css/theme.css';?>">
+        <link rel="stylesheet" href="<?php echo session('public').'css/tokens.css';?>">
         
     </head>
     

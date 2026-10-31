@@ -10,6 +10,7 @@ import axios from "axios"
 
 import '../../css/styles.css'
 import '../../css/theme.css'
+import '../../css/tokens.css'
 import '../../css/animate.css'
 
 

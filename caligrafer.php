@@ -55,6 +55,7 @@ $defaultMsg = "\n Available Functions:
 				\n - token <create | list | revoke>: personal access tokens for REST and MCP clients (scoped, revocable)
 				\n - audit [--limit 50] [--capability <name>]: the latest capability calls
 				\n - service <Name> [--scope books:write] [--read-only]: creates a capability in application/services/
+				\n - client [<file>] [--prefix /capabilities]: writes the JS client of the capabilities (default public/js/capabilities.js)
 				\n - capabilities [--json | --markdown]: the capabilities of application/services/ (what REST, MCP and the JS client can call)
 				\n - mcp [--token <token>]: MCP server over stdio for local AI agents (Claude Code, Cursor...): php caligrafer.php mcp
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
@@ -302,6 +303,21 @@ switch(strtolower($argv[1])) {
 		@mkdir(dirname($file), 0755, true);
 		file_put_contents($file, $code);
 		print("\n Created $file: capability '$name'" . ($scope ? " (scope $scope)" : '') . "\n Fill in \$rules and handle(), then call it from a controller (\$this->call('$name')), REST (Route::capability) or MCP (Route::mcp)\n\n");
+		break;
+
+	case 'client':
+		// php caligrafer.php client [<file>] [--prefix /capabilities]: the JS client of the capabilities
+		$target = isset($argv[2]) && strpos($argv[2], '--') !== 0 ? $argv[2] : 'public/js/capabilities.js';
+		$prefixAt = array_search('--prefix', $argv);
+		$prefix = $prefixAt !== false ? ($argv[$prefixAt + 1] ?? '/capabilities') : '/capabilities';
+		$code = Caligrafy\Client::generate($prefix);
+		@mkdir(dirname($target), 0755, true);
+		if (file_put_contents($target, $code) === false) {
+			print("\n Could not write $target\n\n");
+			exit(1);
+		}
+		print("\n $target written: " . count(Caligrafy\Capabilities::all()) . " capabilities, calls $prefix (Route::capabilities('$prefix') in web.php)\n"
+			. " import { createBook, CapabilityError } from './capabilities.js'\n\n");
 		break;
 
 	case 'capabilities':

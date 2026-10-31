@@ -976,6 +976,23 @@ qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per messag
     qa_assert(in_array('get_book', $tools, true) && !in_array('create_book', $tools, true), 'stdio tools: ' . implode(', ', $tools));
 });
 
+qa_test('the generated JS client calls the same capabilities from Node with a token', function () use ($WRITER, $BASE, $ROOT) {
+    @mkdir("$ROOT/qa/tmp", 0777, true);
+    qa_contains('5 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));
+    $script = "$ROOT/qa/tmp/client-check.mjs";
+    file_put_contents($script, "import { configure, listBooks, createBook, getBook, CapabilityError } from './capabilities.mjs'\n"
+        . "configure({ baseUrl: process.argv[2], token: process.argv[3] })\n"
+        . "const book = await createBook({ title: 'Solaris', author: 'Stanislaw Lem', publisher_id: 1 })\n"
+        . "const again = await getBook({ id: book.id })\n"
+        . "let refused = null\n"
+        . "try { await createBook({ author: 'Nobody' }) } catch (e) { refused = e instanceof CapabilityError ? [e.status, e.code, Object.keys(e.fields).sort()] : String(e) }\n"
+        . "console.log(JSON.stringify({ title: again.title, listed: (await listBooks()).some(b => b.id === book.id), refused }))\n");
+    $out = shell_exec('node ' . escapeshellarg($script) . ' ' . escapeshellarg($BASE) . ' ' . escapeshellarg($WRITER) . ' 2>&1');
+    $result = json_decode(trim((string) $out), true);
+    qa_assert(is_array($result), "node: $out");
+    qa_equals(['title' => 'Solaris', 'listed' => true, 'refused' => [422, 'invalid', ['publisher_id', 'title']]], $result);
+});
+
 qa_test('the audit log names the web page, REST and MCP calls and the refusals', function () {
     $out = qa_cli('audit --capability create_book --limit 100');
     foreach (['web   user', 'rest  token', 'mcp   token', 'invalid', 'forbidden'] as $needle) {
