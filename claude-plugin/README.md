@@ -1,5 +1,7 @@
 # caligrafy-quill - Claude Code plugin
 
+![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
+
 Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligrafy/caligrafy-quill), the "Build Once, Experience Everywhere" framework: Claude writes a feature once as a capability and serves it to web pages, Vue apps, REST and AI agents.
 
 | Component | Name | What it does |
@@ -42,6 +44,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.11.1** - Caligrafy Quill 2.1.1: `application/services/` in the project layout (shipped empty by the template,
+  added by `upgrade --apply`) and in the API reference; the plugin, marketplace and wiki descriptions present
+  Caligrafy as the "Build Once, Experience Everywhere" framework, with its banner; wiki mirrors synced.
 - **1.11.0** - Build once (Caligrafy Quill 2.1.0): new `/caligrafy-quill:new-capability` skill; wiki mirrors of
   "11. Build Once: Services, Capabilities and MCP" and "Release notes: 2.1.0"; API reference of `Service`,
   `#[Capability]`, `Capabilities`, `Context`, `Tokens`, `Audit`, `Rest`, `Mcp\Server`/`Http`, `Client` and the new

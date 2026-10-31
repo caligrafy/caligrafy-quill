@@ -4,7 +4,7 @@
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
 # Caligrafy - Build Once, Experience Everywhere
-![Caligrafy](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/caligrafy-vue2.png)
+![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
 
 ## What is Caligrafy
 
