@@ -21,7 +21,7 @@ class Framework extends \stdClass {
   /**
    * Version of Caligrafy Quill (semantic versioning: the git tag is v<VERSION>, the changes are in CHANGELOG.md)
    */
-  const VERSION = '2.1.0';
+  const VERSION = '2.1.1';
     
   /**
    * Framework main 

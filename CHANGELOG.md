@@ -6,6 +6,12 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.1.1] - 2026-10-31
+
+### Fixed
+- New projects get an empty `application/services/` folder, where capabilities live, as the documentation says.
+  `php caligrafer.php upgrade --apply` adds it to existing projects.
+
 ## [2.1.0] - 2026-10-31
 
 Build once, experience everywhere: a feature written once as a capability is served to web pages, Vue apps, REST and
@@ -69,5 +75,6 @@ every change, what can break and the upgrade checklist for existing projects.
 - `.env` and the server files are no longer served, uploads are limited to an allow-list of extensions, and
   scripts never run from `public/uploads`.
 
+[2.1.1]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.1
 [2.1.0]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.1.0
 [2.0.0]: https://github.com/caligrafy/caligrafy-quill/releases/tag/v2.0.0

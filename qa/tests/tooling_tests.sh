@@ -43,8 +43,8 @@ php caligrafer.php initialize >/dev/null 2>&1
 FIRST=$(grep -c '^APP_KEY=' .env); KEY1=$(grep '^APP_KEY=' .env | head -1)
 php caligrafer.php initialize >/dev/null 2>&1
 SECOND=$(grep -c '^APP_KEY=' .env); KEY2=$(grep '^APP_KEY=' .env | head -1)
-if [ "$FIRST" = 1 ] && [ "$SECOND" = 1 ] && [ "$KEY1" = "$KEY2" ] && [ -d application ]; then
-    ok "caligrafer initialize keeps existing APP_KEY/API_KEY when re-run"
+if [ "$FIRST" = 1 ] && [ "$SECOND" = 1 ] && [ "$KEY1" = "$KEY2" ] && [ -d application ] && [ -d application/services ]; then
+    ok "caligrafer initialize keeps existing APP_KEY/API_KEY when re-run, and creates application/services/"
 else
     ko "caligrafer initialize re-run" "APP_KEY lines: $FIRST then $SECOND; key kept: $([ "$KEY1" = "$KEY2" ] && echo yes || echo no)"
 fi

@@ -56,6 +56,7 @@ application/                 # YOUR server code - every .php here is auto-requir
   config/routing/web.php     # ALL routes; ends with Route::run()
   controllers/               # *Controller.php, any sub-folders (core/Auth, core/AI ship by default)
   models/                    # Model classes + create_db.sql scripts (models/Auth/User.php, models/Auth/create_db.sql)
+  services/                  # capabilities: Service classes with #[Capability] (php caligrafer.php service <Folder/Name>); empty in a new project
   views/                     # .pug templates (default/, Auth/, AI/, Client/app.pug)
 public/                      # browser-facing: css, js, images, uploads, client apps public/<appName>/
 framework/                   # core (rarely edited); framework/settings/application is the template for application/

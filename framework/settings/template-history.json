@@ -68,6 +68,9 @@
         "43343045db96b8ca64724c6ab72d330a37b6c1db24f8844d1cef0bdc506e82e9",
         "dd51e4b2dfcb9fd655a16a2359625d021b290e0fc64bd638743a504457d4319f"
     ],
+    "services/.gitignore": [
+        "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
     "views/.gitignore": [
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     ],

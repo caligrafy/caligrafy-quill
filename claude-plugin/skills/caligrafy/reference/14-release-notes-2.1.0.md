@@ -10,7 +10,7 @@ Caligrafy Quill **2.1.0** adds the build-once layer: write a feature once as a *
 Do these steps in order, on a branch, and commit after each one.
 
 1. **Update the framework**: `git pull` (or download the release), then check: `php caligrafer.php version` prints `Caligrafy Quill 2.1.0`.
-2. **Update your `application` folder**: `php caligrafer.php upgrade`, then `php caligrafer.php upgrade --apply` (the default layout now links `public/css/tokens.css`).
+2. **Update your `application` folder**: `php caligrafer.php upgrade`, then `php caligrafer.php upgrade --apply` (the default layout now links `public/css/tokens.css`, and since 2.1.1 it adds the empty `application/services/` folder of your capabilities).
 3. **Create the framework tables**: `php caligrafer.php platform install` (with Docker: `docker compose exec dev-box php caligrafer.php platform install`).
 4. **Optional, when you adopt capabilities**: add `Route::capabilities('/capabilities');` and `Route::mcp('/mcp');` to `web.php`, create your first service with `php caligrafer.php service <Name>`, generate the JS client with `php caligrafer.php client`.
 5. **Move API clients to tokens**: `php caligrafer.php token create <name> --scopes <scopes>` for each program or agent; browser apps call the capabilities through the JS client and the session instead of the API key.
