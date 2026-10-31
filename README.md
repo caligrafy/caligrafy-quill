@@ -103,7 +103,7 @@ feature step by step, page included.
 | --- | --- |
 | Get started | [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart), then [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) |
 | Understand the idea | [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
-| Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course): build a complete application in 15 lessons |
+| Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course): build a complete application in 14 lessons, capabilities first, by hand or with Claude |
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
 | Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
 | See what changed | [Changelog](CHANGELOG.md) and the [release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0) |
