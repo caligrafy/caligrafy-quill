@@ -33,6 +33,9 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
 - Bound queries only (`?` placeholders and `'bindings'`): never concatenate request data into SQL.
 - Every new page or client app UI uses the page components of `public/css/tokens.css` (`main.cq-page > .cq-card`, `.cq-form`,
   `.cq-tabs`, `.cq-list`): see `ui-guidelines.md`, and check it at desktop and phone width.
+- Another look is a design style (`DESIGN_STYLE` in `.env`, `php caligrafer.php design`): restyle only in
+  `public/css/designs/<name>.css`, written from `framework/designs/<name>/DESIGN.md`; never edit `tokens.css`, `theme.css`,
+  `styles.css` or the views for it, so that an empty `DESIGN_STYLE` gives the Caligrafy look back.
 - Never put an API key or a personal access token in a page, a `VITE_` variable or a bundle: browser clients use the
   session through the generated JS client; programs and agents use tokens (`php caligrafer.php token create`).
 - Never print or commit secrets from `.env`. `php caligrafer.php initialize` deletes `.git`: ask before running it.

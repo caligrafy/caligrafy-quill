@@ -20,6 +20,10 @@ block headers
 		link(rel="stylesheet", type="text/css", href=scripts('animate'))
         include ../modules/touchicons
         link(rel="stylesheet", type="text/css", href=scripts('social_buttons_css'))
+        //- DESIGN_STYLE in .env: the override stylesheet of the selected style (public/css/designs/<name>.css), loaded last
+        - $design_css = design_stylesheet();
+        if $design_css
+            link(rel="stylesheet", href=$design_css)
         if $google_analytics
             script(async src="https://www.googletagmanager.com/gtag/js?id={$analytics_id}")
             script.

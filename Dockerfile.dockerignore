@@ -10,6 +10,8 @@ qa
 tests
 backups
 claude-plugin
+framework/designs
+framework/designs-extra
 .claude
 .claude-plugin
 *.log

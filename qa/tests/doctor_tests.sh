@@ -121,6 +121,20 @@ CODE=$(doctor groq-llama --only agent)
 grep -q '^  WARN  AGENT_MODEL: llama-3.3-70b-versatile is not available for this key' "$TMP/groq-llama.out" && grep -q 'Llama chat models are gone' "$TMP/groq-llama.out" && [ "$CODE" = 0 ] \
     && ok "doctor: AGENT_PROVIDER=groq checks AGENT_MODEL, a retired Groq Llama id is a WARN" || ko "doctor Groq Llama (exit $CODE)" "$(cat "$TMP/groq-llama.out")"
 
+# DESIGN_STYLE: the selected design style; an unknown one is a WARN (the pages keep the Caligrafy look)
+grep -q '^  OK    Design style: Caligrafy'"'"'s own look (DESIGN_STYLE is empty)' "$TMP/all.out" && ok "doctor: an empty DESIGN_STYLE reports the Caligrafy look" \
+    || ko "doctor design style (default)" "$(grep -i design "$TMP/all.out")"
+variant design-unknown "\$a\\
+DESIGN_STYLE=no-such-style"
+variant design-selected "\$a\\
+DESIGN_STYLE=claude"
+CODE=$(doctor design-unknown --only project)
+grep -q "^  WARN  Design style: 'no-such-style' is unknown" "$TMP/design-unknown.out" && grep -q 'design list' "$TMP/design-unknown.out" && [ "$CODE" = 0 ] \
+    && ok "doctor: an unknown DESIGN_STYLE is a WARN that points to design list" || ko "doctor unknown design style (exit $CODE)" "$(cat "$TMP/design-unknown.out")"
+CODE=$(doctor design-selected --only project)
+grep -q '^  WARN  Design style: claude selected, but public/css/designs/claude.css is not written yet' "$TMP/design-selected.out" && grep -q '/caligrafy-quill:design' "$TMP/design-selected.out" \
+    && ok "doctor: a selected style without its stylesheet is a WARN that points to the design skill" || ko "doctor selected design style (exit $CODE)" "$(cat "$TMP/design-selected.out")"
+
 LEAK=""
 for secret in "$OPENAI" "$GROQ" "$TOGETHER" "$OPENROUTER" "$STRIPE" "$WATSON" "$COINBASE" "QaDoctorSecret" "$(sed -n 's/^APP_KEY=//p' .env)" "$(sed -n 's/^API_KEY=//p' .env)"; do
     grep -lF -- "$secret" "$TMP"/*.out >/dev/null 2>&1 && LEAK="$LEAK ${secret%"${secret#????????}"}..."

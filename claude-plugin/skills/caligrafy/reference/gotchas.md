@@ -353,3 +353,25 @@ created in that hour to expire an hour later was refused at once. `Tokens::creat
 local time after it (02:00): a token never stops early, at worst an hour late. A `date('Y-m-d H:i:s', ...)` string is
 still accepted and stored as given (without that protection). `Tokens::verify()` and `token list` share
 `Tokens::expired()`. Proof: `framework/core/Tokens.php`.
+
+**G92. A design style changes nothing until its stylesheet exists (2.8+).** `DESIGN_STYLE=<name>` in `.env` only
+selects a style: the layout (`design_stylesheet()` in `layoutblocks.pug` and `framework/plugins/app/index.php`) links
+`public/css/designs/<name>.css` when that file exists, after `styles.css`, Bootstrap, `theme.css` and `tokens.css`.
+An empty setting, an unknown name, a name that is not `[a-z0-9._-]` (no paths) or a style whose stylesheet is not
+written yet all keep the Caligrafy look; `doctor` says which (`WARN Design style: ...`). The `design` skill writes the
+stylesheet from `framework/designs/<name>/DESIGN.md`, `framework/designs-extra/<name>/` (styles from outside the
+awesome-design-md collection, such as `interstellar`) or `application/designs/<name>/`, which wins. Never restyle by
+editing `tokens.css`, `tokens.json` (the QA suite checks they match), `theme.css`, `styles.css` or the views: an emptied
+`DESIGN_STYLE` must bring the Caligrafy look back. Projects copied before 2.8 have no `design_stylesheet()` line in
+their layout: `php caligrafer.php upgrade` updates an untouched `layoutblocks.pug`, otherwise add the four lines by hand.
+Proof: `framework/core/Designs.php`.
+
+**G93. A design stylesheet wins by specificity, not `!important`.** `styles.css` sets `font-family` and
+`font-weight: lighter` on `body *`, `theme.css` colors buttons on `html .btn-primary` / `html .btn-secondary` through
+Bootstrap's `--bs-btn-*` variables and gives `.form-control` `height: 3em; font-size: 1.5em`: prefix every rule of
+`public/css/designs/<name>.css` with `html body`, redefine the whole `--bs-btn-*` set and set `background-color` /
+`border-color` / `color` too. The sign-in button is `btn btn-primary btn-secondary w-100` (it renders as the white
+secondary button in the Caligrafy look): style `.btn-primary.btn-secondary` as the main action. A Vite SPA imports its
+CSS at build time (`src/main.js`): it needs `import '../../css/designs/<name>.css'` and a rebuild. Online: commit the
+stylesheet and set `DESIGN_STYLE` on the server (`cloud secret set <app> DESIGN_STYLE=<name>`); the production image
+leaves `framework/designs/` out.

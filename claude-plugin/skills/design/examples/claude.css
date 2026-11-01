@@ -1,0 +1,138 @@
+@import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap');
+/* Design style "claude": warm cream canvas, serif display headlines, coral primary actions, hairlines instead of shadows.
+ * Written from framework/designs/claude/DESIGN.md (VoltAgent/awesome-design-md, MIT) by /caligrafy-quill:design.
+ * Loaded after the Caligrafy stylesheets when DESIGN_STYLE=claude in .env; empty DESIGN_STYLE brings the Caligrafy look back.
+ * Inspiration only: the application keeps its own name and logo. */
+
+/* 1. Tokens ------------------------------------------------------------------------------------------------- */
+:root {
+  --design-canvas: #faf9f5;          /* the page: cream, never pure white */
+  --design-surface-soft: #f5f0e8;
+  --design-surface-card: #efe9de;    /* cream cards, active tabs, badges */
+  --design-ink: #141413;
+  --design-body: #3d3d3a;
+  --design-muted: #6c6a64;
+  --design-hairline: #e6dfd8;
+  --design-primary: #cc785c;         /* coral: primary actions only */
+  --design-primary-active: #a9583e;
+  --design-primary-disabled: #e6dfd8;
+  --design-on-primary: #ffffff;
+  --design-error: #c64545;
+  --design-success: #5db872;
+  --design-focus-ring: rgba(204, 120, 92, .15);
+  --design-font-display: Copernicus, 'Tiempos Headline', 'Cormorant Garamond', 'EB Garamond', Garamond, serif;
+  --design-font-body: StyreneB, Inter, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --design-font-code: 'JetBrains Mono', ui-monospace, monospace;
+  --design-radius-control: 8px;
+  --design-radius-card: 12px;
+
+  /* the Caligrafy tokens this style replaces (the page components read them) */
+  --cq-color-ink: var(--design-ink);
+  --cq-color-paper: var(--design-canvas);
+  --cq-color-page: var(--design-canvas);
+  --cq-color-text: var(--design-body);
+  --cq-color-text-muted: var(--design-muted);
+  --cq-color-border: var(--design-hairline);
+  --cq-color-accent-dark: var(--design-muted);
+  --cq-color-accent-light: var(--design-surface-soft);
+  --cq-color-accent-red: var(--design-error);
+  --cq-radius-control: var(--design-radius-control);
+}
+
+/* 2. Layout: body, header, footer ---------------------------------------------------------------------------- */
+html body { background-color: var(--design-canvas); color: var(--design-body); font-size: 15px; }
+html body * { font-family: var(--design-font-body); font-weight: 400; }
+html body h1, html body h2, html body h3 { font-family: var(--design-font-display); font-weight: 500; letter-spacing: -.02em; color: var(--design-ink); }
+html body .semibold, html body .semi-bold, html body strong, html body b { font-weight: 500; }
+html body code, html body pre, html body kbd { font-family: var(--design-font-code); }
+html body header { background-color: var(--design-canvas); color: var(--design-ink); border-bottom: 1px solid var(--design-hairline); }
+html body .shadowCoverTop { background-color: var(--design-canvas); }
+html body header h1.large-text, html body header h1.large-text * { font-family: var(--design-font-display); font-size: 26px; letter-spacing: -.02em; color: var(--design-ink); }
+html body .radialShadowTop { display: none; }   /* flat: no shadows under the header */
+html body footer, html body footer * { color: var(--design-muted); }
+html body .color4, html body .content-section.color4 { background-color: var(--design-canvas); color: var(--design-body); }
+html body .color0, html body .card.color0 { background-color: var(--design-canvas); color: var(--design-body); border-color: var(--design-hairline); }
+html body .textcolor5, html body .default-text.textcolor5 { color: var(--design-muted); }
+html body a:not(.btn) { color: var(--design-ink); }
+html body .btn-link, html body a.btn-link:link, html body a.btn-link:visited { color: var(--design-primary-active); }
+
+/* 3. Sign-in pages: Caligrafy cards (.card.dropshadow) become hairline cream cards ---------------------------------- */
+html body .card, html body .card-unbounded, html body .dropshadow {
+  background-color: var(--design-canvas); border: 1px solid var(--design-hairline); border-radius: var(--design-radius-card); box-shadow: none;
+}
+html body .card .medium-text { color: var(--design-ink); }
+html body .alert { border-radius: var(--design-radius-control); border: 1px solid var(--design-hairline); background: var(--design-surface-soft); color: var(--design-body); }
+html body .alert-danger { border-color: var(--design-error); }
+html body .alert-success { border-color: var(--design-success); }
+
+/* 4. Controls: buttons and fields (Bootstrap reads its --bs-btn-* variables) ---------------------------------------- */
+html body .btn {
+  --bs-btn-border-radius: var(--design-radius-control);
+  font-family: var(--design-font-body); font-weight: 500; font-size: 14px; height: auto; min-height: 40px; padding: 10px 20px; box-shadow: none;
+}
+html body .btn-primary, html body .btn-primary.btn-secondary {   /* the sign-in button is btn-primary btn-secondary: the main action */
+  --bs-btn-color: var(--design-on-primary); --bs-btn-bg: var(--design-primary); --bs-btn-border-color: var(--design-primary);
+  --bs-btn-hover-color: var(--design-on-primary); --bs-btn-hover-bg: var(--design-primary); --bs-btn-hover-border-color: var(--design-primary);
+  --bs-btn-active-color: var(--design-on-primary); --bs-btn-active-bg: var(--design-primary-active); --bs-btn-active-border-color: var(--design-primary-active);
+  --bs-btn-disabled-color: var(--design-muted); --bs-btn-disabled-bg: var(--design-primary-disabled); --bs-btn-disabled-border-color: var(--design-primary-disabled);
+  --bs-btn-focus-shadow-rgb: 204, 120, 92;
+  background-color: var(--bs-btn-bg); border-color: var(--bs-btn-border-color); color: var(--bs-btn-color);
+}
+html body .btn-primary:active, html body .btn-primary.btn-secondary:active { background-color: var(--design-primary-active); border-color: var(--design-primary-active); }
+html body .btn-secondary:not(.btn-primary), html body .btn-outline-dark {
+  --bs-btn-color: var(--design-ink); --bs-btn-bg: var(--design-canvas); --bs-btn-border-color: var(--design-hairline);
+  --bs-btn-hover-color: var(--design-ink); --bs-btn-hover-bg: var(--design-surface-soft); --bs-btn-hover-border-color: var(--design-hairline);
+  --bs-btn-active-color: var(--design-ink); --bs-btn-active-bg: var(--design-surface-card); --bs-btn-active-border-color: var(--design-hairline);
+  --bs-btn-focus-shadow-rgb: 204, 120, 92;
+  background-color: var(--bs-btn-bg); border-color: var(--bs-btn-border-color); color: var(--bs-btn-color);
+}
+html body .btn-secondary:not(.btn-primary):hover, html body .btn-outline-dark:hover { background-color: var(--design-surface-soft); }
+html body a.btn-primary:link, html body a.btn-primary:visited { color: var(--design-on-primary); }
+html body a.btn-secondary:link, html body a.btn-secondary:visited { color: var(--design-ink); }
+html body .btn:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--design-focus-ring), 0 0 0 1px var(--design-primary); }
+
+html body .form-control, html body .form-select {
+  font-family: var(--design-font-body); font-size: 15px; height: auto; min-height: 40px; padding: 10px 14px;
+  background-color: var(--design-canvas); color: var(--design-ink); border: 1px solid var(--design-hairline); border-radius: var(--design-radius-control);
+}
+html body .form-control::placeholder { color: var(--design-muted); opacity: 1; }
+html body .form-control:focus, html body .form-select:focus { border-color: var(--design-primary); box-shadow: 0 0 0 3px var(--design-focus-ring); background-color: var(--design-canvas); }
+html body .form-control:-webkit-autofill { -webkit-box-shadow: 0 0 0 40px var(--design-canvas) inset; -webkit-text-fill-color: var(--design-ink); }
+html body label { color: var(--design-muted); font-weight: 500; }
+
+/* 5. Page components (tokens.css): .cq-page > .cq-card ... ---------------------------------------------------------- */
+html body .cq-card { background: var(--design-canvas); color: var(--design-body); border: 1px solid var(--design-hairline); border-radius: var(--design-radius-card); box-shadow: none; }
+html body .cq-card + .cq-card { margin-top: 16px; }
+html body .cq-card-head { padding-top: 40px; }
+html body .cq-title { font-family: var(--design-font-display); font-size: 30px; font-weight: 500; line-height: 1.15; letter-spacing: -.02em; color: var(--design-ink); }
+html body .cq-note { font-size: 14px; font-weight: 400; color: var(--design-muted); line-height: 1.55; }
+html body .cq-note code { background: var(--design-surface-card); color: var(--design-body); font-family: var(--design-font-code); font-size: 12px; }
+html body .cq-form label { font-size: 13px; font-weight: 500; color: var(--design-muted); }
+html body .cq-error { color: var(--design-error); }
+html body .cq-tabs { gap: 6px; padding: 8px 52px; border-top: 1px solid var(--design-hairline); border-bottom: 1px solid var(--design-hairline); background: var(--design-canvas); }
+html body .cq-tabs button { flex: 0 1 auto; padding: 8px 14px; border: 0; border-radius: var(--design-radius-control); background: transparent; color: var(--design-muted); font-size: 14px; font-weight: 500; }
+html body .cq-tabs button:hover { color: var(--design-ink); }
+html body .cq-tabs button.active { background: var(--design-surface-card); color: var(--design-ink); border-bottom-color: transparent; }
+html body .cq-tabs button:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--design-focus-ring); }
+html body .cq-count { background: var(--design-surface-card); color: var(--design-body); }
+html body .cq-tabs button.active .cq-count { background: var(--design-ink); color: var(--design-canvas); }
+html body .cq-item { border-bottom: 1px solid var(--design-hairline); }
+html body .cq-item-title { font-weight: 500; color: var(--design-ink); }
+html body .cq-item-meta { color: var(--design-muted); }
+html body .cq-item.is-done .cq-item-title { color: var(--design-muted); font-weight: 400; }
+html body .cq-check.form-check-input { border-color: var(--design-muted); background-color: var(--design-canvas); border-radius: 4px; }
+html body .cq-check.form-check-input:checked { background-color: var(--design-ink); border-color: var(--design-ink); }
+html body .cq-check.form-check-input:focus { box-shadow: 0 0 0 3px var(--design-focus-ring); border-color: var(--design-primary); }
+html body .cq-actions .btn { min-height: 32px; padding: 4px 12px; font-size: 13px; }
+html body .cq-empty { color: var(--design-muted); font-weight: 400; }
+html body .cq-foot { border-top: 1px solid var(--design-hairline); background: var(--design-surface-card); color: var(--design-ink); font-family: var(--design-font-display); font-size: 20px; letter-spacing: -.01em; }
+
+/* 6. Phone width ---------------------------------------------------------------------------------------------- */
+@media (max-width: 575px) {
+  html body .cq-tabs { padding-left: 12px; padding-right: 12px; }
+  html body .cq-tabs button { flex: 1; }
+  html body .cq-title { font-size: 26px; }
+}
+@media (pointer: coarse) {
+  html body .btn, html body .form-control, html body .form-select { min-height: var(--cq-touch-target); }
+}

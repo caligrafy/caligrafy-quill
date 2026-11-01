@@ -1,0 +1,140 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap');
+/* Design style "linear.app": near-black canvas, layered dark surfaces with hairlines, one indigo accent, tight Inter type.
+ * Written from framework/designs/linear.app/DESIGN.md (VoltAgent/awesome-design-md, MIT) by /caligrafy-quill:design.
+ * Loaded after the Caligrafy stylesheets when DESIGN_STYLE=linear.app in .env; empty DESIGN_STYLE brings the Caligrafy look back.
+ * Inspiration only: the application keeps its own name and logo. */
+
+/* 1. Tokens ------------------------------------------------------------------------------------------------- */
+:root {
+  color-scheme: dark;
+  --design-canvas: #010102;
+  --design-surface-1: #0f1011;       /* cards, fields, secondary buttons */
+  --design-surface-2: #141516;
+  --design-surface-3: #18191a;
+  --design-ink: #f7f8f8;
+  --design-ink-muted: #d0d6e0;
+  --design-ink-subtle: #8a8f98;
+  --design-hairline: #23252a;
+  --design-hairline-strong: #34343a;
+  --design-primary: #5e6ad2;         /* the one chromatic accent */
+  --design-primary-hover: #828fff;
+  --design-primary-pressed: #5e69d1;
+  --design-on-primary: #ffffff;
+  --design-error: #eb5757;
+  --design-success: #27a644;
+  --design-focus-ring: rgba(94, 106, 210, .35);
+  --design-font: 'Linear Text', Inter, -apple-system, system-ui, 'Segoe UI', Roboto, sans-serif;
+  --design-font-display: 'Linear Display', Inter, -apple-system, system-ui, sans-serif;
+  --design-font-code: 'Linear Mono', 'JetBrains Mono', ui-monospace, monospace;
+  --design-radius-control: 8px;
+  --design-radius-card: 12px;
+
+  --cq-color-ink: var(--design-ink);
+  --cq-color-paper: var(--design-surface-1);
+  --cq-color-page: var(--design-canvas);
+  --cq-color-text: var(--design-ink-muted);
+  --cq-color-text-muted: var(--design-ink-subtle);
+  --cq-color-text-faint: var(--design-hairline-strong);
+  --cq-color-border: var(--design-hairline);
+  --cq-color-accent-dark: var(--design-ink-subtle);
+  --cq-color-accent-light: var(--design-surface-2);
+  --cq-color-accent-red: var(--design-error);
+  --cq-radius-control: var(--design-radius-control);
+}
+
+/* 2. Layout -------------------------------------------------------------------------------------------------- */
+html body { background-color: var(--design-canvas); color: var(--design-ink-muted); font-size: 15px; }
+html body * { font-family: var(--design-font); font-weight: 400; }
+html body h1, html body h2, html body h3 { font-family: var(--design-font-display); font-weight: 600; letter-spacing: -.02em; color: var(--design-ink); }
+html body .semibold, html body .semi-bold, html body strong, html body b { font-weight: 600; }
+html body code, html body pre, html body kbd { font-family: var(--design-font-code); }
+html body header { background-color: rgba(1, 1, 2, .85); backdrop-filter: blur(12px); color: var(--design-ink); border-bottom: 1px solid var(--design-hairline); }
+html body .shadowCoverTop { background-color: var(--design-canvas); }
+html body header h1.large-text, html body header h1.large-text * { font-family: var(--design-font-display); font-size: 20px; letter-spacing: -.02em; color: var(--design-ink); }
+html body header nav ul.menu li { border-color: var(--design-ink); }
+html body header .menulist { background-color: var(--design-surface-1); }
+html body .radialShadowTop { display: none; }
+html body footer, html body footer * { color: var(--design-ink-subtle); }
+html body .color4, html body .content-section.color4 { background-color: var(--design-canvas); color: var(--design-ink-muted); }
+html body .color0, html body .card.color0 { background-color: var(--design-surface-1); color: var(--design-ink-muted); border-color: var(--design-hairline); }
+html body .textcolor5, html body .default-text.textcolor5 { color: var(--design-ink-subtle); }
+html body a:not(.btn) { color: var(--design-ink); }
+html body .btn-link, html body a.btn-link:link, html body a.btn-link:visited { color: var(--design-primary-hover); }
+
+/* 3. Sign-in cards --------------------------------------------------------------------------------------------- */
+html body .card, html body .card-unbounded, html body .dropshadow {
+  background-color: var(--design-surface-1); border: 1px solid var(--design-hairline); border-radius: var(--design-radius-card); box-shadow: none;
+}
+html body .card .medium-text { color: var(--design-ink); }
+html body .alert { border-radius: var(--design-radius-control); border: 1px solid var(--design-hairline-strong); background: var(--design-surface-2); color: var(--design-ink-muted); }
+html body .alert-danger { border-color: var(--design-error); }
+html body .alert-success { border-color: var(--design-success); }
+
+/* 4. Controls ---------------------------------------------------------------------------------------------------- */
+html body .btn {
+  --bs-btn-border-radius: var(--design-radius-control);
+  font-family: var(--design-font); font-weight: 500; font-size: 14px; height: auto; min-height: 36px; padding: 8px 14px; box-shadow: none;
+}
+html body .btn-primary, html body .btn-primary.btn-secondary {
+  --bs-btn-color: var(--design-on-primary); --bs-btn-bg: var(--design-primary); --bs-btn-border-color: var(--design-primary);
+  --bs-btn-hover-color: var(--design-on-primary); --bs-btn-hover-bg: var(--design-primary-hover); --bs-btn-hover-border-color: var(--design-primary-hover);
+  --bs-btn-active-color: var(--design-on-primary); --bs-btn-active-bg: var(--design-primary-pressed); --bs-btn-active-border-color: var(--design-primary-pressed);
+  --bs-btn-disabled-color: var(--design-ink-subtle); --bs-btn-disabled-bg: var(--design-surface-3); --bs-btn-disabled-border-color: var(--design-hairline);
+  --bs-btn-focus-shadow-rgb: 94, 106, 210;
+  background-color: var(--bs-btn-bg); border-color: var(--bs-btn-border-color); color: var(--bs-btn-color);
+}
+html body .btn-primary:hover, html body .btn-primary.btn-secondary:hover { background-color: var(--design-primary-hover); border-color: var(--design-primary-hover); }
+html body .btn-secondary:not(.btn-primary), html body .btn-outline-dark {
+  --bs-btn-color: var(--design-ink); --bs-btn-bg: var(--design-surface-2); --bs-btn-border-color: var(--design-hairline-strong);
+  --bs-btn-hover-color: var(--design-ink); --bs-btn-hover-bg: var(--design-surface-3); --bs-btn-hover-border-color: var(--design-hairline-strong);
+  --bs-btn-active-color: var(--design-ink); --bs-btn-active-bg: var(--design-surface-3); --bs-btn-active-border-color: var(--design-hairline-strong);
+  --bs-btn-focus-shadow-rgb: 94, 106, 210;
+  background-color: var(--bs-btn-bg); border-color: var(--bs-btn-border-color); color: var(--bs-btn-color);
+}
+html body .btn-secondary:not(.btn-primary):hover, html body .btn-outline-dark:hover { background-color: var(--design-surface-3); }
+html body a.btn-primary:link, html body a.btn-primary:visited { color: var(--design-on-primary); }
+html body a.btn-secondary:link, html body a.btn-secondary:visited { color: var(--design-ink); }
+html body .btn:focus-visible { outline: 0; box-shadow: 0 0 0 3px var(--design-focus-ring); }
+
+html body .form-control, html body .form-select {
+  font-family: var(--design-font); font-size: 15px; height: auto; min-height: 38px; padding: 8px 12px;
+  background-color: var(--design-surface-2); color: var(--design-ink); border: 1px solid var(--design-hairline-strong); border-radius: var(--design-radius-control);
+}
+html body .form-control::placeholder { color: var(--design-ink-subtle); opacity: 1; }
+html body .form-control:focus, html body .form-select:focus { border-color: var(--design-primary); box-shadow: 0 0 0 3px var(--design-focus-ring); background-color: var(--design-surface-2); color: var(--design-ink); }
+html body .form-control:-webkit-autofill { -webkit-box-shadow: 0 0 0 40px var(--design-surface-2) inset; -webkit-text-fill-color: var(--design-ink); }
+html body label { color: var(--design-ink-subtle); font-weight: 500; }
+
+/* 5. Page components ----------------------------------------------------------------------------------------------- */
+html body .cq-card { background: var(--design-surface-1); color: var(--design-ink-muted); border: 1px solid var(--design-hairline); border-radius: var(--design-radius-card); box-shadow: none; }
+html body .cq-card + .cq-card { margin-top: 16px; }
+html body .cq-title { font-family: var(--design-font-display); font-size: 22px; font-weight: 500; line-height: 1.25; letter-spacing: -.02em; color: var(--design-ink); }
+html body .cq-note { font-size: 14px; font-weight: 400; color: var(--design-ink-subtle); line-height: 1.5; }
+html body .cq-note code { background: var(--design-surface-3); color: var(--design-ink-muted); border: 1px solid var(--design-hairline); font-family: var(--design-font-code); font-size: 12px; }
+html body .cq-form label { font-size: 13px; font-weight: 500; color: var(--design-ink-subtle); }
+html body .cq-error { color: var(--design-error); }
+html body .cq-tabs { border-top: 1px solid var(--design-hairline); border-bottom: 1px solid var(--design-hairline); }
+html body .cq-tabs button { background: var(--design-surface-1); color: var(--design-ink-subtle); font-weight: 500; border-bottom: 2px solid transparent; }
+html body .cq-tabs button:hover { color: var(--design-ink); }
+html body .cq-tabs button.active { background: var(--design-surface-2); color: var(--design-ink); border-bottom-color: var(--design-primary); }
+html body .cq-tabs button:focus-visible { outline: 0; box-shadow: inset 0 0 0 2px var(--design-focus-ring); }
+html body .cq-count { background: var(--design-surface-3); color: var(--design-ink-muted); border: 1px solid var(--design-hairline-strong); }
+html body .cq-tabs button.active .cq-count { background: var(--design-primary); color: var(--design-on-primary); border-color: var(--design-primary); }
+html body .cq-item { border-bottom: 1px solid var(--design-hairline); }
+html body .cq-item-title { font-weight: 500; color: var(--design-ink); }
+html body .cq-item-meta { color: var(--design-ink-subtle); }
+html body .cq-item.is-done .cq-item-title { color: var(--design-ink-subtle); font-weight: 400; }
+html body .cq-check.form-check-input { border-color: var(--design-hairline-strong); background-color: var(--design-surface-2); border-radius: 4px; }
+html body .cq-check.form-check-input:checked { background-color: var(--design-primary); border-color: var(--design-primary); }
+html body .cq-check.form-check-input:focus { box-shadow: 0 0 0 3px var(--design-focus-ring); border-color: var(--design-primary); }
+html body .cq-actions .btn { min-height: 30px; padding: 4px 10px; font-size: 13px; }
+html body .cq-empty { color: var(--design-ink-subtle); font-weight: 400; }
+html body .cq-foot { border-top: 1px solid var(--design-hairline); background: var(--design-surface-2); color: var(--design-ink-muted); font-size: 15px; }
+
+/* 6. Phone width ---------------------------------------------------------------------------------------------------- */
+@media (max-width: 575px) {
+  html body .cq-title { font-size: 20px; }
+}
+@media (pointer: coarse) {
+  html body .btn, html body .form-control, html body .form-select { min-height: var(--cq-touch-target); }
+}

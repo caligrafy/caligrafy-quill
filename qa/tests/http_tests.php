@@ -162,6 +162,65 @@ qa_test('PWA_SERVICE_WORKER=true registers the service worker with the applicati
 });
 
 // ---------------------------------------------------------------------------
+qa_section('Design styles (DESIGN_STYLE, public/css/designs)');
+
+// Runs $fn with DESIGN_STYLE=$style in .env and, when $css is given, public/css/designs/<style>.css written; restores both
+function qa_with_design($style, $css, callable $fn)
+{
+    global $ROOT;
+    $file = "$ROOT/.env";
+    $orig = file_get_contents($file);
+    $dir = "$ROOT/public/css/designs";
+    $created = !is_dir($dir) && mkdir($dir, 0777, true);
+    $sheet = $css !== null ? "$dir/" . basename($style) . '.css' : null;
+    qa_assert(preg_match('/^DESIGN_STYLE=/m', $orig) === 1, 'DESIGN_STYLE is not in the QA .env (framework/settings/.env.example)');
+    try {
+        if ($sheet) file_put_contents($sheet, $css);
+        file_put_contents($file, preg_replace('/^DESIGN_STYLE=.*$/m', 'DESIGN_STYLE=' . $style, $orig));
+        return $fn();
+    } finally {
+        file_put_contents($file, $orig);
+        if ($sheet) @unlink($sheet);
+        if ($created) @rmdir($dir);
+    }
+}
+
+qa_test('by default no design stylesheet is linked: the Caligrafy look', function () use ($guest) {
+    foreach (['/', '/login', '/apps/qaapp'] as $page) {
+        $r = $guest->get($page);
+        qa_equals(200, $r['status'], $page);
+        qa_contains('/public/css/tokens.css', $r['body'], $page);
+        qa_not_contains('css/designs/', $r['body'], $page);
+    }
+});
+
+qa_test('DESIGN_STYLE=<name> links public/css/designs/<name>.css after tokens.css on Pug pages and Vue apps', function () use ($guest, $BASE, $ROOT) {
+    $css = file_get_contents("$ROOT/claude-plugin/skills/design/examples/claude.css");
+    qa_with_design('claude', $css, function () use ($guest, $BASE) {
+        foreach (['/', '/login', '/register', '/apps/qaapp'] as $page) {
+            $body = $guest->get($page)['body'];
+            qa_assert(preg_match('#<link rel="stylesheet" href="' . preg_quote($BASE, '#') . '/public/css/designs/claude\.css\?v=(\d+)">#', $body, $m) === 1, "no design stylesheet on $page");
+            qa_assert(strpos($body, 'css/designs/claude.css') > strpos($body, '/public/css/tokens.css'), "design stylesheet before tokens.css on $page");
+        }
+        $sheet = $guest->get('/public/css/designs/claude.css');
+        qa_equals(200, $sheet['status']);
+        qa_assert(preg_match('#^Content-Type:\s*text/css#mi', $sheet['headers']) === 1, 'Content-Type of the design stylesheet');
+        qa_contains('--cq-color-ink', $sheet['body']);
+    });
+    qa_not_contains('css/designs/', $guest->get('/login')['body'], 'DESIGN_STYLE emptied again: the Caligrafy look is back');
+});
+
+qa_test('a style without its stylesheet, an unknown style or a path keeps the Caligrafy look', function () use ($guest) {
+    foreach (['claude', 'no-such-style', '../../.env', '"../css/styles"'] as $style) {
+        qa_with_design($style, null, function () use ($guest, $style) {
+            $r = $guest->get('/login');
+            qa_equals(200, $r['status'], $style);
+            qa_not_contains('css/designs/', $r['body'], $style);
+        });
+    }
+});
+
+// ---------------------------------------------------------------------------
 qa_section('Sensitive files are not served');
 
 foreach (['/.env', '/.git/HEAD', '/composer.json', '/composer.lock', '/caligrafer.php', '/docker-compose.yaml',

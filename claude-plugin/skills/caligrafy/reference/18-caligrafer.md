@@ -23,6 +23,7 @@
 | [`initialize`](#initialize) | Prepares a fresh copy of the framework: `application/`, `.env`, keys |
 | [`server`](#server) | Starts, stops or rebuilds the Docker development server |
 | [`version`](#version) | Prints the version of Caligrafy Quill |
+| [`design`](#design) | Picks a design style for every page (`DESIGN_STYLE`), or the Caligrafy look |
 | [`service`](#service) | Creates a capability in `application/services/` |
 | [`capabilities`](#capabilities) | Lists the capabilities and their inputs |
 | [`call`](#call) | Calls a capability and prints its JSON answer |
@@ -79,6 +80,16 @@ Starts, stops or rebuilds the Docker development server (`dev-box`, MySQL 8.4, p
 php caligrafer.php version        # Caligrafy Quill 2.2.0
 ```
 Prints the version of the framework in this project (also `--version` and `-v`). It works before `composer install` and creates nothing. In code: `Caligrafy\Framework::VERSION`. The changes of every version are in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
+
+### `design`
+```bash
+php caligrafer.php design list [--json]   # the styles of framework/designs and application/designs
+php caligrafer.php design show <name>     # its DESIGN.md, its description, its stylesheet
+php caligrafer.php design use <name>      # DESIGN_STYLE=<name> in .env
+php caligrafer.php design off             # DESIGN_STYLE= : the Caligrafy look
+php caligrafer.php design status          # the selected style
+```
+Picks a [design style](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles): a `DESIGN.md` of `framework/designs/` (84 styles from VoltAgent/awesome-design-md, MIT), of `framework/designs-extra/` (`interstellar`...) or of `application/designs/`. Pages load `public/css/designs/<name>.css` after the Caligrafy stylesheets once it exists; `/caligrafy-quill:design` in Claude Code writes it from the `DESIGN.md`. `use` and `off` only change `DESIGN_STYLE` in `.env`: stylesheets are kept.
 
 ## Build features
 
@@ -184,7 +195,7 @@ php caligrafer.php doctor --only database          # some checks: project, datab
 php caligrafer.php doctor --env .env.production    # another environment file
 php caligrafer.php doctor --json                   # for scripts
 ```
-A read-only health check: PHP and its extensions, `vendor/`, `.env` and the keys, the legacy API key setting, `APP_DEBUG` on a site served over HTTPS, `public/uploads`, the web app manifest, whether `application/` is up to date, the database and the framework tables, and every service configured in `.env` (OpenAI, Groq and the open-model providers, Stripe, Coinbase, Watson, mail). Each line is `OK`, `WARN`, `FAIL` or `SKIP` (not configured), with a fix. Secrets are never printed. It exits with `1` when a check fails. With Docker, run it in the container so that the database host resolves. Run it first whenever something does not work.
+A read-only health check: PHP and its extensions, `vendor/`, `.env` and the keys, the legacy API key setting, `APP_DEBUG` on a site served over HTTPS, `public/uploads`, the web app manifest, the selected design style (`DESIGN_STYLE`), whether `application/` is up to date, the database and the framework tables, and every service configured in `.env` (OpenAI, Groq and the open-model providers, Stripe, Coinbase, Watson, mail). Each line is `OK`, `WARN`, `FAIL` or `SKIP` (not configured), with a fix. Secrets are never printed. It exits with `1` when a check fails. With Docker, run it in the container so that the database host resolves. Run it first whenever something does not work.
 + Billing and credits cannot be checked without spending: an OpenAI `429 insufficient_quota` on the first request means the account has no credits.
 + Network errors are explained: `self-signed certificate in certificate chain` means a company TLS inspection proxy (the Claude plugin's `server` skill has the Docker fix).
 + Optional overrides for tests, proxies or regional endpoints: `OPENAI_API_BASE`, `GROQ_API_BASE`, `AGENT_API_BASE`, `STRIPE_API_BASE`, `COINBASE_API_BASE`; `WATSON_ASSISTANT_ID` lets doctor check the assistant.

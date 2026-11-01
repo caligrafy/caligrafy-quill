@@ -268,4 +268,8 @@ block content
 
 The same classes work in Vue apps and the single page application (`tokens.css` is linked there too). Keep to black and white (`btn-primary` is black, `btn-secondary` white): no Bootstrap color classes. The [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) builds every new page with these components.
 
+## Another look: design styles
+
+The page components are the default look. To give the whole application another one, pick a [design style](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles) (`php caligrafer.php design use <name>`, `DESIGN_STYLE` in `.env`) and let Claude write its stylesheet (`/caligrafy-quill:design`): the layout loads `public/css/designs/<name>.css` after `tokens.css`, so the same markup takes the new look and your views do not change. An empty `DESIGN_STYLE` is the Caligrafy look again.
+
 >[Next Section: Learn about Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)

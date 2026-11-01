@@ -133,6 +133,15 @@ function scripts($key, $value = null)
 }
 
 /**
+ * URL of the override stylesheet of the design style selected in .env (DESIGN_STYLE), loaded after the Caligrafy
+ * stylesheets; '' for Caligrafy's own look (empty setting, unknown style or stylesheet not written yet)
+ */
+function design_stylesheet()
+{
+    return class_exists('Caligrafy\\Designs') ? Caligrafy\Designs::stylesheetUrl($_SESSION['public'] ?? '', defined('ROOT') ? rtrim(ROOT, DIRECTORY_SEPARATOR) : '.') : '';
+}
+
+/**
  * Gets the copyright signature from session
  * @author Dory A.Azar 
  * @version 1.0

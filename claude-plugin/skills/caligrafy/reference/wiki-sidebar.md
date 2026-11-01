@@ -25,6 +25,7 @@
 
 + **Web pages**
     > + [Views and page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents)
+    > + [Design styles: another look, one setting](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
     > + [Controllers: calling a capability](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)
     > + [Forms and helpers](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API)
 + **Vue apps**

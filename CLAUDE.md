@@ -7,6 +7,6 @@ documentation, a source-verified API reference and known gotchas: consult it bef
 - Your code: `application/` (routes in `application/config/routing/web.php`, controllers, models, Pug views) and `public/` (client apps).
 - Only capabilities touch models: pages use `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`, controllers call `$this->call()`.
 - Framework internals: `framework/` - change only when asked.
-- Tools: `/caligrafy-quill:idea` (from an idea to an application online), `/caligrafy-quill:new-capability` (one feature for pages, REST, Vue apps and AI agents), `/caligrafy-quill:new-resource`, `/caligrafy-quill:new-app`, `/caligrafy-quill:server`, `/caligrafy-quill:db`, `/caligrafy-quill:ship` (GitHub and Caligrafy Cloud, no hand-offs), `/caligrafy-quill:deploy` (readiness, own server), agent `caligrafy-reviewer`.
+- Tools: `/caligrafy-quill:idea` (from an idea to an application online), `/caligrafy-quill:new-capability` (one feature for pages, REST, Vue apps and AI agents), `/caligrafy-quill:new-resource`, `/caligrafy-quill:new-app`, `/caligrafy-quill:server`, `/caligrafy-quill:db`, `/caligrafy-quill:design` (another look for every page, `DESIGN_STYLE`), `/caligrafy-quill:ship` (GitHub and Caligrafy Cloud, no hand-offs), `/caligrafy-quill:deploy` (readiness, own server), agent `caligrafy-reviewer`.
 - `php caligrafer.php initialize` deletes `.git`; ask before running it in a git repository.
 - Never print or commit secrets from `.env`.

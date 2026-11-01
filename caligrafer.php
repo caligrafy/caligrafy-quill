@@ -51,6 +51,7 @@ $defaultMsg = "\n Available Functions:
 				\n - initialize: Initializes and signs your project
 				\n - upgrade [--apply] [--force <application/path>] [--keep <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files; also reports .env settings and Bootstrap 3 classes
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
+				\n - design <list [--json] | show <name> | use <name> | off | status>: picks a design style (DESIGN_STYLE in .env) from framework/designs; empty = Caligrafy's own look
 				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
 				\n - sql <file.sql>: runs a SQL script on the database of .env
 				\n - platform install: creates the framework tables (personal access tokens, audit log)
@@ -483,6 +484,10 @@ switch(strtolower($argv[1])) {
 		$onlyAt = array_search('--only', $argv);
 		$only = $onlyAt !== false? ($argv[$onlyAt + 1] ?? '') : null;
 		exit((new Caligrafy\Doctor('.', $only, $envFile))->run(in_array('--json', $argv)));
+
+	case 'design':
+		// Design styles: DESIGN_STYLE in .env, framework/designs/<name>/DESIGN.md, public/css/designs/<name>.css
+		exit(Caligrafy\Designs::cli(array_slice($argv, 2), '.', $envFile));
 
 	case 'create':
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {

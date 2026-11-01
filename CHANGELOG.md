@@ -6,6 +6,34 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## Unreleased
+
+### Added
+- Design styles: another look for every page, picked with one setting, with Caligrafy's own look as the default.
+  `framework/designs/` holds 84 `DESIGN.md` files (design system descriptions written for AI agents: colors, type,
+  spacing, components) from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), MIT, with
+  its license and attribution (`framework/designs/LICENSE`, `README.md`, `SOURCE`; `sh framework/designs/sync.sh`
+  refreshes them). `framework/designs-extra/` holds styles added outside that collection, which the refresh never
+  touches: `interstellar` (the Interstellar laboratory operations design system), its origin in the folder's README.
+  A project can add its own in `application/designs/<name>/DESIGN.md`.
+- `DESIGN_STYLE` in `.env` (empty by default, in `.env.example` and `.env.docker`). When it names a style whose
+  stylesheet `public/css/designs/<name>.css` exists, the layout (`layoutblocks.pug`) and the Vue app template
+  (`framework/plugins/app/index.php`) link it after `styles.css`, Bootstrap, `theme.css` and `tokens.css` with the new
+  `design_stylesheet()` helper (versioned by its modification time). An empty setting, an unknown name, a name that
+  is not a style name (no paths) or a style without its stylesheet changes nothing: the Caligrafy look.
+- `php caligrafer.php design list [--json] | show <name> | use <name> | off | status`: lists the styles, selects one
+  or goes back to the Caligrafy look by writing `DESIGN_STYLE` in `.env` only (`Caligrafy\Designs`).
+- `doctor` reports the selected style: `OK` for the Caligrafy look or a style with its stylesheet, `WARN` for an
+  unknown name or a style whose stylesheet is not written yet, with the fix.
+- Claude Code plugin: the `design` skill (`/caligrafy-quill:design [style | off]`) reads the selected `DESIGN.md`,
+  writes the one override stylesheet (tokens, layout, sign-in pages, buttons, fields, every page component, phone
+  width) without editing the Caligrafy stylesheets or the views, and checks the pages in a browser at desktop and
+  phone width. Worked examples for a light and a dark style; gotchas G92-G93; the wiki page Design styles.
+
+### Changed
+- The production image (`Dockerfile.dockerignore`) leaves `framework/designs/` and `framework/designs-extra/` out: only the stylesheet is used at
+  run time. `layoutblocks.pug` has the stylesheet link: `php caligrafer.php upgrade` updates untouched copies.
+
 ## [2.7.1] - 2026-11-01
 
 ### Fixed

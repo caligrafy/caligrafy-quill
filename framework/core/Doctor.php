@@ -148,6 +148,10 @@ class Doctor
 
         $this->webApp();
 
+        // DESIGN_STYLE: the selected design style and its override stylesheet (php caligrafer.php design)
+        list($status, $message, $fix) = Designs::status($this->root);
+        $this->add('project', 'Design style', $status, $message, $fix);
+
         if (!is_dir($this->root . '/application')) {
             $this->add('project', 'Templates', 'FAIL', 'application/ not found', 'php caligrafer.php initialize');
             return;

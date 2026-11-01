@@ -110,6 +110,19 @@ Same classes inside the app's root element: `#app > main.cq-page > .cq-card > ..
 Caligrafy header (`header.color0.caligrafy-header`) keep `.cq-page` for the offset. Specialized screens keep their
 own parts (the FaceDetect camera, a chat thread) but sit in a `.cq-card` with a `.cq-card-head`.
 
+## Design styles
+
+The page components are the default look and stay the markup of every page, whatever the style. A project can give
+every page another look with a design style (`php caligrafer.php design use <name>`, `DESIGN_STYLE` in `.env`): the
+layout then loads `public/css/designs/<name>.css` after `tokens.css`, which overrides the tokens and the component
+selectors. So:
+- build pages with the same components and tokens as always; never write style-specific markup or classes;
+- restyle only in `public/css/designs/<name>.css`, with the `design` skill (`/caligrafy-quill:design`), never in
+  `tokens.css`, `theme.css`, `styles.css` or a view: an empty `DESIGN_STYLE` must give the Caligrafy look back (G92);
+- a new component class you add to a page under a selected style needs its rule in the style's stylesheet too:
+  check the page with the style on and off;
+- the application keeps its own name and logo; a style is inspiration, never another site's brand.
+
 ## Checklist before you say a page is done
 
 - [ ] `main.cq-page > .cq-card` (one card in 2.2.0 projects), with a `.cq-card-head` (title + note); nothing hidden under the header
@@ -117,3 +130,4 @@ own parts (the FaceDetect camera, a chat thread) but sit in a `.cq-card` with a 
 - [ ] lists use `.cq-list > .cq-item` with `.cq-actions`; an empty state says what to do next
 - [ ] no Bootstrap color classes, no hard-coded colors, no page-level `style` block unless a part has no component
 - [ ] opened in a browser at desktop width and at phone width (375px): no horizontal scroll, readable, touch-size buttons
+- [ ] with a design style selected (`DESIGN_STYLE`): checked with the style on and off

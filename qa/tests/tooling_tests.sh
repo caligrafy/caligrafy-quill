@@ -81,6 +81,54 @@ fi
 rm -rf application/services/QaCall
 cd "$ROOT"
 
+# --- design styles: design list / use / off write DESIGN_STYLE, doctor follows, the skill examples restyle the surfaces ----
+cd "$TMP/quick"
+LIST=$(php caligrafer.php design list 2>&1)
+SHOW=$(php caligrafer.php design show linear.app 2>&1)
+EXTRA=$(php caligrafer.php design show interstellar 2>&1)
+USE=$(php caligrafer.php design use claude 2>&1); SET=$(grep '^DESIGN_STYLE=' .env)
+DOC1=$(php caligrafer.php doctor --only project 2>&1)
+mkdir -p public/css/designs && cp "$ROOT/claude-plugin/skills/design/examples/claude.css" public/css/designs/
+DOC2=$(php caligrafer.php doctor --only project 2>&1)
+BAD=$(php caligrafer.php design use no-such-style 2>&1); BADCODE=$?
+OFF=$(php caligrafer.php design off 2>&1); UNSET=$(grep '^DESIGN_STYLE=' .env)
+DOC3=$(php caligrafer.php doctor --only project 2>&1)
+COUNT=$(echo "$LIST" | sed -n 's/^ \([0-9]*\) styles.*/\1/p')
+if [ "${COUNT:-0}" -ge 80 ] && echo "$LIST" | grep -q 'VoltAgent/awesome-design-md (MIT)' && echo "$SHOW" | grep -q 'framework/designs/linear.app/DESIGN.md' \
+    && echo "$EXTRA" | grep -q 'framework/designs-extra/interstellar/DESIGN.md' && echo "$LIST" | grep -q ' interstellar ' \
+    && [ "$SET" = "DESIGN_STYLE=claude" ] && echo "$USE" | grep -q 'not written yet' \
+    && echo "$DOC1" | grep -q "WARN  Design style: claude selected, but public/css/designs/claude.css is not written yet" \
+    && echo "$DOC2" | grep -q "OK    Design style: claude: public/css/designs/claude.css loaded after the Caligrafy stylesheets" \
+    && [ "$BADCODE" = 1 ] && echo "$BAD" | grep -q "unknown style 'no-such-style'" \
+    && [ "$UNSET" = "DESIGN_STYLE=" ] && [ -f public/css/designs/claude.css ] && echo "$DOC3" | grep -q "OK    Design style: Caligrafy's own look"; then
+    ok "design: list ($COUNT styles), show, use, off write DESIGN_STYLE only; doctor reports the style and its stylesheet"
+else
+    ko "design command" "list: $(echo "$LIST" | head -3)
+show: $SHOW
+extra: $EXTRA
+use: $USE ($SET)
+doctor before/after the stylesheet: $(echo "$DOC1" | grep Design) / $(echo "$DOC2" | grep Design)
+bad ($BADCODE): $BAD
+off: $OFF ($UNSET); doctor: $(echo "$DOC3" | grep Design)"
+fi
+rm -rf public/css/designs
+cd "$ROOT"
+OUT=$(php -r '
+$bad = [];
+foreach (glob("claude-plugin/skills/design/examples/*.css") as $f) {
+    $css = file_get_contents($f);
+    if (strpos($css, "!important") !== false) $bad[] = "$f uses !important";
+    foreach ([".btn-primary.btn-secondary", ".btn-secondary", ".form-control", ".card", "header", ".cq-card", ".cq-title", ".cq-tabs button.active", ".cq-count", ".cq-item", ".cq-check", ".cq-empty", ".cq-foot", "--cq-color-ink", "--cq-color-paper", "--cq-color-page", "max-width: 575px"] as $s) {
+        if (strpos($css, $s) === false) $bad[] = basename($f) . " misses $s";
+    }
+    $name = basename($f, ".css");
+    if (!is_file("framework/designs/$name/DESIGN.md")) $bad[] = "$name is not a style of framework/designs";
+}
+if (count(glob("claude-plugin/skills/design/examples/*.css")) < 2) $bad[] = "fewer than two examples";
+foreach (["css/tokens.css", "css/theme.css", "css/styles.css"] as $c) { if (strpos(file_get_contents("public/$c"), "designs/") !== false) $bad[] = "public/$c mentions a design style"; }
+echo implode("; ", $bad);')
+[ -z "$OUT" ] && ok "design skill examples: one override stylesheet per style, every Caligrafy surface, no !important; the Caligrafy stylesheets untouched" || ko "design skill examples" "$OUT"
+
 # --- page components: every .cq- class the UI guidelines teach exists in public/css/tokens.css -----------------
 OUT=$(php -r '
 preg_match_all("/\\.(cq-[a-z0-9-]+)/", file_get_contents("claude-plugin/skills/caligrafy/reference/ui-guidelines.md"), $m);

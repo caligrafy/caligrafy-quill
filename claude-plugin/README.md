@@ -6,12 +6,13 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 49 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G91) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 50 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G93) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
+| Skill | `/caligrafy-quill:design [style\|off]` | Restyles every page to match a design style: reads the selected `DESIGN.md` (84 styles from VoltAgent/awesome-design-md in `framework/designs/`, more in `framework/designs-extra/` such as `interstellar`, or the project's own), writes one override stylesheet `public/css/designs/<style>.css` loaded after the Caligrafy ones, sets `DESIGN_STYLE`, and checks the pages in a browser at desktop and phone width. `off` brings the Caligrafy look back. Worked light and dark examples in `examples/` |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
 | Skill | `/caligrafy-quill:db <script.sql\|tables\|query "...">` | Runs SQL scripts in the `mysql` container (or local MySQL), with safety checks for destructive scripts |
 | Skill | `/caligrafy-quill:deploy [app-name] [--own-server]` | Puts the project online: checks it is ready (Dockerfile, `composer.lock`, no secrets in git, `create_db.sql` safe to run again, pushed), then deploys it to Caligrafy Cloud (`https://<name>.caligrafy.com`) or prepares it for Coolify or Docker |
@@ -47,6 +48,10 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **Unreleased** - Design styles (Caligrafy Quill, unreleased): the new `design` skill (`reference/surfaces.md`, the
+  worked `examples/claude.css` and `examples/linear.app.css`); `ui-guidelines.md` on restyling; gotchas G92 (a style
+  changes nothing until its stylesheet exists, never edit the Caligrafy stylesheets) and G93 (specificity, the sign-in
+  button, SPAs, online); wiki mirror `26-design-styles.md`, and `design` in the Caligrafer and plugin mirrors.
 - **1.19.1** - Caligrafy Quill 2.7.1: `Tokens::create()` takes the expiry as a Unix time (`Tokens::expiresAt()`,
   G91) in the API reference and the `idea` skill's token page; gotchas G1-G91.
 - **1.19.0** - Caligrafy Quill 2.7.0, from an idea to online without hand-offs: the new `ship` skill and its

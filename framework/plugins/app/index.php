@@ -13,6 +13,7 @@
         <link rel="stylesheet" href="<?php echo scripts('bootstrap_css'); ?>" />
         <link rel="stylesheet" href="<?php echo session('public').'css/theme.css';?>">
         <link rel="stylesheet" href="<?php echo session('public').'css/tokens.css';?>">
+        <?php if (design_stylesheet()): ?><link rel="stylesheet" href="<?php echo design_stylesheet(); ?>"><?php endif; ?>
         
     </head>
     
