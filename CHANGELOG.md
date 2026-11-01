@@ -6,14 +6,17 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
-## [Unreleased]
+## [2.7.1] - 2026-11-01
 
 ### Fixed
-- A personal access token whose expiry falls in the hour repeated when the clocks fall back is no longer refused
-  early. Expiry dates are local times (`SERVER_TIMEZONE`), and `strtotime()` read such a time as its first occurrence:
-  in America/New_York, a token created at 05:21 UTC on 2026-11-01 to expire an hour later was refused at once.
-  `Tokens::expired()` now reads it as the later occurrence (at worst a token works up to an hour more, never less);
-  `Tokens::verify()` and `php caligrafer.php token list` use it. Stored tokens keep working unchanged.
+- A personal access token whose expiry falls in the hour repeated when the clocks fall back is no longer refused at
+  once. Dates are stored in local time (`SERVER_TIMEZONE`), and that hour names two instants: in America/New_York, a
+  token created at 05:21 UTC on 2026-11-01 to expire an hour later was stored as `01:21`, read back as the first
+  01:21 (now) and refused. `Tokens::create()` now takes the expiry as a Unix time (`time() + 86400 * 90`) and stores
+  it with `Tokens::expiresAt()`: an instant of the second occurrence becomes `02:00`, so a token never stops early,
+  at worst an hour late, and a token that expired a minute ago stays expired. A local `'Y-m-d H:i:s'` string is still
+  accepted and stored as given; stored tokens keep working unchanged. `php caligrafer.php token create --expires`
+  uses it, and `Tokens::verify()` and `token list` share `Tokens::expired()`.
 
 ## [2.7.0] - 2026-11-01
 

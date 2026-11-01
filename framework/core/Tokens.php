@@ -26,7 +26,7 @@ class Tokens
      * @param string $name what the token is for ("Claude Code on my laptop")
      * @param array $scopes the scopes it grants
      * @param int|null $userId the user it acts for (null: the application itself)
-     * @param string|null $expiresAt 'Y-m-d H:i:s' (null: never expires)
+     * @param int|string|null $expiresAt a Unix time (time() + 86400 * 90), or a local 'Y-m-d H:i:s' (null: never expires)
      * @return array ['id' => ..., 'token' => 'cq_...']: the token is never shown again
      */
     public static function create($name, $scopes = array(), $userId = null, $expiresAt = null)
@@ -38,7 +38,7 @@ class Tokens
         $scopes = self::normalizeScopes($scopes);
         $secret = bin2hex(random_bytes(20));
         Database::execute('INSERT INTO ' . self::TABLE . ' (name, token_hash, scopes, user_id, created_at, expires_at) VALUES (?, ?, ?, ?, ?, ?)',
-            array($name, str_repeat('0', 64), implode(' ', $scopes), $userId, date('Y-m-d H:i:s'), $expiresAt));
+            array($name, str_repeat('0', 64), implode(' ', $scopes), $userId, date('Y-m-d H:i:s'), self::expiresAt($expiresAt)));
         $id = (int) Database::lastInsertId();
         $token = self::PREFIX . $id . '_' . $secret;
         Database::execute('UPDATE ' . self::TABLE . ' SET token_hash = ? WHERE id = ?', array(self::hash($token), $id));
@@ -71,10 +71,7 @@ class Tokens
     }
 
     /**
-     * Whether an expiry date (local 'Y-m-d H:i:s', SERVER_TIMEZONE) has passed. When the clocks fall back, a local time
-     * of the repeated hour names two instants and strtotime() reads the first one: a token created at 01:21 EDT to
-     * expire an hour later (01:21 EST) would be refused at once. Such a time is read as its later occurrence:
-     * a token never stops early, at worst it works up to an hour more.
+     * Whether an expiry date (local 'Y-m-d H:i:s', SERVER_TIMEZONE) has passed
      * @param string|null $expiresAt the expires_at column (null: never expires)
      * @param int|null $now a Unix time (null: now)
      */
@@ -84,17 +81,27 @@ class Tokens
             return false;
         }
         $at = strtotime((string) $expiresAt);
-        if ($at === false) {
-            return true;
+        return $at === false || $at <= ($now ?? time());
+    }
+
+    /**
+     * The expires_at value of an expiry given as a Unix time. Dates are stored in local time (SERVER_TIMEZONE), and when
+     * the clocks fall back the repeated hour names two instants: strtotime() reads its first one. A token created at
+     * 01:21 EDT to expire an hour later (01:21 EST) would be refused at once, so an instant of the second occurrence
+     * is stored as the first local time after the repeated hour (02:00): it never stops early, at worst an hour late.
+     * @param int|string|null $expiresAt a Unix time, a local 'Y-m-d H:i:s' (kept as given) or null (never expires)
+     * @return string|null
+     */
+    public static function expiresAt($expiresAt)
+    {
+        if (!is_int($expiresAt)) {
+            return $expiresAt === null || $expiresAt === '' ? null : (string) $expiresAt;
         }
-        $local = date('Y-m-d H:i:s', $at);
-        foreach (array(3600, 1800) as $shift) {     // the repeated hour (half an hour on Lord Howe Island)
-            if (date('Y-m-d H:i:s', $at + $shift) === $local) {
-                $at += $shift;
-                break;
-            }
+        $at = $expiresAt;
+        while (strtotime(date('Y-m-d H:i:s', $at)) < $at) {
+            $at = (int) (floor($at / 1800) + 1) * 1800;     // the next half hour, until the local time is read back as itself
         }
-        return $at <= ($now ?? time());
+        return date('Y-m-d H:i:s', $at);
     }
 
     /**

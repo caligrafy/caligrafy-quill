@@ -97,7 +97,7 @@ class CreateMyToken extends Service
         if ($context->token !== null || !$context->user) {
             throw ServiceError::forbidden('Create tokens on the site, signed in');
         }
-        $created = Tokens::create($input['name'], array(/* every scope of the app's capabilities */), $context->user->id, date('Y-m-d H:i:s', strtotime('+90 days')));
+        $created = Tokens::create($input['name'], array(/* every scope of the app's capabilities */), $context->user->id, time() + 86400 * 90);
         return array('token' => $created['token'], 'expires_in_days' => 90, 'shown_once' => true);
     }
 }

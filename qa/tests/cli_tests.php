@@ -911,7 +911,7 @@ qa_test('a revoked or expired token is refused', function () {
     qa_equals(null, Caligrafy\Tokens::verify($revoked['token']));
     $expired = Caligrafy\Tokens::create('expired', '*', null, date('Y-m-d H:i:s', time() - 60));
     qa_equals(null, Caligrafy\Tokens::verify($expired['token']));
-    $later = Caligrafy\Tokens::create('later', '*', null, date('Y-m-d H:i:s', time() + 3600));
+    $later = Caligrafy\Tokens::create('later', '*', null, time() + 3600);     // a Unix time: right even when the clocks fall back
     qa_assert(Caligrafy\Tokens::verify($later['token']) !== null, 'a token that expires later works');
 });
 

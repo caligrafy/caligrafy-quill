@@ -258,7 +258,7 @@ switch(strtolower($argv[1])) {
 					exit(1);
 				}
 				$days = $option('expires');
-				$expires = $days !== null && $days !== '' ? date('Y-m-d H:i:s', time() + 86400 * max(1, (int) $days)) : null;
+				$expires = $days !== null && $days !== '' ? Caligrafy\Tokens::expiresAt(time() + 86400 * max(1, (int) $days)) : null;
 				$user = $option('user');
 				$created = Caligrafy\Tokens::create($argv[3], $scopes, $user !== null && $user !== '' ? (int) $user : null, $expires);
 				print("\n Token #{$created['id']} \"{$argv[3]}\" created with " . implode(' ', $scopes) . ($expires ? ", expires $expires" : '') . "\n\n"
