@@ -49,6 +49,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.24.3** - Caligrafy Quill 2.12.3: the Caligrafer mirror says how `cloud account` and `cloud apps` show an unlimited
+  Caligrafy Cloud account ("unlimited", "no end").
 - **1.24.2** - Caligrafy Quill 2.12.2: the Testing Caligrafy mirror describes the `caligrafy-contributor` skill of the
   framework repository and the release notes page of each fix release.
 - **1.24.1** - Caligrafy Quill 2.12.1: the offline page, the bot template and the modules of the older masters in

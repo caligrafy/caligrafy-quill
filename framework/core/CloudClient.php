@@ -54,7 +54,9 @@ class CloudClient
                     return 0;
                 case 'account':
                     $a = $this->call('my_account');
-                    $this->out(" {$a['email']}: {$a['credits']} credits" . ($a['verified'] ? '' : ' (confirm your email to deploy)') . ', every new app is free for its first ' . ($a['free_minutes_per_app'] ?? 30) . ' minutes');
+                    $this->out(" {$a['email']}: " . (!empty($a['unlimited']) ? 'unlimited (no credits needed, your apps stay online with no end)'
+                        : "{$a['credits']} credits, every new app is free for its first " . ($a['free_minutes_per_app'] ?? 30) . ' minutes')
+                        . ($a['verified'] ? '' : ' (confirm your email to deploy)'));
                     return 0;
                 case 'apps':
                     $apps = $this->call('list_apps');
@@ -285,6 +287,8 @@ class CloudClient
 
     private function left(array $app)
     {
+        // an unlimited account's apps have no end (Caligrafy Cloud reports no_end)
+        if (!empty($app['no_end'])) return $app['status'] === 'paused' ? ' (paused: php caligrafer.php cloud extend ' . $app['name'] . ' week restarts it, at no cost)' : ' (no end)';
         $m = (int) ($app['time_left_minutes'] ?? 0);
         if ($m <= 0) return $app['status'] === 'paused' ? ' (paused: php caligrafer.php cloud extend ' . $app['name'] . ' week)' : '';
         return ' (' . ($m >= 2880 ? round($m / 1440) . ' days' : ($m >= 120 ? round($m / 60) . ' hours' : "$m minutes")) . ' left' . (!empty($app['on_trial']) ? ', free trial' : '') . ')';
