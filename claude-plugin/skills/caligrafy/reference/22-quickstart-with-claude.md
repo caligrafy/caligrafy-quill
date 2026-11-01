@@ -70,7 +70,7 @@ Every experience calls the same capabilities: the same rules, the same permissio
 
 | You see | What to do |
 | --- | --- |
-| `/caligrafy-quill:idea` is not a command | trust the folder (restart `claude` in `myapp`), or run `/plugin` and enable `caligrafy-quill` |
+| `/caligrafy-quill:idea` is not a command | run `php caligrafer.php plugin` in `myapp` (it registers the project's plugin with Claude Code), then restart `claude` there |
 | Docker is not running | start Docker Desktop, then tell Claude to go on |
 | A port is already in use (8080, 8077, 3306) | Claude proposes other ports with `docker-compose.override.yml`; see the [server skill](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) |
 | Sign-up refuses your email address | usernames are letters and digits only, for example `sam42` |

@@ -50,6 +50,7 @@ $defaultMsg = "\n Available Functions:
 				\n - version: prints the version of Caligrafy Quill
 				\n - initialize: Initializes and signs your project
 				\n - update [<version>] [--check] [--yes] [--no-composer]: moves the project to another release of Caligrafy Quill (the latest by default) and applies everything: framework/, the release's other files (untouched ones replaced, changed ones kept with a .caligrafy-new), composer.json, .gitignore and new .env settings merged, then upgrade --apply; backups in backups/
+				\n - plugin: gives this project's Claude Code plugin its own source name and says where Claude Code reads it
 				\n - upgrade [--apply] [--local] [--force <application/path>] [--keep <application/path>]: brings the project up to date (dry run by default). When a newer release of Caligrafy Quill is out, it moves the project to it like update; otherwise (or with --local) it compares application/ with the framework templates and updates the untouched files; also reports .env settings and Bootstrap 3 classes
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - design <list [--json] | show <name> | use <name> | off | status>: picks a design style (DESIGN_STYLE in .env) (framework/design, application/design); empty = Caligrafy's own look
@@ -170,6 +171,10 @@ switch(strtolower($argv[1])) {
 			Caligrafy\Upgrader::writeManifest('.');
 		   }
 		   system('chmod -R 777 public/uploads');
+		   // the Claude Code plugin of this project gets its own source name (one shared name breaks every other project)
+		   if ($pluginSource = Caligrafy\PluginSource::ensureOwn('.')) {
+			print("\n Claude Code plugin source: $pluginSource (enable caligrafy-quill@$pluginSource when Claude Code asks)");
+		   }
 
 		   // the .git folder of the framework goes only when someone says so: --yes, or yes to the question in a terminal
 		   if (is_dir("./.git")) {
@@ -491,6 +496,17 @@ switch(strtolower($argv[1])) {
 			if ($arg !== '' && $arg[0] !== '-') { $target = $arg; break; }
 		}
 		exit((new Caligrafy\Updater('.'))->run($target, in_array('--check', $argv), in_array('--yes', $argv), !in_array('--no-composer', $argv)));
+
+	case 'plugin':
+		// The Claude Code plugin of this project: its own source name, and where Claude Code reads it on this computer
+		$renamed = Caligrafy\PluginSource::ensureOwn('.');
+		$name = Caligrafy\PluginSource::name('.');
+		if ($name === null) {
+			print("\n No .claude-plugin/marketplace.json: this project has no Claude Code plugin source (php caligrafer.php update brings it)\n\n");
+			exit(1);
+		}
+		print("\n Plugin source: $name" . ($renamed ? ' (renamed from the shared "caligrafy")' : '') . ", plugin caligrafy-quill@$name\n");
+		exit(Caligrafy\PluginSource::connect('.', function ($line) { print(" $line\n"); }));
 
 	case 'upgrade':
 		$apply = in_array('--apply', $argv);

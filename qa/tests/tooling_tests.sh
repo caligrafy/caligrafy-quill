@@ -165,6 +165,7 @@ cd "$ROOT"
 # --- initialize keeps a .git folder unless --yes (it used to delete it without asking) ---------------------------
 mkdir -p "$TMP/initgit" && cd "$TMP/initgit"
 cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads .git
+cp -r "$ROOT/.claude" "$ROOT/.claude-plugin" .
 cp framework/settings/.env.example .env
 php caligrafer.php initialize < /dev/null >/dev/null 2>&1
 KEPT=$([ -d .git ] && echo yes || echo no)
@@ -173,6 +174,13 @@ if [ "$KEPT" = yes ] && [ ! -d .git ] && [ -d application ]; then
     ok "caligrafer initialize keeps .git without --yes, and deletes it with --yes"
 else
     ko "caligrafer initialize and .git" "kept without --yes: $KEPT; after --yes: $([ -d .git ] && echo still there || echo deleted)"
+fi
+SOURCE=$(sed -n 's/^ *"name": *"\([^"]*\)".*/\1/p' .claude-plugin/marketplace.json | head -1)
+if echo "$SOURCE" | grep -qE '^caligrafy-initgit-[0-9a-f]{4}$' && grep -q "\"caligrafy-quill@$SOURCE\": true" .claude/settings.json \
+    && grep -q "\"$SOURCE\": {" .claude/settings.json && grep -q '"name": "caligrafy"' "$ROOT/.claude-plugin/marketplace.json"; then
+    ok "caligrafer initialize gives the project's Claude Code plugin source its own name (the framework's stays caligrafy)"
+else
+    ko "initialize and the plugin source" "source: $SOURCE; settings: $(tr -d '\n ' < .claude/settings.json)"
 fi
 cd "$ROOT"
 

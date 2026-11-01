@@ -6,6 +6,23 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.10.1] - 2026-11-01
+
+### Fixed
+- Each project's Claude Code plugin source gets the project's own name (`Caligrafy\PluginSource`). Every project
+  named it `caligrafy`, and Claude Code keeps one source per name for the whole computer: the first project opened
+  won, every other project got that project's plugin (an older one, without the newer skills such as `design`), and
+  none got any once that folder was deleted. `initialize` renames it to `caligrafy-<folder>-<4 hex>` in
+  `.claude/settings.json` and `.claude-plugin/marketplace.json`; `update` does it for existing projects (and no longer
+  compares those two files with the release's).
+
+### Added
+- `php caligrafer.php plugin`: gives the project's plugin source its own name, registers it with Claude Code
+  (`claude plugin marketplace add`, replacing a registration from another folder) and installs the plugin for the
+  project, when the `claude` command is on the computer. `.bin/caligrafer quickstart` does it after the quickstart,
+  also for a project served by Docker (the container has no `claude`).
+- `doctor` reports the plugin: a source still named `caligrafy`, or read from another folder, is a warning.
+
 ## [2.10.0] - 2026-11-01
 
 `php caligrafer.php upgrade` checks for a newer release of Caligrafy Quill first.

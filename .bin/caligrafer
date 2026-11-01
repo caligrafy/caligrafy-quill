@@ -1,5 +1,17 @@
 #!/bin/bash
 
+# Registers this project's Claude Code plugin with the claude command of this computer (quickstart in Docker: the
+# container has no claude). php caligrafer.php plugin does the same where PHP runs on the computer
+connectPlugin() {
+    command -v claude >/dev/null 2>&1 || return 0
+    local NAME
+    NAME=$(sed -n 's/^ *"name": *"\([^"]*\)".*/\1/p' .claude-plugin/marketplace.json 2>/dev/null | head -1)
+    [ -n "$NAME" ] && [ "$NAME" != "caligrafy" ] || return 0
+    claude plugin marketplace list 2>/dev/null | grep -q "$NAME" || claude plugin marketplace add "$PWD" >/dev/null 2>&1
+    claude plugin list 2>/dev/null | grep -q "caligrafy-quill@$NAME" || claude plugin install "caligrafy-quill@$NAME" --scope project >/dev/null 2>&1
+    printf "\nClaude Code plugin: caligrafy-quill@%s, read from this folder (restart claude here to load it)\n" "$NAME"
+}
+
 # Preparing input
 if [ "$1" ]; then
     MODE="$(tr [A-Z] [a-z] <<< "$1")"
@@ -48,8 +60,9 @@ if [ "$MODE" = "quickstart" ]; then
             command -v composer >/dev/null 2>&1 || { printf "\nComposer is not installed: https://getcomposer.org, or use Docker (--docker).\n\n"; exit 1; }
             composer install --no-interaction || exit 1
         fi
-        php caligrafer.php quickstart "${@:2}"
-        exit $?
+        php caligrafer.php quickstart "${@:2}" || exit $?
+        php caligrafer.php plugin
+        exit 0
     fi
     if ! docker info >/dev/null 2>&1; then
         printf "\nDocker is not running: start Docker Desktop, then run .bin/caligrafer quickstart again.\n\n"; exit 1
@@ -62,8 +75,9 @@ if [ "$MODE" = "quickstart" ]; then
     [ -f .env ] || cp framework/settings/.env.example .env
     printf "\nStarting the server (the first start builds the PHP image: a few minutes)...\n"
     $COMPOSE up -d dev-box || exit 1
-    $COMPOSE exec -T dev-box php caligrafer.php quickstart "${@:2}"
-    exit $?
+    $COMPOSE exec -T dev-box php caligrafer.php quickstart "${@:2}" || exit $?
+    connectPlugin
+    exit 0
 fi
 
 # Calling the right service based on PHP and Composer presence

@@ -131,6 +131,22 @@ class Doctor
             $this->add('project', 'Pages and the API key', 'WARN', implode(', ', $senders) . ' send the legacy API key: public in the page, and refused where LEGACY_API_KEY=false (Caligrafy Cloud)',
                 "send { headers: apiHeaders() } instead: the session and its X-CSRF-Token (public/js/services/app.js)");
         }
+        // the Claude Code plugin: its own source name (a shared "caligrafy" gives every project the first one's plugin)
+        $source = class_exists('Caligrafy\\PluginSource') ? PluginSource::name($this->root) : null;
+        $frameworkRepository = is_file($this->root . '/qa/run.sh');   // the source people add from GitHub keeps its name
+        if ($source === PluginSource::SHARED && $frameworkRepository) {
+            $this->add('project', 'Claude Code plugin', 'OK', 'caligrafy-quill@caligrafy: the framework\'s own repository');
+        } elseif ($source === PluginSource::SHARED && is_dir($this->root . '/application')) {
+            $this->add('project', 'Claude Code plugin', 'WARN', 'its source is named "caligrafy", like every other project: Claude Code may load another project\'s plugin, or none',
+                'php caligrafer.php plugin (gives it its own name and registers it)');
+        } elseif ($source !== null && $source !== PluginSource::SHARED) {
+            $where = PluginSource::registeredPath($source);
+            if ($where !== null && realpath($where) !== realpath($this->root)) {
+                $this->add('project', 'Claude Code plugin', 'WARN', "$source is read from $where, not this folder", 'php caligrafer.php plugin');
+            } else {
+                $this->add('project', 'Claude Code plugin', 'OK', "caligrafy-quill@$source" . ($where === null ? ' (not registered yet: php caligrafer.php plugin, or start claude here)' : ''));
+            }
+        }
         // error details are for development: on a site served over HTTPS they show file paths and SQL to visitors
         $debug = in_array(strtolower(trim((string) $this->env('APP_DEBUG'))), ['true', '1', 'on', 'yes'], true);
         if ($debug && strtolower(trim((string) $this->env('APP_PROTOCOL'))) === 'https') {

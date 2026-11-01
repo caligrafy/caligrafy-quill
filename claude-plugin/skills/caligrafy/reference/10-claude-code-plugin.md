@@ -29,12 +29,12 @@ The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligraf
 
 The plugin also knows the Caligrafer maintenance commands and uses them: `php caligrafer.php doctor` (read-only health check of the project, its keys and its services) to diagnose problems first, and `php caligrafer.php upgrade` to bring an existing project up to date with the framework templates.
 
-Current version: **1.22.0**, for Caligrafy Quill v2.10.0. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: the library upgrade (1.2), FaceDetector camera control (1.3), AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7), `doctor` (1.8), the PHPUnit unit tests of the framework core in the QA suite (1.8.1), install to home screen, face login liveness and passkeys, and open-model providers such as Llama on OpenRouter or Ollama (1.9), the release notes and Testing Caligrafy pages (1.9.1), versioned releases with `php caligrafer.php version` (1.10), the build-once layer: capabilities, tokens, MCP and the `new-capability` command (1.11), the `application/services/` folder in every new project (1.11.1), `framework/interfaces/` (1.11.2), UI guidelines so every new page is built with the page components (1.12), the one-command `quickstart` (1.13), one card per page, Vue apps on the JS client and the SPA router settings (1.13.1), the fix for the `npm install` vulnerabilities of Vite apps (1.13.2), `caligrafer call` with the new upgrade reports (1.14), putting a project online with the `deploy` command (1.15), the Quickstart with Claude, `/caligrafy-quill:idea` (1.16), only capabilities touch models with `Route::page` and capabilities-first resources (1.17), the Composer quickstart on local servers (1.18), and shipping without hand-offs with `/caligrafy-quill:ship` (1.19). The [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#plugin) map each version to the framework change it follows.
+Current version: **1.22.1**, for Caligrafy Quill v2.10.1. The [plugin changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/claude-plugin/README.md#changelog) lists what each version added: the library upgrade (1.2), FaceDetector camera control (1.3), AI chat and face login recipes and Docker troubleshooting (1.4), real HTTP status codes (1.4.1), `upgrade` (1.5), namespaced controllers (1.6), the explicit layout classes (1.7), `doctor` (1.8), the PHPUnit unit tests of the framework core in the QA suite (1.8.1), install to home screen, face login liveness and passkeys, and open-model providers such as Llama on OpenRouter or Ollama (1.9), the release notes and Testing Caligrafy pages (1.9.1), versioned releases with `php caligrafer.php version` (1.10), the build-once layer: capabilities, tokens, MCP and the `new-capability` command (1.11), the `application/services/` folder in every new project (1.11.1), `framework/interfaces/` (1.11.2), UI guidelines so every new page is built with the page components (1.12), the one-command `quickstart` (1.13), one card per page, Vue apps on the JS client and the SPA router settings (1.13.1), the fix for the `npm install` vulnerabilities of Vite apps (1.13.2), `caligrafer call` with the new upgrade reports (1.14), putting a project online with the `deploy` command (1.15), the Quickstart with Claude, `/caligrafy-quill:idea` (1.16), only capabilities touch models with `Route::page` and capabilities-first resources (1.17), the Composer quickstart on local servers (1.18), and shipping without hand-offs with `/caligrafy-quill:ship` (1.19). The [Release notes: October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026#plugin) map each version to the framework change it follows.
 
 ## Installing the plugin
 
 ### Automatic (recommended)
-Every Quill project ships a `.claude/settings.json` that registers the plugin's marketplace and enables the plugin. Create or clone a Quill project, open it in Claude Code and accept the **"trust this folder"** prompt:
+Every Quill project ships a `.claude/settings.json` that registers the plugin's source (its "marketplace") and enables the plugin. Since 2.10.1 `initialize` (and so `quickstart`) gives that source the project's own name, `caligrafy-<folder>-<4 letters>`, and `quickstart` registers it with Claude Code when the `claude` command is on your computer. Create or clone a Quill project, set it up, open it in Claude Code and accept the **"trust this folder"** prompt:
 
 ```bash
 composer create-project caligrafy/caligrafy-quill my-app
@@ -60,6 +60,15 @@ claude plugin install caligrafy-quill@caligrafy
 ```
 
 > The marketplace is named `caligrafy` and the plugin `caligrafy-quill`, which is why the install target is `caligrafy-quill@caligrafy`.
+
+### When a command such as `/caligrafy-quill:design` is unknown
+Claude Code keeps one plugin source per name for the whole computer. Before 2.10.1 every project named its source `caligrafy`: the first project opened won, every other project got that project's plugin (an older one, without the newer skills), and none got any once that folder was deleted. In the project, run:
+
+```bash
+php caligrafer.php plugin
+```
+
+It gives the project's source its own name, registers it with Claude Code and installs the plugin for the project (`claude plugin marketplace add`, `claude plugin install ... --scope project`). Then restart `claude` in the folder. `php caligrafer.php doctor` warns when a project still shares the name or its plugin is read from another folder; `php caligrafer.php update` renames it too.
 
 ## Commands
 

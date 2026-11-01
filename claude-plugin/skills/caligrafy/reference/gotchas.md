@@ -404,3 +404,14 @@ was out, and "upgrading" changed nothing when the framework itself was old. Sinc
 `update` (the framework, the release's untouched files, `composer.json`, `.gitignore`, `.env`, then the templates).
 `--local`, `--force` and `--keep` skip the check; offline it says so and compares the templates. A project before
 2.10.0 runs `php caligrafer.php update` (2.9.0+) or gets the command first (G94). Proof: `caligrafer.php` (`upgrade`).
+
+**G97. One plugin source name for every project gave them all the first one's plugin.** A project enables its own
+`claude-plugin/` through `.claude/settings.json` (a directory source at `./`, `caligrafy-quill@<source>`), and Claude
+Code keeps one source per name for the whole computer (`~/.claude/plugins/known_marketplaces.json`). Before 2.10.1
+every project called it `caligrafy`: the first project opened was registered, every other project silently loaded that
+project's plugin (an older one: `/caligrafy-quill:design` "unknown command" in a 2.8.0 project, verified), and no
+project got any once that folder was deleted. An already trusted folder is never asked again, so starting `claude`
+there does not fix it. Since 2.10.1 `initialize` names the source `caligrafy-<folder>-<4 hex>` and `update` renames it;
+`php caligrafer.php plugin` renames, registers (`claude plugin marketplace add <folder>`, replacing another folder's)
+and installs it (`claude plugin install caligrafy-quill@<name> --scope project`); `doctor` warns. The framework's own
+repository keeps `caligrafy`: it is the source added from GitHub. Proof: `framework/core/PluginSource.php`.

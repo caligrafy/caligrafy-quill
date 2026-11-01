@@ -36,6 +36,7 @@
 | [`audit`](#audit) | Shows the latest capability calls and refusals |
 | [`doctor`](#doctor) | Checks the project, the database and every configured service |
 | [`update`](#update) | Moves the project to another release of Caligrafy Quill and applies everything (2.9.0+) |
+| [`plugin`](#plugin) | Gives the project's Claude Code plugin its own source name, registers it and installs it (2.10.1+) |
 | [`upgrade`](#upgrade) | Updates the `application/` templates of a project to the framework's |
 | [`deploy`](#deploy) | Prepares the database in production (what the production image runs at start) |
 | [`cloud`](#cloud) | Puts the project online at `https://<name>.caligrafy.com` with Caligrafy Cloud |
@@ -222,6 +223,12 @@ curl -fsSL https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/fr
 php -r "require 'framework/core/Updater.php'; exit((new Caligrafy\Updater('.'))->run());"
 ```
 In Docker, run each `php` line with `docker compose exec dev-box` in front.
+
+### `plugin`
+```bash
+php caligrafer.php plugin
+```
+Connects the project's Claude Code plugin (`claude-plugin/`) to Claude Code on this computer. It gives the plugin source of `.claude/settings.json` and `.claude-plugin/marketplace.json` the project's own name (`caligrafy-<folder>-<4 letters>`) when it is still the shared `caligrafy`, then, when the `claude` command is here, registers it (`claude plugin marketplace add <folder>`, replacing a registration from another folder) and installs the plugin for the project. Restart `claude` in the folder to load it. `initialize`, `quickstart` and `update` do it for you; run it when a `/caligrafy-quill:...` command is unknown.
 
 ### `upgrade`
 ```bash

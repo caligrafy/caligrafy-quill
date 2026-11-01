@@ -30,7 +30,9 @@ class Updater
     // written by initialize inside framework/: kept across updates
     const KEEP = array('framework/librairies/app/.env');
     // in the release but not the project's: tests, CI, the lock file of the framework's own development
-    const SKIP = array('/^qa\//', '/^tests\//', '/^\.github\//', '/^composer\.lock$/', '/^public\/uploads\//', '/^application\//');
+    // and the plugin source files: each project names its source (PluginSource), ensureOwn() keeps them right
+    const SKIP = array('/^qa\//', '/^tests\//', '/^\.github\//', '/^composer\.lock$/', '/^public\/uploads\//', '/^application\//',
+        '/^\.claude\/settings\.json$/', '/^\.claude-plugin\/marketplace\.json$/');
     // merged instead of compared
     const MERGED = array('composer.json', '.gitignore');
     // replaced when untouched, else left alone without a .caligrafy-new, never added (the project's own documents:
@@ -42,6 +44,7 @@ class Updater
     private $root;
     private $fetch;
     private $run;
+    private $runner;
     private $lines = array();
     private $tmp = array();
 
@@ -56,6 +59,7 @@ class Updater
         $this->root = rtrim($root, '/');
         $this->fetch = $fetch ?: array($this, 'download');
         $this->run = $run ?: function ($command) { passthru($command, $code); return $code; };
+        $this->runner = $run ? function ($command) use ($run) { return array(call_user_func($run, $command), ''); } : null;
     }
 
     /**
@@ -121,6 +125,16 @@ class Updater
             return 0;
         }
         $this->out("\n Backups: " . substr($backup, strlen($this->root) + 1) . '/');
+        foreach (array('.claude/settings.json', '.claude-plugin/marketplace.json') as $file) {
+            if (!is_file("$this->root/$file") && is_file("$new/$file")) self::put("$this->root/$file", "$new/$file");
+        }
+        if (class_exists('Caligrafy\\PluginSource') || is_file("$this->root/framework/core/PluginSource.php")) {
+            if (!class_exists('Caligrafy\\PluginSource')) require_once "$this->root/framework/core/PluginSource.php";
+            if ($name = PluginSource::ensureOwn($this->root)) {
+                $this->out(" Claude Code plugin source: $name (its own name: the shared \"caligrafy\" gave every project the first one's plugin)");
+                PluginSource::connect($this->root, function ($line) { $this->out(" $line"); }, $this->runner);
+            }
+        }
 
         $code = 0;
         if ($packages && $composer) {
