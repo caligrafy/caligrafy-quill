@@ -167,7 +167,7 @@ feature step by step, page included.
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
 | See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
-| Contribute | [Contributing](CONTRIBUTING.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
+| Contribute | [Contributing](CONTRIBUTING.md), [how the framework is built](ARCHITECTURE.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
 
 Other ways to install (your own Apache, MySQL and PHP; `composer create-project`) are in
 [Getting Started](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started). Requirements without

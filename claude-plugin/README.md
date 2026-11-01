@@ -46,6 +46,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.17.1** - `ARCHITECTURE.md` rewritten for Caligrafy Quill 2.5.0 (the request lifecycle, `Capabilities::call`, the
+  `Context`, each experience's adapter, the user capabilities, data and deployment, the design decisions); the
+  `caligrafy` skill points to it for questions about how the framework itself is built.
 - **1.17.0** - Caligrafy Quill 2.5.0, only capabilities touch models: `Route::page` and the page controller in the API
   reference, the main skill (map row, CRUD recipe and conventions capabilities-first) and the UI guidelines; the user
   capabilities (`list_users`, `get_user`, `update_user`, `delete_user`, `register_user`, `CaligrafyUsers::ADMIN_LEVEL`)

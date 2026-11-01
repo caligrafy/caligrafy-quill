@@ -7,6 +7,10 @@ We love your input! We want to make contributing to this project as easy and tra
 - Proposing new features
 - Becoming a maintainer
 
+## How the framework is built
+Read [ARCHITECTURE.md](ARCHITECTURE.md) first: how a request runs, how a capability is called from every experience, who is
+acting (the `Context`), the rule that only capabilities touch models, and the design decisions a change must keep.
+
 ## We Develop with Github
 We use github to host code, to track issues and feature requests, as well as accept pull requests.
 

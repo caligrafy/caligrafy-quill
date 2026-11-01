@@ -43,6 +43,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | What 2.4.0 changed: production image, `deploy`, `cloud`, sessions volume, the sign-in look of the page components, upgrading from 2.3.0 | [21-release-notes-2.4.0.md](reference/21-release-notes-2.4.0.md) |
 | What 2.3.0 changed: `caligrafer call`, the upgrade reports and `--keep`, doctor warnings, fixed templates, one time zone, upgrading from 2.2.0 | [19-release-notes-2.3.0.md](reference/19-release-notes-2.3.0.md) |
 | Every change of October 2026: upgrade checklist for existing projects, what can break, `.env` settings | [11-release-notes-october-2026.md](reference/11-release-notes-october-2026.md) |
+| How the framework itself is built: the request lifecycle, `Capabilities::call`, the `Context` (actors, scopes, levels), each experience's adapter, the design decisions | `ARCHITECTURE.md` at the root of the framework (and of every project) |
 | Changing the framework itself: QA suite phases, PHPUnit tests in `qa/unit`, mocks, adding a test, release process | [12-testing-caligrafy.md](reference/12-testing-caligrafy.md) |
 | Stripe and Coinbase payments | [09.2-stripe-crypto-payment.md](reference/09.2-stripe-crypto-payment.md) |
 | Metadata, rich cards, SEO, analytics | [09.3-metadata-rich-cards.md](reference/09.3-metadata-rich-cards.md), [09.4-search-referencing-analytics.md](reference/09.4-search-referencing-analytics.md) |

@@ -3,7 +3,7 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-This page is for contributors to Caligrafy Quill: how the framework is tested, how to run all or part of the tests, how to add a test, and how a release is prepared. You do not need any of it to build an application with Caligrafy.
+This page is for contributors to Caligrafy Quill: how the framework is tested, how to run all or part of the tests, how to add a test, and how a release is prepared. You do not need any of it to build an application with Caligrafy. How the framework itself is built (the request lifecycle, capabilities, the `Context`, the design decisions) is in [ARCHITECTURE.md](https://github.com/caligrafy/caligrafy-quill/blob/master/ARCHITECTURE.md).
 
 Run every command from the root of a **clean checkout of the framework** (`git clone https://github.com/caligrafy/caligrafy-quill.git`), not from one of your projects.
 
