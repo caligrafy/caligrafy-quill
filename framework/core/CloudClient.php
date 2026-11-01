@@ -87,7 +87,7 @@ class CloudClient
                     $period = strtolower($args[2] ?? '');
                     if (!$name || !in_array($period, self::PERIODS, true)) return $this->usage('extend <name> week|month|year   (2, 5 or 50 credits)');
                     $app = $this->call('extend_app', array('name' => $name, 'period' => $period));
-                    $this->out(" {$app['url']} is online until {$app['online_until']} (server time). Credits left: {$app['credits_left']}." . ($app['restarted'] ? ' It is starting again.' : ''));
+                    $this->out(" {$app['url']} is online until " . date('Y-m-d H:i T', strtotime($app['online_until'])) . ". Credits left: {$app['credits_left']}." . ($app['restarted'] ? ' It is starting again.' : ''));
                     return 0;
                 case 'credits':
                     if (!in_array((int) $name, array(5, 10, 25, 50), true)) return $this->usage('credits 5|10|25|50   (1 credit = 1 USD)');
