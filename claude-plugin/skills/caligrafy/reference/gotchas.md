@@ -359,8 +359,8 @@ selects a style: the layout (`design_stylesheet()` in `layoutblocks.pug` and `fr
 `public/css/designs/<name>.css` when that file exists, after `styles.css`, Bootstrap, `theme.css` and `tokens.css`.
 An empty setting, an unknown name, a name that is not `[a-z0-9._-]` (no paths) or a style whose stylesheet is not
 written yet all keep the Caligrafy look; `doctor` says which (`WARN Design style: ...`). The `design` skill writes the
-stylesheet from `framework/designs/<name>/DESIGN.md`, `framework/designs-extra/<name>/` (styles from outside the
-awesome-design-md collection, such as `interstellar`) or `application/designs/<name>/`, which wins. Never restyle by
+stylesheet from the style's `DESIGN.md`: the first of `application/design/<name>/` (the project's own),
+`framework/design/local/<name>/` (`interstellar`...) and `framework/design/vendor/<vendor>/<name>/` (awesome-design-md). Never restyle by
 editing `tokens.css`, `tokens.json` (the QA suite checks they match), `theme.css`, `styles.css` or the views: an emptied
 `DESIGN_STYLE` must bring the Caligrafy look back. Projects copied before 2.8 have no `design_stylesheet()` line in
 their layout: `php caligrafer.php upgrade` updates an untouched `layoutblocks.pug`, otherwise add the four lines by hand.
@@ -374,4 +374,4 @@ Bootstrap's `--bs-btn-*` variables and gives `.form-control` `height: 3em; font-
 secondary button in the Caligrafy look): style `.btn-primary.btn-secondary` as the main action. A Vite SPA imports its
 CSS at build time (`src/main.js`): it needs `import '../../css/designs/<name>.css'` and a rebuild. Online: commit the
 stylesheet and set `DESIGN_STYLE` on the server (`cloud secret set <app> DESIGN_STYLE=<name>`); the production image
-leaves `framework/designs/` out.
+leaves `framework/design/` out.

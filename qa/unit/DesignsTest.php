@@ -11,19 +11,19 @@ final class DesignsTest extends TestCase
     protected function setUp(): void
     {
         $this->root = sys_get_temp_dir() . '/quill-designs-' . bin2hex(random_bytes(4));
-        mkdir($this->root . '/framework/designs/calm', 0777, true);
-        mkdir($this->root . '/framework/designs/prose.site', 0777, true);
-        mkdir($this->root . '/application/designs/calm', 0777, true);
-        mkdir($this->root . '/application/designs/own', 0777, true);
-        mkdir($this->root . '/framework/designs-extra/extra', 0777, true);
-        mkdir($this->root . '/framework/designs-extra/prose.site', 0777, true);
+        mkdir($this->root . '/framework/design/vendor/acme/calm', 0777, true);
+        mkdir($this->root . '/framework/design/vendor/acme/prose.site', 0777, true);
+        mkdir($this->root . '/application/design/calm', 0777, true);
+        mkdir($this->root . '/application/design/own', 0777, true);
+        mkdir($this->root . '/framework/design/local/extra', 0777, true);
+        mkdir($this->root . '/framework/design/local/prose.site', 0777, true);
         mkdir($this->root . '/public/css/designs', 0777, true);
-        file_put_contents($this->root . '/framework/designs/calm/DESIGN.md', "---\nversion: alpha\nname: Calm\ndescription: \"A calm framework style.\"\ncolors:\n  primary: \"#123456\"\n---\n\n## Overview\n");
-        file_put_contents($this->root . '/framework/designs/prose.site/DESIGN.md', "# Design System Inspired by Prose\n\n## 1. Visual Theme\n\nA prose-only style with a **bold** first paragraph.\n\nSecond paragraph.\n");
-        file_put_contents($this->root . '/application/designs/calm/DESIGN.md', "---\ndescription: The project's own calm.\n---\n");
-        file_put_contents($this->root . '/application/designs/own/DESIGN.md', "Own style.\n");
-        file_put_contents($this->root . '/framework/designs-extra/extra/DESIGN.md', "---\ndescription: An extra style.\n---\n");
-        file_put_contents($this->root . '/framework/designs-extra/prose.site/DESIGN.md', "An extra prose.\n");
+        file_put_contents($this->root . '/framework/design/vendor/acme/calm/DESIGN.md', "---\nversion: alpha\nname: Calm\ndescription: \"A calm framework style.\"\ncolors:\n  primary: \"#123456\"\n---\n\n## Overview\n");
+        file_put_contents($this->root . '/framework/design/vendor/acme/prose.site/DESIGN.md', "# Design System Inspired by Prose\n\n## 1. Visual Theme\n\nA prose-only style with a **bold** first paragraph.\n\nSecond paragraph.\n");
+        file_put_contents($this->root . '/application/design/calm/DESIGN.md', "---\ndescription: The project's own calm.\n---\n");
+        file_put_contents($this->root . '/application/design/own/DESIGN.md', "Own style.\n");
+        file_put_contents($this->root . '/framework/design/local/extra/DESIGN.md', "---\ndescription: An extra style.\n---\n");
+        file_put_contents($this->root . '/framework/design/local/prose.site/DESIGN.md', "An extra prose.\n");
         file_put_contents($this->root . '/.env', "APP_ENV=local\nDESIGN_STYLE=\nAPP_DEBUG=true\n");
     }
 
@@ -50,22 +50,42 @@ final class DesignsTest extends TestCase
     {
         $styles = Designs::available($this->root);
         $this->assertSame(['calm', 'extra', 'own', 'prose.site'], array_keys($styles));
-        $this->assertStringContainsString('/framework/designs-extra/extra/', $styles['extra']);
-        $this->assertStringContainsString('/framework/designs-extra/prose.site/', $styles['prose.site']);   // extra wins over the collection
-        $this->assertStringContainsString('/application/designs/calm/', $styles['calm']);
-        $this->assertStringContainsString('/application/designs/calm/', Designs::find('calm', $this->root));
-        $this->assertStringContainsString('/framework/designs-extra/prose.site/', Designs::find('prose.site', $this->root));
-        $this->assertStringContainsString('/framework/designs-extra/extra/', Designs::find('extra', $this->root));
+        $this->assertStringContainsString('/framework/design/local/extra/', $styles['extra']);
+        $this->assertStringContainsString('/framework/design/local/prose.site/', $styles['prose.site']);   // local wins over a vendor
+        $this->assertStringContainsString('/application/design/calm/', $styles['calm']);
+        $this->assertStringContainsString('/application/design/calm/', Designs::find('calm', $this->root));
+        $this->assertStringContainsString('/framework/design/local/prose.site/', Designs::find('prose.site', $this->root));
+        $this->assertStringContainsString('/framework/design/local/extra/', Designs::find('extra', $this->root));
         $this->assertNull(Designs::find('nope', $this->root));
         $this->assertNull(Designs::find('../calm', $this->root));
     }
 
+    public function testVendorsComeLastInAlphabeticalOrderAndShowNamesHiddenCopies(): void
+    {
+        mkdir($this->root . '/framework/design/vendor/zeta/calm', 0777, true);
+        mkdir($this->root . '/framework/design/vendor/zeta/only.zeta', 0777, true);
+        mkdir($this->root . '/framework/design/vendor/beta/only.zeta', 0777, true);
+        file_put_contents($this->root . '/framework/design/vendor/zeta/calm/DESIGN.md', "Zeta calm.\n");
+        file_put_contents($this->root . '/framework/design/vendor/zeta/only.zeta/DESIGN.md', "Zeta.\n");
+        file_put_contents($this->root . '/framework/design/vendor/beta/only.zeta/DESIGN.md', "Beta.\n");
+        $this->assertSame(['application', 'local', 'vendor/acme', 'vendor/beta', 'vendor/zeta'], array_keys(Designs::sources($this->root)));
+        $this->assertSame('vendor/beta', Designs::source(Designs::find('only.zeta', $this->root), $this->root));
+        $this->assertSame('application', Designs::source(Designs::find('calm', $this->root), $this->root));
+        $this->assertSame(['application', 'vendor/acme', 'vendor/zeta'], array_keys(Designs::all('calm', $this->root)));
+        $this->assertSame(0, $this->cli(['show', 'calm'], $output));
+        $this->assertStringContainsString('calm (application)', $output);
+        $this->assertStringContainsString('also in:    framework/design/vendor/acme/calm/DESIGN.md, framework/design/vendor/zeta/calm/DESIGN.md (not used: the first one wins)', $output);
+        $this->assertSame(0, $this->cli(['list', '--json'], $output));
+        $sources = array_column(json_decode($output, true)['styles'], 'source', 'name');
+        $this->assertSame(['calm' => 'application', 'extra' => 'local', 'only.zeta' => 'vendor/beta', 'own' => 'application', 'prose.site' => 'local'], $sources);
+    }
+
     public function testDescriptionComesFromTheFrontMatterOrTheFirstParagraph(): void
     {
-        $this->assertSame('A calm framework style.', Designs::describe($this->root . '/framework/designs/calm/DESIGN.md'));
-        $this->assertSame('A prose-only style with a **bold** first paragraph.', Designs::describe($this->root . '/framework/designs/prose.site/DESIGN.md'));
-        $this->assertSame('An extra prose.', Designs::describe($this->root . '/framework/designs-extra/prose.site/DESIGN.md'));
-        $long = $this->root . '/framework/designs/calm/LONG.md';
+        $this->assertSame('A calm framework style.', Designs::describe($this->root . '/framework/design/vendor/acme/calm/DESIGN.md'));
+        $this->assertSame('A prose-only style with a **bold** first paragraph.', Designs::describe($this->root . '/framework/design/vendor/acme/prose.site/DESIGN.md'));
+        $this->assertSame('An extra prose.', Designs::describe($this->root . '/framework/design/local/prose.site/DESIGN.md'));
+        $long = $this->root . '/framework/design/vendor/acme/calm/LONG.md';
         file_put_contents($long, "---\ndescription: " . str_repeat('word ', 40) . "\n---\n");
         $this->assertSame(110, strlen(Designs::describe($long)));
         $this->assertSame(199, strlen(Designs::describe($long, 0)));
@@ -136,7 +156,7 @@ final class DesignsTest extends TestCase
         $own = array_values(array_filter($list['styles'], fn ($s) => $s['name'] === 'own'))[0];
         $this->assertTrue($own['selected']);
         $this->assertTrue($own['stylesheet']);
-        $this->assertSame('application/designs/own/DESIGN.md', $own['design']);
+        $this->assertSame('application/design/own/DESIGN.md', $own['design']);
         $this->assertSame(1, $this->cli(['bogus'], $output));
     }
 
@@ -159,16 +179,16 @@ final class DesignsTest extends TestCase
     {
         $root = dirname(__DIR__, 2);
         $styles = Designs::available($root);
-        $this->assertGreaterThanOrEqual(80, count(array_filter($styles, fn ($f) => strpos($f, '/framework/designs/') !== false)));
+        $this->assertGreaterThanOrEqual(80, count(array_filter($styles, fn ($f) => strpos($f, '/framework/design/vendor/awesome-design-md/') !== false)));
         $this->assertArrayHasKey('claude', $styles);
-        $this->assertStringContainsString('Copyright (c) 2026 VoltAgent', file_get_contents($root . '/framework/designs/LICENSE'));
-        $this->assertStringContainsString('Permission is hereby granted', file_get_contents($root . '/framework/designs/LICENSE'));
-        $this->assertStringContainsString('VoltAgent/awesome-design-md', file_get_contents($root . '/framework/designs/README.md'));
-        $this->assertMatchesRegularExpression('#^https://github\.com/VoltAgent/awesome-design-md [0-9a-f]{40} #', file_get_contents($root . '/framework/designs/SOURCE'));
-        $this->assertStringContainsString('/framework/designs-extra/interstellar/DESIGN.md', $styles['interstellar'] ?? '');
+        $this->assertStringContainsString('Copyright (c) 2026 VoltAgent', file_get_contents($root . '/framework/design/vendor/awesome-design-md/LICENSE'));
+        $this->assertStringContainsString('Permission is hereby granted', file_get_contents($root . '/framework/design/vendor/awesome-design-md/LICENSE'));
+        $this->assertStringContainsString('VoltAgent/awesome-design-md', file_get_contents($root . '/framework/design/vendor/awesome-design-md/README.md'));
+        $this->assertMatchesRegularExpression('#^https://github\.com/VoltAgent/awesome-design-md [0-9a-f]{40} #', file_get_contents($root . '/framework/design/vendor/awesome-design-md/SOURCE'));
+        $this->assertStringContainsString('/framework/design/local/interstellar/DESIGN.md', $styles['interstellar'] ?? '');
         $this->assertStringStartsWith('A calm, dense laboratory operations system', Designs::describe($styles['interstellar']));
-        $this->assertStringContainsString('`interstellar`', file_get_contents($root . '/framework/designs-extra/README.md'));
-        $this->assertFileDoesNotExist($root . '/framework/designs/interstellar/DESIGN.md', 'interstellar is not part of the awesome-design-md copy');
+        $this->assertStringContainsString('`interstellar`', file_get_contents($root . '/framework/design/local/README.md'));
+        $this->assertFileDoesNotExist($root . '/framework/design/vendor/awesome-design-md/interstellar/DESIGN.md', 'interstellar is not part of the awesome-design-md copy');
         foreach ($styles as $name => $file) {
             $this->assertNotSame('', Designs::describe($file), "$name has no description");
         }

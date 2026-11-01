@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@500;600&family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap');
 /* Design style "claude": warm cream canvas, serif display headlines, coral primary actions, hairlines instead of shadows.
- * Written from framework/designs/claude/DESIGN.md (VoltAgent/awesome-design-md, MIT) by /caligrafy-quill:design.
+ * Written from framework/design/vendor/awesome-design-md/claude/DESIGN.md (VoltAgent/awesome-design-md, MIT) by /caligrafy-quill:design.
  * Loaded after the Caligrafy stylesheets when DESIGN_STYLE=claude in .env; empty DESIGN_STYLE brings the Caligrafy look back.
  * Inspiration only: the application keeps its own name and logo. */
 

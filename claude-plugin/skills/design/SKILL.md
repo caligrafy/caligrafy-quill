@@ -1,6 +1,6 @@
 ---
 name: design
-description: Restyle every page of a Caligrafy Quill project to match a design style - a DESIGN.md of framework/designs (84 styles from VoltAgent/awesome-design-md, MIT), framework/designs-extra (interstellar...) or the project's own application/designs/<name>/DESIGN.md - by writing ONE override stylesheet, public/css/designs/<name>.css, that the layout loads after the Caligrafy stylesheets when DESIGN_STYLE=<name> in .env. Caligrafy's own look stays the default and comes back when DESIGN_STYLE is emptied.
+description: Restyle every page of a Caligrafy Quill project to match a design style - a DESIGN.md of framework/design (84 vendored styles from VoltAgent/awesome-design-md, MIT, and local ones such as interstellar) or the project's own application/design/<name>/DESIGN.md - by writing ONE override stylesheet, public/css/designs/<name>.css, that the layout loads after the Caligrafy stylesheets when DESIGN_STYLE=<name> in .env. Caligrafy's own look stays the default and comes back when DESIGN_STYLE is emptied.
 when_to_use: The user asks to restyle, theme or re-skin the application, to make it look like a website or a design system, to use a DESIGN.md, a design style, DESIGN_STYLE or php caligrafer.php design, or to go back to the Caligrafy look ("/caligrafy-quill:design linear.app", "/caligrafy-quill:design off").
 argument-hint: "[style-name | off]"
 ---
@@ -10,10 +10,11 @@ argument-hint: "[style-name | off]"
 Style: `$ARGUMENTS` (a style name; empty = the `DESIGN_STYLE` of `.env`, or ask; `off` = back to the Caligrafy look).
 
 How it fits together (Quill 2.8+):
-+ `framework/designs/<name>/DESIGN.md`: 84 design systems of public websites (colors, type, spacing, components,
-  do's and don'ts) from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), MIT, attribution
-  in `framework/designs/README.md` and `LICENSE`; `framework/designs-extra/<name>/DESIGN.md`: styles added outside
-  that collection (`interstellar`), their origin in its README. A project's own `application/designs/<name>/DESIGN.md` wins.
++ Every style is a `DESIGN.md` (colors, type, spacing, components, do's and don'ts), looked up in this order, the
+  first one winning on a name clash: the project's own `application/design/<name>/`, then Caligrafy's
+  `framework/design/local/<name>/` (`interstellar`...), then `framework/design/vendor/<vendor>/<name>/` (84 styles of
+  [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), MIT, attribution in its `README.md`
+  and `LICENSE`). `framework/design/README.md` explains the layout; `design list` shows each style's source.
 + `DESIGN_STYLE=<name>` in `.env` selects one; empty is Caligrafy's own look.
 + The layout (`layoutblocks.pug`) and the Vue app template (`framework/plugins/app/index.php`) link
   `public/css/designs/<name>.css` **after** styles.css, Bootstrap, theme.css and tokens.css, through
@@ -35,10 +36,10 @@ Commands: `php caligrafer.php ...` when PHP 8.3+ is on this computer (`php -v`),
 - A name: `caligrafer design show <name>`. Unknown: `caligrafer design list` and offer the closest names.
 - Empty: `caligrafer design status`. Nothing selected: ask which style, with three or four fitting suggestions from
   `caligrafer design list` (light editorial, dark developer, colorful consumer...) and "Other". A project without
-  `framework/designs/` (before 2.8): fetch the one file the user picked,
+  `framework/design/` (before 2.8): fetch the one file the user picked,
   `https://raw.githubusercontent.com/VoltAgent/awesome-design-md/main/design-md/<name>/DESIGN.md`, into
-  `application/designs/<name>/DESIGN.md` with a line crediting VoltAgent/awesome-design-md (MIT).
-- The user's own design ("our brand", a Figma, a site they own): write `application/designs/<name>/DESIGN.md` in the
+  `application/design/<name>/DESIGN.md` with a line crediting VoltAgent/awesome-design-md (MIT).
+- The user's own design ("our brand", a Figma, a site they own): write `application/design/<name>/DESIGN.md` in the
   same sections first, then continue with it.
 
 ## 2. Read the DESIGN.md completely
@@ -76,7 +77,7 @@ Follow the six sections of the two worked examples, written by this skill and ch
 [examples/claude.css](examples/claude.css) (a light style: cream canvas, serif headings, hairline cards) and
 [examples/linear.app.css](examples/linear.app.css) (a dark one: layered surfaces, one accent). Fill every section
 from your notes, never from the example's values:
-1. A header comment: the style, its source (`framework/designs/<name>/DESIGN.md`, VoltAgent/awesome-design-md, MIT),
+1. A header comment: the style, its source (the `DESIGN.md` path that `design show <name>` prints, and its license or origin),
    "loaded after the Caligrafy stylesheets when DESIGN_STYLE=<name>; empty it to get the Caligrafy look back".
 2. Fonts: `@import` the free substitutes from Google Fonts at the very top. Never link or embed proprietary fonts
    (Söhne, SF Pro, Copernicus, Styrene, Circular...): name them first in `font-family` only when the DESIGN.md does,

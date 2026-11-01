@@ -10,12 +10,13 @@ same number. Check the version of a project with `php caligrafer.php version`.
 
 ### Added
 - Design styles: another look for every page, picked with one setting, with Caligrafy's own look as the default.
-  `framework/designs/` holds 84 `DESIGN.md` files (design system descriptions written for AI agents: colors, type,
-  spacing, components) from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), MIT, with
-  its license and attribution (`framework/designs/LICENSE`, `README.md`, `SOURCE`; `sh framework/designs/sync.sh`
-  refreshes them). `framework/designs-extra/` holds styles added outside that collection, which the refresh never
-  touches: `interstellar` (the Interstellar laboratory operations design system), its origin in the folder's README.
-  A project can add its own in `application/designs/<name>/DESIGN.md`.
+  `framework/design/` holds every style (`DESIGN.md`: a design system description written for AI agents: colors,
+  type, spacing, components), with `README.md` explaining the layout: `vendor/<vendor>/` for collections copied from
+  elsewhere, starting with the 84 styles of [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md)
+  (`vendor/awesome-design-md/`, MIT, with its `LICENSE`, attribution, `SOURCE` commit and `sync.sh` refresh), and
+  `local/` for styles added to Caligrafy itself, starting with `interstellar` (the Interstellar laboratory operations
+  design system, its origin in `local/README.md`). A project adds its own in `application/design/<name>/DESIGN.md`.
+  On a name clash the first wins: `application/design`, then `local`, then the vendors in alphabetical order.
 - `DESIGN_STYLE` in `.env` (empty by default, in `.env.example` and `.env.docker`). When it names a style whose
   stylesheet `public/css/designs/<name>.css` exists, the layout (`layoutblocks.pug`) and the Vue app template
   (`framework/plugins/app/index.php`) link it after `styles.css`, Bootstrap, `theme.css` and `tokens.css` with the new
@@ -31,7 +32,7 @@ same number. Check the version of a project with `php caligrafer.php version`.
   phone width. Worked examples for a light and a dark style; gotchas G92-G93; the wiki page Design styles.
 
 ### Changed
-- The production image (`Dockerfile.dockerignore`) leaves `framework/designs/` and `framework/designs-extra/` out: only the stylesheet is used at
+- The production image (`Dockerfile.dockerignore`) leaves `framework/design/` out: only the stylesheet is used at
   run time. `layoutblocks.pug` has the stylesheet link: `php caligrafer.php upgrade` updates untouched copies.
 
 ## [2.7.1] - 2026-11-01

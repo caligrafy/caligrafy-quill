@@ -83,13 +83,13 @@ Prints the version of the framework in this project (also `--version` and `-v`).
 
 ### `design`
 ```bash
-php caligrafer.php design list [--json]   # the styles of framework/designs and application/designs
+php caligrafer.php design list [--json]   # every style and its source (application/design, framework/design)
 php caligrafer.php design show <name>     # its DESIGN.md, its description, its stylesheet
 php caligrafer.php design use <name>      # DESIGN_STYLE=<name> in .env
 php caligrafer.php design off             # DESIGN_STYLE= : the Caligrafy look
 php caligrafer.php design status          # the selected style
 ```
-Picks a [design style](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles): a `DESIGN.md` of `framework/designs/` (84 styles from VoltAgent/awesome-design-md, MIT), of `framework/designs-extra/` (`interstellar`...) or of `application/designs/`. Pages load `public/css/designs/<name>.css` after the Caligrafy stylesheets once it exists; `/caligrafy-quill:design` in Claude Code writes it from the `DESIGN.md`. `use` and `off` only change `DESIGN_STYLE` in `.env`: stylesheets are kept.
+Picks a [design style](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles): a `DESIGN.md` of your `application/design/`, of `framework/design/local/` (`interstellar`...) or of `framework/design/vendor/` (84 styles from VoltAgent/awesome-design-md, MIT), the first one winning on a name clash. Pages load `public/css/designs/<name>.css` after the Caligrafy stylesheets once it exists; `/caligrafy-quill:design` in Claude Code writes it from the `DESIGN.md`. `use` and `off` only change `DESIGN_STYLE` in `.env`: stylesheets are kept.
 
 ## Build features
 

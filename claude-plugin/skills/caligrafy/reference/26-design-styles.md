@@ -7,7 +7,18 @@
 
 ## What a design style is
 
-A design style is a `DESIGN.md`: a plain-text description of a website's design system (its colors, typography, spacing, components, do's and don'ts) written for AI agents to read. Caligrafy Quill ships 84 of them in `framework/designs/<name>/DESIGN.md`, from [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md) (MIT License, copyright VoltAgent; the license and the attribution are in `framework/designs/`). More styles from outside that collection are in `framework/designs-extra/`, with their origin in its README: `interstellar`, a calm, dense laboratory operations system (cool grey canvas, Inter, one brand blue, pill buttons). A project can add its own in `application/designs/<name>/DESIGN.md`.
+A design style is a `DESIGN.md`: a plain-text description of a website's design system (its colors, typography, spacing, components, do's and don'ts) written for AI agents to read. Everything about design styles lives in one folder, `framework/design/`:
+
+```
+framework/design/
+  vendor/<vendor>/<name>/DESIGN.md   collections copied from elsewhere, each with its license and attribution
+      awesome-design-md/             84 styles from VoltAgent/awesome-design-md (MIT License, copyright VoltAgent)
+  local/<name>/DESIGN.md             styles added to Caligrafy itself, their origin in local/README.md
+      interstellar/                  a calm, dense laboratory operations system (cool grey canvas, Inter, one brand blue)
+application/design/<name>/DESIGN.md  your own styles: drop a DESIGN.md here
+```
+
+A style's name is its folder name. When a name exists in several places, the first one wins: `application/design`, then `framework/design/local`, then each vendor in alphabetical order. `design list` shows where each style comes from; `design show <name>` also names the copies it hides.
 
 The styles describe the visual language of public websites to inspire yours: your application keeps its own name and logo, and never presents itself as one of those sites.
 
@@ -49,8 +60,8 @@ Claude reads the whole `DESIGN.md` (its tokens and its prose), looks at the page
 
 ## Online
 
-Commit `public/css/designs/<name>.css` (it is part of your application) and set `DESIGN_STYLE` where the application runs: in the server's `.env`, or on Caligrafy Cloud with `php caligrafer.php cloud secret set <app> DESIGN_STYLE=<name>`. The production image leaves `framework/designs/` and `framework/designs-extra/` out: only the stylesheet is needed at run time.
+Commit `public/css/designs/<name>.css` (it is part of your application) and set `DESIGN_STYLE` where the application runs: in the server's `.env`, or on Caligrafy Cloud with `php caligrafer.php cloud secret set <app> DESIGN_STYLE=<name>`. The production image leaves `framework/design/` out: only the stylesheet is needed at run time.
 
 ## Updating the styles
 
-`sh framework/designs/sync.sh` copies the latest `DESIGN.md` files from VoltAgent/awesome-design-md (and `framework/designs/SOURCE` records the commit); it never touches `framework/designs-extra/`. Framework updates bring new styles too.
+`sh framework/design/vendor/awesome-design-md/sync.sh` copies the latest `DESIGN.md` files from VoltAgent/awesome-design-md (and `SOURCE` in that folder records the commit); it never touches the other vendors, `local/` or `application/design/`. Another collection is another folder in `framework/design/vendor/`, with its license and a README that credits it. Framework updates bring new styles too.

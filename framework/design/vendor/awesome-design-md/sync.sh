@@ -1,8 +1,8 @@
 #!/bin/sh
-# Refreshes framework/designs/<name>/DESIGN.md from VoltAgent/awesome-design-md (MIT, see LICENSE in this folder).
+# Refreshes framework/design/vendor/awesome-design-md/<name>/DESIGN.md from VoltAgent/awesome-design-md (MIT, see LICENSE in this folder).
 #
-#   sh framework/designs/sync.sh                 # clones the latest upstream into a temporary folder
-#   sh framework/designs/sync.sh <clone>         # or copies from an existing clone
+#   sh framework/design/vendor/awesome-design-md/sync.sh           # clones the latest upstream into a temporary folder
+#   sh framework/design/vendor/awesome-design-md/sync.sh <clone>   # or copies from an existing clone
 #
 # Only the DESIGN.md files are copied (the upstream per-site README.md only points to getdesign.md);
 # styles removed upstream are removed here, and SOURCE records the upstream commit.
@@ -29,4 +29,4 @@ for dir in "$SRC"/design-md/*/; do
 done
 cp "$SRC/LICENSE" "$DEST/LICENSE"
 echo "https://github.com/VoltAgent/awesome-design-md $(git -C "$SRC" log -1 --format='%H %cs')" > "$DEST/SOURCE"
-echo "sync.sh: $count styles in framework/designs ($(cat "$DEST/SOURCE"))"
+echo "sync.sh: $count styles in framework/design/vendor/awesome-design-md ($(cat "$DEST/SOURCE"))"

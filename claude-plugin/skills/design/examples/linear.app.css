@@ -1,6 +1,6 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=JetBrains+Mono&display=swap');
 /* Design style "linear.app": near-black canvas, layered dark surfaces with hairlines, one indigo accent, tight Inter type.
- * Written from framework/designs/linear.app/DESIGN.md (VoltAgent/awesome-design-md, MIT) by /caligrafy-quill:design.
+ * Written from framework/design/vendor/awesome-design-md/linear.app/DESIGN.md (VoltAgent/awesome-design-md, MIT) by /caligrafy-quill:design.
  * Loaded after the Caligrafy stylesheets when DESIGN_STYLE=linear.app in .env; empty DESIGN_STYLE brings the Caligrafy look back.
  * Inspiration only: the application keeps its own name and logo. */
 

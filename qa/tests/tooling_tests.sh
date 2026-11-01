@@ -94,8 +94,8 @@ BAD=$(php caligrafer.php design use no-such-style 2>&1); BADCODE=$?
 OFF=$(php caligrafer.php design off 2>&1); UNSET=$(grep '^DESIGN_STYLE=' .env)
 DOC3=$(php caligrafer.php doctor --only project 2>&1)
 COUNT=$(echo "$LIST" | sed -n 's/^ \([0-9]*\) styles.*/\1/p')
-if [ "${COUNT:-0}" -ge 80 ] && echo "$LIST" | grep -q 'VoltAgent/awesome-design-md (MIT)' && echo "$SHOW" | grep -q 'framework/designs/linear.app/DESIGN.md' \
-    && echo "$EXTRA" | grep -q 'framework/designs-extra/interstellar/DESIGN.md' && echo "$LIST" | grep -q ' interstellar ' \
+if [ "${COUNT:-0}" -ge 80 ] && echo "$LIST" | grep -q 'vendor/awesome-design-md' && echo "$SHOW" | grep -q 'framework/design/vendor/awesome-design-md/linear.app/DESIGN.md' \
+    && echo "$EXTRA" | grep -q 'framework/design/local/interstellar/DESIGN.md' && echo "$LIST" | grep -q ' interstellar ' \
     && [ "$SET" = "DESIGN_STYLE=claude" ] && echo "$USE" | grep -q 'not written yet' \
     && echo "$DOC1" | grep -q "WARN  Design style: claude selected, but public/css/designs/claude.css is not written yet" \
     && echo "$DOC2" | grep -q "OK    Design style: claude: public/css/designs/claude.css loaded after the Caligrafy stylesheets" \
@@ -122,7 +122,7 @@ foreach (glob("claude-plugin/skills/design/examples/*.css") as $f) {
         if (strpos($css, $s) === false) $bad[] = basename($f) . " misses $s";
     }
     $name = basename($f, ".css");
-    if (!is_file("framework/designs/$name/DESIGN.md")) $bad[] = "$name is not a style of framework/designs";
+    if (!is_file("framework/design/vendor/awesome-design-md/$name/DESIGN.md")) $bad[] = "$name is not a style of framework/design/vendor/awesome-design-md";
 }
 if (count(glob("claude-plugin/skills/design/examples/*.css")) < 2) $bad[] = "fewer than two examples";
 foreach (["css/tokens.css", "css/theme.css", "css/styles.css"] as $c) { if (strpos(file_get_contents("public/$c"), "designs/") !== false) $bad[] = "public/$c mentions a design style"; }
