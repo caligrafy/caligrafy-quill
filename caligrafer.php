@@ -50,7 +50,7 @@ $defaultMsg = "\n Available Functions:
 				\n - version: prints the version of Caligrafy Quill
 				\n - initialize: Initializes and signs your project
 				\n - update [<version>] [--check] [--yes] [--no-composer]: moves the project to another release of Caligrafy Quill (the latest by default) and applies everything: framework/, the release's other files (untouched ones replaced, changed ones kept with a .caligrafy-new), composer.json, .gitignore and new .env settings merged, then upgrade --apply; backups in backups/
-				\n - upgrade [--apply] [--force <application/path>] [--keep <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files; also reports .env settings and Bootstrap 3 classes
+				\n - upgrade [--apply] [--local] [--force <application/path>] [--keep <application/path>]: brings the project up to date (dry run by default). When a newer release of Caligrafy Quill is out, it moves the project to it like update; otherwise (or with --local) it compares application/ with the framework templates and updates the untouched files; also reports .env settings and Bootstrap 3 classes
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - design <list [--json] | show <name> | use <name> | off | status>: picks a design style (DESIGN_STYLE in .env) (framework/design, application/design); empty = Caligrafy's own look
 				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
@@ -499,6 +499,17 @@ switch(strtolower($argv[1])) {
 		$keep = array();
 		foreach ($argv as $i => $arg) {
 			if ($arg === '--keep' && isset($argv[$i + 1])) $keep[] = $argv[$i + 1];
+		}
+		// first, a newer release of Caligrafy Quill: upgrade brings the project to it (php caligrafer.php update), which
+		// updates application/ at the end. --local compares application/ with this release's templates only
+		if (!in_array('--local', $argv) && $force === null && !$keep) {
+			list($newer, $why) = (new Caligrafy\Updater('.'))->newerRelease();
+			if ($newer) {
+				print("\n Caligrafy Quill $newer is out (this project runs " . Caligrafy\Framework::VERSION . ").\n");
+				exit((new Caligrafy\Updater('.'))->run($newer, !$apply, in_array('--yes', $argv), !in_array('--no-composer', $argv)));
+			}
+			print($why ? "\n Could not check for a newer release ($why): comparing with this release's templates.\n"
+				: "\n Caligrafy Quill " . Caligrafy\Framework::VERSION . " is the latest release.\n");
 		}
 		exit((new Caligrafy\Upgrader('.', $apply, $force, $keep))->run());
 

@@ -29,6 +29,9 @@ git status --short
 
 ## 2. See, then apply
 
+Since 2.10.0 `php caligrafer.php upgrade` checks for a newer release too and then does what `update` does
+(`upgrade --apply` = `update`); `update` also takes a version. Use either.
+
 ```bash
 php caligrafer.php update --check [version]
 php caligrafer.php update [version]
@@ -54,7 +57,7 @@ if it is a fix, and tell the user what you chose. Views and controllers under `a
 ```bash
 php caligrafer.php version
 php caligrafer.php doctor
-php caligrafer.php upgrade          # should report nothing outdated
+php caligrafer.php upgrade --local  # should report nothing outdated in application/
 ```
 + The release notes of every version passed (`https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-<version>`):
   do what they ask of projects (for example 2.7.0: client apps call their routes with `apiHeaders()`; `doctor` lists

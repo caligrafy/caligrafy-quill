@@ -396,3 +396,11 @@ the command, lowercased, plus `off`: `.bin/caligrafer design use linear.app` sel
 `quickstart`), and `initialize` deletes `.git` only with `--yes` or a yes typed in a terminal. With an older
 framework, never run `.bin/caligrafer` in a folder without `application/` and with a `.git` you want to keep.
 Proof: `.bin/caligrafer` (`run_caligrafer`), `caligrafer.php` (`initialize`).
+
+**G96. `upgrade` looks for a newer release first (2.10.0+).** Before 2.10.0, `php caligrafer.php upgrade` only
+compared `application/` with the templates of the release the project already ran: it never said a newer release
+was out, and "upgrading" changed nothing when the framework itself was old. Since 2.10.0 it asks GitHub
+(`Updater::newerRelease()`); when a newer release exists, `upgrade` is `update --check` and `upgrade --apply` is
+`update` (the framework, the release's untouched files, `composer.json`, `.gitignore`, `.env`, then the templates).
+`--local`, `--force` and `--keep` skip the check; offline it says so and compares the templates. A project before
+2.10.0 runs `php caligrafer.php update` (2.9.0+) or gets the command first (G94). Proof: `caligrafer.php` (`upgrade`).

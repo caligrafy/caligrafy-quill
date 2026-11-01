@@ -6,6 +6,18 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.10.0] - 2026-11-01
+
+`php caligrafer.php upgrade` checks for a newer release of Caligrafy Quill first.
+
+### Changed
+- `upgrade` asks GitHub for the latest release (`Updater::newerRelease()`). When it is newer than the project's, the
+  dry run shows what moving to it changes and `upgrade --apply` applies it, exactly like `update` (the framework, the
+  release's other files, `composer.json`, `.gitignore`, `.env`, then the `application/` templates). When the project
+  runs the latest release, or with `--local`, or with `--force`/`--keep`, it compares `application/` with this
+  release's templates as before. Offline, it says it could not check and compares the templates.
+- `update` runs `upgrade --apply --local` at the end, so it never looks for another release.
+
 ## [2.9.2] - 2026-11-01
 
 ### Fixed

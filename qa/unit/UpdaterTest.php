@@ -120,7 +120,7 @@ final class UpdaterTest extends TestCase
         $this->assertSame('^1.0', $composer['c/lib']);      // new
         $this->assertSame('^1', $composer['mine/lib']);
         $this->assertSame(["composer update --no-interaction 'a/lib' 'c/lib'"], array_slice($this->commands, 0, 1));
-        $this->assertStringEndsWith('caligrafer.php upgrade --apply', end($this->commands));
+        $this->assertStringEndsWith('caligrafer.php upgrade --apply --local', end($this->commands));
         $this->assertStringContainsString('/.caligrafy/', $this->read('.gitignore'));
         $env = $this->read('.env');
         $this->assertStringContainsString("MY_SECRET=keep\n", $env);
@@ -151,5 +151,21 @@ final class UpdaterTest extends TestCase
         [$code, $out] = $this->update(false, 'next');
         $this->assertSame(1, $code);
         $this->assertSame('cli 1', $this->read('caligrafer.php'));
+    }
+
+    public function testNewerReleaseTellsUpgradeWhetherToUpdate(): void
+    {
+        $updater = fn ($latest) => new Updater("$this->dir/project", fn ($v) => $v === 'latest' ? $latest : null);
+        $this->assertSame(['1.1.0', null], $updater('v1.1.0')->newerRelease());
+        $this->assertSame([null, null], $updater('v1.0.0')->newerRelease());
+        $this->assertSame([null, null], $updater('0.9.0')->newerRelease());
+        $offline = new Updater("$this->dir/project", function () { throw new RuntimeException('no network'); });
+        $this->assertSame([null, 'no network'], $offline->newerRelease());
+    }
+
+    public function testTheUpdateRunsUpgradeOnThisReleaseOnly(): void
+    {
+        $this->update();
+        $this->assertStringEndsWith('caligrafer.php upgrade --apply --local', end($this->commands));
     }
 }

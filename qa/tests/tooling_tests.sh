@@ -217,13 +217,13 @@ for c in AI/AIController AI/ClientController AI/WatsonController Auth/AuthContro
 done
 printf '<?php\nclass AIController extends Caligrafy\\Controller { public function mine() {} }\n' > application/controllers/AIController.php
 echo "QA_SECRET=keep" >> .env; ENVSUM=$(cksum < .env)
-DRY=$(php caligrafer.php upgrade 2>&1)
+DRY=$(php caligrafer.php upgrade --local 2>&1)
 if echo "$DRY" | grep -q '^  missing     application/models/Auth/create_db.sql' && echo "$DRY" | grep -q '^  outdated    application/views/Auth/login.pug' \
     && echo "$DRY" | grep -q '^  customized  application/views/default/index.pug' && echo "$DRY" | grep -q 'echo \$e->getMessage();' \
     && [ ! -f application/models/Auth/create_db.sql ] && [ ! -d backups ] && [ ! -f application/.caligrafy-manifest.json ]; then
     ok "caligrafer upgrade dry run lists missing, outdated (untouched), customized files and the routes patch without changing anything"
 else ko "caligrafer upgrade dry run" "$DRY"; fi
-php caligrafer.php upgrade --apply >"$TMP/upgrade.log" 2>&1
+php caligrafer.php upgrade --apply --local >"$TMP/upgrade.log" 2>&1
 B=$(ls -d backups/caligrafy-upgrade-* 2>/dev/null | head -1)
 cmp -s application/models/Auth/create_db.sql $P/models/Auth/create_db.sql && cmp -s application/views/Auth/login.pug $P/views/Auth/login.pug \
     && [ -n "$B" ] && [ -f "$B/application/views/Auth/login.pug" ] && ! cmp -s "$B/application/views/Auth/login.pug" $P/views/Auth/login.pug \
@@ -248,7 +248,7 @@ grep -q '^namespace Caligrafy\\Controllers;' application/controllers/core/AI/AIC
     && ok "caligrafer upgrade --apply namespaces the 1.5 example controllers; old short routes resolve and a project AIController no longer collides" \
     || ko "upgrade --apply (namespaced example controllers)" "$CTRL"
 SUMS1=$(find application -type f -not -name .caligrafy-manifest.json -exec cksum {} \; | sort)
-AGAIN=$(php caligrafer.php upgrade --apply 2>&1)
+AGAIN=$(php caligrafer.php upgrade --apply --local 2>&1)
 SUMS2=$(find application -type f -not -name .caligrafy-manifest.json -exec cksum {} \; | sort)
 [ "$SUMS1" = "$SUMS2" ] && [ "$(ls -d backups/caligrafy-upgrade-* | wc -l | tr -d ' ')" = 1 ] && ! echo "$AGAIN" | grep -qE '^  (missing|outdated) ' \
     && [ "$(cat application/views/default/qa-mine.pug)" = mine ] && [ "$(cksum < .env)" = "$ENVSUM" ] && [ -f application/.caligrafy-manifest.json ] \

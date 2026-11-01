@@ -22,7 +22,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Learning Caligrafy from zero (a user asks for a tutorial or course): the Caligrafy course builds Bookshelf capabilities first in 15 lessons, up to putting it online, each with a manual track and a With Claude track (point the user to it; its lessons match these docs) | https://github.com/caligrafy/caligrafy-quill-course/wiki |
 | Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade, deploy, cloud | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G95) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G96) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -59,6 +59,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | What 2.7.0 changed: pages call their routes with the session (`apiHeaders()`, `X-CSRF-Token`), `cloud login` approved in the browser, `cloud key`, 30 free minutes per new app, the `ship` skill | [25-release-notes-2.7.0.md](reference/25-release-notes-2.7.0.md), G87-G90 |
 | What 2.8.0 changed: design styles (`framework/design/`, `DESIGN_STYLE`, `php caligrafer.php design`, the `design` skill) | [27-release-notes-2.8.0.md](reference/27-release-notes-2.8.0.md), G92-G93 |
 | What 2.9.0 changed: `php caligrafer.php update` (one command to the latest release, keeping what the project changed), the `update` skill | [28-release-notes-2.9.0.md](reference/28-release-notes-2.9.0.md), G94 |
+| What 2.10.0 changed: `php caligrafer.php upgrade` checks for a newer release first and applies it like `update` (`--local`: templates only) | [29-release-notes-2.10.0.md](reference/29-release-notes-2.10.0.md), G96 |
 | **Pages and the rule "only capabilities touch models"** (2.5.0): `Route::page` (options, what the view gets, refusals), when to still write a controller, the user capabilities | [02-routing.md](reference/02-routing.md#pageroutes), [08-controllers.md](reference/08-controllers.md), [09.1-authentication.md](reference/09.1-authentication.md), [23-release-notes-2.5.0.md](reference/23-release-notes-2.5.0.md), G80-G85 |
 | **Another look for every page**: a design style (`DESIGN_STYLE`, `php caligrafer.php design`, a `DESIGN.md` of `framework/design/` (vendored VoltAgent/awesome-design-md, local styles) or `application/design/`), one override stylesheet `public/css/designs/<name>.css`; use the `design` skill | [26-design-styles.md](reference/26-design-styles.md), [ui-guidelines.md](reference/ui-guidelines.md#design-styles), G92-G93 |
 | **Any new page or client app UI**: the page components (`.cq-page`, `.cq-card`, `.cq-form`, `.cq-tabs`, `.cq-list`...), a worked example, the checklist | [ui-guidelines.md](reference/ui-guidelines.md) |

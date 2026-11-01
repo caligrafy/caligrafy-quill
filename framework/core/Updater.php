@@ -133,7 +133,8 @@ class Updater
             $this->out("\n Then: composer update " . implode(' ', $packages));
         }
         $this->out("\n application/: php caligrafer.php upgrade --apply (from $to)");
-        $upgrade = call_user_func($this->run, escapeshellarg(PHP_BINARY) . ' caligrafer.php upgrade --apply');
+        // --local: the templates of this release only (upgrade would otherwise look for a newer release again)
+        $upgrade = call_user_func($this->run, escapeshellarg(PHP_BINARY) . ' caligrafer.php upgrade --apply --local');
         $this->out("\n Caligrafy Quill $to is in place." . ($plan['new'] ? ' Merge the .caligrafy-new files listed above into yours, then delete them.' : '')
             . " Check the project with php caligrafer.php doctor; the release notes: https://github.com/" . self::REPOSITORY . "/wiki/Release-notes:-$to");
         return $code ?: (int) $upgrade;
@@ -290,6 +291,23 @@ class Updater
         if ($plan['framework']) {
             $this->out("\n Framework files you changed by hand, " . ($check ? 'to be replaced' : 'replaced') . " (your copies are in the backup):\n   " . implode("\n   ", $plan['framework']));
         }
+    }
+
+    /**
+     * The latest release when it is newer than the project's, for upgrade: [version or null, why it could not tell or null]
+     */
+    public function newerRelease()
+    {
+        try {
+            $latest = ltrim((string) call_user_func($this->fetch, 'latest'), 'vV');
+        } catch (\RuntimeException $e) {
+            return array(null, $e->getMessage());
+        }
+        $mine = $this->projectVersion();
+        if (!preg_match('/^\d+\.\d+\.\d+$/', $latest)) {
+            return array(null, 'the latest release could not be read');
+        }
+        return array($mine === null || version_compare($latest, $mine, '>') ? $latest : null, null);
     }
 
     /**
