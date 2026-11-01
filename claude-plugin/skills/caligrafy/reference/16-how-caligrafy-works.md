@@ -3,7 +3,7 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-Caligrafy is built around one idea: **build once, experience everywhere**. A feature is written once, as a capability, and every experience of your application (web pages, Vue apps, a REST API, AI agents) uses that same capability. This page explains the few ideas behind it. To try it first, follow the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
+Caligrafy is built around one idea: **build once, experience everywhere**. A feature is written once, as a capability, and every experience of your application (web pages, Vue apps, a REST API, AI agents) uses that same capability. From the first command to a public address, it is one project. This page explains the few ideas behind it. To try it first, follow the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
 
 ## A capability is a feature, written once
 
@@ -65,6 +65,16 @@ Whatever the experience, every call goes through the same five steps:
 
 So an invalid title gets the same message on the web page, over REST and for an agent, and a token without the scope is refused everywhere.
 
+## From your computer to the internet
+
+Build once does not end on your computer. The project you build is the project you put online, unchanged:
+
++ a production `Dockerfile` at its root builds it as it is (PHP, Apache, your libraries, no development tools);
++ when it starts, `php caligrafer.php deploy` creates and updates the tables from your `create_db.sql` scripts;
++ `php caligrafer.php cloud deploy <name>` puts it at `https://<name>.caligrafy.com` with [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud), or you run the same image on [your own server](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#ownserver).
+
+Online, every experience still calls the same capabilities: the pages, the apps, the REST API and the AI agents of the public address follow the same rules as on your computer. From the first command to that address, the steps are: start, your data, build once, experience everywhere, people and trust, ship, online.
+
 ## Where things live
 
 ```
@@ -74,6 +84,7 @@ application/
 ├── views/         the web pages (Pug), built with the page components
 ├── controllers/   pages that need server-side logic
 └── config/routing/web.php   the routes: pages, Route::capability, Route::capabilities, Route::mcp
+Dockerfile                   the production image (php caligrafer.php deploy runs when it starts)
 public/
 ├── js/capabilities.js       the generated JS client
 ├── css/tokens.css           the Caligrafy look and the page components
@@ -87,3 +98,4 @@ Caligrafy is also a classic MVC framework (routes, controllers, models, views), 
 + [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): a working application in 5 minutes.
 + [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability): build a complete feature, page included.
 + [Build Once: Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): every option, in depth.
++ [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): from your computer to a public address.

@@ -13,7 +13,29 @@ Caligrafy then serves that same capability to every way people and machines reac
 | **AI agents** such as Claude or Cursor | an MCP tool: `create_task` |
 
 The same validation messages, the same permissions and the same audit log, whichever way it is called. You never
-write a feature twice, and the experiences never drift apart.
+write a feature twice, and the experiences never drift apart. And it does not stop at your computer: the same
+project goes online in a few commands.
+
+<br/>
+
+## From an idea to an application online
+
+Caligrafy is the whole way from zero to one, in one project, with one command line:
+
+| Step | What you do | With |
+| --- | --- | --- |
+| **1. Start** | a running application, database included | `.bin/caligrafer quickstart` |
+| **2. Your data** | the tables and their models | `create_db.sql`, models and relationships |
+| **3. Build once** | each feature, written once, with its rules | a capability (`php caligrafer.php service`) |
+| **4. Experience everywhere** | web pages, a Vue app, a phone and tablet app, a REST API, AI agents | page components, the JS client, `Route::capability`, `Route::mcp` |
+| **5. People and trust** | sign-in, permissions, tokens for programs and agents, an audit log | `scope` and `level`, `php caligrafer.php token` |
+| **6. Ship** | tests, a review, a health check | PHPUnit, the reviewer, `php caligrafer.php doctor` |
+| **7. Online** | your application at a public address | the production `Dockerfile`, `php caligrafer.php cloud deploy` |
+
+With [Claude Code](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin), the plugin that ships
+in every project does each step with you, from `/caligrafy-quill:new-capability` to `/caligrafy-quill:deploy`. The
+[course](https://github.com/caligrafy/caligrafy-quill-course) follows these seven steps from an empty folder to an
+application on the internet.
 
 <br/>
 

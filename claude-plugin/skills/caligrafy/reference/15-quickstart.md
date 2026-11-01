@@ -3,7 +3,7 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-In five minutes you have a Caligrafy application running, with one feature (Tasks) that you use from a web page, from another application over REST, and from an AI agent such as Claude or Cursor. One command does the setup.
+In five minutes you have a Caligrafy application running, with one feature (Tasks) that you use from a web page, from another application over REST, and from an AI agent such as Claude or Cursor. One command does the setup, and three more [put it online](#online).
 
 ## What you need
 

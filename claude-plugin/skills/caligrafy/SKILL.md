@@ -7,7 +7,10 @@ when_to_use: The working directory contains caligrafer.php, framework/core/Contr
 # Caligrafy Quill
 
 Caligrafy Quill is the "Build Once, Experience Everywhere" framework: a PHP MVC framework (PHP >= 8.3, MySQL via PDO) with Pug templates (Phug), GUMP validation,
-a REST API built into every route, and Vue 3 client apps. This skill is an index: read the reference file
+a REST API built into every route, and Vue 3 client apps. It covers the whole way from zero to one in one project:
+start (`quickstart`), data, capabilities written once, every experience (pages, Vue and phone apps, REST, MCP agents),
+people and trust, ship (tests, `doctor`, review), online (`Dockerfile`, `caligrafer cloud deploy`). When a user
+describes an idea, take it along these steps; when a feature works locally, the next step is the `deploy` skill. This skill is an index: read the reference file
 for the topic before writing code, and check [gotchas.md](reference/gotchas.md) whenever behavior surprises you.
 Signatures in [api-reference.md](reference/api-reference.md) are copied from the source and win over the wiki.
 
