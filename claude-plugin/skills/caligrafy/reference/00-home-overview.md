@@ -36,7 +36,8 @@ Caligrafy is the whole way from zero to one, in one project, with one command li
 | **7. Online** | your application at a public address | the production `Dockerfile`, `php caligrafer.php cloud deploy` |
 
 With [Claude Code](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin), the plugin that ships
-in every project does each step with you, from `/caligrafy-quill:new-capability` to `/caligrafy-quill:deploy`. The
+in every project does each step with you, or all of them at once: `/caligrafy-quill:idea` takes an idea to an
+application online. The
 [course](https://github.com/caligrafy/caligrafy-quill-course) follows these seven steps from an empty folder to an
 application on the internet.
 
@@ -85,6 +86,23 @@ The first 30 minutes are free. The Tasks example is open to everyone, online too
 That is the whole idea: the Tasks feature lives in five small files in `application/services/Tasks/`, and every
 experience above uses them.
 
+## Quickstart with Claude: from your idea to online
+
+Describe an application in a sentence; [Claude Code](https://claude.com/claude-code) builds it the Caligrafy way and
+puts it online for you to use everywhere:
+```bash
+git clone https://github.com/caligrafy/caligrafy-quill.git myapp
+cd myapp
+claude
+```
+```
+/caligrafy-quill:idea A reading list: I add books I want to read, mark them as read, and rate them from 1 to 5.
+```
+Claude plans it with you (tables, capabilities, who may do what), builds every feature once, checks it from the page,
+REST and an AI agent, then pushes it to GitHub and deploys it to `https://<name>.caligrafy.com`. You answer a few
+questions and sign in where only you can. See
+[Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude).
+
 ## Your first capability
 
 ```bash
@@ -120,7 +138,8 @@ feature step by step, page included.
 + **Batteries included:** card, ACH and crypto payments, OpenAI and open-model AI (Llama on Groq, OpenRouter,
   Ollama...), chatbots, face detection and machine learning in the browser, search and social metadata.
 + **Made for AI-assisted development:** a [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
-  that knows the framework and builds features the Caligrafy way, and `AGENTS.md` for other coding agents.
+  that knows the framework, builds features the Caligrafy way or a whole application from your idea, and puts it
+  online, and `AGENTS.md` for other coding agents.
 + **Online in a few commands:** a production `Dockerfile` in every project, the database prepared at every start,
   and [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud):
   `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, the first 30 minutes free.
@@ -131,7 +150,7 @@ feature step by step, page included.
 
 | You want to | Read |
 | --- | --- |
-| Get a feel for it | [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart), then [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
+| Get a feel for it | [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) or [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude), then [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
 | Build a feature | [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability), then [Capabilities in depth](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP) |
 | Build a web page | [Views and page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents) |
 | Build a Vue app or a single page application | [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library), [the single page application](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application) |

@@ -6,8 +6,9 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 46 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G73) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 47 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G73) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + Controller (filter/validate CRUD) + REST routes |
+| Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then pushes to GitHub and deploys to Caligrafy Cloud |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
@@ -45,6 +46,10 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.16.0** - The Quickstart with Claude: the new `/caligrafy-quill:idea` skill takes an idea to an application
+  online (plan, tables, capabilities, sign-in, a page on the page components, REST, MCP and a token page so agents
+  can use the app online, checks of every experience, GitHub, Caligrafy Cloud); the `caligrafy` skill points to it;
+  wiki mirrors, including Quickstart with Claude.
 - **1.15.0** - Caligrafy Quill 2.4.0, putting a project online: the new `/caligrafy-quill:deploy` skill (readiness
   checks, then Caligrafy Cloud or an own server); `php caligrafer.php deploy` and `cloud` in the API reference and the
   `caligrafy` skill; gotchas G67-G73 (`.env` as a file only, `create_db.sql` run again when changed, `composer.lock`,

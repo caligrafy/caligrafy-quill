@@ -33,7 +33,8 @@ Caligrafy is the whole way from zero to one, in one project, with one command li
 | **7. Online** | your application at a public address | the production `Dockerfile`, `php caligrafer.php cloud deploy` |
 
 With [Claude Code](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin), the plugin that ships
-in every project does each step with you, from `/caligrafy-quill:new-capability` to `/caligrafy-quill:deploy`. The
+in every project does each step with you, or all of them at once: `/caligrafy-quill:idea` takes an idea to an
+application online. The
 [course](https://github.com/caligrafy/caligrafy-quill-course) follows these seven steps from an empty folder to an
 application on the internet.
 
@@ -86,6 +87,25 @@ experience above uses them.
 
 <br/>
 
+## Quickstart with Claude: from your idea to online
+
+Describe an application in a sentence; [Claude Code](https://claude.com/claude-code) builds it the Caligrafy way and
+puts it online for you to use everywhere:
+```bash
+git clone https://github.com/caligrafy/caligrafy-quill.git myapp
+cd myapp
+claude
+```
+```
+/caligrafy-quill:idea A reading list: I add books I want to read, mark them as read, and rate them from 1 to 5.
+```
+Claude plans it with you (tables, capabilities, who may do what), builds every feature once, checks it from the page,
+REST and an AI agent, then pushes it to GitHub and deploys it to `https://<name>.caligrafy.com`. You answer a few
+questions and sign in where only you can. See
+[Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude).
+
+<br/>
+
 ## Your first capability
 
 ```bash
@@ -123,7 +143,8 @@ feature step by step, page included.
 + **Batteries included:** card, ACH and crypto payments, OpenAI and open-model AI (Llama on Groq, OpenRouter,
   Ollama...), chatbots, face detection and machine learning in the browser, search and social metadata.
 + **Made for AI-assisted development:** a [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
-  that knows the framework and builds features the Caligrafy way, and `AGENTS.md` for other coding agents.
+  that knows the framework, builds features the Caligrafy way or a whole application from your idea, and puts it
+  online, and `AGENTS.md` for other coding agents.
 + **Online in a few commands:** a production `Dockerfile` in every project, the database prepared at every start,
   and [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud):
   `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, the first 30 minutes free.
@@ -136,7 +157,7 @@ feature step by step, page included.
 
 | If you want to | Read |
 | --- | --- |
-| Get started | [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart), then [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) |
+| Get started | [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) or [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude), then [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) |
 | Understand the idea | [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
 | Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course): build a complete application in 15 lessons, capabilities first, by hand or with Claude, up to putting it online |
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
