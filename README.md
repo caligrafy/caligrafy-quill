@@ -49,6 +49,16 @@ In Cursor, add to `.cursor/mcp.json`:
 { "mcpServers": { "myapp": { "url": "http://localhost:8080/mcp", "headers": { "Authorization": "Bearer <the token>" } } } }
 ```
 
+**4. Put it online.** Push the project to a GitHub repository (`git init`, commit, push), sign up at
+[deploy.caligrafy.com](https://deploy.caligrafy.com) and create a token on its dashboard, then:
+```bash
+docker compose exec dev-box php caligrafer.php cloud login                 # paste the token
+docker compose exec dev-box php caligrafer.php cloud create myapp --repo https://github.com/<you>/myapp
+docker compose exec dev-box php caligrafer.php cloud deploy myapp          # https://myapp.caligrafy.com
+```
+The first 30 minutes are free. The Tasks example is open to everyone, online too: see
+[Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online) before you share the address.
+
 That is the whole idea: the Tasks feature lives in five small files in `application/services/Tasks/`, and every
 experience above uses them.
 

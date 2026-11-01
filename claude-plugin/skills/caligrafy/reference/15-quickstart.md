@@ -67,6 +67,22 @@ The Tasks feature is five small files in `application/services/Tasks/` (one per 
 
 > **The example is open to everyone** (`public: true` on its capabilities), so it works without signing in. Before you put an application online, remove `public: true` and let people sign in or use tokens: [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#secure) shows how.
 
+## Put it online
+
+The same project runs online with [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud), at `https://<name>.caligrafy.com`, built from its GitHub repository. The first 30 minutes are free.
+
+1. **Your code on GitHub.** `quickstart` removed the framework's history, so start yours: `git init`, `git add -A`, `git commit -m "My app"`, then create a repository on GitHub and push to it (a private repository works too: Caligrafy Cloud gives you a read-only deploy key to add on GitHub).
+2. **An account and a token.** Sign up at [deploy.caligrafy.com](https://deploy.caligrafy.com/signup), open the confirmation email, then create a token on the dashboard (*Command line and AI agents*).
+3. **Online:**
+```bash
+docker compose exec dev-box php caligrafer.php cloud login                 # paste the token (it is not shown)
+docker compose exec dev-box php caligrafer.php cloud create myapp --repo https://github.com/<you>/myapp
+docker compose exec dev-box php caligrafer.php cloud deploy myapp          # follows the build: a few minutes
+```
+Open `https://myapp.caligrafy.com/tasks`: the tasks table was created when the app started. The dashboard does the same without the command line, and `/caligrafy-quill:deploy` does it with Claude.
+
+> **Online, the Tasks example is open to everyone** too: anyone with the address can add and delete tasks. That is fine for a 30-minute try; for longer, remove `public: true` first (see the note above). When the time ends the app is paused, and `php caligrafer.php cloud extend myapp week` (2 credits) brings it back.
+
 ## Next
 
 + **Build your own feature:** [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) adds a Books catalog with its page, its API and its agent tools.
