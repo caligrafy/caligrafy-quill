@@ -32,6 +32,8 @@ php caligrafer.php design status            # the selected style
 php caligrafer.php design off               # DESIGN_STYLE= : the Caligrafy look again
 ```
 
+`.bin/caligrafer design ...` works the same (2.9.2+). In Docker, put `docker compose exec dev-box` in front: `docker compose exec dev-box php caligrafer.php design use linear.app`.
+
 Or set it in `.env` yourself:
 
 ```bash

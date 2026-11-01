@@ -123,7 +123,7 @@ Caligrafer is the command line tool of Caligrafy: `php caligrafer.php <command>`
 | Command | What it does |
 | --- | --- |
 | `quickstart [--example]` | sets up a project in one step ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#quickstart)) |
-| `initialize` | prepares a fresh copy of the framework; deletes `.git` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#initialize)) |
+| `initialize` | prepares a fresh copy of the framework; asks before deleting `.git` (`--yes`: without asking) ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#initialize)) |
 | `service <Name>` | creates a capability ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#service)) |
 | `client` | writes the JavaScript client of the capabilities ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#client)) |
 | `token create <name> --scopes ...` | a token for a program or an AI agent ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#token)) |

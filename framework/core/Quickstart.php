@@ -72,7 +72,7 @@ class Quickstart
                 $this->say('        Run again with --yes to continue, or copy the project elsewhere first.');
                 return 1;
             }
-            $this->step('Project', $this->php('initialize' . ($docker ? ' off' : '')) === 0 && is_dir($this->root . '/application'),
+            $this->step('Project', $this->php('initialize' . ($docker ? ' off' : '') . ' --yes') === 0 && is_dir($this->root . '/application'),
                 'application/ and .env created, keys generated', 'php caligrafer.php initialize failed');
             if (!is_dir($this->root . '/application')) {
                 return 1;

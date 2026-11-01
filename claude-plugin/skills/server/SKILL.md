@@ -39,7 +39,7 @@ which MySQL answers on the port first), else Docker; `--local` / `--docker` choo
    - `APP_ROOT=` empty (the dev-box serves the project at the web root);
    - `APP_KEY` / `API_KEY` present.
    Propose fixes; edit only with the user's OK.
-5. **Initialization.** If `application/` or `vendor/` is missing, `.bin/caligrafer server start` will run `composer install` and `caligrafer initialize`, which **deletes `.git`** (G25). If the folder is a git repo, warn and ask first; alternatively run `composer install` and `cp -r framework/settings/application ./application` manually and create `.env` from `framework/settings/.env.docker`, then set `APP_ROOT=` (empty: that template has `APP_ROOT=caligrafy-quill`, which is right for `prod-box` only).
+5. **Initialization.** If `application/` or `vendor/` is missing, `.bin/caligrafer server start` will run `composer install` and `caligrafer initialize`, which can delete `.git` (G25; since 2.9.2 only with `--yes` or a yes in the terminal, and other `.bin/caligrafer` commands never initialize, G95). If the folder is a git repo, warn and ask first; alternatively run `composer install` and `cp -r framework/settings/application ./application` manually and create `.env` from `framework/settings/.env.docker`, then set `APP_ROOT=` (empty: that template has `APP_ROOT=caligrafy-quill`, which is right for `prod-box` only).
 6. **Start** from the project root:
    ```bash
    .bin/caligrafer server start

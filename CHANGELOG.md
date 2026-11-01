@@ -6,6 +6,18 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.9.2] - 2026-11-01
+
+### Fixed
+- `.bin/caligrafer` passes the arguments of a command as typed. It passed only the first word after the command,
+  lowercased, then `off` when no local server was running, so `.bin/caligrafer design use linear.app` selected a
+  style named `off`, and `cloud deploy <name>`, `token create <name>`, `call`, `service` and the other commands with
+  more than one argument lost theirs. `initialize` and `server` still get the word that says Docker serves the project.
+- `initialize` no longer deletes a `.git` folder without being told: it asks in a terminal and keeps it otherwise;
+  `initialize --yes` deletes it (`quickstart` passes it, after its own question). `.bin/caligrafer` never runs
+  `initialize` on the way to another command any more: in a folder without `application/` it says to run
+  `quickstart`. Before, any launcher command run in a clone of the framework initialized it and deleted its history.
+
 ## [2.9.1] - 2026-11-01
 
 ### Fixed

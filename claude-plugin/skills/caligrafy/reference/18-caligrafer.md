@@ -66,7 +66,7 @@ Every step can be run again: it only does what is missing and never overwrites y
 php caligrafer.php initialize            # site in a sub-folder: http://localhost/<folder>/
 php caligrafer.php initialize off        # site at the root (Docker): http://localhost:8080/
 ```
-Prepares a fresh copy of the framework: creates `.env` from the template if needed, generates `APP_KEY` and `API_KEY` (an existing pair is kept), sets `APP_ROOT`, copies `framework/settings/application` to `application/` and records the template versions for [`upgrade`](#upgrade). **It deletes the `.git` folder**: run it once, right after downloading the framework, never in a project with your own history. `quickstart` runs it for you.
+Prepares a fresh copy of the framework: creates `.env` from the template if needed, generates `APP_KEY` and `API_KEY` (an existing pair is kept), sets `APP_ROOT`, copies `framework/settings/application` to `application/` and records the template versions for [`upgrade`](#upgrade). It can delete the `.git` folder (the framework's history) so that your project starts its own: since 2.9.2 it asks first in a terminal and keeps it otherwise; `initialize --yes` deletes it without asking. Run it once, right after downloading the framework. `quickstart` runs it for you, after its own question.
 
 ### `server`
 ```bash

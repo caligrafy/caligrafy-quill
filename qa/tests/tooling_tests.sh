@@ -28,6 +28,16 @@ else
 fi
 cd "$ROOT"
 
+# --- .bin/caligrafer passes a command's arguments as typed (it used to keep one word and add "off") --------------
+if command -v composer >/dev/null 2>&1 && [ -d vendor ] && [ -f .env ] && [ -d application ]; then
+    OUT=$(.bin/caligrafer design show linear.app 2>&1)
+    if echo "$OUT" | grep -q "linear.app (vendor/awesome-design-md)" && ! echo "$OUT" | grep -q "unknown style"; then
+        ok ".bin/caligrafer passes every argument as typed (design show linear.app)"
+    else
+        ko ".bin/caligrafer passes every argument as typed" "$(echo "$OUT" | tail -3)"
+    fi
+fi
+
 # --- design tokens: tokens.css defines every value of tokens.json -----------------------------
 OUT=$(php -r '
 $t = json_decode(file_get_contents("public/css/tokens.json"), true); $css = file_get_contents("public/css/tokens.css"); $bad = [];
@@ -149,6 +159,20 @@ if echo "$OUT" | grep -q '"result":{}' && echo "$DOC" | grep -q "WARN  Framework
 else
     ko "moved framework files" "mcp: $OUT
 doctor: $DOC"
+fi
+cd "$ROOT"
+
+# --- initialize keeps a .git folder unless --yes (it used to delete it without asking) ---------------------------
+mkdir -p "$TMP/initgit" && cd "$TMP/initgit"
+cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads .git
+cp framework/settings/.env.example .env
+php caligrafer.php initialize < /dev/null >/dev/null 2>&1
+KEPT=$([ -d .git ] && echo yes || echo no)
+php caligrafer.php initialize --yes < /dev/null >/dev/null 2>&1
+if [ "$KEPT" = yes ] && [ ! -d .git ] && [ -d application ]; then
+    ok "caligrafer initialize keeps .git without --yes, and deletes it with --yes"
+else
+    ko "caligrafer initialize and .git" "kept without --yes: $KEPT; after --yes: $([ -d .git ] && echo still there || echo deleted)"
 fi
 cd "$ROOT"
 

@@ -134,7 +134,9 @@ switch(strtolower($argv[1])) {
         break;
 	case 'initialize':
 		try {
-		   $appRoot = isset($argv[2])? "" : basename(getcwd()); 
+		   // any word after initialize (the launcher's "off": Docker serves the project) means a root install; --yes is an option
+		   $words = array_values(array_filter(array_slice($argv, 2), function ($a) { return $a !== '' && $a[0] !== '-'; }));
+		   $appRoot = $words ? "" : basename(getcwd());
 		   print("\n\nPreparing and signing the project for usage... \n");
 		   $file = '.env';
 		   $current = file_get_contents($file);
@@ -169,9 +171,20 @@ switch(strtolower($argv[1])) {
 		   }
 		   system('chmod -R 777 public/uploads');
 
+		   // the .git folder of the framework goes only when someone says so: --yes, or yes to the question in a terminal
 		   if (is_dir("./.git")) {
-			system('chmod -R 777 .git');
-			system('rm -R .git');
+			$deleteGit = in_array('--yes', $argv, true);
+			if (!$deleteGit && function_exists('posix_isatty') && @posix_isatty(STDIN)) {
+				print("\n This folder has a .git folder (the framework's history, or your project's). Delete it so that your project starts its own history? [y/N] ");
+				$deleteGit = strtolower(trim((string) fgets(STDIN))) === 'y';
+			}
+			if ($deleteGit) {
+				system('chmod -R 777 .git');
+				system('rm -R .git');
+				print("\n .git deleted: git init starts your project's own history");
+			} else {
+				print("\n .git kept (php caligrafer.php initialize --yes deletes it)");
+			}
 		   }
 		   print("\n Application initialized successfully");
 		   print ("\n APP_KEY=".$appKey);

@@ -385,3 +385,14 @@ differs. `framework/` and `claude-plugin/` are always replaced (changes made the
 not kept): customize in `application/` and `public/<your app>/` instead. It never replaces `application/` (that is
 `upgrade --apply`'s job, which it runs), `.env` values, `public/uploads` or `vendor/`, and stops on uncommitted git
 changes unless `--yes`. Run it whole, not piped (G89). Proof: `framework/core/Updater.php`.
+
+**G95. Before 2.9.2, `.bin/caligrafer` initialized any folder without `application/`, and `initialize` deleted `.git`
+without asking.** Any launcher command (`.bin/caligrafer design list`, `cloud ...`) run in a clone of the framework,
+or in the framework's own repository, ran `initialize` first, which removed the `.git` folder: the history was gone
+unless it was pushed (verified: it happened in the framework repository; it was restored from GitHub with
+`git clone --no-checkout` and moving its `.git` in, then `git reset`). The launcher also passed only one word after
+the command, lowercased, plus `off`: `.bin/caligrafer design use linear.app` selected a style named `off`. Since
+2.9.2 the launcher passes arguments as typed, never initializes on the way to another command (it says to run
+`quickstart`), and `initialize` deletes `.git` only with `--yes` or a yes typed in a terminal. With an older
+framework, never run `.bin/caligrafer` in a folder without `application/` and with a `.git` you want to keep.
+Proof: `.bin/caligrafer` (`run_caligrafer`), `caligrafer.php` (`initialize`).
