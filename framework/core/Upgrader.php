@@ -19,6 +19,9 @@ class Upgrader
 {
     const TEMPLATE = 'framework/settings/application';
     const HISTORY = 'framework/settings/template-history.json';
+    const USER_SERVICES = 'services/Users/';
+    const ADMIN_CONTROLLER = 'controllers/core/Auth/AdminController.php';
+    const AUTH_CONTROLLER = 'controllers/core/Auth/AuthController.php';
     const PLUGINS = 'framework/plugins';
     const MANIFEST = '.caligrafy-manifest.json';
     const ROUTES = 'config/routing/web.php';
@@ -113,7 +116,59 @@ class Upgrader
             else $status = 'customized';
             $plan[$path] = ['status' => $status, 'template' => $hash, 'current' => $current];
         }
+        return $this->holdUserCapabilities($plan);
+    }
+
+    /**
+     * The user capabilities (application/services/Users, 2.5.0) are not added on their own when the project manages
+     * users its own way: a customized AdminController (it may use another administrator level), or a class or a
+     * capability of the same name already in application/ (two declarations stop the application). The controllers
+     * that call them (AdminController, AuthController) are held with them. --force adds a file anyway.
+     */
+    private function holdUserCapabilities(array $plan)
+    {
+        $users = array_filter(array_keys($plan), function ($path) use ($plan) {
+            return strpos($path, self::USER_SERVICES) === 0 && $plan[$path]['status'] === 'missing';
+        });
+        if (!$users) return $plan;
+        $reason = null;
+        if (in_array($plan[self::ADMIN_CONTROLLER]['status'] ?? '', ['customized', 'kept'], true)) {
+            $reason = 'your AdminController is customized: set CaligrafyUsers::ADMIN_LEVEL to its administrator level, then add them with --force';
+        } else {
+            $taken = $this->declared(array('list_users', 'get_user', 'update_user', 'delete_user', 'register_user'),
+                array('CaligrafyUsers', 'CaligrafyListUsers', 'CaligrafyGetUser', 'CaligrafyUpdateUser', 'CaligrafyDeleteUser', 'CaligrafyRegisterUser'));
+            if ($taken) $reason = 'application/ already declares ' . implode(', ', $taken) . ': rename yours, then add them with --force';
+        }
+        if ($reason === null) return $plan;
+        foreach (array_merge($users, array(self::ADMIN_CONTROLLER, self::AUTH_CONTROLLER)) as $path) {
+            if (isset($plan[$path]) && in_array($plan[$path]['status'], ['missing', 'outdated'], true)) {
+                $plan[$path]['status'] = 'held';
+                $plan[$path]['reason'] = $reason;
+            }
+        }
         return $plan;
+    }
+
+    /**
+     * Capability names and class names declared by the PHP files of application/ (outside the user capabilities)
+     */
+    private function declared(array $capabilities, array $classes)
+    {
+        $found = [];
+        $dir = $this->root . '/application';
+        $it = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($dir, \FilesystemIterator::SKIP_DOTS));
+        foreach ($it as $file) {
+            $rel = substr($file->getPathname(), strlen($dir) + 1);
+            if (substr($rel, -4) !== '.php' || strpos($rel, self::USER_SERVICES) === 0) continue;
+            $code = (string) @file_get_contents($file->getPathname());
+            foreach ($capabilities as $name) {
+                if (preg_match("/name\\s*:\\s*['\"]" . $name . "['\"]/", $code)) $found[] = "the capability $name ($rel)";
+            }
+            foreach ($classes as $class) {
+                if (preg_match('/^\\s*(final\\s+|abstract\\s+)?class\\s+' . $class . '\\b/mi', $code)) $found[] = "the class $class ($rel)";
+            }
+        }
+        return array_values(array_unique($found));
     }
 
     /**
@@ -137,7 +192,7 @@ class Upgrader
             . ($manifest? "manifest " . self::MANIFEST . " found" : "no manifest (older project): untouched files recognized from the release history") . "\n\n");
 
         $files = $manifest['files'] ?? [];
-        $counts = array_fill_keys(['missing', 'identical', 'outdated', 'customized', 'routes'], 0);
+        $counts = array_fill_keys(['missing', 'identical', 'outdated', 'customized', 'routes', 'held'], 0);
         foreach ($plan as $path => $item) {
             if ($item['status'] === 'outdated' && in_array($path, $this->keep, true)) {
                 $item['status'] = $plan[$path]['status'] = 'kept';
@@ -157,6 +212,14 @@ class Upgrader
                 case 'outdated':
                     $action = $this->apply || $forced? "replaced (backup in " . $this->backupName() . ")" : "untouched copy, will be replaced (with a backup)";
                     if ($this->apply || $forced) $this->copy($path);
+                    break;
+                case 'held':
+                    if (!$forced) {
+                        printf("  %-11s application/%s: not added: %s\n", 'held', $path, $item['reason']);
+                        continue 2;
+                    }
+                    $this->copy($path);
+                    $action = "forced: added";
                     break;
                 case 'customized':
                 case 'kept':

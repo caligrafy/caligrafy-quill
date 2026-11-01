@@ -10,6 +10,36 @@ class CaligrafyUsers
      */
     const ADMIN_LEVEL = 1;
 
+    /**
+     * Managing users: the command line, or a real person (signed in, or the owner of a token) at ADMIN_LEVEL or above.
+     * Never the shared legacy API key or a token without an owner: those are not someone.
+     */
+    public static function requireAdmin(\Caligrafy\Context $context)
+    {
+        if ($context->actorType() === 'cli') {
+            return;
+        }
+        if ($context->user === null || $context->level() < self::ADMIN_LEVEL) {
+            throw \Caligrafy\ServiceError::forbidden('Managing users needs an administrator: signed in, or a token created with --user');
+        }
+    }
+
+    /**
+     * Whether the caller may manage a person with these permissions (never someone above their own level)
+     */
+    public static function mayManage(\Caligrafy\Context $context, $permissions)
+    {
+        return $context->actorType() === 'cli' || (int) $permissions <= $context->level();
+    }
+
+    /**
+     * A username taken at the same moment (the unique index answered): the same refusal as the check before it
+     */
+    public static function isDuplicate(\Throwable $e)
+    {
+        return $e instanceof \PDOException && (string) $e->getCode() === '23000';
+    }
+
     public static function profile($user)
     {
         $user = (object) $user;

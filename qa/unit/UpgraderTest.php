@@ -94,6 +94,54 @@ final class UpgraderTest extends TestCase
         $this->assertStringNotContainsString('fine.pug', $out);
     }
 
+    private function userTemplates(): void
+    {
+        $this->write(Upgrader::TEMPLATE . '/services/Users/CaligrafyUsers.php', '<?php class CaligrafyUsers {}');
+        $this->write(Upgrader::TEMPLATE . '/services/Users/CaligrafyListUsers.php', "<?php #[Capability(name: 'list_users')] class CaligrafyListUsers {}");
+        $this->write(Upgrader::TEMPLATE . '/controllers/core/Auth/AdminController.php', 'admin v2');
+        $this->write(Upgrader::TEMPLATE . '/controllers/core/Auth/AuthController.php', 'auth v2');
+        $this->write('application/controllers/core/Auth/AuthController.php', 'auth v1');
+        $history = ['controllers/core/Auth/AdminController.php' => [hash('sha256', 'admin v1')], 'controllers/core/Auth/AuthController.php' => [hash('sha256', 'auth v1')]];
+        $this->write(Upgrader::HISTORY, json_encode($history));
+    }
+
+    public function testUserCapabilitiesAreAddedToAProjectThatManagesUsersTheFrameworkWay(): void
+    {
+        $this->userTemplates();
+        $this->write('application/controllers/core/Auth/AdminController.php', 'admin v1');
+        $plan = (new Upgrader($this->root))->plan();
+        $this->assertSame('missing', $plan['services/Users/CaligrafyListUsers.php']['status']);
+        $this->assertSame('outdated', $plan['controllers/core/Auth/AdminController.php']['status']);
+    }
+
+    public function testUserCapabilitiesAreHeldWhenTheAdminControllerIsCustomized(): void
+    {
+        $this->userTemplates();
+        $this->write('application/controllers/core/Auth/AdminController.php', 'admin v1 with my own level');
+        $plan = (new Upgrader($this->root))->plan();
+        $this->assertSame('held', $plan['services/Users/CaligrafyListUsers.php']['status']);
+        $this->assertStringContainsString('ADMIN_LEVEL', $plan['services/Users/CaligrafyListUsers.php']['reason']);
+        $this->assertSame('held', $plan['controllers/core/Auth/AuthController.php']['status']);
+        $out = $this->dryRun();
+        $this->assertStringContainsString('held        application/services/Users/CaligrafyListUsers.php: not added', $out);
+        ob_start();
+        (new Upgrader($this->root, true))->run();
+        ob_end_clean();
+        $this->assertFileDoesNotExist("$this->root/application/services/Users/CaligrafyListUsers.php");
+        $this->assertSame('auth v1', file_get_contents("$this->root/application/controllers/core/Auth/AuthController.php"));
+    }
+
+    public function testUserCapabilitiesAreHeldWhenTheProjectDeclaresTheSameCapability(): void
+    {
+        $this->userTemplates();
+        $this->write('application/controllers/core/Auth/AdminController.php', 'admin v1');
+        $this->write('application/services/Team/Members.php', "<?php #[Capability(name: 'list_users', scope: 'team:read')] class Members {}");
+        $plan = (new Upgrader($this->root))->plan();
+        $this->assertSame('held', $plan['services/Users/CaligrafyUsers.php']['status']);
+        $this->assertStringContainsString('the capability list_users (services/Team/Members.php)', $plan['services/Users/CaligrafyUsers.php']['reason']);
+        $this->assertSame('held', $plan['controllers/core/Auth/AdminController.php']['status'], 'the admin pages call the held capabilities');
+    }
+
     private function dryRun(): string
     {
         ob_start();

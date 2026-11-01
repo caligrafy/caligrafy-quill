@@ -53,6 +53,10 @@ class AdminController extends Controller {
 			return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.', 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput, 'authorized' => authorized(), 'admin' => true));
 		}
 
+		if (trim((string) ($parameters['username'] ?? '')) === '') {
+			return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoooops, something went wrong', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => ['username' => 'The Username field is required'], 'user' => $userInput, 'authorized' => authorized(), 'admin' => true));
+		}
+
 		try {
 			$this->call('update_user', array('id' => $id, 'username' => $parameters['username']?? '', 'passcode' => $parameters['passcode']?? '',
 				'permissions' => $parameters['permissions']?? ''));

@@ -1055,6 +1055,55 @@ qa_test('list_users over MCP: administrators only, never a password', function (
     qa_assert(!in_array('list_users', array_column(qa_mcp($member, 'tools/list')['json']['result']['tools'], 'name'), true), 'permissions 0: no list_users tool');
 });
 
+qa_test('Route::page: route variables win over the query string, which never reaches the view; notFound shows its view with a 404', function () {
+    $id = qa_sql('SELECT id FROM books ORDER BY id LIMIT 1');
+    $title = qa_sql("SELECT title FROM books WHERE id = $id");
+    $a = new QaBrowser();
+    $a->login('alice', 'Passw0rdQa');
+    $r = $a->get("/qa/page/$id?id=999999&authorized=1");
+    qa_equals(200, $r['status'], substr(strip_tags($r['body']), 0, 300));
+    qa_contains("book $title", $r['body']);
+    qa_contains("id $id", $r['body']);
+    $r = $a->get('/qa/friendly/999999');
+    qa_equals(404, $r['status']);
+    qa_contains('missing 999999: No book #999999', $r['body']);
+});
+
+qa_test('user capabilities: never the legacy key or a token without an owner', function () use ($API_KEY) {
+    $bobId = (int) qa_sql("SELECT id FROM users WHERE username = 'bob'");
+    $r = qa_json('POST', '/capabilities/update_user', ['id' => $bobId, 'permissions' => 9], $API_KEY);
+    qa_equals(403, $r['status'], $r['body']);
+    $ownerless = qa_new_token('qa ownerless', '*');
+    qa_equals(403, qa_json('POST', '/capabilities/list_users', [], $ownerless)['status']);
+    qa_equals('0', qa_sql("SELECT permissions FROM users WHERE id = $bobId"));
+});
+
+qa_test('user capabilities: no one manages someone above their level or grants more than their own', function () {
+    $aliceId = (int) qa_sql("SELECT id FROM users WHERE username = 'alice'");
+    $bobId = (int) qa_sql("SELECT id FROM users WHERE username = 'bob'");
+    qa_sql("UPDATE users SET permissions = 1 WHERE id = $aliceId");
+    $alice = qa_new_token('qa alice admin', '*', $aliceId);
+    $r = qa_json('POST', '/capabilities/update_user', ['id' => $bobId, 'permissions' => 5], $alice);
+    qa_equals(422, $r['status'], $r['body']);
+    qa_sql("UPDATE users SET permissions = 5 WHERE id = $bobId");
+    qa_equals(403, qa_json('POST', '/capabilities/update_user', ['id' => $bobId, 'passcode' => 'Hijacked123'], $alice)['status']);
+    qa_equals(403, qa_json('POST', '/capabilities/delete_user', ['id' => $bobId], $alice)['status']);
+    qa_sql("UPDATE users SET permissions = 0 WHERE id = $bobId");
+});
+
+qa_test('deleting a user stops their tokens', function () {
+    $aliceId = (int) qa_sql("SELECT id FROM users WHERE username = 'alice'");
+    $carl = new QaBrowser();
+    $carl->post('/register', ['_token' => $carl->token('/register'), 'username' => 'carl', 'passcode' => 'Passw0rdQa', 'confirmpasscode' => 'Passw0rdQa']);
+    $carlId = (int) qa_sql("SELECT id FROM users WHERE username = 'carl'");
+    qa_assert($carlId > 0, 'carl registered');
+    $carlToken = qa_new_token('qa carl', 'books:read', $carlId);
+    qa_equals(200, qa_json('GET', '/v2/books', null, $carlToken)['status']);
+    $admin = qa_new_token('qa alice admin 2', '*', $aliceId);
+    qa_equals(201, qa_json('POST', '/capabilities/delete_user', ['id' => $carlId], $admin)['status']);
+    qa_equals(401, qa_json('GET', '/v2/books', null, $carlToken)['status']);
+});
+
 qa_test('register_user is for the sign-up page: refused over REST', function () {
     $r = qa_json('POST', '/capabilities/register_user', ['username' => 'bulk1', 'passcode' => 'Passw0rdQa']);
     qa_equals(403, $r['status'], $r['body']);

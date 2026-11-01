@@ -12,13 +12,14 @@ use Caligrafy\ServiceError;
     level: CaligrafyUsers::ADMIN_LEVEL,
     readOnly: true
 )]
-class GetUser extends Service
+class CaligrafyGetUser extends Service
 {
     public $rules = array('id' => 'required|integer');
     public $descriptions = array('id' => 'The id of the user');
 
     public function handle(array $input, Context $context)
     {
+        CaligrafyUsers::requireAdmin($context);
         $user = (new User('users'))->find($input['id']);
         if (!$user) {
             throw ServiceError::notFound("No user #{$input['id']}");

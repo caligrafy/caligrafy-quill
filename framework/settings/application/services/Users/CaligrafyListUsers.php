@@ -13,10 +13,11 @@ use Caligrafy\Service;
     level: CaligrafyUsers::ADMIN_LEVEL,
     readOnly: true
 )]
-class ListUsers extends Service
+class CaligrafyListUsers extends Service
 {
     public function handle(array $input, Context $context)
     {
+        CaligrafyUsers::requireAdmin($context);
         return array_map(function ($user) { return CaligrafyUsers::profile($user); },
             (new User('users'))->all(array('order' => 'ORDER BY modified_at DESC, id DESC')) ?: array());
     }

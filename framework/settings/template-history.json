@@ -51,7 +51,8 @@
         "1906eb67c897d47b5cc7be2b46f85041ccc966f146847c3dfce17600d7d0818a",
         "1bb93ade98dd81b24c9d16f52bce81b86d526c2c6599064bea84d6624a72bc49",
         "925b839321cba4256a7cb9da2083f98c20ae1fd1b6a021d3c2b38eb1300c1737",
-        "93fd61a3582d4a53229954f6f04e45fc49b06f432604910e8af5e43db9218745"
+        "961e7da57c5c6b10df9fdc249fa8b7613ccdfee9bbeed196415537106a8d3b42",
+        "b6be3248208218c063173a91d7806d371ccffabc218610a8a2dc193c3dad11d5"
     ],
     "controllers/core/Auth/AuthController.php": [
         "1b9aa729666dbbe1cda4b49bddcb14fdc41afd55bf0c0796ea8c3a6733ac8a46",
@@ -74,23 +75,39 @@
     "services/.gitignore": [
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     ],
+    "services/Users/CaligrafyDeleteUser.php": [
+        "ffa6342e9ea4384f52ebfc0d4365afe48e5b0dca25964d759193117d5e43c833"
+    ],
+    "services/Users/CaligrafyGetUser.php": [
+        "37e541df22abd117554addb2d5ae9708a4162a8bdd2c309cb98b0e3266100c19"
+    ],
+    "services/Users/CaligrafyListUsers.php": [
+        "259841dfc1720c889c1b60249ad0fb3f7208ad1a8b2ada93d5b5c92acb2b9a71"
+    ],
+    "services/Users/CaligrafyRegisterUser.php": [
+        "75d1ae37e120e84adba7ff3c81cbba39ea2bbbd285163e9a507eba1b78c8c5fc"
+    ],
+    "services/Users/CaligrafyUpdateUser.php": [
+        "60d91b4407fb297e0f6699da23612a17e87327b95a34544f5dad507b7a593c97"
+    ],
     "services/Users/CaligrafyUsers.php": [
-        "854614534cf48d45c6e43ca88c0ffdff78fc34968f3604b34da4b1943fbd575e"
+        "5ed5c2541a257eca321fb78ca39461d61e133877e0189eb3060b83e3b84cd6a4",
+        "fa4d63469656a56de46f57a9254280b3e8b7cd835a110d15f0da089c2a3f28e5"
     ],
     "services/Users/DeleteUser.php": [
-        "52da5e54859a04f9bd6170434c666270b4f98d3d8329736d032108785ad4f3a2"
+        "1248520fac35ac9057fe8109e625484a0ac1eb1ee763b397757fd4bbe1d3e12b"
     ],
     "services/Users/GetUser.php": [
-        "689bbfd40bd9dbc371adb840225b0dde30f93e924e72c64455ff261d9d93fba5"
+        "6b897fb3519de37edd7e4d9bde0930569176cdcaf2c56d3f323b50fbcce13721"
     ],
     "services/Users/ListUsers.php": [
-        "848e88c685a23aee410261e764d7e0ad20674bed39891a7fcc924bf20cb6f36c"
+        "bc22a2bc59b89b967f9161cec103c9798c4f1e4893f586fe40442066a59d9bb1"
     ],
     "services/Users/RegisterUser.php": [
         "251c022d72f5fecf5d4d35138badd5adcb2deb2c0d242d42ce07a41d4bc6f1d1"
     ],
     "services/Users/UpdateUser.php": [
-        "7e5a4006409942d3b4707feabf18304c80bd3663fd6c3022d3c50b965380890f"
+        "5ac097675a599430e5721971763c4276687d5fcba6600c3d5dbb9a068f1fffda"
     ],
     "views/.gitignore": [
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"

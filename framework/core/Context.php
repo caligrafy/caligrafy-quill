@@ -149,6 +149,9 @@ class Context
             if (!Tokens::allows($this->token['scopes'] ?? array(), $scope)) {
                 return false;
             }
+            if ($this->user === null && !empty($this->token['user_id']) && Auth::active()) {
+                return false;   // the owner of the token no longer exists: the token is not someone any more
+            }
             return $this->user === null ? (int) $level === 0 || empty($this->token['user_id']) : $this->level() >= (int) $level;
         }
         if ($this->user !== null) {

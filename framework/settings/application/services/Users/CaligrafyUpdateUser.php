@@ -12,20 +12,23 @@ use Caligrafy\ServiceError;
     scope: 'users:write',
     level: CaligrafyUsers::ADMIN_LEVEL
 )]
-class UpdateUser extends Service
+class CaligrafyUpdateUser extends Service
 {
     public $rules = array('id' => 'required|integer', 'username' => 'alpha_numeric|max_len,100', 'passcode' => 'min_len,8|max_len,72',
         'permissions' => 'integer|min_numeric,0|max_numeric,255');
-    public $filters = array('username' => 'trim');
     public $descriptions = array('id' => 'The id of the user', 'username' => 'A new username: letters and digits',
         'passcode' => 'A new password: 8 to 72 characters', 'permissions' => '0 for everyone, 1 or more for administrators');
 
     public function handle(array $input, Context $context)
     {
+        CaligrafyUsers::requireAdmin($context);
         $users = new User('users');
         $user = $users->find($input['id']);
         if (!$user) {
             throw ServiceError::notFound("No user #{$input['id']}");
+        }
+        if (!CaligrafyUsers::mayManage($context, $user->permissions ?? 0)) {
+            throw ServiceError::forbidden('You cannot manage someone above your own level');
         }
         $changes = array();
         if (isset($input['username']) && $input['username'] !== '' && $input['username'] !== $user->username) {
@@ -39,12 +42,22 @@ class UpdateUser extends Service
             $changes['passcode'] = User::hashPassword($input['passcode']);
         }
         if (isset($input['permissions']) && $input['permissions'] !== '') {
+            if (!CaligrafyUsers::mayManage($context, $input['permissions'])) {
+                throw ServiceError::invalid(array('permissions' => 'You cannot give more than your own level'));
+            }
             $changes['permissions'] = (int) $input['permissions'];
         }
         if (!$changes) {
             return CaligrafyUsers::profile($user);
         }
         $changes['modified_at'] = date('Y-m-d H:i:s');
-        return CaligrafyUsers::profile($users->update($changes, $user->id));
+        try {
+            return CaligrafyUsers::profile($users->update($changes, $user->id));
+        } catch (\Throwable $e) {
+            if (CaligrafyUsers::isDuplicate($e)) {
+                throw ServiceError::invalid(array('username' => 'The username already exists in the system'));
+            }
+            throw $e;
+        }
     }
 }

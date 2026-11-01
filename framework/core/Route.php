@@ -288,7 +288,8 @@ class Route extends \stdClass
      *   Route::page('/books', 'Books/index');
      *   Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
      *   Route::page('/admin/books', 'Books/admin', ['level' => 1, 'data' => ['books' => 'list_books']]);
-     * Options: 'signedIn' (bool), 'level' (int), 'data' (name => capability, or [capability, inputs]), 'with' (fixed values)
+     * Options: 'signedIn' (bool), 'level' (int), 'data' (name => read-only capability, or [capability, inputs]),
+     * 'with' (fixed values), 'notFound' (a view shown with a 404 when a data capability finds nothing)
      * @param string $route the uri
      * @param string $view the view, as for view()
      * @param array $options see PageController::render()

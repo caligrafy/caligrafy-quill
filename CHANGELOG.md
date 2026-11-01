@@ -18,11 +18,24 @@ page, REST, an AI agent or the command line uses it.
   `level` (people below it go to `/notAuthorized`), `data` (`['book' => 'get_book']`: capabilities called as the person
   who opens the page, with the route variables as inputs; a refusal sends a visitor to sign in, or answers 403 or 404)
   and `with` (fixed values).
-- The user capabilities in `application/services/Users`: `list_users`, `get_user`, `update_user` and `delete_user`
+- The user capabilities in `application/services/Users` (framework class names: `CaligrafyListUsers`...): `list_users`, `get_user`, `update_user` and `delete_user`
   (administrators: `CaligrafyUsers::ADMIN_LEVEL`, 1 by default, which `AdminController` uses too; never a password; an administrator cannot delete their own account) and
   `register_user` (the sign-up page and the command line only: refused over REST and MCP). AI agents and programs with
   an administrator's token can manage users, with the audit log.
 - Error codes 1005 (page not found, 404) and 1006 (forbidden, 403).
+- `Route::page` option `notFound`: a view shown, with a 404, when a data capability finds nothing.
+- `upgrade` holds the user capabilities (status `held`, with the reason) when the project manages users its own way: a
+  customized `AdminController`, or a class or capability of the same name in `application/`. The controllers that
+  call them are held too; `--force` adds a file anyway.
+
+### Security
+- The user capabilities only answer the command line or a real person at `CaligrafyUsers::ADMIN_LEVEL`: never the
+  shared legacy API key or a token without an owner. No one manages someone above their own level or grants more than
+  it; an administrator cannot delete their own account; deleting a user revokes their tokens.
+- A token whose owner no longer exists is refused (with `Auth::authentication` on), instead of keeping the rights of a
+  token without an owner.
+- `Route::page` only calls read-only capabilities (opening a page never changes data), takes route variables from the
+  route pattern (they win over the query string, which never reaches the view), and reserves `authorized` and `user`.
 
 ### Changed
 - The user administration pages (`AdminController`) and sign-up (`AuthController@register`) call those capabilities

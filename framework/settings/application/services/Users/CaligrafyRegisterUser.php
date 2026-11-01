@@ -15,10 +15,9 @@ use Caligrafy\ServiceError;
     scope: 'users:write',
     public: true
 )]
-class RegisterUser extends Service
+class CaligrafyRegisterUser extends Service
 {
     public $rules = array('username' => 'required|alpha_numeric|max_len,100', 'passcode' => 'required|min_len,8|max_len,72');
-    public $filters = array('username' => 'trim');
     public $descriptions = array('username' => 'Letters and digits, up to 100', 'passcode' => 'The password: 8 to 72 characters');
 
     public function handle(array $input, Context $context)
@@ -30,7 +29,14 @@ class RegisterUser extends Service
             throw ServiceError::conflict('The username already exists in the system');
         }
         $users = new User('users');
-        $user = $users->create(array('username' => $input['username'], 'passcode' => User::hashPassword($input['passcode']), 'permissions' => 0));
+        try {
+            $user = $users->create(array('username' => $input['username'], 'passcode' => User::hashPassword($input['passcode']), 'permissions' => 0));
+        } catch (\Throwable $e) {
+            if (CaligrafyUsers::isDuplicate($e)) {
+                throw ServiceError::conflict('The username already exists in the system');
+            }
+            throw $e;
+        }
         return CaligrafyUsers::profile($user);
     }
 }
