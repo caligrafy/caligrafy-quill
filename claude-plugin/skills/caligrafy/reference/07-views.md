@@ -25,7 +25,7 @@ The same code in HTML would look like this:
 ```
 
 ### The two masters
-Since 2.11.0, Caligrafy's own pages (sign-in, account, admin, welcome, the Tasks example, payment) extend **`default/master/site`**: a light top bar with the Caligrafy mark, then the page, then a footer, with [Caligrafy's look](#pagecomponents) (`public/css/layout.css` and `public/css/look.css`). Its blocks are `title`, `brand` (the name after the mark), `nav_links` (the links on the right; on phones a Menu button opens them), `content`, `footer`, `additional_css` and `additional_scripts`. Build new pages on it. Its stylesheet links carry their modification time (`?v=...`), so browsers get every change; do the same for your own scripts.
+Since 2.11.0, Caligrafy's own pages (sign-in, account, admin, welcome, the Tasks example, payment) extend **`default/master/site`**: a light top bar with the Caligrafy mark, then the page, then a footer, with [Caligrafy's look](#pagecomponents) (`public/css/layout.css` and `public/css/look.css`). Its blocks are `title`, `brand` (the name after the mark), `nav_links` (the links on the right; on phones a Menu button opens them; Sign in or Sign out follow the session, even on a page whose controller does not pass `$authorized`, since 2.12.4), `content`, `footer`, `additional_css` and `additional_scripts`. Build new pages on it. Its stylesheet links carry their modification time (`?v=...`), so browsers get every change; do the same for your own scripts.
 
 The older master `default/master/layoutblocks` keeps working for existing pages (it loads `look.css` too). The rest of this section describes it.
 

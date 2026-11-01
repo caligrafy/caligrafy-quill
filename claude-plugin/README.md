@@ -49,6 +49,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.24.4** - Caligrafy Quill 2.12.4: ui-guidelines and the Views mirror say that the top bar's Sign in / Sign out follow
+  the session (`authorized()`), whatever the page's controller passes.
 - **1.24.3** - Caligrafy Quill 2.12.3: the Caligrafer mirror says how `cloud account` and `cloud apps` show an unlimited
   Caligrafy Cloud account ("unlimited", "no end").
 - **1.24.2** - Caligrafy Quill 2.12.2: the Testing Caligrafy mirror describes the `caligrafy-contributor` skill of the

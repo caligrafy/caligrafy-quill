@@ -36,7 +36,8 @@ block content
       //- form, error, segments, rows, empty state: in this order
 ```
 The master's blocks: `title`, `brand` (the name in the top bar, after the mark), `nav_links` (the links on the right;
-on phones they open under a Menu button), `content`, `footer`, `additional_css`, `additional_scripts`. The top bar is
+on phones they open under a Menu button: Sign in / Sign out follow the session, `authorized()`, even when the page's
+controller passes no `$authorized`, 2.12.4+), `content`, `footer`, `additional_css`, `additional_scripts`. The top bar is
 sticky, not fixed: nothing hides under it (G59 is about the older `layoutblocks.pug`).
 Its route, in `web.php` (2.5.0+): `Route::page('/books', 'Books/index');`, or with server-side data
 `Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);`. The view then always has `$authorized`

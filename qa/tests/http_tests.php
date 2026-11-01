@@ -532,6 +532,16 @@ qa_test('login with the right password', function () use ($alice) {
     qa_contains('You are signed in', $alice->get('/home')['body']);
 });
 
+qa_test('the top bar asks the session: Sign out on a page whose controller passes nothing', function () use ($guest) {
+    $b = new QaBrowser();
+    $b->login('alice', 'Passw0rdQa');
+    $signedIn = $b->get('/qa/bare');
+    qa_equals(200, $signedIn['status']);
+    qa_contains('Bare page', $signedIn['body']);
+    qa_contains('>Sign out<', $signedIn['body']);
+    qa_contains('>Sign in<', $guest->get('/qa/bare')['body']);
+});
+
 qa_test('login with a wrong password fails', function () {
     $b = new QaBrowser();
     $r = $b->login('alice', 'nope12345');

@@ -6,6 +6,13 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.12.4] - 2026-11-01
+
+### Fixed
+- The top bar of the masters (`site.pug`, and `layout.pug` under `layoutblocks.pug`) showed Sign in and Create account
+  to a signed-in person on every page whose controller did not pass `$authorized` (the payment page, for example). It
+  now asks the session (`$authorized || authorized()`).
+
 ## [2.12.3] - 2026-11-01
 
 ### Fixed

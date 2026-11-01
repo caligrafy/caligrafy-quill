@@ -5,6 +5,12 @@ use Caligrafy\Controller;
 
 class QaController extends Controller {
 
+    // a page of the site.pug master whose controller passes nothing (no $authorized): the top bar asks the session
+    public function bare()
+    {
+        return view('Qa/bare');
+    }
+
     public function upload()
     {
         $url = uploadFile($this->request->files('f'));

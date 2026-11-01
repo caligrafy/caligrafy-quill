@@ -12,7 +12,8 @@ html(lang="en")
   //- Defining the body
   //- caligrafy-layout: Caligrafy layout scope of public/css/theme.css (the gesturize id is kept for older layouts)
   body(id='gesturize' class='caligrafy-layout')
-    if $authorized
+    //- the session decides, not only what the page's controller passed
+    if $authorized || authorized()
         block navigation_authorized
     else 
         block navigation_default

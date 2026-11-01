@@ -161,6 +161,7 @@
         "d96da57b223fbd1e0e03e7a7aa6d3e2f356420d139a34c8b7526688ee4858847"
     ],
     "views/default/master/layout.pug": [
+        "05a178d85fed09b6e403d8c38c4671240bddf94796973495b6fdc3282a3a4dad",
         "0eef79b524717c64f1f912d11e0534861e05a64ee709b18d261faf0ed4792b33",
         "cdfb2525f35c4aad8ab83eb139f5713fcf94ae703aa600d2919c1847ab6f3c72",
         "ffcf0f51e3d1560d9133fd35e1025b603ca2a209316f95c13040ddf2577c2560"
@@ -181,6 +182,7 @@
         "f01218a8cca127b572517fcfa6ed927212061560b3f5b35a98ae8798e2450ac7"
     ],
     "views/default/master/site.pug": [
+        "3e32bbf9e02cd1cdd9b720f1a1379c83140c7a762fbed0dee0f04612758b279e",
         "7363e6a39c94e4bed3560bc863c06f9504b70f6b02e0aa019041ed85e1e11c39"
     ],
     "views/default/modules/ach.pug": [

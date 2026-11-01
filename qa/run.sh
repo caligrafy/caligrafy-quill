@@ -66,7 +66,7 @@ php -r '
 $f = "application/config/routing/web.php";
 $s = file_get_contents($f);
 $s = preg_replace("#^(\s*)// (Auth::authentication|Route::)#m", "$1$2", $s);
-$qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n"
+$qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n    Route::get(\"/qa/bare\", \"QaController@bare\");\n"
     . "    Route::get(\"/qa/missing\", \"QaController@nope\");\n    Route::get(\"/qa/fatal\", \"QaController@fatal\");\n    Route::get(\"/qa/boom\", \"QaController@boom\");\n"
     . "    Route::post(\"/qa/upload\", \"QaController@upload\");\n"
     . "    Route::get(\"/qa/install\", \"QaController@install\");\n"
