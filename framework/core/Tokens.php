@@ -61,13 +61,40 @@ class Tokens
         if (!$row || !hash_equals((string) $row['token_hash'], self::hash($token))) {
             return null;
         }
-        if ($row['revoked_at'] !== null || ($row['expires_at'] !== null && strtotime($row['expires_at']) <= time())) {
+        if ($row['revoked_at'] !== null || self::expired($row['expires_at'])) {
             return null;
         }
         Database::execute('UPDATE ' . self::TABLE . ' SET last_used_at = ? WHERE id = ?', array(date('Y-m-d H:i:s'), $id));
         $row['scopes'] = self::normalizeScopes($row['scopes']);
         unset($row['token_hash']);
         return $row;
+    }
+
+    /**
+     * Whether an expiry date (local 'Y-m-d H:i:s', SERVER_TIMEZONE) has passed. When the clocks fall back, a local time
+     * of the repeated hour names two instants and strtotime() reads the first one: a token created at 01:21 EDT to
+     * expire an hour later (01:21 EST) would be refused at once. Such a time is read as its later occurrence:
+     * a token never stops early, at worst it works up to an hour more.
+     * @param string|null $expiresAt the expires_at column (null: never expires)
+     * @param int|null $now a Unix time (null: now)
+     */
+    public static function expired($expiresAt, $now = null)
+    {
+        if ($expiresAt === null || $expiresAt === '') {
+            return false;
+        }
+        $at = strtotime((string) $expiresAt);
+        if ($at === false) {
+            return true;
+        }
+        $local = date('Y-m-d H:i:s', $at);
+        foreach (array(3600, 1800) as $shift) {     // the repeated hour (half an hour on Lord Howe Island)
+            if (date('Y-m-d H:i:s', $at + $shift) === $local) {
+                $at += $shift;
+                break;
+            }
+        }
+        return $at <= ($now ?? time());
     }
 
     /**

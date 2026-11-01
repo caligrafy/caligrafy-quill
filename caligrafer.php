@@ -267,7 +267,7 @@ switch(strtolower($argv[1])) {
 				$tokens = Caligrafy\Tokens::all();
 				print($tokens ? "\n" : "\n No tokens yet: php caligrafer.php token create <name> --scopes <scopes>\n\n");
 				foreach ($tokens as $t) {
-					$state = $t['revoked_at'] ? 'revoked' : ($t['expires_at'] && strtotime($t['expires_at']) <= time() ? 'expired' : 'active');
+					$state = $t['revoked_at'] ? 'revoked' : (Caligrafy\Tokens::expired($t['expires_at']) ? 'expired' : 'active');
 					printf(" #%-4d %-8s %-30s %s%s%s\n", $t['id'], $state, $t['name'], implode(' ', $t['scopes']),
 						$t['user_id'] ? "  user {$t['user_id']}" : '', $t['last_used_at'] ? "  last used {$t['last_used_at']}" : '  never used');
 				}

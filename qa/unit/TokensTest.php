@@ -32,4 +32,41 @@ final class TokensTest extends TestCase
         $this->assertTrue(Tokens::allows([], ''));
         $this->assertFalse(Tokens::allows([], 'books:read'));
     }
+
+    public function testExpiryIsReadOnTheServerClock(): void
+    {
+        $zone = date_default_timezone_get();
+        date_default_timezone_set('America/New_York');
+        try {
+            $now = gmmktime(15, 0, 0, 6, 1, 2026);
+            $this->assertFalse(Tokens::expired(null, $now));
+            $this->assertFalse(Tokens::expired(date('Y-m-d H:i:s', $now + 60), $now));
+            $this->assertTrue(Tokens::expired(date('Y-m-d H:i:s', $now - 60), $now));
+            $this->assertTrue(Tokens::expired(date('Y-m-d H:i:s', $now), $now));
+            $this->assertTrue(Tokens::expired('not a date', $now));
+        } finally {
+            date_default_timezone_set($zone);
+        }
+    }
+
+    public function testATokenExpiringInTheRepeatedHourIsNotRefusedEarly(): void
+    {
+        $zone = date_default_timezone_get();
+        date_default_timezone_set('America/New_York');
+        try {
+            // 2026-11-01 05:21 UTC is 01:21 EDT; an hour later is 01:21 EST: the same local time
+            $now = gmmktime(5, 21, 0, 11, 1, 2026);
+            $expiresAt = date('Y-m-d H:i:s', $now + 3600);
+            $this->assertSame('2026-11-01 01:21:00', $expiresAt);
+            $this->assertFalse(Tokens::expired($expiresAt, $now));
+            $this->assertFalse(Tokens::expired($expiresAt, $now + 3599));
+            $this->assertTrue(Tokens::expired($expiresAt, $now + 3600));
+            // the hours around the change are unambiguous
+            $this->assertTrue(Tokens::expired('2026-11-01 00:59:00', gmmktime(5, 0, 0, 11, 1, 2026)));
+            $this->assertFalse(Tokens::expired('2026-11-01 02:00:00', gmmktime(6, 59, 0, 11, 1, 2026)));
+            $this->assertTrue(Tokens::expired('2026-11-01 02:00:00', gmmktime(7, 0, 0, 11, 1, 2026)));
+        } finally {
+            date_default_timezone_set($zone);
+        }
+    }
 }

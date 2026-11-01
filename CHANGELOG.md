@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [Unreleased]
+
+### Fixed
+- A personal access token whose expiry falls in the hour repeated when the clocks fall back is no longer refused
+  early. Expiry dates are local times (`SERVER_TIMEZONE`), and `strtotime()` read such a time as its first occurrence:
+  in America/New_York, a token created at 05:21 UTC on 2026-11-01 to expire an hour later was refused at once.
+  `Tokens::expired()` now reads it as the later occurrence (at worst a token works up to an hour more, never less);
+  `Tokens::verify()` and `php caligrafer.php token list` use it. Stored tokens keep working unchanged.
+
 ## [2.7.0] - 2026-11-01
 
 From an idea to an application online without handing the work to anyone: pages work online as they do locally,
