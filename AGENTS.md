@@ -48,5 +48,7 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
   handle the token. Claude Code users run `/caligrafy-quill:ship`.
 - Pages call their own JSON routes with the session: `apiHeaders()` (`X-CSRF-Token`) or the JS client, never the
   legacy API key, which is off online (`LEGACY_API_KEY=false` on Caligrafy Cloud).
+- To move a project to a newer release: `php caligrafer.php update --check`, then `update` (2.9.0+: framework, untouched
+  release files, merged settings, `upgrade --apply`); merge each `<file>.caligrafy-new` into the project's version.
 - After changing PHP, run `php -l <file>`; check the project with `php caligrafer.php doctor` (read-only).
 - Framework changes need the QA suite: `vendor/bin/phpunit` and `./qa/run.sh` (see `CONTRIBUTING.md`).

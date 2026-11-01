@@ -375,3 +375,13 @@ secondary button in the Caligrafy look): style `.btn-primary.btn-secondary` as t
 CSS at build time (`src/main.js`): it needs `import '../../css/designs/<name>.css'` and a rebuild. Online: commit the
 stylesheet and set `DESIGN_STYLE` on the server (`cloud secret set <app> DESIGN_STYLE=<name>`); the production image
 leaves `framework/design/` out.
+
+**G94. `update` needs itself first, and never touches your code.** `php caligrafer.php update` exists since 2.9.0: an
+older project gets `framework/core/Updater.php` once (`curl -fsSL https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/framework/core/Updater.php -o framework/core/Updater.php`)
+and runs `php -r "require 'framework/core/Updater.php'; exit((new Caligrafy\Updater('.'))->run());"`. It decides
+what you changed by comparing each file with your project's own release (`Framework::VERSION`, downloaded from GitHub
+with the new one): a project whose version is unknown (before 2.0) gets a `.caligrafy-new` for every file that
+differs. `framework/` and `claude-plugin/` are always replaced (changes made there by hand are listed and backed up,
+not kept): customize in `application/` and `public/<your app>/` instead. It never replaces `application/` (that is
+`upgrade --apply`'s job, which it runs), `.env` values, `public/uploads` or `vendor/`, and stops on uncommitted git
+changes unless `--yes`. Run it whole, not piped (G89). Proof: `framework/core/Updater.php`.

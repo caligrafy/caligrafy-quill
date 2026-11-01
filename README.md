@@ -166,7 +166,8 @@ feature step by step, page included.
   `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, every new app free for its first 30
   minutes, and `/caligrafy-quill:ship` does it all for you, from the GitHub repository to the check online.
 + **Tools:** `php caligrafer.php doctor` checks your setup and services, `call` tries a capability in one line,
-  `upgrade` updates a project and tells you what to check, `version` tells you which release you run.
+  `update` moves a project to the latest release in one command (keeping what you changed), `upgrade` updates its
+  `application/` templates and tells you what to check, `version` tells you which release you run.
 
 <br/>
 
@@ -180,7 +181,7 @@ feature step by step, page included.
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
-| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.8](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.8.0), [2.7](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.7.0), [2.6](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.6.0), [2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
+| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.9](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.9.0), [2.8](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.8.0), [2.7](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.7.0), [2.6](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.6.0), [2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
 | Contribute | [Contributing](CONTRIBUTING.md), [how the framework is built](ARCHITECTURE.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
 
 Other ways to install (your own Apache, MySQL and PHP; `composer create-project`) are in

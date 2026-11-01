@@ -6,6 +6,25 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.9.0] - 2026-11-01
+
+A project updates in one command: `php caligrafer.php update` moves it to the latest release and applies everything
+that can be applied safely, keeping what you changed.
+
+### Added
+- `php caligrafer.php update [<version>] [--check] [--yes] [--no-composer]` (`Caligrafy\Updater`): downloads the
+  project's release (`Framework::VERSION`) and the target release (the latest by default) from GitHub, then replaces
+  `framework/` and `claude-plugin/` whole (keeping `framework/librairies/app/.env`), compares every other file of the
+  release with the project's release (an untouched copy is replaced, a missing one added, a changed one kept with the
+  new version in `<file>.caligrafy-new`, a file the release did not change left as it is; the project's documents
+  such as `README.md` are never overwritten when changed), merges `composer.json` (new packages and the versions the
+  project did not change, then `composer update` for them), the new lines of `.gitignore` and the new settings of
+  `.env` with their defaults, and runs `upgrade --apply` from the new release. Everything replaced is backed up first
+  in `backups/caligrafy-update-<from>-to-<to>-<time>/`; uncommitted git changes stop it unless `--yes`; `--check`
+  reports only. `.bin/caligrafer update` passes it through.
+- Claude Code plugin 1.21.0: the `update` skill runs it and merges every `.caligrafy-new` file into the project's own
+  version; gotcha G94.
+
 ## [2.8.0] - 2026-11-01
 
 Design styles: every page can take another look with one setting, and Claude restyles the pages to match it.

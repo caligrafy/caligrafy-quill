@@ -11,7 +11,7 @@
 | --- | --- |
 | **Docker** (the Quickstart, the course) | `docker compose exec dev-box php caligrafer.php <command>` |
 | Your own Apache, PHP and MySQL | `php caligrafer.php <command>`, from the project folder |
-| Either, for the commands that manage the project itself | `.bin/caligrafer <command>`: `quickstart`, `server`, `version`, `doctor`, `upgrade` |
+| Either, for the commands that manage the project itself | `.bin/caligrafer <command>`: `quickstart`, `server`, `version`, `doctor`, `update`, `upgrade` |
 
 `php caligrafer.php` alone prints the list of commands. In the rest of this page, `php caligrafer.php` means either of the first two forms.
 
@@ -35,6 +35,7 @@
 | [`mcp`](#mcp) | An MCP server over stdio for AI agents on your computer |
 | [`audit`](#audit) | Shows the latest capability calls and refusals |
 | [`doctor`](#doctor) | Checks the project, the database and every configured service |
+| [`update`](#update) | Moves the project to another release of Caligrafy Quill and applies everything (2.9.0+) |
 | [`upgrade`](#upgrade) | Updates the `application/` templates of a project to the framework's |
 | [`deploy`](#deploy) | Prepares the database in production (what the production image runs at start) |
 | [`cloud`](#cloud) | Puts the project online at `https://<name>.caligrafy.com` with Caligrafy Cloud |
@@ -200,6 +201,28 @@ A read-only health check: PHP and its extensions, `vendor/`, `.env` and the keys
 + Network errors are explained: `self-signed certificate in certificate chain` means a company TLS inspection proxy (the Claude plugin's `server` skill has the Docker fix).
 + Optional overrides for tests, proxies or regional endpoints: `OPENAI_API_BASE`, `GROQ_API_BASE`, `AGENT_API_BASE`, `STRIPE_API_BASE`, `COINBASE_API_BASE`; `WATSON_ASSISTANT_ID` lets doctor check the assistant.
 
+### `update`
+```bash
+php caligrafer.php update              # to the latest release, everything applied
+php caligrafer.php update --check      # what it would change, nothing written
+php caligrafer.php update 2.8.0        # to one release
+```
+Moves the project to another release of Caligrafy Quill in one command (2.9.0+). It downloads the project's release (the version `version` prints) and the new one from GitHub, then:
+
+1. replaces `framework/` and `claude-plugin/` whole (files the new release dropped go too; the files `initialize` wrote there stay);
+2. compares every other file of the release with your project's release: `caligrafer.php`, `.bin/`, `Dockerfile`, `docker-compose.yaml`, `index.php`, `public/css`, `public/js`... A file you never changed is replaced, a missing one is added, a file you changed is kept with the new version next to it as `<file>.caligrafy-new`. When the release did not change a file, your version stays as it is. Your `README.md` and the other documents of your project are left alone;
+3. merges `composer.json` (new packages, new versions of the packages you did not change), then runs `composer update` for them (`--no-composer`: it only prints the command); adds the new lines of `.gitignore`, and the new settings of `.env` with their defaults (your values never change);
+4. runs `php caligrafer.php upgrade --apply` from the new release, for `application/` ([`upgrade`](#upgrade)).
+
+Everything it replaces is first copied to `backups/caligrafy-update-<from>-to-<to>-<time>/`. With uncommitted git changes it stops (commit first, or `--yes`). `application/`, your `.env` values, `public/uploads` and `vendor/` are never replaced. Then merge the `.caligrafy-new` files into yours, delete them, and run `doctor`. With Claude Code, `/caligrafy-quill:update` does all of it, the merges included.
+
+**A project before 2.9.0** does not have the command yet: get it once, then run it.
+```bash
+curl -fsSL https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/framework/core/Updater.php -o framework/core/Updater.php
+php -r "require 'framework/core/Updater.php'; exit((new Caligrafy\Updater('.'))->run());"
+```
+In Docker, run each `php` line with `docker compose exec dev-box` in front.
+
 ### `upgrade`
 ```bash
 php caligrafer.php upgrade                                     # dry run: what would change
@@ -207,7 +230,7 @@ php caligrafer.php upgrade --apply                             # update the file
 php caligrafer.php upgrade --force application/views/Auth/login.pug   # replace one file you changed
 php caligrafer.php upgrade --apply --keep application/views/default/index.pug   # keep a default page that is now yours
 ```
-After you update the framework of a project (`git pull`, or a new release copied over `framework/`), `upgrade` compares your `application/` with the framework's templates. Files you never changed are updated (with a backup in `backups/caligrafy-upgrade-<time>/`); files you changed are kept, and the new version is written next to them as `<file>.caligrafy-new` for you to merge; your routes are never replaced. `--keep` keeps a page that is an untouched copy of an older template (a default page that became a page of your site, like the home page): the new version is written next to it, and later upgrades remember it. It also reports, without changing anything: client apps in `public/` that differ from their template, settings of `framework/settings/.env.example` missing from your `.env` and obsolete ones (`CRYPTO_PAY_KEY`), and views or apps that still use Bootstrap 3 classes (`col-xs-`, `pull-left`, `btn-default`...), which break under Bootstrap 5. Learn more in [Security and upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
+`update` runs it for you. After you update the framework of a project by hand (`git pull`, or a new release copied over `framework/`), `upgrade` compares your `application/` with the framework's templates. Files you never changed are updated (with a backup in `backups/caligrafy-upgrade-<time>/`); files you changed are kept, and the new version is written next to them as `<file>.caligrafy-new` for you to merge; your routes are never replaced. `--keep` keeps a page that is an untouched copy of an older template (a default page that became a page of your site, like the home page): the new version is written next to it, and later upgrades remember it. It also reports, without changing anything: client apps in `public/` that differ from their template, settings of `framework/settings/.env.example` missing from your `.env` and obsolete ones (`CRYPTO_PAY_KEY`), and views or apps that still use Bootstrap 3 classes (`col-xs-`, `pull-left`, `btn-default`...), which break under Bootstrap 5. Learn more in [Security and upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
 
 ## Put it online
 

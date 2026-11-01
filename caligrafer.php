@@ -49,6 +49,7 @@ $defaultMsg = "\n Available Functions:
 				\n - quickstart [--example] [--yes]: sets up a fresh project in one step (database, framework tables, /capabilities and /mcp); --example adds the Tasks example. With Docker: .bin/caligrafer quickstart
 				\n - version: prints the version of Caligrafy Quill
 				\n - initialize: Initializes and signs your project
+				\n - update [<version>] [--check] [--yes] [--no-composer]: moves the project to another release of Caligrafy Quill (the latest by default) and applies everything: framework/, the release's other files (untouched ones replaced, changed ones kept with a .caligrafy-new), composer.json, .gitignore and new .env settings merged, then upgrade --apply; backups in backups/
 				\n - upgrade [--apply] [--force <application/path>] [--keep <application/path>]: compares application/ with the framework templates (dry run by default) and updates the untouched files; also reports .env settings and Bootstrap 3 classes
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - design <list [--json] | show <name> | use <name> | off | status>: picks a design style (DESIGN_STYLE in .env) (framework/design, application/design); empty = Caligrafy's own look
@@ -469,6 +470,14 @@ switch(strtolower($argv[1])) {
 		}
 		print(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
 		exit($status);
+
+	case 'update':
+		// Moves the project to another release (the latest by default): framework files, merged settings, then upgrade --apply
+		$target = null;
+		foreach (array_slice($argv, 2) as $arg) {
+			if ($arg !== '' && $arg[0] !== '-') { $target = $arg; break; }
+		}
+		exit((new Caligrafy\Updater('.'))->run($target, in_array('--check', $argv), in_array('--yes', $argv), !in_array('--no-composer', $argv)));
 
 	case 'upgrade':
 		$apply = in_array('--apply', $argv);

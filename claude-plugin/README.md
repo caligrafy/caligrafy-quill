@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 51 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G93) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 52 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G94) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
@@ -16,6 +16,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
 | Skill | `/caligrafy-quill:db <script.sql\|tables\|query "...">` | Runs SQL scripts in the `mysql` container (or local MySQL), with safety checks for destructive scripts |
 | Skill | `/caligrafy-quill:deploy [app-name] [--own-server]` | Puts the project online: checks it is ready (Dockerfile, `composer.lock`, no secrets in git, `create_db.sql` safe to run again, pushed), then deploys it to Caligrafy Cloud (`https://<name>.caligrafy.com`) or prepares it for Coolify or Docker |
+| Skill | `/caligrafy-quill:update [version]` | Updates the project to the latest release (or one): runs `php caligrafer.php update --check`, then `update` (framework, untouched release files, `composer.json`, `.gitignore`, new `.env` settings, `upgrade --apply`), merges every `.caligrafy-new` file into the project's own version, and checks the project with `doctor` and the release notes |
 | Agent | `caligrafy-reviewer` | Reviews Caligrafy code against the framework's real behavior |
 | Hook | PostToolUse `php -l` | Syntax-checks every `.php` file Claude writes or edits (skipped when PHP is not installed) |
 
@@ -48,6 +49,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.21.0** - Caligrafy Quill 2.9.0: the new `update` skill (`php caligrafer.php update`, then Claude merges the
+  `.caligrafy-new` files); `update` in the API reference and the Caligrafer, Security and upgrading and plugin wiki
+  mirrors; gotcha G94 (projects before 2.9.0 get the command once; what update never touches).
 - **1.20.0** - Caligrafy Quill 2.8.0, design styles: the new `design` skill (`reference/surfaces.md`, the
   worked `examples/claude.css` and `examples/linear.app.css`); `ui-guidelines.md` on restyling; gotchas G92 (a style
   changes nothing until its stylesheet exists, never edit the Caligrafy stylesheets) and G93 (specificity, the sign-in
