@@ -19,7 +19,7 @@
 
 | Command | What it does |
 | --- | --- |
-| [`quickstart`](#quickstart) | Sets up a project in one step; `--example` adds the Tasks example |
+| [`quickstart`](#quickstart) | Sets up a project in one step, on MAMP, XAMPP, LAMP or Docker; `--example` adds the Tasks example |
 | [`initialize`](#initialize) | Prepares a fresh copy of the framework: `application/`, `.env`, keys |
 | [`server`](#server) | Starts, stops or rebuilds the Docker development server |
 | [`version`](#version) | Prints the version of Caligrafy Quill |
@@ -43,16 +43,19 @@
 
 ### `quickstart`
 ```bash
-.bin/caligrafer quickstart [--example] [--yes]          # with Docker: nothing else needed on your computer
-php caligrafer.php quickstart [--example] [--yes]       # on your own server
+.bin/caligrafer quickstart [--example] [--yes] [--local | --docker] [--url <address>] [--no-db | --db-defaults]
+php caligrafer.php quickstart [--example] [--yes] [--url <address>] [--no-db]   # on your own server (Windows too)
+composer create-project caligrafy/caligrafy-quill myapp                         # then the command it prints
 ```
-From a fresh copy of the framework to a working application, in one step:
-1. installs the PHP libraries (`.bin/caligrafer` uses Composer in Docker when Composer is not installed) and starts the Docker server;
+From a fresh copy of the framework to a working application, in one step. `.bin/caligrafer quickstart` picks the server like [`server`](#server): a running local Apache (MAMP, XAMPP, LAMP) with PHP installed, else Docker; `--local` or `--docker` chooses.
+1. installs the PHP libraries when they are missing (`.bin/caligrafer` uses Composer in Docker when Composer is not installed) and, with Docker, starts the Docker server;
 2. initializes the project (see [`initialize`](#initialize)). It deletes the `.git` folder of the framework, so it asks first; `--yes` answers for you;
-3. with Docker, points `.env` at the database of the server (`DB_ACTIVATE=true`, `DB_HOST=mysql`, `DB_DATABASE=caligrafy`);
-4. creates the database and the framework tables;
+3. with Docker, points `.env` at the database of the server (`DB_ACTIVATE=true`, `DB_HOST=mysql`, `DB_DATABASE=caligrafy`). On a local server: gives the project its address and `APP_ROOT` from its place in the web folder (MAMP's settings are read: its web folder and ports; `--url` gives the address of another folder), then asks for the MySQL settings with the server's defaults (without a terminal to confirm them it skips the database, unless `--db-defaults`; `--no-db` skips it);
+4. creates the database and the framework tables (if the settings it wrote do not work, it switches `DB_ACTIVATE` off again so that the pages still open);
 5. adds `Route::capabilities('/capabilities')` (for the JS client) and `Route::mcp('/mcp')` (for AI agents) to `application/config/routing/web.php`;
-6. with `--example`: adds the Tasks example (five capabilities, a page, REST routes, the table, the JS client) at http://localhost:8080/tasks.
+6. with `--example`: adds the Tasks example (five capabilities, a page, REST routes, the table, the JS client) at `<address>/tasks`.
+
+After `composer create-project`, Composer runs `php caligrafer.php created`: it says where the project will be served and the command to run next.
 
 Every step can be run again: it only does what is missing and never overwrites your files. Without a database configured, it skips the database steps and tells you what to set. Learn more in the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
 
@@ -69,7 +72,7 @@ Prepares a fresh copy of the framework: creates `.env` from the template if need
 .bin/caligrafer server stop
 .bin/caligrafer server rebuild    # after a change to docker/Dockerfile, or to update the system packages
 ```
-Starts, stops or rebuilds the Docker development server (`dev-box`, MySQL 8.4, phpMyAdmin). The first start builds the PHP image; later starts take seconds. Use the `.bin/caligrafer` form: it detects your setup and runs `initialize` first when the project is not initialized. The equivalent Docker commands are `docker compose up -d dev-box` and `docker compose stop`. If a port is taken, see the [Quickstart troubleshooting](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart#trouble).
+Starts, stops or rebuilds the Docker development server (`dev-box`, MySQL 8.4, phpMyAdmin). The first start builds the PHP image; later starts take seconds. Use the `.bin/caligrafer` form: it detects your setup (a running local Apache, `httpd` for MAMP and XAMPP or `apache2` for LAMP, is used as it is; otherwise Docker) and runs `initialize` first when the project is not initialized. The equivalent Docker commands are `docker compose up -d dev-box` and `docker compose stop`. If a port is taken, see the [Quickstart troubleshooting](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart#trouble).
 
 ### `version`
 ```bash

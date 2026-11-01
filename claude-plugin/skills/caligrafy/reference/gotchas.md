@@ -295,3 +295,16 @@ above their own level (`forbidden`) or grants more than it (`invalid` on `permis
 deleted person's tokens, and since 2.5.0 `Context::allows()` refuses a token whose owner no longer exists (with
 `Auth::authentication` on): recreate tokens of deleted users. Proof: `application/services/Users/CaligrafyUsers.php`,
 `framework/core/Context.php` (`allows()`).
+
+**G86. A local server's web folder and ports are what its settings say, not the defaults.** Many MAMP installs serve
+another folder than `/Applications/MAMP/htdocs` (Apache's `DocumentRoot`, for example `~/www`) and use ports 80 and
+3306 instead of 8888 and 8889 (verified on a real install). Since 2.6.0 `quickstart` reads them from MAMP's
+`conf/apache/httpd.conf` and `bin/startMysql.sh`; for XAMPP and LAMP it assumes their defaults. A project outside the
+served folder gets a 404 from Apache, not a Caligrafy error: create it in the folder `DocumentRoot` names (or give the
+address with `--url`). A Docker MySQL published on 3306 (another project's `docker compose`) takes the port a local
+MySQL wants: MAMP's MySQL then cannot start, and quickstart's defaults would reach the Docker database instead; check
+`lsof -nP -iTCP:3306 -sTCP:LISTEN` before trusting the defaults. That is why, without a terminal to confirm them (Claude
+running it, CI), quickstart skips the database instead of using the defaults: never pass `--db-defaults` before checking
+which MySQL answers on that port. Proof: `framework/core/Quickstart.php` (`stacks()`,
+`localSite()`).
+

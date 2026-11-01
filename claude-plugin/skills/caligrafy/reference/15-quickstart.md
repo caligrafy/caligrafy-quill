@@ -10,7 +10,7 @@ In five minutes you have a Caligrafy application running, with one feature (Task
 + [Git](https://git-scm.com/)
 + [Docker Desktop](https://www.docker.com/products/docker-desktop/), running
 
-That is all: PHP 8.5, Apache, MySQL 8.4 and Composer run in Docker. (No Docker? See [without Docker](#nodocker).)
+That is all: PHP 8.5, Apache, MySQL 8.4 and Composer run in Docker. (Composer, MAMP, XAMPP or LAMP instead? See [with Composer](#composer).)
 
 ## Start
 
@@ -100,13 +100,23 @@ Open `https://myapp.caligrafy.com/tasks`: the tasks table was created when the a
 | `Database: could not reach mysql` | MySQL takes a few seconds on its first start: run `.bin/caligrafer quickstart --example` again |
 | The page is empty or shows an error | `docker compose exec dev-box php caligrafer.php doctor` lists what is wrong, with a fix for each line |
 
-## Without Docker
+## With Composer: MAMP, XAMPP, LAMP or Docker
 
-With your own Apache, PHP 8.3+ and MySQL (MAMP, LAMP, XAMPP): put the project in your web folder, then
+If you have PHP 8.3+ and [Composer](https://getcomposer.org) on your computer:
 ```bash
-composer install
-php caligrafer.php quickstart --example
+composer create-project caligrafy/caligrafy-quill myapp
+cd myapp
+.bin/caligrafer quickstart --example
 ```
-The first run creates `application/` and `.env` and stops at the database (`SKIP Database`). Set `DB_ACTIVATE=true` and the `DB_HOST`, `DB_DATABASE`, `DB_USERNAME` and `DB_PASSWORD` of your MySQL in `.env`, then run the same command again: it creates the database and finishes. The site is at `http://localhost/<your folder>/tasks`. More options are in [Getting Started](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started).
+`composer create-project` downloads the latest release and its libraries, then tells you where the project will be served and the command to run next. `quickstart` then picks the server, like `.bin/caligrafer server` does:
+
+| What runs on your computer | What quickstart does |
+| --- | --- |
+| **MAMP, XAMPP, or Apache and MySQL (LAMP)** | uses them. Create the project **in their web folder** (MAMP: the folder of its Apache settings, `htdocs` by default; XAMPP: `htdocs`; LAMP: `/var/www/html`). It gives the project its address (`APP_ROOT`): with MAMP it reads MAMP's own settings (its web folder, its Apache and MySQL ports). Then it asks for your MySQL settings, with the server's defaults (MAMP: `root` / `root`; XAMPP and LAMP: `root` and no password), creates the database, the framework tables and the example. If the settings do not work, it switches the database off again so that the pages still open, and says what to fix in `.env` |
+| **Docker Desktop** | the same as the 5-minute quickstart above: the Docker server at `http://localhost:8080` |
+| **Both** | the local server; add `--docker` to use Docker |
+| **Neither** | it says what to start |
+
+Options: `--local` or `--docker` chooses the server; `--url http://localhost/<folder>` gives the address when the project is in another web folder; `--no-db` skips the database. Run it in a terminal: without one to confirm the MySQL settings, it skips the database rather than guess (`--db-defaults` takes the server's defaults), because another MySQL may answer on the same port (a Docker project's, for example). On **Windows** (XAMPP, MAMP for Windows), run `php caligrafer.php quickstart --example`: it uses the local server. Then open the address quickstart prints, for example `http://localhost:8888/myapp/tasks` with a default MAMP.
 
 >[Next: How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works)

@@ -14,19 +14,45 @@ else
     COMMAND=""
 fi
 
-# quickstart: a fresh project to a working application with Docker only (no PHP or Composer needed on this computer)
+# a local web server (MAMP, XAMPP: httpd; LAMP on Debian and Ubuntu: apache2) is running
+localServerRunning() { pgrep -x httpd >/dev/null 2>&1 || pgrep -x apache2 >/dev/null 2>&1; }
+
+# quickstart: a fresh project to a working application, on the local server (MAMP, XAMPP, LAMP) when one is running
+# and PHP is installed, else on Docker (no PHP or Composer needed). --local or --docker chooses.
 if [ "$MODE" = "quickstart" ]; then
     cd "$(dirname "$0")/.." || exit 1
     COMPOSE="docker compose"
     $COMPOSE version >/dev/null 2>&1 || COMPOSE="docker-compose"
-    if ! docker info >/dev/null 2>&1; then
-        printf "\nDocker is not running: start Docker Desktop, then run .bin/caligrafer quickstart again.\n\n"; exit 1
+    WHERE=""
+    [[ " $* " == *" --docker "* ]] && WHERE="docker"
+    [[ " $* " == *" --local "* ]] && WHERE="local"
+    if [ -z "$WHERE" ]; then
+        if localServerRunning && command -v php >/dev/null 2>&1; then WHERE="local"
+        elif docker info >/dev/null 2>&1; then WHERE="docker"
+        else
+            printf "\nNo server to run Caligrafy: start MAMP, XAMPP or your Apache and MySQL (LAMP), or Docker Desktop,\nthen run .bin/caligrafer quickstart again (--local or --docker chooses).\n\n"; exit 1
+        fi
     fi
     if [ -d .git ] && [ ! -d application ] && [[ " $* " != *" --yes "* ]]; then
         printf "\nquickstart initializes the project, which deletes the .git folder of the framework (your project starts its own history).\n"
         read -r -p "Continue? [y/N] " ANSWER
         [ "$ANSWER" = "y" ] || [ "$ANSWER" = "Y" ] || exit 1
         set -- "$@" --yes
+    fi
+    if [ "$WHERE" = "local" ]; then
+        if ! command -v php >/dev/null 2>&1; then
+            printf "\nPHP is not installed on this computer: use Docker (.bin/caligrafer quickstart --docker).\n\n"; exit 1
+        fi
+        printf "\nUsing the local server (MAMP, XAMPP or LAMP). Docker instead: .bin/caligrafer quickstart --docker\n"
+        if [ ! -f vendor/autoload.php ]; then
+            command -v composer >/dev/null 2>&1 || { printf "\nComposer is not installed: https://getcomposer.org, or use Docker (--docker).\n\n"; exit 1; }
+            composer install --no-interaction || exit 1
+        fi
+        php caligrafer.php quickstart "${@:2}"
+        exit $?
+    fi
+    if ! docker info >/dev/null 2>&1; then
+        printf "\nDocker is not running: start Docker Desktop, then run .bin/caligrafer quickstart again.\n\n"; exit 1
     fi
     if [ ! -f vendor/autoload.php ]; then
         printf "\nInstalling the PHP libraries (Composer in Docker)...\n"
@@ -43,7 +69,7 @@ fi
 # Calling the right service based on PHP and Composer presence
 
 printf "Checking if server is running..."
-if pgrep -x "httpd" > /dev/null; then
+if localServerRunning; then
     SERVER=""
 else
     SERVER="off"

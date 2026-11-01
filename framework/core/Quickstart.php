@@ -12,7 +12,9 @@ namespace Caligrafy;
  * Class Quickstart
  * Every step can be run again: it only does what is missing.
  * 1. application/ (initialize; it deletes the .git folder of the framework, so it needs --yes when one exists)
- * 2. .env: the database of the Docker server (DB_ACTIVATE=true, DB_HOST=mysql, a database name)
+ * 2. .env: the database of the Docker server (DB_ACTIVATE=true, DB_HOST=mysql, a database name), or, on a local server
+ *    (MAMP, XAMPP, LAMP), the address of the project in its web folder (APP_ROOT) and its MySQL settings (asked with the
+ *    stack's defaults; without a terminal to confirm them, skipped unless --db-defaults)
  * 3. the database and the framework tables (tokens, audit log)
  * 4. web.php: Route::capabilities('/capabilities') for the JS client and Route::mcp('/mcp') for AI agents
  * 5. with --example: the Tasks example (capabilities, page, REST routes, table, JS client)
@@ -20,6 +22,25 @@ namespace Caligrafy;
 class Quickstart
 {
     const EXAMPLE = 'framework/settings/examples/tasks';
+
+    /*
+     * Local servers quickstart knows: their web folder, the address of that folder and their MySQL defaults.
+     * A project inside one of these folders is served at <url>/<its path in the folder>.
+     */
+    const LOCAL_STACKS = array(
+        array('name' => 'MAMP', 'root' => '/Applications/MAMP/htdocs', 'url' => 'http://localhost:8888',
+            'db' => array('host' => '127.0.0.1', 'port' => '8889', 'user' => 'root', 'password' => 'root')),
+        array('name' => 'XAMPP', 'root' => '/Applications/XAMPP/xamppfiles/htdocs', 'url' => 'http://localhost',
+            'db' => array('host' => '127.0.0.1', 'port' => '3306', 'user' => 'root', 'password' => '')),
+        array('name' => 'XAMPP', 'root' => '/opt/lampp/htdocs', 'url' => 'http://localhost',
+            'db' => array('host' => '127.0.0.1', 'port' => '3306', 'user' => 'root', 'password' => '')),
+        array('name' => 'LAMP', 'root' => '/var/www/html', 'url' => 'http://localhost',
+            'db' => array('host' => 'localhost', 'port' => '3306', 'user' => 'root', 'password' => '')),
+        array('name' => 'MAMP', 'root' => 'C:/MAMP/htdocs', 'url' => 'http://localhost',
+            'db' => array('host' => '127.0.0.1', 'port' => '3306', 'user' => 'root', 'password' => 'root')),
+        array('name' => 'XAMPP', 'root' => 'C:/xampp/htdocs', 'url' => 'http://localhost',
+            'db' => array('host' => '127.0.0.1', 'port' => '3306', 'user' => 'root', 'password' => '')),
+    );
     const DEFAULT_DATABASE = 'caligrafy';
 
     /** @var string the project root */
@@ -62,6 +83,11 @@ class Quickstart
 
         $envFile = $this->root . '/.env';
         $env = is_file($envFile) ? file_get_contents($envFile) : '';
+        $base = $docker ? 'http://localhost:8080' : '<your site>';
+        if (!$docker) {
+            list($env, $base) = $this->localServer($env, $options);
+            file_put_contents($envFile, $env);
+        }
         if ($docker) {
             $changes = array('DB_ACTIVATE' => 'true', 'DB_HOST' => 'mysql');
             if (in_array(self::envValue($env, 'DB_DATABASE'), array('', 'databasename'), true)) {
@@ -81,6 +107,11 @@ class Quickstart
         } else {
             $this->say('  SKIP  Database: set DB_ACTIVATE=true and the DB_* settings in .env, then run quickstart again');
         }
+        if (!$docker && !$dbReady && strtolower(self::envValue($env, 'DB_ACTIVATE')) === 'true' && !empty($this->askedDatabase)) {
+            // the settings quickstart wrote do not work: turn the database off again so that the pages still open
+            file_put_contents($envFile, $env = self::envSet($env, array('DB_ACTIVATE' => 'false')));
+            $this->say('        .env: DB_ACTIVATE=false again. Fix the DB_* settings in .env, set DB_ACTIVATE=true, then run quickstart again');
+        }
 
         $routes = $this->root . '/application/config/routing/web.php';
         $source = file_get_contents($routes);
@@ -97,7 +128,6 @@ class Quickstart
             $this->example($dbReady);
         }
 
-        $base = $docker ? 'http://localhost:8080' : '<your site>';
         $this->say('');
         $this->say('Ready. Next:');
         if (!empty($options['example'])) {
@@ -153,6 +183,126 @@ class Quickstart
         $this->step('Example client', $this->php('client public/js/capabilities.js') === 0, 'public/js/capabilities.js generated', 'php caligrafer.php client failed');
     }
 
+    /** @var bool whether quickstart wrote the database settings of .env in this run */
+    protected $askedDatabase = false;
+
+    /**
+     * A local server (MAMP, XAMPP, LAMP): the project's address and APP_ROOT from its place in the web folder, and the
+     * MySQL settings when .env has none yet
+     * @return array [the new .env, the base address of the project]
+     */
+    protected function localServer($env, array $options)
+    {
+        $site = self::localSite((string) realpath($this->root), self::stacks());
+        if (!empty($options['url'])) {
+            $path = trim((string) parse_url($options['url'], PHP_URL_PATH), '/');
+            $site = array('name' => $site['name'] ?? 'your server', 'url' => rtrim($options['url'], '/'), 'appRoot' => $path,
+                'db' => $site['db'] ?? null);
+        }
+        if ($site === null) {
+            $this->say('  NOTE  Local server: this folder is not in the web folder of MAMP, XAMPP or LAMP. Move it there (for example');
+            $this->say('        /Applications/MAMP/htdocs), give its address with --url http://localhost/<folder>, or use Docker:');
+            $this->say('        .bin/caligrafer quickstart --docker');
+            $base = '<your site>';
+        } else {
+            $env = self::envSet($env, array('APP_ROOT' => $site['appRoot']));
+            $base = $site['url'];
+            $this->say("  OK    Local server: {$site['name']}, $base (APP_ROOT=" . ($site['appRoot'] === '' ? 'empty' : $site['appRoot']) . ')');
+        }
+        $configured = strtolower(self::envValue($env, 'DB_ACTIVATE')) === 'true'
+            && !in_array(self::envValue($env, 'DB_DATABASE'), array('', 'databasename'), true);
+        if (!$configured && ($options['db'] ?? true) && !$this->interactive() && empty($options['dbDefaults'])) {
+            // no one to confirm: never write database settings that could reach another database on this computer
+            $this->say('  SKIP  Database: no terminal to confirm the MySQL settings. Run quickstart in a terminal, set the DB_* settings');
+            $this->say('        in .env (DB_ACTIVATE=true), or pass --db-defaults to use the server\'s defaults');
+        } elseif (!$configured && ($options['db'] ?? true)) {
+            $defaults = $site['db'] ?? array('host' => '127.0.0.1', 'port' => '3306', 'user' => 'root', 'password' => '');
+            $name = strtolower(preg_replace('/[^A-Za-z0-9_]+/', '_', basename((string) realpath($this->root)))) ?: self::DEFAULT_DATABASE;
+            $settings = array(
+                'DB_ACTIVATE' => 'true',
+                'DB_HOST' => $this->ask('MySQL host', $defaults['host']),
+                'DB_PORT' => $this->ask('MySQL port', $defaults['port']),
+                'DB_USERNAME' => $this->ask('MySQL user', $defaults['user']),
+                'DB_PASSWORD' => $this->ask('MySQL password', $defaults['password'], true),
+                'DB_DATABASE' => $this->ask('Database name', substr($name, 0, 64)),
+            );
+            $env = self::envSet($env, $settings);
+            $this->askedDatabase = true;
+            $this->say('  OK    .env: the MySQL of ' . ($site['name'] ?? 'this computer') . " ({$settings['DB_HOST']}:{$settings['DB_PORT']}, database {$settings['DB_DATABASE']})");
+        }
+        return array($env, $base);
+    }
+
+    /**
+     * LOCAL_STACKS with what MAMP is really set to on this computer, when it is installed: its web folder (Apache's
+     * DocumentRoot), its address (Listen) and its MySQL port (--port). Many installs serve another folder than htdocs
+     * and use 80 and 3306 instead of 8888 and 8889
+     */
+    public static function stacks($mamp = '/Applications/MAMP')
+    {
+        $stacks = self::LOCAL_STACKS;
+        $httpd = @file_get_contents("$mamp/conf/apache/httpd.conf");
+        $mysql = @file_get_contents("$mamp/bin/startMysql.sh");
+        foreach ($stacks as $i => $stack) {
+            if ($stack['root'] !== '/Applications/MAMP/htdocs') continue;
+            $stacks[$i]['root'] = "$mamp/htdocs";
+            if ($httpd && preg_match('/^\s*DocumentRoot\s+"?([^"\r\n]+?)"?\s*$/m', $httpd, $m)) {
+                $stacks[$i]['root'] = rtrim($m[1], '/');
+            }
+            if ($httpd && preg_match('/^\s*Listen\s+(?:[\d.]+:)?(\d+)/m', $httpd, $m)) {
+                $stacks[$i]['url'] = 'http://localhost' . ($m[1] === '80' ? '' : ':' . $m[1]);
+            }
+            if ($mysql && preg_match('/--port=(\d+)/', $mysql, $m)) {
+                $stacks[$i]['db']['port'] = $m[1];
+            }
+        }
+        return $stacks;
+    }
+
+    /**
+     * Where a folder is served by a known local server: ['name', 'url', 'appRoot', 'db'], or null outside their web folders
+     * @param string $dir the real path of the project
+     * @param array $stacks LOCAL_STACKS
+     */
+    public static function localSite($dir, array $stacks)
+    {
+        $dir = rtrim(str_replace('\\', '/', (string) $dir), '/');
+        foreach ($stacks as $stack) {
+            $root = rtrim(str_replace('\\', '/', (string) (realpath($stack['root']) ?: $stack['root'])), '/');
+            if ($dir === $root || strpos(strtolower($dir) . '/', strtolower($root) . '/') === 0) {
+                $relative = trim(substr($dir, strlen($root)), '/');
+                return array('name' => $stack['name'], 'url' => $stack['url'] . ($relative === '' ? '' : '/' . $relative),
+                    'appRoot' => $relative, 'db' => $stack['db']);
+            }
+        }
+        return null;
+    }
+
+    /**
+     * Whether someone can answer at the terminal
+     */
+    protected function interactive()
+    {
+        return defined('STDIN') && function_exists('stream_isatty') && @stream_isatty(STDIN);
+    }
+
+    /**
+     * A setting the person may change: asked when the terminal can answer, else the default
+     */
+    protected function ask($question, $default, $secret = false)
+    {
+        if (!$this->interactive()) {
+            return $default;
+        }
+        $shown = $secret ? ($default === '' ? 'none' : 'default of the server') : $default;
+        print("  ?     $question [$shown]: ");
+        if ($secret) @system('stty -echo 2>/dev/null');
+        $answer = fgets(STDIN);
+        if ($secret) { @system('stty echo 2>/dev/null'); print("\n"); }
+        $answer = trim((string) $answer);
+        return $answer === '' ? $default : $answer;
+    }
+
     /**
      * Creates the database of .env when it does not exist (waits up to 60 s for the server to accept connections)
      */
@@ -168,7 +318,8 @@ class Quickstart
         $port = self::envValue($env, 'DB_PORT');
         $dsn = "$driver:host=$host" . ($port !== '' ? ";port=$port" : '');
         $error = '';
-        for ($i = 0; $i < 30; $i++) {
+        $tries = is_file('/.dockerenv') ? 30 : 3;   // the Docker database may still be starting; a local one is up or not
+        for ($i = 0; $i < $tries; $i++) {
             try {
                 $pdo = new \PDO($dsn, self::envValue($env, 'DB_USERNAME'), self::envValue($env, 'DB_PASSWORD'), array(\PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION, \PDO::ATTR_TIMEOUT => 3));
                 $pdo->exec("CREATE DATABASE IF NOT EXISTS `$name` CHARACTER SET utf8mb4");
@@ -176,7 +327,7 @@ class Quickstart
                 return true;
             } catch (\PDOException $e) {
                 $error = $e->getMessage();
-                sleep(2);
+                if ($i < $tries - 1) sleep(2);
             }
         }
         $this->say("  FAIL  Database: could not reach $host ($error). Is the server running? php caligrafer.php doctor --only database");

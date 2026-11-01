@@ -6,6 +6,25 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.6.0] - 2026-11-01
+
+A quickstart from Composer, on the server you already have: MAMP, XAMPP, LAMP or Docker.
+
+### Added
+- `composer create-project caligrafy/caligrafy-quill <folder>` ends with `php caligrafer.php created` (Composer's
+  `post-create-project-cmd`): it says where the project will be served and the one command to run next.
+- `quickstart` on a local server (MAMP, XAMPP, LAMP; Windows too with `php caligrafer.php quickstart`): it gives the
+  project its address and `APP_ROOT` from its place in the server's web folder, reads MAMP's own settings (its web
+  folder and its Apache and MySQL ports), asks for the MySQL settings with the server's defaults (without a terminal to
+  confirm them it skips the database, unless `--db-defaults`: it never writes settings no one confirmed), and creates the database, the framework tables and the example. If the settings it wrote do
+  not work, it switches the database off again so that the pages still open. Options `--url <address>`, `--no-db` and
+  `--db-defaults`.
+
+### Changed
+- `.bin/caligrafer quickstart` picks the server like `.bin/caligrafer server`: a running local Apache with PHP
+  installed, else Docker; `--local` or `--docker` chooses.
+- `.bin/caligrafer` recognizes the Apache of LAMP on Debian and Ubuntu (`apache2`) as a local server, not only `httpd`.
+
 ## [2.5.0] - 2026-11-01
 
 Pages go through one controller, and only capabilities touch the data: the rules of a feature live once, whether a

@@ -40,50 +40,21 @@ cd myapp
 ```
 It installs the libraries (Composer in Docker), starts the server, initializes the project, points `.env` at the Docker database, creates the database and the framework tables, and adds the `/capabilities` and `/mcp` routes. Every step can be run again. Details and troubleshooting: [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart). The options below are for your own Apache, MySQL and PHP, or for full control.
 
-### Quick Installation (MAMP/LAMP/XAMP)
+### Quick Installation with Composer (MAMP, XAMPP, LAMP or Docker)
 
 > #### (video) [Installing Caligrafy](https://youtu.be/21Lazd38FfQ)
 >
 > In this video we show you how to install Caligrafy on a local Apache/MySQL/PHP server.
 
-+ Run the following code from the terminal to get the latest version of Caligrafy
-
-    ```bash
-
-    composer create-project caligrafy/caligrafy-quill <optionally specify a folder name. default: caligrafy-quill>
-
-    ```
-
-    This installs the latest release (see the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md)). Add `-s dev` to get the unreleased `master` branch instead.
-
-+ Start the local Apache server. [Set up a local server](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#build-your-own-local-apachemysqlphp-server-to-run-caligrafy) Or use the [Docker installation](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#using-docker) 
-
-+ Run the following code from the Caligrafy root folder to initialize the framework
-
-    ```bash
-
-    php caligrafer.php initialize
-
-    #or
-
-    .bin/caligrafer initialize
-
-    ``` 
-
-    It signs the project with an `APP_KEY` and an `API_KEY`, creates the `application` folder, sets `APP_ROOT` to the name of the folder and deletes the `.git` folder.
-
-    >
-    > Note that the Caligrafer Initialize command breaks all `git` links. 
-    > - If you would like to create a `git` repo for your application, it is recommended that you do so after you initialize it. 
-    > - If you are pulling an application built in Caligrafy from Github and you would like to preserve the `git` connection in order to pull updates regularly, it is recommended that you proceed with the manual installation instead.
-    >
-
-+ Add/Modify the following to the .env file if not accurate: `APP_ROOT=<caligrafy root folder. default: caligrafy-quill>`
-
-+ You are good to go! If the quick installation does not complete successfully, proceed with the manual installation
+```bash
+composer create-project caligrafy/caligrafy-quill myapp      # in the web folder of your local server
+cd myapp
+.bin/caligrafer quickstart                                   # add --example for the Tasks example
+```
+This installs the latest release (see the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md); add `-s dev` for the unreleased `master` branch). `quickstart` uses your running MAMP, XAMPP or LAMP, else Docker (`--local` or `--docker` chooses; on Windows run `php caligrafer.php quickstart`): it initializes the project, gives it its address (`APP_ROOT`, from its place in the web folder; MAMP's own settings are read), asks for your MySQL settings with the server's defaults, and creates the database, the framework tables and the `/capabilities` and `/mcp` routes. Every step can be run again. Details: [Quickstart with Composer](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart#composer).
 
 **Testing the Installation**
-+ You can test if the framework is working by visiting `http://localhost:<server port, default 80>/<caligrafy root folder. default: caligrafy-quill>` in the browser. 
++ Open the address quickstart prints, for example `http://localhost:8888/myapp` with a default MAMP, or `http://localhost/myapp`.
 
 ### Using Docker
 

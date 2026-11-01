@@ -180,9 +180,33 @@ switch(strtolower($argv[1])) {
         }
 		break;
 
+	case 'created':
+		// run by Composer after composer create-project caligrafy/caligrafy-quill <folder>: the one next command
+		$here = realpath('.');
+		$site = Caligrafy\Quickstart::localSite($here, Caligrafy\Quickstart::stacks());
+		$windows = stripos(PHP_OS_FAMILY, 'Windows') === 0;
+		$server = !$windows && trim((string) @shell_exec('pgrep -x httpd 2>/dev/null || pgrep -x apache2 2>/dev/null')) !== '';
+		$docker = trim((string) @shell_exec('docker info >/dev/null 2>&1 && echo yes')) === 'yes';
+		print("\n Caligrafy Quill " . Caligrafy\Framework::VERSION . " is in " . $here . ". One more command sets it up:\n\n");
+		print("   cd " . basename($here) . "\n   " . ($windows ? 'php caligrafer.php quickstart --example' : '.bin/caligrafer quickstart --example') . "\n\n");
+		if ($site !== null) {
+			print(" It is in the web folder of " . $site['name'] . ": with its Apache and MySQL running, it will be at " . $site['url'] . "\n");
+		} elseif ($server) {
+			print(" A local web server is running, but this folder is not in its web folder (MAMP: /Applications/MAMP/htdocs,\n XAMPP: htdocs, LAMP: /var/www/html): move it there, or use Docker (quickstart --docker).\n");
+		}
+		if ($docker) {
+			print(" Docker is running: " . ($server || $site !== null ? 'add --docker to use it instead' : 'quickstart uses it') . " (http://localhost:8080).\n");
+		} elseif (!$server && $site === null) {
+			print(" quickstart needs a server: start MAMP, XAMPP or Apache and MySQL (LAMP) with this folder in its web folder,\n or Docker Desktop.\n");
+		}
+		print(" Then: https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart\n\n");
+		exit(0);
+
 	case 'quickstart':
 		// php caligrafer.php quickstart [--example] [--yes]: from a fresh project to a working build-once application
-		exit((new Caligrafy\Quickstart('.'))->run(array('example' => in_array('--example', $argv), 'yes' => in_array('--yes', $argv))));
+		$urlAt = array_search('--url', $argv);
+		exit((new Caligrafy\Quickstart('.'))->run(array('example' => in_array('--example', $argv), 'yes' => in_array('--yes', $argv),
+			'db' => !in_array('--no-db', $argv), 'dbDefaults' => in_array('--db-defaults', $argv), 'url' => $urlAt !== false ? ($argv[$urlAt + 1] ?? '') : '')));
 
 	case 'sql':
 		// php caligrafer.php sql <file.sql>: runs a SQL script on the database of .env

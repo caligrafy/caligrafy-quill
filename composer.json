@@ -48,5 +48,10 @@
     "prefer-stable": true,
     "require-dev": {
         "phpunit/phpunit": "^12"
+    },
+    "scripts": {
+        "post-create-project-cmd": [
+            "@php caligrafer.php created"
+        ]
     }
 }

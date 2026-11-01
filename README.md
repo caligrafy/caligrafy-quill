@@ -73,6 +73,17 @@ cd myapp
 **Tasks** example (the first start builds the PHP image: a few minutes). When it asks to delete the `.git` folder,
 answer `y`: your project starts its own history.
 
+**With Composer, on MAMP, XAMPP, LAMP or Docker.** If you have PHP 8.3+ and [Composer](https://getcomposer.org):
+```bash
+composer create-project caligrafy/caligrafy-quill myapp
+cd myapp
+.bin/caligrafer quickstart --example
+```
+`quickstart` uses your local Apache and MySQL when they are running (create the project in their web folder: it reads
+MAMP's own settings, and asks for your MySQL settings with their defaults), Docker otherwise; `--local` or `--docker`
+chooses. On Windows: `php caligrafer.php quickstart --example`. See
+[Quickstart with Composer](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart#composer).
+
 **1. Use it on the web.** Open **http://localhost:8080/tasks**, add a task, tick it, rename it.
 
 **2. Use it from another application.** The same tasks, over REST:
@@ -166,7 +177,7 @@ feature step by step, page included.
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
-| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
+| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.6](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.6.0), [2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
 | Contribute | [Contributing](CONTRIBUTING.md), [how the framework is built](ARCHITECTURE.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
 
 Other ways to install (your own Apache, MySQL and PHP; `composer create-project`) are in

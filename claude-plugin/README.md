@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 48 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G85) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 48 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G86) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then pushes to GitHub and deploys to Caligrafy Cloud |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
@@ -46,6 +46,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.18.0** - Caligrafy Quill 2.6.0: the quickstart from Composer on MAMP, XAMPP, LAMP or Docker (`composer
+  create-project`, `created`, the launcher's choice of server, local addresses and MySQL settings) in the `server` skill,
+  the API reference and the wiki mirrors; G86 (a local server's real web folder and ports, a Docker MySQL holding 3306).
 - **1.17.1** - `ARCHITECTURE.md` rewritten for Caligrafy Quill 2.5.0 (the request lifecycle, `Capabilities::call`, the
   `Context`, each experience's adapter, the user capabilities, data and deployment, the design decisions); the
   `caligrafy` skill points to it for questions about how the framework itself is built.

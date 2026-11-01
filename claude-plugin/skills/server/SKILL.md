@@ -19,8 +19,12 @@ Report which services of this project run, their host ports, and the URLs (app `
 ## start
 **A project that was never set up** (no `application/`, or no database, framework tables or `/mcp` route): prefer
 `.bin/caligrafer quickstart` (add `--example` for the Tasks example). It does steps 1-6 below plus the database, the
-framework tables and the `/capabilities` and `/mcp` routes, with Docker only (Composer runs in Docker), and every step
-can be run again. It asks before `initialize` deletes `.git` (G25); never pass `--yes` without the user's OK.
+framework tables and the `/capabilities` and `/mcp` routes, and every step can be run again. Since 2.6.0 it picks the
+server like `server` does: a running local Apache (MAMP, XAMPP: `httpd`; LAMP: `apache2`) with PHP installed is used
+as it is (the project must be in its web folder; quickstart reads MAMP's settings and asks for the MySQL settings with
+the stack's defaults; run without a terminal, as Claude does, it skips the database unless `--db-defaults`: check
+which MySQL answers on the port first), else Docker; `--local` / `--docker` chooses (G86). A Composer user starts with
+`composer create-project caligrafy/caligrafy-quill <folder>`, which prints the next command. It asks before `initialize` deletes `.git` (G25); never pass `--yes` without the user's OK.
 
 1. **Docker running?** `docker info >/dev/null 2>&1` - if not, ask the user to start Docker Desktop.
 2. **Compose command.** Prefer `docker-compose` (what caligrafer calls); if missing use `docker compose`.

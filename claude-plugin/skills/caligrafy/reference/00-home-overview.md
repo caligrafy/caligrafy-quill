@@ -72,6 +72,17 @@ cd myapp
 **Tasks** example (the first start builds the PHP image: a few minutes). When it asks to delete the `.git` folder,
 answer `y`: your project starts its own history.
 
+**With Composer, on MAMP, XAMPP, LAMP or Docker.** If you have PHP 8.3+ and [Composer](https://getcomposer.org):
+```bash
+composer create-project caligrafy/caligrafy-quill myapp
+cd myapp
+.bin/caligrafer quickstart --example
+```
+`quickstart` uses your local Apache and MySQL when they are running (create the project in their web folder: it reads
+MAMP's own settings, and asks for your MySQL settings with their defaults), Docker otherwise; `--local` or `--docker`
+chooses. On Windows: `php caligrafer.php quickstart --example`. See
+[Quickstart with Composer](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart#composer).
+
 **1. Use it on the web.** Open **http://localhost:8080/tasks**, add a task, tick it, rename it.
 
 **2. Use it from another application.** The same tasks, over REST:

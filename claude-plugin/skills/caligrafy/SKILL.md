@@ -22,7 +22,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Learning Caligrafy from zero (a user asks for a tutorial or course): the Caligrafy course builds Bookshelf capabilities first in 15 lessons, up to putting it online, each with a manual track and a With Claude track (point the user to it; its lessons match these docs) | https://github.com/caligrafy/caligrafy-quill-course/wiki |
 | Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade, deploy, cloud | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G85) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G86) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -55,6 +55,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | OpenAI chat/images, Assistants, open source agents (Groq, Together, Fireworks, OpenRouter, Ollama) | [09.9.4](reference/09.9.4-ai-openai-chatgpt-dalle.md), [09.9.5](reference/09.9.5-ai-openai-assistants.md), [09.9.6](reference/09.9.6-ai-open-source-agents-groq.md) |
 | Recipe: OpenAI/open model chat app (history, live model list, images, vision, Llama on OpenRouter/Ollama, Vue chat UI) | [recipes-ai-apps.md](reference/recipes-ai-apps.md) |
 | Recipe: face login (liveness challenges, single-use nonce, anti-replay, encrypted prints, lockout, passkeys / WebAuthn step-up) | [recipes-face-login.md](reference/recipes-face-login.md) |
+| What 2.6.0 changed: the quickstart from Composer on MAMP, XAMPP, LAMP or Docker (`composer create-project`, `created`, `.bin/caligrafer quickstart --local/--docker`, local addresses and MySQL settings) | [24-release-notes-2.6.0.md](reference/24-release-notes-2.6.0.md), G86 |
 | **Pages and the rule "only capabilities touch models"** (2.5.0): `Route::page` (options, what the view gets, refusals), when to still write a controller, the user capabilities | [02-routing.md](reference/02-routing.md#pageroutes), [08-controllers.md](reference/08-controllers.md), [09.1-authentication.md](reference/09.1-authentication.md), [23-release-notes-2.5.0.md](reference/23-release-notes-2.5.0.md), G80-G85 |
 | **Any new page or client app UI**: the page components (`.cq-page`, `.cq-card`, `.cq-form`, `.cq-tabs`, `.cq-list`...), a worked example, the checklist | [ui-guidelines.md](reference/ui-guidelines.md) |
 | Wiki table of contents | [wiki-sidebar.md](reference/wiki-sidebar.md) |
