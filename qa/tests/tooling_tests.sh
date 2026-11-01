@@ -182,6 +182,13 @@ if echo "$SOURCE" | grep -qE '^caligrafy-initgit-[0-9a-f]{4}$' && grep -q "\"cal
 else
     ko "initialize and the plugin source" "source: $SOURCE; settings: $(tr -d '\n ' < .claude/settings.json)"
 fi
+# the contributor skill stays in the framework repository and out of projects: initialize deletes it, archives leave it out
+if [ -f "$ROOT/.claude/skills/caligrafy-contributor/SKILL.md" ] && [ ! -e .claude/skills/caligrafy-contributor ] && [ -f .claude/settings.json ] \
+    && grep -q '^/.claude/skills/caligrafy-contributor export-ignore$' "$ROOT/.gitattributes"; then
+    ok "caligrafer initialize deletes the contributor skill (.claude/skills/caligrafy-contributor), releases leave it out"
+else
+    ko "the contributor skill reached a project" "in the project: $([ -e .claude/skills/caligrafy-contributor ] && echo yes || echo no)"
+fi
 cd "$ROOT"
 
 # --- caligrafer initialize is idempotent for the keys ---------------------------------------

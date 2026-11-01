@@ -38,6 +38,8 @@ final class UpdaterTest extends TestCase
             'composer.json' => json_encode(['require' => ['php' => '>=8.3', 'a/lib' => '^1.5', 'b/lib' => '^3.0', 'c/lib' => '^1.0']]),
             '.gitignore' => "/vendor/\n/.caligrafy/\n",
             'qa/run.sh' => 'tests',
+            '.claude/skills/caligrafy-contributor/SKILL.md' => 'for the framework repository only',
+            '.gitattributes' => '/.claude/skills/caligrafy-contributor export-ignore',
             'LICENSE' => 'MIT',
         ]);
         unset($new['framework/core/Gone.php']);
@@ -106,6 +108,8 @@ final class UpdaterTest extends TestCase
         $this->assertSame('my app', $this->read('README.md'));                           // a document of the project
         $this->assertNull($this->read('README.md.caligrafy-new'));
         $this->assertNull($this->read('qa/run.sh'));
+        $this->assertNull($this->read('.claude/skills/caligrafy-contributor/SKILL.md'));   // contributors only
+        $this->assertNull($this->read('.gitattributes'));
         $this->assertNull($this->read('LICENSE'));                                       // never added to a project
         $this->assertSame('mine', $this->read('application/views/page.pug'));
         $this->assertStringContainsString('customized  public/js/services/app.js', $out);

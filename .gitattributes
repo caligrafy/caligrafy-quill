@@ -1,0 +1,3 @@
+# Left out of the release archives (Composer installs, php caligrafer.php update): for contributors to the framework only
+/.claude/skills/caligrafy-contributor export-ignore
+/.gitattributes export-ignore

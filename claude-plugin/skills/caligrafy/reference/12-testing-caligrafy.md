@@ -186,6 +186,10 @@ Make the check fail first (break the code it protects), then make it pass. Never
 
 ## Release process
 
+With [Claude Code](https://claude.com/claude-code) in the framework repository, the `caligrafy-contributor` skill (`.claude/skills/caligrafy-contributor/SKILL.md`) follows this process after every framework change: the Claude plugin, the README, the wiki, the version, the changelog, the QA suite and the release, then it asks whether to review the [course](https://github.com/caligrafy/caligrafy-quill-course) and whether to update and deploy caligrafy.com and Caligrafy Cloud. It is for contributors only: releases leave it out (`.gitattributes`), `php caligrafer.php update` never adds it to a project, and `php caligrafer.php initialize` deletes it from a clone.
+
+A patch release also gets a short wiki page `Release-notes:-X.Y.Z` (a fix release of X.Y.0, with its changelog section): `php caligrafer.php update` links to the release notes of the exact version it installs.
+
 1. **Templates changed?** When you change a file of `framework/settings/application`, rebuild the template history and commit it:
     ```bash
     php qa/build-template-history.php

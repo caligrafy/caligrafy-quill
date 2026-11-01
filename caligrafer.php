@@ -171,6 +171,12 @@ switch(strtolower($argv[1])) {
 			Caligrafy\Upgrader::writeManifest('.');
 		   }
 		   system('chmod -R 777 public/uploads');
+		   // the skill for contributors to the framework (.claude/skills/caligrafy-contributor) has no place in a project
+		   if (is_dir('.claude/skills/caligrafy-contributor')) {
+			system('rm -rf .claude/skills/caligrafy-contributor');
+			@rmdir('.claude/skills');
+			print("\n Contributor skill removed (.claude/skills/caligrafy-contributor: for the framework repository only)");
+		   }
 		   // the Claude Code plugin of this project gets its own source name (one shared name breaks every other project)
 		   if ($pluginSource = Caligrafy\PluginSource::ensureOwn('.')) {
 			print("\n Claude Code plugin source: $pluginSource (enable caligrafy-quill@$pluginSource when Claude Code asks)");

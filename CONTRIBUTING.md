@@ -47,6 +47,13 @@ Run the QA suite before opening a pull request that touches `framework/`, `calig
 
 The details are in the [release process](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy#release).
 
+With [Claude Code](https://claude.com/claude-code) in this repository, the `caligrafy-contributor` skill
+(`.claude/skills/caligrafy-contributor/SKILL.md`) does these steps after every framework change, without being asked:
+the plugin, the README, the wiki, the version, the changelog, QA and the release; then it asks whether to review the
+[course](https://github.com/caligrafy/caligrafy-quill-course) and whether to update and deploy caligrafy.com and
+Caligrafy Cloud. It is for contributors only: releases leave it out, `php caligrafer.php update` never adds it to a
+project, and `php caligrafer.php initialize` deletes it from a clone.
+
 ## Any contributions you make will be under the MIT Software License
 In short, when you submit code changes, your submissions are understood to be under the same [MIT License](https://github.com/caligrafy/caligrafy-quill/blob/master/LICENSE) that covers the project. Feel free to contact the maintainers if that's a concern.
 

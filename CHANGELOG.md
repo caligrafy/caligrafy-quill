@@ -6,6 +6,19 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.12.2] - 2026-11-01
+
+### Added
+- For contributors to the framework: the Claude Code skill `caligrafy-contributor`
+  (`.claude/skills/caligrafy-contributor/SKILL.md`) carries every framework change to the plugin, the README, the wiki,
+  the version, the changelog, QA and the release, then asks whether to review the course and whether to update and
+  deploy caligrafy.com and Caligrafy Cloud.
+
+### Fixed
+- Contributor files stay out of projects: release archives leave out the skill and `.gitattributes`
+  (`export-ignore`), `php caligrafer.php update` never adds them, and `php caligrafer.php initialize` deletes the
+  skill from a clone.
+
 ## [2.12.1] - 2026-11-01
 
 ### Fixed
