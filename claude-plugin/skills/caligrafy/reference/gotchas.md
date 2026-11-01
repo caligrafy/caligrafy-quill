@@ -249,36 +249,49 @@ shows the token once and the `claude mcp add` line (the `idea` skill's `create_m
 
 ## Pages and the user capabilities (2.5.0: `Route::page`, only capabilities touch models)
 
-**G80. After upgrading to 2.5.0, a capability or class of the project can collide with the user capabilities.**
-`upgrade --apply` adds `application/services/Users/` (`list_users`, `get_user`, `update_user`, `delete_user`,
-`register_user`; classes `ListUsers`, `GetUser`, `UpdateUser`, `DeleteUser`, `RegisterUser`, `CaligrafyUsers`). A
-project service declaring one of those capability names makes the registry throw `LogicException: Two services declare
-the capability 'list_users'` on every capability call; a project class with one of those names is a PHP fatal
-("Cannot declare class"), since every file of `application/` is required in one namespace. Rename the project's own
-before `--apply`, or delete the framework file it does not want. Proof: `framework/core/Capabilities.php` (`all()`).
+**G80. `upgrade` holds the user capabilities when the project already manages users its own way.** 2.5.0 adds
+`application/services/Users/` (capabilities `list_users`, `get_user`, `update_user`, `delete_user`, `register_user`;
+classes `CaligrafyListUsers`, `CaligrafyGetUser`, `CaligrafyUpdateUser`, `CaligrafyDeleteUser`, `CaligrafyRegisterUser`,
+`CaligrafyUsers`). They show as `held` (not added, with the reason) when another PHP file of `application/` declares one
+of those capability names or classes (two declarations stop the registry, or are a PHP fatal), or when the project's
+`AdminController` is customized; `AdminController` and `AuthController` are then held too, since they call them. Fix
+the reason (rename the project's own capability or class), then add the files with
+`php caligrafer.php upgrade --force application/services/Users/<file>`. Proof: `framework/core/Upgrader.php`
+(`holdUserCapabilities()`, `declared()`).
 
 **G81. `register_user` is refused over REST and MCP.** It is `public: true` (visitors sign up) but throws `forbidden`
 unless `$context->channel` is `web` or `cli`, so nobody can create accounts in bulk through `/capabilities/register_user`,
 a `Route::capability` route or an agent. Sign-up goes through the sign-up page (`AuthController@register` calls it) or
-`php caligrafer.php call register_user username=... passcode=...`. Proof: `application/services/Users/RegisterUser.php`.
+`php caligrafer.php call register_user username=... passcode=...`. Proof: `application/services/Users/CaligrafyRegisterUser.php`.
 
-**G82. The administrator level now lives in `CaligrafyUsers::ADMIN_LEVEL`.** The user capabilities declare
-`level: CaligrafyUsers::ADMIN_LEVEL` and the 2.5.0 `AdminController` sets `ADMIN_PERMISSION` from it. A project that
-raised `ADMIN_PERMISSION` in its customized `AdminController` (kept by `upgrade`) still guards its pages with its own
-value, but the capabilities (and REST, MCP) use 1: set `ADMIN_LEVEL` in `application/services/Users/CaligrafyUsers.php`
-to the same value. Proof: `application/services/Users/*.php`, `controllers/core/Auth/AdminController.php`.
+**G82. The administrator level lives in `CaligrafyUsers::ADMIN_LEVEL`.** The user capabilities declare
+`level: CaligrafyUsers::ADMIN_LEVEL` and the 2.5.0 `AdminController` sets `ADMIN_PERMISSION` from it. A project whose
+`AdminController` is customized (it may have raised `ADMIN_PERMISSION`) gets the user capabilities `held` by `upgrade`
+(G80): set `ADMIN_LEVEL` in the new `application/services/Users/CaligrafyUsers.php` to the project's administrator
+level, then add the files with `--force`. Otherwise the pages would guard with one level and REST and MCP with another.
 
-**G83. `Route::page` data: inputs are the route variables and the query string, and a refusal decides the answer.**
-`'data' => ['book' => 'get_book']` calls `get_book` as the person who opens the page with `currentBind` + the request
-parameters (`/books/3?x=1` gives `id = 3`, `x = 1`; undeclared inputs are dropped by the capability). Give fixed inputs
-with `['book' => ['get_book', ['id' => 3]]]` (then the route variables are not used). A refusal ends the page: a visitor
-(`unauthenticated`) is redirected to `/login`; `forbidden` answers `[ERROR 1006]` (403); `not_found`, `invalid` and
-`conflict` answer `[ERROR 1005]` (404). So a page whose data needs sign-in is enough to protect it, and a capability
-that needs an input the URL does not give makes the page a 404. The view also receives the route variables (and, on
-GET, the query parameters) as variables. Proof: `framework/core/PageController.php`, `Controller::call()`.
+**G83. `Route::page` data: read-only capabilities, route variables win, the query string never reaches the view.**
+`'data' => ['book' => 'get_book']` calls `get_book` as the person who opens the page with the query string plus the
+route pattern's variables, the route variables winning (`/books/3?id=9` gives `id = 3`); undeclared inputs are dropped.
+Fixed inputs: `['book' => ['get_book', ['id' => 3]]]`. Only existing `readOnly` capabilities: another one, or a
+`data`/`with` name `authorized` or `user`, throws `LogicException` (a 500 on every visit). A refusal ends the page: a
+visitor (`unauthenticated`) goes to `/login`; `forbidden` answers `[ERROR 1006]` (403); `not_found`, `invalid` and
+`conflict` answer `[ERROR 1005]` (404), or render the `notFound` view (option) with status 404, the route variables,
+`$message`, `$authorized` and `$user`. The view gets the route variables, `with`, the data, `authorized` and `user`:
+never the query string (read it through a capability input). Capability results are plain arrays (`$book['title']`).
+Proof: `framework/core/PageController.php`.
 
 **G84. `Route::page` with `signedIn` or `level` needs the authentication module.** Without
 `Auth::authentication('User', 'users');` in `web.php`, such a page throws `LogicException("Route::page('...'):
 'signedIn' and 'level' need Auth::authentication(...)")` (a 500). Pages without those options work without it
-(`$authorized` is then false). Proof: `framework/core/PageController.php` (`render()`).
+(`$authorized` is then false). `level` compares `Context::$levelAttribute` (`permissions` by default). Proof:
+`framework/core/PageController.php` (`render()`).
 
+**G85. The legacy API key and tokens without an owner never manage users.** The user capabilities call
+`CaligrafyUsers::requireAdmin()`: only the command line or a real person at `ADMIN_LEVEL` (signed in, or a token
+created with `--user <id>`). The shared `API_KEY` (full access everywhere else) and `token create ... --scopes "*"`
+without `--user` get `forbidden`; give an agent that manages users a token of an administrator. No one manages someone
+above their own level (`forbidden`) or grants more than it (`invalid` on `permissions`); `delete_user` revokes the
+deleted person's tokens, and since 2.5.0 `Context::allows()` refuses a token whose owner no longer exists (with
+`Auth::authentication` on): recreate tokens of deleted users. Proof: `application/services/Users/CaligrafyUsers.php`,
+`framework/core/Context.php` (`allows()`).

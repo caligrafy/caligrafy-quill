@@ -104,7 +104,8 @@ calls it, then shows the token once and the line to paste:
 
 **Experiences** in `application/config/routing/web.php`, before `Route::run()`:
 - the page: `Route::page('/<things>', '<Folder>/index');` and `Route::page('/', '<Folder>/index');` (a page that shows one
-  record server-side: `Route::page('/<things>/{id}', '<Folder>/show', ['data' => ['<thing>' => 'get_<thing>']])`, G83);
+  record server-side: `Route::page('/<things>/{id}', '<Folder>/show', ['data' => ['<thing>' => 'get_<thing>'], 'notFound' => '<Folder>/missing'])`, read-only
+  capabilities only, G83);
   never a controller that reads the models: only capabilities touch them;
 - REST for every capability: `Route::capability('GET', '/api/<things>', 'list_<things>');`,
   `Route::capability('GET', '/api/<things>/{id}', 'get_<thing>');`, `POST`, `PUT /{id}`, `DELETE /{id}`...;

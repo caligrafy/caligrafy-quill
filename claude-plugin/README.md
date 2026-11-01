@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 48 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G84) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 48 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G85) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then pushes to GitHub and deploys to Caligrafy Cloud |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
@@ -51,7 +51,8 @@ written from the framework source: update them when `framework/` changes (and ru
   capabilities (`list_users`, `get_user`, `update_user`, `delete_user`, `register_user`, `CaligrafyUsers::ADMIN_LEVEL`)
   and the controllers on them; error codes 1005 and 1006; `/caligrafy-quill:new-resource` rewritten capabilities-first
   (no controller on the model); `idea` and `new-capability` build pages with `Route::page`; G74 updated, gotchas
-  G80-G84; reviewer check 20; wiki mirrors, including the 2.5.0 release notes.
+  G80-G85 (upgrade holds the user capabilities, `register_user` web and cli only, `ADMIN_LEVEL`, `Route::page` data and
+  `notFound`, auth for `signedIn`/`level`, the legacy key and ownerless tokens never manage users); reviewer check 20; wiki mirrors, including the 2.5.0 release notes.
 - **1.16.1** - What building an application with `/caligrafy-quill:idea` showed: gotchas G74-G79 (views on closure
   routes need `authorized` passed, sign-up usernames are letters and digits only, `service` without `--scope` writes
   an empty scope, `token revoke` takes the bare number, `quickstart` prints port 8080 even when remapped, tokens for an

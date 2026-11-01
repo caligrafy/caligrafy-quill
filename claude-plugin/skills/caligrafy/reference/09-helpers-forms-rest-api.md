@@ -323,7 +323,7 @@ Then you could type directly in the body the content you want to send in the des
     | `403` | `3000` Cross Site Forgery | form post without a valid `_token` |
     | `403` | `1006` Forbidden | a `Route::page` whose data capability is not allowed to the signed-in person (2.5.0+) |
     | `404` | `1001` Invalid Controller or Action | the route points to a missing controller or method |
-    | `404` | `1005` Page Not Found | a `Route::page` whose data capability finds nothing or refuses its inputs (2.5.0+) |
+    | `404` | `1005` Page Not Found | a `Route::page` whose data capability finds nothing or refuses its inputs, without a `notFound` view (2.5.0+) |
     | `405` | `1000` Invalid Http Request Method | mapped for your own `throw Errors::raise(1000)`: the router does not raise it (an unmatched URL runs the first route) |
     | `500` | any other error | exceptions caught by the `catch` of `web.php` keep their message; for PHP fatal errors and errors outside the routes `try`, the message is only shown when `APP_DEBUG=true` |
 

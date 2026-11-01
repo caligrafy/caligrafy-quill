@@ -42,7 +42,8 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
      (Vite SPA) or `public/js/capabilities.js`; use `createBook(...)` and `CapabilityError` in the Vue code.
    - MCP: `Route::mcp('/mcp');`
    - Pug page that shows the result: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);` (the
-     view gets `$book` as a plain array, `$authorized`, `$user`; a refusal sends a visitor to sign in or answers 404/403, G83).
+     view gets `$book` as a plain array, `$authorized`, `$user`, never the query string; only `readOnly` capabilities; a
+     refusal sends a visitor to sign in or answers 404/403, or renders the page's `notFound` view, G83).
    - A form post: a thin controller, `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`.
      Never `new <Model>()`, `associate()` or `save()` outside `application/services/`: only capabilities touch models.
    - Any page you build for it (Pug, or a page calling the JS client) uses the page components and the worked example of

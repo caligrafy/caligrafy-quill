@@ -119,7 +119,8 @@ Insert inside the `try` block, after the existing `/` route and before `Route::r
 ```
 Keep one `Route::capabilities('/capabilities');` and one `Route::mcp('/mcp');` in the file (add them if missing), then
 `php caligrafer.php client` for the JS client. A capability that refuses a page's data sends a visitor to sign in or
-answers 404/403 (G83).
+answers 404/403 (G83); add `'notFound' => 'Books/missing'` to show your own 404 view. Only `readOnly` capabilities can
+be page data, and the view never gets the query string.
 
 ### 5. Views (only if the user wants HTML pages)
 `application/views/Books/index.pug` and `show.pug`, built with the page components of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (`main.cq-page > .cq-card`: `.cq-card-head`, `.cq-form` with labeled fields and `btn btn-primary cq-submit`, `.cq-list > .cq-item` rows with `.cq-actions`, `.cq-empty`; follow its checklist), `extends ../default/master/layoutblocks`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, a thin controller:

@@ -14,7 +14,8 @@ Route::page('/admin/books', 'Books/admin', ['level' => 1, 'data' => ['books' => 
 ```
 
 + Every page gets `$authorized`, `$user` (`id`, `username`, `permissions`) and its route variables: no page shows a signed-in person as a visitor any more.
-+ `data` calls capabilities as the person who opens the page, with the route variables and the query string as inputs. A refusal sends a visitor to sign in, or answers 403 (`1006`) or 404 (`1005`).
++ `data` calls read-only capabilities as the person who opens the page, with the query string and the route variables as inputs (the route variables win). A refusal sends a visitor to sign in, or answers 403 (`1006`) or 404 (`1005`), or shows your `notFound` view.
++ The view never receives the query string, and `authorized` and `user` cannot be replaced.
 + `signedIn` and `level` keep a page for signed-in people or administrators.
 
 See [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
@@ -25,7 +26,7 @@ Pages get their data from capabilities, controllers call capabilities (`$this->c
 
 ## Users are capabilities too
 
-`list_users`, `get_user`, `update_user` and `delete_user` (administrators only, never a password, nobody deletes their own account) and `register_user` (the sign-up page). The user administration pages and sign-up now call them, with the same look and messages. Give an AI agent an administrator's token and it can manage users, with the audit log. See [User capabilities](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#usercapabilities).
+`list_users`, `get_user`, `update_user` and `delete_user` and `register_user` (the sign-up page). Only a real administrator may manage users: signed in or with a token created for them, never the shared legacy key or a token without an owner. No one manages someone above their own level or grants more than it, nobody deletes their own account, deleting a user revokes their tokens, and answers never include a password. The user administration pages and sign-up now call them, with the same look and messages. Give an AI agent an administrator's token and it can manage users, with the audit log. See [User capabilities](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#usercapabilities).
 
 ## Also in 2.5.0
 
@@ -34,12 +35,14 @@ Pages get their data from capabilities, controllers call capabilities (`$this->c
 | Welcome page and Tasks example | closure routes: the page did not know who was signed in | `Route::page` |
 | Errors | no page-level not found or forbidden | `[ERROR 1005] Page Not Found` (404), `[ERROR 1006] Forbidden` (403) |
 | Administrator level | `AdminController::ADMIN_PERMISSION` | `CaligrafyUsers::ADMIN_LEVEL`, used by the pages and the capabilities |
+| Tokens | a token whose owner was deleted kept working | refused |
+| Upgrade | every new template was added | `held`: files that would clash with how your project manages users are not added, with the reason |
 
 ## Upgrading from 2.4.0
 
 1. Update the framework (`git pull`, or copy `framework/`, `caligrafer.php`, `.bin/` and `claude-plugin/` from the release).
-2. A capability of yours named like the new user capabilities (or a class named `ListUsers`, `GetUser`, `UpdateUser`, `DeleteUser`, `RegisterUser`, `CaligrafyUsers`): rename it first.
-3. `php caligrafer.php upgrade`, then `php caligrafer.php upgrade --apply`: it adds `application/services/Users/` and updates the controllers you never changed.
+2. `php caligrafer.php upgrade`, then `php caligrafer.php upgrade --apply`: it adds `application/services/Users/` and updates the controllers you never changed.
+3. If the report lists files as `held`, your project manages users its own way (a customized `AdminController`, or a capability or class of the same name): follow the reason it gives, then add them with `--force`.
 4. In `web.php` (never replaced), change your page closures to `Route::page`, starting with `/`.
 5. `php caligrafer.php doctor`.
 

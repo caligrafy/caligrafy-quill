@@ -12,7 +12,7 @@
 | You need | Use |
 | --- | --- |
 | A page, with or without data | `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);` ([Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes)) |
-| A page that only signed-in people or administrators may open | `Route::page(..., ['signedIn' => true])` or `['level' => 1]` |
+| A page that only signed-in people or administrators may open (its data capabilities must be read-only) | `Route::page(..., ['signedIn' => true])` or `['level' => 1]` |
 | A form post, several capabilities with conditions, a choice between views | a thin controller whose actions call capabilities with `$this->call()` ([below](#callcapability)) |
 | Sign-in, sign-out, a session | a controller: the web session is the only thing capabilities never touch (`AuthController`) |
 

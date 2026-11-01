@@ -111,12 +111,12 @@ php caligrafer.php capabilities --json       # with the input schemas
 
 ## From a Pug page
 
-A page shows data with `Route::page`: its capabilities run as the person who opens the page, with the route variables and the query string as inputs (since 2.5.0):
+A page shows data with `Route::page`: its read-only capabilities run as the person who opens the page, with the query string and the route variables as inputs, the route variables winning (since 2.5.0):
 ```php
 Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);
 Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);   // {id} is the input id
 ```
-The view gets `$books` or `$book`, plus `$authorized` and `$user`. A refusal sends a visitor to sign in, or answers 403 or 404. See [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
+The view gets `$books` or `$book` (plain arrays), plus `$authorized` and `$user`, never the query string. A refusal sends a visitor to sign in, or answers 403 or 404 (or shows the page's `notFound` view). See [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
 
 For a form post, a controller action calls the capability as the signed-in user and renders the result. The inputs default to the posted fields and the route variables:
 ```php
