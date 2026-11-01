@@ -14,6 +14,9 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
     && docker-php-ext-install -j2 bcmath exif gd intl mysqli pdo_mysql zip \
     && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 
+# sessions in their own folder: mount a volume there and a new deploy does not sign everyone out
+RUN mkdir -p /var/lib/php/sessions && chown www-data:www-data /var/lib/php/sessions \
+    && printf 'session.save_path = "/var/lib/php/sessions"\n' > "$PHP_INI_DIR/conf.d/sessions.ini"
 COPY --from=composer:2 /usr/bin/composer /usr/local/bin/composer
 WORKDIR /var/www/html
 
