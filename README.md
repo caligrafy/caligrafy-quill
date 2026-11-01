@@ -151,8 +151,9 @@ feature step by step, page included.
 + **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
   (`Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
   never follow different rules.
-+ **One look:** ready-made page components (cards, forms, tabs, lists) with the Caligrafy black and white style, the
-  same on every page and device.
++ **One look, or yours:** ready-made page components (cards, forms, tabs, lists) with the Caligrafy black and white
+  style, the same on every page and device. Or pick one of 85 [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
+  (`DESIGN_STYLE` in `.env`, or your own `DESIGN.md`) and let `/caligrafy-quill:design` restyle every page.
 + **Secure by design:** sign-in, passkeys and face login for people; scoped, revocable tokens for programs and
   agents; CSRF protection; an audit log of every change; server files never served.
 + **Batteries included:** card, ACH and crypto payments, OpenAI and open-model AI (Llama on Groq, OpenRouter,
@@ -179,7 +180,7 @@ feature step by step, page included.
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
-| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.7](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.7.0), [2.6](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.6.0), [2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
+| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.8](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.8.0), [2.7](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.7.0), [2.6](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.6.0), [2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
 | Contribute | [Contributing](CONTRIBUTING.md), [how the framework is built](ARCHITECTURE.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
 
 Other ways to install (your own Apache, MySQL and PHP; `composer create-project`) are in

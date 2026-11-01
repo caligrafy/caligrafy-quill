@@ -6,7 +6,10 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
-## Unreleased
+## [2.8.0] - 2026-11-01
+
+Design styles: every page can take another look with one setting, and Claude restyles the pages to match it.
+Caligrafy's own look stays the default, and nothing changes until a style is selected.
 
 ### Added
 - Design styles: another look for every page, picked with one setting, with Caligrafy's own look as the default.
