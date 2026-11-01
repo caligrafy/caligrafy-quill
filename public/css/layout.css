@@ -9,6 +9,7 @@
  *   main.cq-auth > h1 + form > .cq-field (label + .form-control) + .btn, .cq-or, p.cq-auth-note
  *   ul.cq-rows > li.cq-row > .cq-row-main (p.cq-row-title + p.cq-row-meta) + .cq-row-actions
  *   .cq-tiles > a.cq-tile > h3 + p          .cq-segments > button(.active)          .cq-stats > .cq-stat
+ *   .cq-split > .cq-split-main + aside.cq-split-detail            (a list and the item opened, side by side)
  *   .cq-account > nav.cq-account-nav > a  +  .cq-account-main > section(id)
  *   .cq-doc (long text)   .cq-code (a code to compare)   pre.cq-pre   footer.cq-footer */
 
@@ -137,6 +138,30 @@ body.cq-site { margin: 0; background: var(--cq-color-canvas); color: var(--cq-co
 .cq-tiles--spaced { margin-top: 40px; }
 @media (max-width: 991px) { .cq-tiles { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
 @media (max-width: 575px) { .cq-tiles { grid-template-columns: 1fr; } .cq-tile { min-height: 180px; padding: 24px; } }
+
+/* --- side by side: a list and the item opened (or a form), one column on phones, two from tablets up ----------
+ * section.cq-hero.cq-hero--page, then .cq-split > .cq-split-main (search, rows) + aside.cq-split-detail (the item, a
+ * form). The detail is an ash panel that stays in view while the list scrolls. Scoped to .cq-site: the older
+ * .cq-split of tokens.css (list a third, detail two thirds) is unchanged on layoutblocks pages. */
+.cq-site .cq-split {
+  display: grid; grid-template-columns: minmax(0, 1fr); gap: 32px; align-items: start;
+  width: 100%; max-width: 1120px; margin: 0 auto; padding: 8px var(--cq-gutter) 80px;
+}
+.cq-split-main, .cq-split-detail { min-width: 0; }
+.cq-split-detail { padding: 32px; background: var(--cq-color-surface); border-radius: var(--cq-radius-card); }
+.cq-split-detail > :first-child { margin-top: 0; }
+.cq-split-detail > :last-child { margin-bottom: 0; }
+.cq-split-detail .cq-heading { font-size: 24px; margin-bottom: 8px; }
+.cq-split-detail .cq-lead { margin-left: 0; margin-right: 0; }
+.cq-split-detail .cq-form-grid, .cq-split-detail .cq-form-grid--2 { grid-template-columns: 1fr; }   /* half a screen: one field a line */
+.cq-split-detail .form-control, .cq-split-detail .form-select { background-color: var(--cq-color-canvas); }
+.cq-split-detail .cq-empty-state { margin: 0; padding: 0; text-align: left; }
+@media (min-width: 768px) {
+  .cq-site .cq-split { grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); }
+  .cq-split-detail { position: sticky; top: calc(var(--cq-nav-height) + 24px); max-height: calc(100vh - var(--cq-nav-height) - 48px); overflow: auto; }
+}
+@media (min-width: 1200px) { .cq-site .cq-split { grid-template-columns: minmax(0, 7fr) minmax(0, 5fr); gap: 48px; } }
+@media (max-width: 575px) { .cq-split-detail { padding: 24px; } }
 
 /* --- figures: a row of numbers or prices --------------------------------------------------------------------- */
 .cq-stats { display: grid; gap: 16px; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); margin: 32px 0 0; padding: 0; list-style: none; }

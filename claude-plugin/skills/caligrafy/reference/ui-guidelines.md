@@ -59,6 +59,7 @@ and `$user` for the signed-in parts (G74); data comes from capabilities only, ne
 | Inline edit | `.cq-inline-edit > input.form-control.form-control-sm` | Replace the title in place; Save / Cancel in `.cq-row-actions` |
 | Empty state | `p.cq-empty-state` | Always say what to do next ("No books yet: add the first one above.") |
 | Tiles | `.cq-tiles(.cq-tiles--spaced) > a.cq-tile > h3 + p + span.cq-tile-link` | Links to other parts: 1, 2 or 3 columns by width |
+| Side by side | `.cq-split > section.cq-split-main + aside.cq-split-detail` | A list and the item opened, or a list and its form (2.12.0+). Right after the title band, instead of a band. One column on phones, two from tablets up; the detail is an ash panel that stays in view while the list scrolls, and its form takes one field a line |
 | Figures | `.cq-stats > .cq-stat > .cq-stat-value + .cq-stat-label` | Counts, credits, totals |
 | Badge | `span.cq-badge(.cq-badge--strong)` | A status beside a title |
 | Account area | `.cq-account > nav.cq-account-nav > a(href='#id')` + `.cq-account-main > section(id)` | Side menu on desktops (it marks the section on screen), links on top on phones |
@@ -133,6 +134,32 @@ Behavior that goes with the look:
 - find elements by id, never by tag: the top bar has its own button (Menu), so `document.querySelector('button')` is
   not your button (G100).
 
+## A list and its detail, side by side (2.12.0+)
+
+When a page shows a list and the item opened (a finder, an inbox, a catalog with its add form), put them side by
+side instead of a band under the list:
+
+```pug
+section.cq-hero.cq-hero--page
+  h1.cq-display Find a book
+  p.cq-lead Type a few words: the books answer as you type.
+
+.cq-split
+  section.cq-split-main
+    .cq-field
+      label(for='query') Search
+      input#query.form-control(type='search')
+    ul#books.cq-rows
+    p#empty.cq-empty-state(hidden) No book matches.
+  aside#book.cq-split-detail(aria-live='polite')
+    p.cq-empty-state Open a book to read about it.
+```
+In a Vue template the same classes go on the same elements (`<div class="cq-split">`, `<aside class="cq-split-detail">`).
+On phones the detail comes after the list: when opening an item there matters, scroll it into view
+(`document.getElementById('book').scrollIntoView({ behavior: 'smooth' })` when `innerWidth < 768`).
+The older `.cq-split` of `tokens.css` (list a third, detail two thirds, unstyled children) still applies on pages of
+`layoutblocks.pug`; the rules above are scoped to `site.pug` pages (`body.cq-site`).
+
 ## Pug in Caligrafy is PHP
 
 Caligrafy renders Pug with PHP expressions: `+` adds numbers and never joins strings (G98). Join with `.`, or let Pug
@@ -181,7 +208,7 @@ selectors. So:
 
 - [ ] `extends ../default/master/site`, a `block title`, a title band (or a hero) then bands; nothing nested in cards
 - [ ] every input has a `label`; the primary action is `btn btn-primary`; errors show next to the action that failed
-- [ ] lists use `ul.cq-rows > li.cq-row` with `.cq-row-actions`; an empty state says what to do next
+- [ ] lists use `ul.cq-rows > li.cq-row` with `.cq-row-actions`; an empty state says what to do next; a list with an opened item or its form uses `.cq-split`
 - [ ] no Bootstrap color classes, no hard-coded colors, no page-level `style` block unless a part has no class
 - [ ] elements found by id; Pug expressions join strings with `.`, never `+`
 - [ ] opened in a browser at desktop width and at phone width (375px): no horizontal scroll, readable, touch-size buttons, the Menu opens the links

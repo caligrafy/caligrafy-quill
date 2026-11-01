@@ -6,6 +6,14 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.12.0] - 2026-11-01
+
+### Added
+- A list and its detail, side by side, in Caligrafy's look (`public/css/layout.css`): `.cq-split > section.cq-split-main
+  + aside.cq-split-detail`, right after a title band. One column on phones; from tablets up the list on the left and
+  the item opened (or a form, one field a line) in an ash panel on the right that stays in view while the list
+  scrolls. Scoped to pages of `site.pug` (`body.cq-site`): the older `.cq-split` of `tokens.css` is unchanged.
+
 ## [2.11.0] - 2026-11-01
 
 ### Added

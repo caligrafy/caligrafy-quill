@@ -49,6 +49,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.24.0** - Caligrafy Quill 2.12.0: a list and its detail side by side (`.cq-split > section.cq-split-main +
+  aside.cq-split-detail`) in `ui-guidelines.md` (a part, a section with its markup, the checklist), the Views mirror
+  (and its `.cq-split` example without `+` between strings), the 2.12.0 release notes.
 - **1.23.0** - Caligrafy Quill 2.11.0: Caligrafy's new look. `ui-guidelines.md` builds every new page on the master
   `site.pug` with the classes of `layout.css` and `look.css` (title band, bands, `.cq-field`, `.cq-rows`, `.cq-tiles`,
   the account area), camera apps full screen with `camera.css`, the older card components for existing pages; the

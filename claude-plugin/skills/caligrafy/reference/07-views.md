@@ -203,14 +203,18 @@ This installs the whole application (it opens on its home page). To install a cl
 Experiences differ in layout (a dense page on a desktop, touch-first on a tablet, one column on a phone) but share one look. `public/css/tokens.css` defines the Caligrafy look as CSS custom properties, from `public/css/tokens.json`: colors (`--cq-color-ink`, `--cq-color-paper`...), type, spacing (`--cq-space-1` to `--cq-space-5`), radius and breakpoints. The default layout, the Vue app template and the Vite SPA template include it, and it adds:
 + touch targets of at least `--cq-touch-target` (44px) on touch screens,
 + safe-area padding when the application is installed to the home screen,
-+ `.cq-split`: one column on phones, a list and its detail side by side from tablets up.
++ `.cq-split`: one column on phones, a list and its detail side by side from tablets up (since 2.12.0, on pages of the master `site.pug`: `.cq-split > section.cq-split-main + aside.cq-split-detail`, see [side by side](#sidebyside)).
 
 ```pug
 .cq-split
-  .list
-    each book in books
-      a(href="/books/" + book.id)= book.title
-  .detail
+  section.cq-split-main
+    ul.cq-rows
+      each $book in $books
+        li.cq-row
+          .cq-row-main
+            p.cq-row-title
+              a(href=$home . 'books/' . $book['id'])= $book['title']
+  aside.cq-split-detail
     block detail
 ```
 Use the tokens in your own styles (`color: var(--cq-color-text)`) so that every experience of the application stays the same. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#experiences).
@@ -282,6 +286,7 @@ block content
 | Choices | `.cq-segments > button` (`.active`) with `span.cq-count` |
 | List | `ul.cq-rows > li.cq-row` (`.is-done` greys it) with `.cq-row-check`, `.cq-row-main` (`.cq-row-title`, `.cq-row-meta`), `.cq-row-actions` |
 | Links | `.cq-tiles > a.cq-tile > h3 + p + span.cq-tile-link`: one, two or three columns by width |
+| Side by side | `.cq-split > section.cq-split-main + aside.cq-split-detail`: a list and the item opened, or a list and its form (2.12.0+, [below](#sidebyside)) |
 | Figures | `.cq-stats > .cq-stat > .cq-stat-value + .cq-stat-label`, `span.cq-badge` |
 | Account area | `.cq-account > nav.cq-account-nav > a(href='#section')` + `.cq-account-main > section(id)`: a side menu on desktops that marks the section on screen |
 | Text and code | `.cq-doc` (long text), `.cq-code`, `pre.cq-pre` |
@@ -289,6 +294,27 @@ block content
 The same classes work in Vue apps and the single page application. Keep to black and white (`btn-primary` is black, `btn-secondary` ash): no Bootstrap color classes. The [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) builds every new page with this look.
 
 Two things to know when writing these views: Caligrafy renders Pug with PHP expressions, so join strings with `.` (`'Hello ' . $name`), never `+`; and the top bar has its own button (Menu), so scripts find their elements by id, never with `document.querySelector('button')`.
+
+### A list and its detail, side by side
+
+Since 2.12.0, a page that shows a list and the item opened (a finder, a catalog and its add form) puts them side by side, right after its title band: the list on the left, the item in an ash panel on the right that stays in view while the list scrolls. On phones the panel comes after the list.
+
+```pug
+section.cq-hero.cq-hero--page
+  h1.cq-display Find a book
+  p.cq-lead Type a few words: the books answer as you type.
+
+.cq-split
+  section.cq-split-main
+    .cq-field
+      label(for='query') Search
+      input#query.form-control(type='search')
+    ul#books.cq-rows
+  aside#book.cq-split-detail(aria-live='polite')
+    p.cq-empty-state Open a book to read about it.
+```
+
+A form in the panel takes one field a line. Vue templates use the same classes; the course's [finder and single page application](https://github.com/caligrafy/caligrafy-quill-course/wiki) are built this way.
 
 ### Camera pages
 
