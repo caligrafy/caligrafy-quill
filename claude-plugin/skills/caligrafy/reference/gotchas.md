@@ -345,3 +345,11 @@ are used answers `deploy_app` with "has no time left (its free 30 minutes are us
 `cloud extend <name> week|month|year` then deploy again. `cloud status <name>` shows the time left; `my_account` gives
 `free_minutes_per_app`. A private repository needs its read-only deploy key on GitHub first: since 2.7.0 `cloud create`
 saves it in `.caligrafy/<name>-deploy-key.pub` (`cloud key <name>`), for `gh repo deploy-key add`.
+
+**G91. Give a token's expiry as a Unix time (2.7.1+).** Token dates are stored in local time (`SERVER_TIMEZONE`). When
+the clocks fall back, one local hour happens twice and `strtotime()` reads its first occurrence: before 2.7.1 a token
+created in that hour to expire an hour later was refused at once. `Tokens::create($name, $scopes, $userId, time() +
+86400 * 90)` stores the expiry with `Tokens::expiresAt()`, which moves an instant of the repeated hour to the first
+local time after it (02:00): a token never stops early, at worst an hour late. A `date('Y-m-d H:i:s', ...)` string is
+still accepted and stored as given (without that protection). `Tokens::verify()` and `token list` share
+`Tokens::expired()`. Proof: `framework/core/Tokens.php`.
