@@ -7,8 +7,8 @@
 
 ## Start here
 
-1. [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): a working application in 5 minutes
-    > or [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude): your idea, built and online
+1. [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude): your idea, built and online
+    > or the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): a working application in 5 minutes
 2. [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works): the ideas in 5 minutes
 3. [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability): build a feature, page included
 

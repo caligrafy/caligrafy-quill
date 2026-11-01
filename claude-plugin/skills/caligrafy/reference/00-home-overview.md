@@ -41,6 +41,23 @@ application online. The
 [course](https://github.com/caligrafy/caligrafy-quill-course) follows these seven steps from an empty folder to an
 application on the internet.
 
+## Quickstart with Claude: from your idea to online
+
+Describe an application in a sentence; [Claude Code](https://claude.com/claude-code) builds it the Caligrafy way and
+puts it online for you to use everywhere:
+```bash
+git clone https://github.com/caligrafy/caligrafy-quill.git myapp
+cd myapp
+claude
+```
+```
+/caligrafy-quill:idea A reading list: I add books I want to read, mark them as read, and rate them from 1 to 5.
+```
+Claude plans it with you (tables, capabilities, who may do what), builds every feature once, checks it from the page,
+REST and an AI agent, then pushes it to GitHub and deploys it to `https://<name>.caligrafy.com`. You answer a few
+questions and sign in where only you can. See
+[Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude).
+
 ## Quickstart: 5 minutes
 
 You need [Git](https://git-scm.com/) and [Docker Desktop](https://www.docker.com/products/docker-desktop/)
@@ -85,23 +102,6 @@ The first 30 minutes are free. The Tasks example is open to everyone, online too
 
 That is the whole idea: the Tasks feature lives in five small files in `application/services/Tasks/`, and every
 experience above uses them.
-
-## Quickstart with Claude: from your idea to online
-
-Describe an application in a sentence; [Claude Code](https://claude.com/claude-code) builds it the Caligrafy way and
-puts it online for you to use everywhere:
-```bash
-git clone https://github.com/caligrafy/caligrafy-quill.git myapp
-cd myapp
-claude
-```
-```
-/caligrafy-quill:idea A reading list: I add books I want to read, mark them as read, and rate them from 1 to 5.
-```
-Claude plans it with you (tables, capabilities, who may do what), builds every feature once, checks it from the page,
-REST and an AI agent, then pushes it to GitHub and deploys it to `https://<name>.caligrafy.com`. You answer a few
-questions and sign in where only you can. See
-[Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude).
 
 ## Your first capability
 
@@ -150,7 +150,7 @@ feature step by step, page included.
 
 | You want to | Read |
 | --- | --- |
-| Get a feel for it | [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) or [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude), then [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
+| Get a feel for it | [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude) or the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart), then [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
 | Build a feature | [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability), then [Capabilities in depth](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP) |
 | Build a web page | [Views and page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents) |
 | Build a Vue app or a single page application | [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library), [the single page application](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application) |

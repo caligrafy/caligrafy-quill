@@ -95,7 +95,7 @@ Caligrafy is also a classic MVC framework (routes, controllers, models, views), 
 
 ## Next
 
-+ [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): a working application in 5 minutes, or the [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude): your idea, built and online.
++ [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude): your idea, built and online, or the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): a working application in 5 minutes.
 + [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability): build a complete feature, page included.
 + [Build Once: Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): every option, in depth.
 + [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): from your computer to a public address.
