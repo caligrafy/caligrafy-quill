@@ -16,7 +16,8 @@ namespace Caligrafy;
  * 2. data: each 'data' entry calls a read-only capability as the person who opens the page ($this->call(): the same
  *    rules as REST and MCP), with the query string and the route variables as inputs (the route variables win), or
  *    with the inputs it lists (['book' => ['get_book', ['id' => 3]]]). A refusal becomes the page's answer: a visitor
- *    is sent to sign in; otherwise 403 (error 1006) or 404 (error 1005), or the 'notFound' view with a 404 status
+ *    is sent to sign in; otherwise 403 (error 1006) or 404 (error 1005), or the 'notFound' view (route variables,
+ *    'with', 'message', who opens it) with a 404 status
  * 3. the view gets the route variables, 'with' values, the data, 'authorized' and 'user' (id, username, level) - never
  *    the query string
  * Pages never read models: capabilities do, so a page, REST and AI agents follow the same rules.
@@ -121,7 +122,8 @@ class PageController extends Controller
         }
         if (!empty($options['notFound'])) {
             http_response_code(404);
-            return view($options['notFound'], array_merge(self::routeVariables(), array('message' => $e->getMessage()), self::identity()));
+            return view($options['notFound'], array_merge(self::routeVariables(), (array) ($options['with'] ?? array()),
+                array('message' => $e->getMessage()), self::identity()));
         }
         throw Errors::raise(1005);
     }

@@ -277,7 +277,7 @@ Fixed inputs: `['book' => ['get_book', ['id' => 3]]]`. Only existing `readOnly` 
 `data`/`with` name `authorized` or `user`, throws `LogicException` (a 500 on every visit). A refusal ends the page: a
 visitor (`unauthenticated`) goes to `/login`; `forbidden` answers `[ERROR 1006]` (403); `not_found`, `invalid` and
 `conflict` answer `[ERROR 1005]` (404), or render the `notFound` view (option) with status 404, the route variables,
-`$message`, `$authorized` and `$user`. The view gets the route variables, `with`, the data, `authorized` and `user`:
+the `with` values, `$message`, `$authorized` and `$user`. The view gets the route variables, `with`, the data, `authorized` and `user`:
 never the query string (read it through a capability input). Capability results are plain arrays (`$book['title']`).
 Proof: `framework/core/PageController.php`.
 

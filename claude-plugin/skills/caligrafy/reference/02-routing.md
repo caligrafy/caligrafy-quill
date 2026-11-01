@@ -74,7 +74,7 @@ Route::page('/admin/books', 'Books/admin', ['level' => 1, 'data' => ['books' => 
 | `signedIn` | `true`: visitors are sent to `/login` |
 | `level` | people whose level (the `permissions` column) is lower are sent to `/notAuthorized` (visitors to `/login`) |
 | `with` | fixed values for the view: `['with' => ['title' => 'Books']]` |
-| `notFound` | a view shown, with a `404`, when a `data` capability finds nothing: `['notFound' => 'Books/missing']`. It gets the route variables, `$message`, `$authorized` and `$user` |
+| `notFound` | a view shown, with a `404`, when a `data` capability finds nothing: `['notFound' => 'Books/missing']`. It gets the route variables, the `with` values, `$message`, `$authorized` and `$user` |
 
 **What the view receives**, on every page: `$authorized` (true when someone is signed in), `$user` (`id`, `username`, `permissions`, or `null`), the route variables (`$id`) and the `data` and `with` values. Never the query string: a page reads it through a capability's inputs. `authorized` and `user` are reserved: a `data` or `with` entry with one of those names is an error. Capabilities return plain arrays: `$book['title']` in the view. A page on a closure route (`Route::get('/books', function () { return view('Books/index'); })`) gets none of this unless the closure passes it.
 
