@@ -11,11 +11,11 @@ no `.cq-page` rule, it predates 2.1.3: copy the file from the framework (or upda
 
 | Part | Markup | Notes |
 | --- | --- | --- |
-| Page | `main.cq-page` | Starts below the fixed header (120px), centers the card. `.cq-page--wide` for 960px cards |
-| Card | `.cq-card` | White, rounded, shadowed, 640px max, full width on phones. Several cards stack with a gap (2.3.0+; in a 2.2.0 project keep one card per page, G61) |
+| Page | `main.cq-page` | Starts just below the fixed header (76px), centers the card. `.cq-page--wide` for 960px cards |
+| Card | `.cq-card` | White, rounded, shadowed (no outline), 600px max like the sign-in card, full width on phones. Several cards stack with a gap (2.3.0+; in a 2.2.0 project keep one card per page, G61) |
 | Card header | `.cq-card-head > h2.cq-title + p.cq-note` | The title says what the page is; the note one line of context |
 | Form | `form.cq-form > .cq-fields > div > label + input.form-control` | `.cq-fields--2` / `--3`: columns from 576px up, one column on phones. Every field has a `label` |
-| Submit | `button.btn.btn-primary.cq-submit` | Full-width black button (Bootstrap's `w-100` is overridden by the theme: use `cq-submit`) |
+| Submit | `button.btn.btn-primary.cq-submit` | The sign-in button: black, at least 150px, on the left (Bootstrap's `w-100` is overridden by the theme: use `cq-submit`) |
 | Error | `p.cq-error(role='alert')` | Under the form; show `ServiceError` field messages here |
 | Tabs | `.cq-tabs(role='tablist') > button(role='tab')` + `span.cq-count` | Active tab: `.active` + `aria-selected`. Use for filters and views of the same list |
 | List | `ul.cq-list > li.cq-item` | Row: optional `input.form-check-input.cq-check`, `.cq-item-body > p.cq-item-title + p.cq-item-meta`, `.cq-actions > .btn` |
