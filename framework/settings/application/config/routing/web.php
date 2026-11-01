@@ -23,7 +23,7 @@ try {
     // Auth::authentication('User', 'users');
     
     // ROUTE DEFINITION: get, post, put and delete
-    Route::get('/', function() { return view('default/index'); });
+    Route::page('/', 'default/index');   // a page: the framework's page controller gives it who is signed in
     Route::get('/helloworld', function() { echo "Hello World"; });
 	
     // Auth Routes - Uncomment only if AUTHENTICATION activated above

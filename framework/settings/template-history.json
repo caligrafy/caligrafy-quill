@@ -12,6 +12,7 @@
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     ],
     "config/routing/web.php": [
+        "1e9a8c2898264247aa88f2a67c1084eaad6b4f0f44a79cd5a63884ac2c94911f",
         "3a69e70c1de83e311942d8b9494bb71dd0c02df117a06c3980f4f3705bd62c86",
         "7a5afe5400e62d51b1b74641df2aeeff21ea58d1a99a7ba66b8814a5e24c92b3",
         "8f18fbfb500b88dfdc7bf4eab5c50fb31fb968ec928a9acae0a389534916cf45",
@@ -49,12 +50,14 @@
         "0dd2905d2ef419a4c72411bc78c942507a00bdc72fc4e4225b15c63f3ce970fe",
         "1906eb67c897d47b5cc7be2b46f85041ccc966f146847c3dfce17600d7d0818a",
         "1bb93ade98dd81b24c9d16f52bce81b86d526c2c6599064bea84d6624a72bc49",
-        "925b839321cba4256a7cb9da2083f98c20ae1fd1b6a021d3c2b38eb1300c1737"
+        "925b839321cba4256a7cb9da2083f98c20ae1fd1b6a021d3c2b38eb1300c1737",
+        "93fd61a3582d4a53229954f6f04e45fc49b06f432604910e8af5e43db9218745"
     ],
     "controllers/core/Auth/AuthController.php": [
         "1b9aa729666dbbe1cda4b49bddcb14fdc41afd55bf0c0796ea8c3a6733ac8a46",
         "3abb501827dd50c736093fca54375b2b7eada0741becd663f203e7d9f87b99a0",
         "7f1d7f84d83e3b4e9267afe2b83f1ef8ff7c1b7e2ff1b679d86b04124333e2d0",
+        "80d48b3d911b3161293afb322c2345ebae4e6a784ac50170b8a585e8ac74da66",
         "844fefbaf0c41dfc022099f1a4fc0bc5162fdb0e951db1605259cd978f41d705"
     ],
     "models/.gitignore": [
@@ -70,6 +73,24 @@
     ],
     "services/.gitignore": [
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
+    ],
+    "services/Users/CaligrafyUsers.php": [
+        "854614534cf48d45c6e43ca88c0ffdff78fc34968f3604b34da4b1943fbd575e"
+    ],
+    "services/Users/DeleteUser.php": [
+        "52da5e54859a04f9bd6170434c666270b4f98d3d8329736d032108785ad4f3a2"
+    ],
+    "services/Users/GetUser.php": [
+        "689bbfd40bd9dbc371adb840225b0dde30f93e924e72c64455ff261d9d93fba5"
+    ],
+    "services/Users/ListUsers.php": [
+        "848e88c685a23aee410261e764d7e0ad20674bed39891a7fcc924bf20cb6f36c"
+    ],
+    "services/Users/RegisterUser.php": [
+        "251c022d72f5fecf5d4d35138badd5adcb2deb2c0d242d42ce07a41d4bc6f1d1"
+    ],
+    "services/Users/UpdateUser.php": [
+        "7e5a4006409942d3b4707feabf18304c80bd3663fd6c3022d3c50b965380890f"
     ],
     "views/.gitignore": [
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"

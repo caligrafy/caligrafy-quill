@@ -6,6 +6,7 @@
 namespace Caligrafy\Controllers;
 
 use Caligrafy\Controller;
+use Caligrafy\ServiceError;
 use User;
 
 class AuthController extends Controller {
@@ -40,38 +41,28 @@ class AuthController extends Controller {
     }
     
     /*
-     *Register
+     * Register: the register_user capability creates the account (the same rules as everywhere), then the person signs in
      */
     public function register()
     {
-        $this->associate('User', 'users');
         $parameters = $this->request->parameters;
-        $validate = $this->validator->check($parameters, array('username' => 'required|alpha_numeric|max_len,100',
-                                                               'passcode' => 'required|min_len,8|max_len,72',
-                                                               'confirmpasscode' => 'required|max_len,72'
-                                                              ));
         $userInput = (Object)array('username' => $parameters['username']?? '');
    
         
-        //confirm password
+        //confirm password (a form check: the capability takes one password)
         if (($parameters['passcode']?? '') !== ($parameters['confirmpasscode']?? '')) {
             return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.', 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput));
         }
         
-        // invalid inputs
-        if ($validate !== true) {
-            return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => $validate, 'user' => $userInput ));
+        try {
+            $this->call('register_user', array('username' => $parameters['username']?? '', 'passcode' => $parameters['passcode']?? ''));
+        } catch (ServiceError $e) {
+            if ($e->kind === 'conflict') {
+                return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'You are already registered', 'errors' => ['username' => 'The username already exists in the system'], 'user' => $userInput));
+            }
+            // invalid inputs
+            return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => $e->fields, 'user' => $userInput ));
         }
-        
-        //check if user exists (exact match, bound query)
-        if ($this->model->findByUsername($parameters['username'])) {
-            return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'You are already registered', 'errors' => ['username' => 'The username already exists in the system'], 'user' => $userInput));
-        }
-        
-        $user = new User();
-        $user->username = $parameters['username'];
-        $user->passcode = User::hashPassword($parameters['passcode']);
-        $this->save($user);
         redirect('/login');
         exit;
 

@@ -978,7 +978,7 @@ qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per messag
 
 qa_test('the generated JS client calls the same capabilities from Node with a token', function () use ($WRITER, $BASE, $ROOT) {
     @mkdir("$ROOT/qa/tmp", 0777, true);
-    qa_contains('5 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));
+    qa_contains('10 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));
     $script = "$ROOT/qa/tmp/client-check.mjs";
     file_put_contents($script, "import { configure, listBooks, createBook, getBook, CapabilityError } from './capabilities.mjs'\n"
         . "configure({ baseUrl: process.argv[2], token: process.argv[3] })\n"
@@ -999,6 +999,66 @@ qa_test('the audit log names the web page, REST and MCP calls and the refusals',
         qa_contains($needle, $out);
     }
     qa_contains('delete_book', qa_cli('audit --limit 100'));
+});
+
+// ---- Route::page: pages get who is signed in, access rules and capability data (2.5.0) ----
+qa_test('Route::page gives the welcome page who is signed in', function () {
+    qa_contains('Welcome to Caligrafy', (new QaBrowser())->get('/')['body']);
+    $a = new QaBrowser();
+    $a->login('alice', 'Passw0rdQa');
+    qa_contains('You are currently logged in', $a->get('/')['body']);
+});
+
+qa_test('Route::page data: a capability as the signed-in person, a visitor is sent to sign in, a missing record is a 404', function () {
+    $id = qa_sql('SELECT id FROM books ORDER BY id LIMIT 1');
+    $title = qa_sql("SELECT title FROM books WHERE id = $id");
+    qa_contains('/login', (new QaBrowser())->get("/qa/page/$id")['location']);
+    $a = new QaBrowser();
+    $a->login('alice', 'Passw0rdQa');
+    $r = $a->get("/qa/page/$id");
+    qa_equals(200, $r['status'], substr(strip_tags($r['body']), 0, 300));
+    qa_contains("book $title", $r['body']);
+    qa_contains("id $id", $r['body']);
+    qa_contains('signed in as alice', $r['body']);
+    $r = $a->get('/qa/page/999999');
+    qa_equals(404, $r['status']);
+    qa_contains('ERROR 1005', $r['body']);
+});
+
+qa_test('Route::page access: signedIn sends visitors to sign in, level sends people below it away', function () {
+    qa_sql("UPDATE users SET permissions = 1 WHERE username = 'alice'");
+    qa_sql("UPDATE users SET permissions = 0 WHERE username = 'bob'");
+    qa_contains('/login', (new QaBrowser())->get('/qa/members')['location']);
+    $bob = new QaBrowser();
+    $bob->login('bob', 'NewPassw0rd');
+    qa_equals(200, $bob->get('/qa/members')['status']);
+    qa_contains('notAuthorized', $bob->get('/qa/admins')['location']);
+    $a = new QaBrowser();
+    $a->login('alice', 'Passw0rdQa');
+    qa_equals(200, $a->get('/qa/admins')['status']);
+});
+
+// ---- the user capabilities: the administration pages, REST and AI agents follow the same rules (2.5.0) ----
+qa_test('list_users over MCP: administrators only, never a password', function () {
+    $aliceId = qa_sql("SELECT id FROM users WHERE username = 'alice'");
+    $bobId = qa_sql("SELECT id FROM users WHERE username = 'bob'");
+    $admin = qa_new_token('qa users admin', '*', $aliceId);
+    $result = qa_tool($admin, 'list_users');
+    qa_assert(empty($result['isError']), json_encode($result));
+    qa_assert(in_array('alice', array_column($result['data'], 'username'), true), json_encode($result['data']));
+    qa_assert(!array_key_exists('passcode', $result['data'][0]), 'list_users must not return passwords');
+    $mine = qa_tool($admin, 'delete_user', ['id' => (int) $aliceId]);
+    qa_assert(!empty($mine['isError']), 'an administrator must not delete their own account: ' . json_encode($mine));
+    $member = qa_new_token('qa users member', '*', $bobId);
+    // a tool this token may not use is unknown to it, as in tools/list
+    qa_equals(-32602, qa_mcp($member, 'tools/call', ['name' => 'list_users', 'arguments' => (object) []])['json']['error']['code']);
+    qa_assert(!in_array('list_users', array_column(qa_mcp($member, 'tools/list')['json']['result']['tools'], 'name'), true), 'permissions 0: no list_users tool');
+});
+
+qa_test('register_user is for the sign-up page: refused over REST', function () {
+    $r = qa_json('POST', '/capabilities/register_user', ['username' => 'bulk1', 'passcode' => 'Passw0rdQa']);
+    qa_equals(403, $r['status'], $r['body']);
+    qa_equals('0', qa_sql("SELECT COUNT(*) FROM users WHERE username = 'bulk1'"));
 });
 
 qa_summary();

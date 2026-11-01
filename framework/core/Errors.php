@@ -29,6 +29,8 @@ class Errors extends \stdClass
         1002 => '[ERROR 1002] Invalid library ',
         1003 => '[ERROR 1003] Property cannot be found ',
         1004 => '[ERROR 1004] Access Denied',
+        1005 => '[ERROR 1005] Page Not Found',
+        1006 => '[ERROR 1006] Forbidden - You may not open this page',
         
         //2xxx: Database Errors
         2000 => '[ERROR 2000] Database Connection Error ',
@@ -57,6 +59,8 @@ class Errors extends \stdClass
         1000 => 405,
         1001 => 404,
         1004 => 401,
+        1005 => 404,
+        1006 => 403,
         3000 => 403
     );
 

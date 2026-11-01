@@ -6,6 +6,30 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.5.0] - 2026-11-01
+
+Pages go through one controller, and only capabilities touch the data: the rules of a feature live once, whether a
+page, REST, an AI agent or the command line uses it.
+
+### Added
+- `Route::page($route, $view, $options)`: a page rendered through the framework's page controller
+  (`Caligrafy\PageController`). Every page gets `authorized`, the signed-in `user` (id, username, permissions) and its
+  route variables, so no page shows a signed-in person as a visitor. Options: `signedIn` (visitors go to `/login`),
+  `level` (people below it go to `/notAuthorized`), `data` (`['book' => 'get_book']`: capabilities called as the person
+  who opens the page, with the route variables as inputs; a refusal sends a visitor to sign in, or answers 403 or 404)
+  and `with` (fixed values).
+- The user capabilities in `application/services/Users`: `list_users`, `get_user`, `update_user` and `delete_user`
+  (administrators: `CaligrafyUsers::ADMIN_LEVEL`, 1 by default, which `AdminController` uses too; never a password; an administrator cannot delete their own account) and
+  `register_user` (the sign-up page and the command line only: refused over REST and MCP). AI agents and programs with
+  an administrator's token can manage users, with the audit log.
+- Error codes 1005 (page not found, 404) and 1006 (forbidden, 403).
+
+### Changed
+- The user administration pages (`AdminController`) and sign-up (`AuthController@register`) call those capabilities
+  instead of the `User` model: the same pages and messages, one set of rules. Signing in and out stay in
+  `AuthController`: they are the web session, which capabilities never touch.
+- The welcome page (`/` in the template `web.php`) and the Tasks example of `quickstart --example` use `Route::page`.
+
 ## [2.4.0] - 2026-11-01
 
 Putting an application online: a production image in every project, the database prepared at every start, and

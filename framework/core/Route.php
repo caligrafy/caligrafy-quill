@@ -283,6 +283,22 @@ class Route extends \stdClass
     }
 
     /**
+     * A page: renders a view through the framework's page controller, which gives every page who is signed in and,
+     * optionally, an access rule and data from capabilities (pages never read models):
+     *   Route::page('/books', 'Books/index');
+     *   Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
+     *   Route::page('/admin/books', 'Books/admin', ['level' => 1, 'data' => ['books' => 'list_books']]);
+     * Options: 'signedIn' (bool), 'level' (int), 'data' (name => capability, or [capability, inputs]), 'with' (fixed values)
+     * @param string $route the uri
+     * @param string $view the view, as for view()
+     * @param array $options see PageController::render()
+    */
+    public static function page($route, $view, array $options = array())
+    {
+        self::get($route, function () use ($view, $options) { (new PageController())->render($view, $options); });
+    }
+
+    /**
      * Exposes every capability under a prefix: GET {prefix} lists what the caller may call (with the input schemas),
      * POST {prefix}/{name} calls one. The JS client of the Vue apps and the SPA (php caligrafer.php client) uses it.
      * @param string $prefix the uri prefix

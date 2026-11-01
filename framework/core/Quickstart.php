@@ -140,7 +140,7 @@ class Quickstart
         $routes = $this->root . '/application/config/routing/web.php';
         $current = file_get_contents($routes);
         $updated = self::addRoutes($current, array(
-            "Route::get('/tasks', function () { return view('Tasks/index'); });   // the web page (public/js/tasks.js)",
+            "Route::page('/tasks', 'Tasks/index');   // the web page (public/js/tasks.js)",
             "Route::capability('GET', '/api/tasks', 'list_tasks');                // REST",
             "Route::capability('GET', '/api/tasks/{id}', 'get_task');",
             "Route::capability('POST', '/api/tasks', 'create_task');",

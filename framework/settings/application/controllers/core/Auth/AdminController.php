@@ -6,22 +6,22 @@
 namespace Caligrafy\Controllers;
 
 use Caligrafy\Controller;
-use User;
+use Caligrafy\ServiceError;
 
 class AdminController extends Controller {
 
 	/*
-	 * Minimum value of users.permissions needed to manage users.
-	 * New users are created with permissions 0, so promote your first administrator in the database:
-	 * UPDATE users SET permissions = 1 WHERE username = '<your username>';
+	 * Minimum value of users.permissions needed to manage users: CaligrafyUsers::ADMIN_LEVEL
+	 * (application/services/Users/CaligrafyUsers.php), the level of the user capabilities too.
+	 * The pages read and change users through those capabilities (list_users, get_user, update_user, delete_user):
+	 * the same rules for this page, REST and AI agents.
 	 */
-	const ADMIN_PERMISSION = 1;
+	const ADMIN_PERMISSION = \CaligrafyUsers::ADMIN_LEVEL;
 	
 	public function index()
 	{
 		guard('permissions', self::ADMIN_PERMISSION);
-		$this->associate('User', 'users');
-		$users = $this->all(array('order' => 'order by modified_at DESC'));
+		$users = array_map(function ($user) { return (object) $user; }, $this->call('list_users', array()));
 		return view('Auth/users', array('users' => $users, 'authorized' => authorized(), 'admin' => true));
 
 	}
@@ -30,9 +30,9 @@ class AdminController extends Controller {
 	public function editUserForm()
 	{
 		guard('permissions', self::ADMIN_PERMISSION);
-		$this->associate('User', 'users');
-		$user = $this->find();
-		if (!$user) {
+		try {
+			$user = (object) $this->call('get_user', array('id' => currentBind()['id'] ?? null));
+		} catch (ServiceError $e) {
 			redirect('/admin');
 			exit;
 		}
@@ -44,43 +44,29 @@ class AdminController extends Controller {
 	public function updateUser()
 	{
 		guard('permissions', self::ADMIN_PERMISSION);
-		$this->associate('User', 'users');
-		$user = $this->find();
-		
-		if (!$user) {
-			redirect('/admin');
-			exit;
-		}
-		
+		$id = currentBind()['id'] ?? null;
 		$parameters = $this->request->parameters;
-        $userInput = (Object)array('id' => $user->id, 'username' => $parameters['username']?? $user->username, 'permissions' => $parameters['permissions']?? $user->permissions);
-            
-		// Input validation
-		$validate = $this->validator->check($parameters, array('username' => 'required|alpha_numeric|max_len,100',
-												   'passcode' => 'min_len,8|max_len,72',
-												   'confirmpasscode' => 'max_len,72',
-												   'permissions' => 'integer|min_numeric,0|max_numeric,255'
-												  ));
-		
-		//confirm password
-        if (($parameters['passcode']?? '') !== ($parameters['confirmpasscode']?? '')) {
-            return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.', 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput, 'authorized' => authorized(), 'admin' => true));
-        }
-		
-        
-		// invalid inputs
-		if ($validate !== true) {
-			return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoooops, something went wrong', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => $validate, 'user' => $userInput, 'authorized' => authorized(), 'admin' => true));
+		$userInput = (Object)array('id' => $id, 'username' => $parameters['username']?? '', 'permissions' => $parameters['permissions']?? '');
+
+		//confirm password (a form check: the capability takes one password)
+		if (($parameters['passcode']?? '') !== ($parameters['confirmpasscode']?? '')) {
+			return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.', 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput, 'authorized' => authorized(), 'admin' => true));
 		}
 
-        $user->username = $parameters['username']?? $user->username;
-        $user->passcode = !empty($parameters['passcode'])? User::hashPassword($parameters['passcode']) : $user->passcode;
-		$user->permissions = isset($parameters['permissions']) && $parameters['permissions'] !== ''? (int)$parameters['permissions'] : $user->permissions;
-		$user->modified_at = now();
-        $this->save($user);
+		try {
+			$this->call('update_user', array('id' => $id, 'username' => $parameters['username']?? '', 'passcode' => $parameters['passcode']?? '',
+				'permissions' => $parameters['permissions']?? ''));
+		} catch (ServiceError $e) {
+			if ($e->kind !== 'invalid') {
+				redirect('/admin');
+				exit;
+			}
+			// invalid inputs
+			return view('Auth/manageusers', array('put' => true, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoooops, something went wrong', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => $e->fields, 'user' => $userInput, 'authorized' => authorized(), 'admin' => true));
+		}
 
-        redirect('/users');
-        exit;
+		redirect('/users');
+		exit;
 		
 	}
 	
@@ -88,10 +74,13 @@ class AdminController extends Controller {
 	public function deleteUser()
 	{
 		guard('permissions', self::ADMIN_PERMISSION);
-        $this->associate('User', 'users');
-        $this->delete();
-        redirect('/users');
-        exit;
+		try {
+			$this->call('delete_user', array('id' => currentBind()['id'] ?? null));
+		} catch (ServiceError $e) {
+			// not found, or your own account: back to the list
+		}
+		redirect('/users');
+		exit;
 	}
 	
 	

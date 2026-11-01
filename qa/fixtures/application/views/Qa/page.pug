@@ -1,0 +1,5 @@
+//- QA: what Route::page gives a view (the signed-in state, the route variables, capability data)
+p#who= $authorized ? 'signed in as ' . ($user['username'] ?? '?') : 'visitor'
+p#id= isset($id) ? 'id ' . $id : 'no id'
+if isset($book)
+    p#book= 'book ' . $book['title']
