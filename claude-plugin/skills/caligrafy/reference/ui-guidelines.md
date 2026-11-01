@@ -44,6 +44,9 @@ block content
             //- form, error, tabs, list, empty state, footer: in this order
 ```
 Never start a page with a bare heading or `.spacer-2`: the fixed header covers the first ~80px (gotcha G59).
+Its route, in `web.php` (2.5.0+): `Route::page('/books', 'Books/index');`, or with server-side data
+`Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);`. The view then always has `$authorized`
+and `$user` for the signed-in parts (G74); data comes from capabilities only, never from a model in a route or a controller.
 
 ## Worked example: a list with a form, filters and actions
 

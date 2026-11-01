@@ -67,11 +67,11 @@ is required: without it the attribute gets `scope: ''`, G76), then fill it as `/
 input, bound queries, `ServiceError` refusals, `readOnly`, `destructive`, `public: true` only for reads anyone may do).
 
 **Sign-in** (unless everything is public): in `web.php` uncomment `Auth::authentication('User', 'users');` and the
-authentication routes (`/login`, `/logout`, `/notAuthorized`, `/register`, both `POST`s), and point `/home` (where
-sign-in lands) to the main page instead of `AuthController@home`. Run `application/models/Auth/create_db.sql`. Add to
-the main page a line with *Sign in* / *Sign up* links for visitors and *Sign out* for signed-in people. A view gets
-`$authorized` only when its route passes it: `Route::get('/<things>', function () { return view('<Folder>/index', array('authorized' => authorized())); });`,
-and the same for `/` and `/home` (G74). The sign-up page accepts usernames of letters and digits only (no email
+authentication routes (`/login`, `/logout`, `/notAuthorized`, `/register`, both `POST`s), and make `/home` (where
+sign-in lands) the main page: `Route::page('/home', '<Folder>/index');` instead of `AuthController@home`. Run `application/models/Auth/create_db.sql`. Add to
+the main page a line with *Sign in* / *Sign up* links for visitors and *Sign out* for signed-in people. Every page is a
+`Route::page` (`/`, `/<things>`, `/home`): it gives the view `$authorized` and `$user` (G74); a closure that returns
+`view()` does not. The sign-up page accepts usernames of letters and digits only (no email
 address, G75): say so next to the *Sign up* link. A capability that is not `public` is refused (401) to visitors: the page
 shows its message in `.cq-error`.
 
@@ -103,7 +103,9 @@ calls it, then shows the token once and the line to paste:
 `location.origin`). Skip it only when everything is public and the user does not want agents.
 
 **Experiences** in `application/config/routing/web.php`, before `Route::run()`:
-- the page: `Route::get('/<things>', function () { return view('<Folder>/index'); });` and `/` to the same view;
+- the page: `Route::page('/<things>', '<Folder>/index');` and `Route::page('/', '<Folder>/index');` (a page that shows one
+  record server-side: `Route::page('/<things>/{id}', '<Folder>/show', ['data' => ['<thing>' => 'get_<thing>']])`, G83);
+  never a controller that reads the models: only capabilities touch them;
 - REST for every capability: `Route::capability('GET', '/api/<things>', 'list_<things>');`,
   `Route::capability('GET', '/api/<things>/{id}', 'get_<thing>');`, `POST`, `PUT /{id}`, `DELETE /{id}`...;
 - `Route::capabilities('/capabilities');` and `Route::mcp('/mcp');` (quickstart adds them: keep one of each);

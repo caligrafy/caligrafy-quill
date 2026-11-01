@@ -89,10 +89,16 @@ Usually in web applications, the most common use case is to have a `Controller` 
 However, there are cases, especially for public pages, where they are just for presentations and no extensive logic nor database extensions are needed.
 
 ### `View` from `Route`
-It is acceptable in such cases to return a `View` directly from a `Route`.
+Since 2.5.0 the way to show a page is `Route::page`:
 ```php
-Route::get('hello', function() { return view('helloworld'); }); 
+Route::page('/hello', 'helloworld');
 // Note that you only enter the name of the template without the `.pug` extension
+```
+It goes through the framework's page controller, which gives every page `$authorized`, `$user` (`id`, `username`, `permissions`) and its route variables, and optionally access rules and data from capabilities: see [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
+
+A closure that returns a view also works, but the view then gets only what the closure passes: no `$authorized`, so the header shows every visitor as signed out.
+```php
+Route::get('hello', function() { return view('helloworld'); });
 ```
 ### `View` from `Controller`
 When the view is called from a `Controller`:
@@ -135,10 +141,9 @@ body
 ### From the `Route`
 We now need to make sure that when the view method is called to assign a value to the `sentence` variable that will be read by the template.
 ```php
-Route::get('hello', function() {
-  return view('helloworld', array('sentence' => 'This is our first view using a route'));    
-});
+Route::page('/hello', 'helloworld', ['with' => ['sentence' => 'This is our first view using a route']]);
 ```
+Data from your database comes from a capability instead: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);`.
 
 ### From the `Controller`
 Similarly, the `Controller` will need to assign a value to the `sentence` variable.

@@ -9,7 +9,7 @@
 
 | Channel | How it calls a capability | Who is calling |
 | --- | --- | --- |
-| Pug pages | `$this->call('create_book')` in a controller action | the signed-in user |
+| Pug pages | `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`, or `$this->call('create_book')` in a controller action (form posts) | the signed-in user |
 | Vue apps and the Vite SPA | the generated JS client (`php caligrafer.php client`) | the signed-in user (session cookie + CSRF token) |
 | REST | `Route::capability('POST', '/books', 'create_book')` | a personal access token, or the signed-in user |
 | AI agents | MCP: `Route::mcp('/mcp')` over HTTP, or `php caligrafer.php mcp` over stdio | a personal access token |
@@ -22,7 +22,7 @@ Every call goes through the same steps, in this order:
 4. **Run** the service.
 5. **Audit**: every refusal, and every success of a capability that changes data, is written to the audit log.
 
-Your existing controllers, models and routes keep working: capabilities are added beside them, one at a time.
+**Only capabilities touch models**: pages, controllers, REST and agents all go through them, so the rules exist once. Your existing controllers, models and routes keep working: capabilities are added beside them, one at a time.
 
 ## Set up a project
 
@@ -111,7 +111,14 @@ php caligrafer.php capabilities --json       # with the input schemas
 
 ## From a Pug page
 
-A controller action calls the capability as the signed-in user and renders the result. The inputs default to the posted fields and the route variables:
+A page shows data with `Route::page`: its capabilities run as the person who opens the page, with the route variables and the query string as inputs (since 2.5.0):
+```php
+Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);
+Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);   // {id} is the input id
+```
+The view gets `$books` or `$book`, plus `$authorized` and `$user`. A refusal sends a visitor to sign in, or answers 403 or 404. See [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
+
+For a form post, a controller action calls the capability as the signed-in user and renders the result. The inputs default to the posted fields and the route variables:
 ```php
 use Caligrafy\Controller;
 use Caligrafy\ServiceError;

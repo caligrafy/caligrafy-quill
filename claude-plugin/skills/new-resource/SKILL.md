@@ -1,6 +1,6 @@
 ---
 name: new-resource
-description: Scaffold a Caligrafy Quill resource - MySQL create_db.sql script, Caligrafy\Model, Caligrafy\Controller with validated CRUD actions, and REST routes in application/config/routing/web.php - following the framework conventions.
+description: Scaffold a Caligrafy Quill resource capabilities-first - MySQL create_db.sql script, Caligrafy\Model, the CRUD capabilities (list, get, create, update, delete) written once with php caligrafer.php service, their REST routes (Route::capability), and pages with Route::page - following the framework conventions (only capabilities touch models).
 when_to_use: The user asks to add an entity, table, model, CRUD, REST endpoint or resource to a Caligrafy Quill project, e.g. "/caligrafy-quill:new-resource Book title:string author:string publisher:fk".
 argument-hint: "<Entity> [field:type ...] [parent:fk]"
 ---
@@ -10,12 +10,16 @@ argument-hint: "<Entity> [field:type ...] [parent:fk]"
 Arguments: `$ARGUMENTS` (entity name, then optional `field:type` pairs; `name:fk` = foreign key to model `Name`).
 If fields are missing, infer sensible ones from the conversation or ask once.
 
-Read first: the `caligrafy` skill's [api-reference.md](../caligrafy/reference/api-reference.md) (Model, Controller, Route)
-and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G23.
+Read first: the `caligrafy` skill's [api-reference.md](../caligrafy/reference/api-reference.md) (Model, Route, Build once)
+and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G23, G52, G76, G83.
+
+**Only capabilities touch models**: the model is read and written by the capabilities of this resource, never by a
+controller or a page. Pages get their data with `Route::page`; a controller is written only for a classic form post,
+and it calls the capabilities.
 
 ## Preconditions
 1. Confirm this is an initialized Quill project: `application/config/routing/web.php` exists. If only `framework/settings/application` exists, tell the user to run `php caligrafer.php initialize` (it deletes `.git` - ask first).
-2. Choose names. Entity `Book` -> model class `Book`, table `books` (lowercase plural, ask if irregular), controller `BookController`, folder `Book`. Grep `application/` for `class Book\b` and `class BookController\b`: class names are global (G19) - pick another name on a clash, or put the controller in a namespace when the project already groups controllers that way (`namespace Shop;`, route `'Shop\\BookController@read'`, G47). Names of the example controllers (`AIController`...) are fine once they are namespaced in `Caligrafy\Controllers`.
+2. Choose names. Entity `Book` -> model class `Book`, table `books` (lowercase plural, ask if irregular), capabilities `list_books`, `get_book`, `create_book`, `update_book`, `delete_book` in `application/services/Books/`, scopes `books:read` / `books:write`. Grep `application/` for `class Book\b`, `class ListBooks\b`... and `php caligrafer.php capabilities` for the names: class names are global (G19) and capability names unique (G80) - pick another name on a clash.
 
 ## Files to create
 
@@ -68,100 +72,78 @@ class Book extends Model {
 ```
 Relationships: child->parent `hasOne('Parent','parents')`; parent->children `hasMany('Child','children')`; many-to-many `belongsToMany('Tag','tags')` (the auto-created pivot copies the id types and uses unique constraint names, G10) or create the pivot table yourself in the SQL script.
 
-### 3. `application/controllers/<Entity>/<Entity>Controller.php`
+### 3. The capabilities: `application/services/<Entities>/`
+One command per capability (the scope is required, G76):
+```bash
+php caligrafer.php service Books/ListBooks --scope books:read --read-only
+php caligrafer.php service Books/GetBook --scope books:read --read-only
+php caligrafer.php service Books/CreateBook --scope books:write
+php caligrafer.php service Books/UpdateBook --scope books:write
+php caligrafer.php service Books/DeleteBook --scope books:write
+```
+Fill each one as `/caligrafy-quill:new-capability` says: a `description` written for an AI agent, `$rules` (+ `$filters`,
+`$descriptions`) for every input, bound queries only, `ServiceError` refusals, `destructive: true` on delete, `level: 1`
+when only administrators may do it. For example:
 ```php
-<?php
+#[Capability(name: 'get_book', description: 'Returns one book by its id, with its title, author and publisher id.', scope: 'books:read', readOnly: true)]
+class GetBook extends Service
+{
+    public $rules = array('id' => 'required|integer');
+    public $descriptions = array('id' => 'The id of the book');
 
-use Caligrafy\Controller;
-
-class BookController extends Controller {
-
-    private $rules = array('title' => 'required|max_len,255', 'author' => 'required|max_len,255');
-    private $filters = array('title' => 'trim|sanitize_string', 'author' => 'trim|sanitize_string');
-
-    // GET /books
-    public function index()
+    public function handle(array $input, Context $context)
     {
-        $this->associate('Book', 'books');
-        return view('Book/index', array('books' => $this->all(array('order' => 'ORDER BY created_at DESC'))));
-    }
-
-    // GET /books/{id}
-    public function read()
-    {
-        $this->associate('Book', 'books');
-        $book = $this->find();
-        if (!$book) { http_response_code(404); return api(array('error' => 'Book not found')); }
-        return view('Book/read', array('book' => $book));
-    }
-
-    // POST /books
-    public function create()
-    {
-        $this->associate('Book', 'books');
-        $data = $this->input();
-        if (isset($data['__errors'])) { http_response_code(422); return api(array('errors' => $data['__errors'])); }
-        $book = new Book();
-        $book->title = $data['title'];
-        $book->author = $data['author'];
-        http_response_code(201);
-        return api($this->save($book));
-    }
-
-    // PUT /books/{id}
-    public function update()
-    {
-        $this->associate('Book', 'books');
-        $book = $this->find();
-        if (!$book) { http_response_code(404); return api(array('error' => 'Book not found')); }
-        $data = $this->input();
-        if (isset($data['__errors'])) { http_response_code(422); return api(array('errors' => $data['__errors'])); }
-        $book->title = $data['title'];
-        $book->author = $data['author'];
-        return api($this->save($book));
-    }
-
-    // DELETE /books/{id}
-    public function remove()
-    {
-        $this->associate('Book', 'books');
-        if (!$this->find()) { http_response_code(404); return api(array('error' => 'Book not found')); }
-        $this->delete();
-        return api(array('deleted' => true));
-    }
-
-    // filter, then validate (Controller::check returns arrays on success AND failure - gotcha G6)
-    private function input()
-    {
-        $data = $this->filter($this->request->parameters(), $this->filters);
-        $valid = $this->validate($data, $this->rules);
-        return $valid === true ? $data : array('__errors' => $valid);
+        $book = (new Book('books'))->find($input['id']);
+        if (!$book) {
+            throw ServiceError::notFound("No book #{$input['id']}");
+        }
+        return $book;
     }
 }
 ```
-Rules:
-- each action calls `associate()` first; never override built-in names (`find`, `save`, `delete`, `all`, `search`, `check`, `validate`, `filter`, `view`, `api`, `associate`, `table`), hence `remove()` not `delete()`;
-- set the HTTP status with `http_response_code()` before `api()`; code after `view()`/`api()` never runs on JSON requests (G21);
-- nested routes: name the parent variable `{book_id}`, not `{id}`, or `save()` will update instead of insert (G23);
-- `save()` writes `0`, `''` and `false` and skips only `null` (G7); in a project still on an older framework falsy values are dropped (G39) - use `Database::execute` there;
-- add `guard('permissions', <level>)` or an `authorized()` check if the resource is private (API key alone is public, G27).
+`create_book`: `(new Book('books'))->create($input)`; `update_book`: refuse a missing id with `notFound`, then
+`->update($changes, $input['id'])` with only the inputs given; `list_books`: `->all(['order' => 'ORDER BY created_at DESC'])`
+(values in `'bindings'`, G8); `delete_book`: `->delete($input['id'])`, return `['deleted' => (int) $input['id']]`.
 
 ### 4. Routes in `application/config/routing/web.php`
 Insert inside the `try` block, after the existing `/` route and before `Route::run();`, with a comment header:
 ```php
-    // BOOK RESOURCE
-    Route::get('/books', 'BookController');
-    Route::get('/books/{id}', 'BookController@read');
-    Route::post('/books', 'BookController@create');
-    Route::put('/books/{id}', 'BookController@update');
-    Route::delete('/books/{id}', 'BookController@remove');
+    // BOOKS: one set of capabilities for the pages, REST, the JS client and AI agents
+    Route::capability('GET', '/api/books', 'list_books');
+    Route::capability('GET', '/api/books/{id}', 'get_book');
+    Route::capability('POST', '/api/books', 'create_book');
+    Route::capability('PUT', '/api/books/{id}', 'update_book');
+    Route::capability('DELETE', '/api/books/{id}', 'delete_book');
+    Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);
+    Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
 ```
-Make sure `Auth::activateAPI();` is present if the resource is consumed as JSON.
+Keep one `Route::capabilities('/capabilities');` and one `Route::mcp('/mcp');` in the file (add them if missing), then
+`php caligrafer.php client` for the JS client. A capability that refuses a page's data sends a visitor to sign in or
+answers 404/403 (G83).
 
 ### 5. Views (only if the user wants HTML pages)
-`application/views/Book/index.pug` and `read.pug`, built with the page components of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (`main.cq-page > .cq-card`: `.cq-card-head`, `.cq-form` with labeled fields and `btn btn-primary cq-submit`, `.cq-list > .cq-item` rows with `.cq-actions`, `.cq-empty`; follow its checklist), `extends ../default/master/layoutblocks`, `block content`, PHP variables (`each $book in $books`, `#{$book->title}`), forms with `=csrf()` and `=methodField('PUT')` (see the `caligrafy` skill). Without views, `view('Book/index', ...)` still works for JSON clients but browsers get a Phug error - use `api()` for JSON-only resources.
+`application/views/Books/index.pug` and `show.pug`, built with the page components of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (`main.cq-page > .cq-card`: `.cq-card-head`, `.cq-form` with labeled fields and `btn btn-primary cq-submit`, `.cq-list > .cq-item` rows with `.cq-actions`, `.cq-empty`; follow its checklist), `extends ../default/master/layoutblocks`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, a thin controller:
+```php
+use Caligrafy\Controller;
+use Caligrafy\ServiceError;
+
+class BookFormController extends Controller
+{
+    public function store()
+    {
+        try {
+            $book = $this->call('create_book');   // the posted fields; never new Book() here
+            redirect('/books/' . $book['id']);   // capabilities return plain arrays
+        } catch (ServiceError $e) {
+            return view('Books/index', array('errors' => $e->fields, 'books' => $this->call('list_books', array())));
+        }
+    }
+}
+```
+with `Route::post('/books', 'BookFormController@store');` and `=csrf()` in the form.
 
 ## Finish
 1. `php -l` every new PHP file (the plugin hook also does it on save).
 2. Offer to run the SQL with `/caligrafy-quill:db application/models/<Entity>/create_db.sql`.
-3. Show test calls: `curl -H "Accept: application/json" -H "Authorization: Bearer $API_KEY" <base>/books` and a POST with `-H "Content-Type: application/json" -d '{...}'` (base: `http://localhost:8080` under Docker, else `http://localhost/<APP_ROOT>`). Read `API_KEY` from `.env` into the shell variable; do not print it.
+3. Check every capability: `php caligrafer.php capabilities`, then `php caligrafer.php call list_books` and `php caligrafer.php call create_book title=...` (an invalid input gives the field messages). Show REST calls with a token: `php caligrafer.php token create "test" --scopes books:read,books:write`, then `curl -H "Accept: application/json" -H "Authorization: Bearer <token>" <base>/api/books` (base: `http://localhost:8080` under Docker, else `http://localhost/<APP_ROOT>`); revoke it after (`token revoke <number>`, G77).
+4. Ask the `caligrafy-reviewer` agent to review the new files.

@@ -37,7 +37,7 @@ An **experience** is a way to reach your application. Each one is shaped for its
 
 | Experience | Who uses it | How it calls `create_task` |
 | --- | --- | --- |
-| Web pages (Pug) | people in a browser | a page script calls the JS client, or a controller calls `$this->call('create_task')` |
+| Web pages (Pug) | people in a browser | a page script calls the JS client, or the page gets it from its route: `Route::page('/tasks/{id}', 'Tasks/show', ['data' => ['task' => 'get_task']])` |
 | Vue apps and the single page application | people on desktop, tablet and phone | `await createTask({ title })` from the generated client (`php caligrafer.php client`) |
 | REST API | other applications | `POST /api/tasks` (`Route::capability('POST', '/api/tasks', 'create_task')`) |
 | AI agents (MCP) | Claude, Cursor and other agents | the `create_task` tool (`Route::mcp('/mcp')`) |
@@ -79,11 +79,11 @@ Online, every experience still calls the same capabilities: the pages, the apps,
 
 ```
 application/
-├── services/      capabilities: each feature, once
+├── services/      capabilities: each feature, once (Users/: the people who sign in)
 ├── models/        the data: one class per table, and its create_db.sql
 ├── views/         the web pages (Pug), built with the page components
-├── controllers/   pages that need server-side logic
-└── config/routing/web.php   the routes: pages, Route::capability, Route::capabilities, Route::mcp
+├── controllers/   only for pages with logic of their own (form posts, sign-in): they call capabilities
+└── config/routing/web.php   the routes: Route::page, Route::capability, Route::capabilities, Route::mcp
 Dockerfile                   the production image (php caligrafer.php deploy runs when it starts)
 public/
 ├── js/capabilities.js       the generated JS client
@@ -91,7 +91,9 @@ public/
 └── <app>/                   Vue apps and the single page application
 ```
 
-Caligrafy is also a classic MVC framework (routes, controllers, models, views), documented in the rest of this wiki. Start with capabilities; reach for a controller when a page needs logic of its own.
+**One rule keeps every experience the same: only capabilities touch models.** Pages get their data from capabilities (`Route::page` with `data`, or the JS client in the browser), controllers call capabilities (`$this->call()`), REST and AI agents call capabilities. Every page goes through `Route::page`, which also gives it who is signed in; see [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
+
+Caligrafy is also a classic MVC framework (routes, controllers, models, views), documented in the rest of this wiki. Start with capabilities; reach for a controller when a page needs logic of its own, and let it call capabilities.
 
 ## Next
 

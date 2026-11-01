@@ -63,7 +63,7 @@ Ask the agent "add a task to buy milk". It calls the `create_task` tool, and the
 
 ## What you just used
 
-The Tasks feature is five small files in `application/services/Tasks/` (one per capability: list, get, create, update, delete). The page, the REST API and the agent all call them, so the rules are the same everywhere: try adding a task without a title from the page, from `curl` and from the agent, and you get the same message each time. [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) explains the idea in a few minutes.
+The Tasks feature is five small files in `application/services/Tasks/` (one per capability: list, get, create, update, delete). The page (`Route::page('/tasks', 'Tasks/index')`), the REST API and the agent all call them, so the rules are the same everywhere: try adding a task without a title from the page, from `curl` and from the agent, and you get the same message each time. [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) explains the idea in a few minutes.
 
 > **The example is open to everyone** (`public: true` on its capabilities), so it works without signing in. Before you put an application online, remove `public: true` and let people sign in or use tokens: [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#secure) shows how.
 

@@ -22,7 +22,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Learning Caligrafy from zero (a user asks for a tutorial or course): the Caligrafy course builds Bookshelf capabilities first in 15 lessons, up to putting it online, each with a manual track and a With Claude track (point the user to it; its lessons match these docs) | https://github.com/caligrafy/caligrafy-quill-course/wiki |
 | Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade, deploy, cloud | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G79) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G84) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -54,6 +54,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | OpenAI chat/images, Assistants, open source agents (Groq, Together, Fireworks, OpenRouter, Ollama) | [09.9.4](reference/09.9.4-ai-openai-chatgpt-dalle.md), [09.9.5](reference/09.9.5-ai-openai-assistants.md), [09.9.6](reference/09.9.6-ai-open-source-agents-groq.md) |
 | Recipe: OpenAI/open model chat app (history, live model list, images, vision, Llama on OpenRouter/Ollama, Vue chat UI) | [recipes-ai-apps.md](reference/recipes-ai-apps.md) |
 | Recipe: face login (liveness challenges, single-use nonce, anti-replay, encrypted prints, lockout, passkeys / WebAuthn step-up) | [recipes-face-login.md](reference/recipes-face-login.md) |
+| **Pages and the rule "only capabilities touch models"** (2.5.0): `Route::page` (options, what the view gets, refusals), when to still write a controller, the user capabilities | [02-routing.md](reference/02-routing.md#pageroutes), [08-controllers.md](reference/08-controllers.md), [09.1-authentication.md](reference/09.1-authentication.md), [23-release-notes-2.5.0.md](reference/23-release-notes-2.5.0.md), G80-G84 |
 | **Any new page or client app UI**: the page components (`.cq-page`, `.cq-card`, `.cq-form`, `.cq-tabs`, `.cq-list`...), a worked example, the checklist | [ui-guidelines.md](reference/ui-guidelines.md) |
 | Wiki table of contents | [wiki-sidebar.md](reference/wiki-sidebar.md) |
 
@@ -67,7 +68,7 @@ application/                 # YOUR server code - every .php here is auto-requir
   config/routing/web.php     # ALL routes; ends with Route::run()
   controllers/               # *Controller.php, any sub-folders (core/Auth, core/AI ship by default)
   models/                    # Model classes + create_db.sql scripts (models/Auth/User.php, models/Auth/create_db.sql)
-  services/                  # capabilities: Service classes with #[Capability] (php caligrafer.php service <Folder/Name>); empty in a new project
+  services/                  # capabilities: Service classes with #[Capability] (php caligrafer.php service <Folder/Name>); Users/ ships the user capabilities (2.5.0)
   views/                     # .pug templates (default/, Auth/, AI/, Client/app.pug)
 public/                      # browser-facing: css, js, images, uploads, client apps public/<appName>/
 framework/                   # rarely edited: core/ (framework + Service, Capability, Context...), interfaces/ (Rest, Mcp/, Client), database/; framework/settings/application is the template for application/
@@ -81,11 +82,12 @@ docker-compose.yaml, docker/ # dev server (8080), phpmyadmin (8077), mysql (3306
 
 - Every table has primary key `id`. Foreign keys are `<lowercase model name>_id` (model name, not table name).
 - One model class per entity, `use Caligrafy\Model;`, one `public $column;` per column, table bound explicitly via `associate()` - there is no implicit table naming.
-- Controllers `use Caligrafy\Controller;`, must have `index()`; pick the model per action with `$this->associate('Book', 'books');`.
+- **Only capabilities touch models** (2.5.0): pages get their data with `Route::page(..., ['data' => [...]])`, controllers call `$this->call('<capability>')`. Controllers (`use Caligrafy\Controller;`, must have `index()`) are for form posts, several capabilities with conditions, and the session (sign-in); `associate()`/`save()`/`all()` in a controller is legacy MVC.
 - Schema is written by hand in SQL (`application/models/<Entity>/create_db.sql`); the framework never migrates (except auto-pivots).
 - Many-to-many pivots are created by `belongsToMany()` (typed like the referenced ids, unique constraint names - G10). Name your own FK constraints `fk_<table>_<column>`.
 - Model writes save `0`, `''` and `false`; only `null` is skipped (G7). `all()` clauses are raw SQL: use `'bindings'` for values (G8).
-- One route file: `application/config/routing/web.php`. Keep `Route::get('/', ...)` first (unmatched URLs fall back to route #1, G4) and `Route::run()` last.
+- Pages: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book'], 'signedIn' => true])` gives the view `authorized`, `user`, the route variables and the data (G74, G83, G84); prefer it to closures returning `view()`.
+- One route file: `application/config/routing/web.php`. Keep the `/` route first (unmatched URLs fall back to route #1, G4) and `Route::run()` last.
 - The same route serves HTML and JSON: `view('tpl', $data)` returns JSON automatically for API calls; `api($data)` always returns JSON.
 
 ## Canonical recipes
@@ -105,39 +107,37 @@ class Book extends Model {
 }
 ```
 ```php
-// application/controllers/Book/BookController.php
-use Caligrafy\Controller;
-class BookController extends Controller {
-    private function context() { $this->associate('Book', 'books'); }
-    public function index()  { $this->context(); return view('Book/index', ['books' => $this->all(['order' => 'ORDER BY created_at DESC'])]); }
-    public function read()   { $this->context(); $book = $this->find(); if (!$book) { http_response_code(404); return api(['error' => 'Not found']); } return api($book); }
-    public function create() {
-        $this->context();
-        $data = $this->filter($this->request->parameters(), ['title' => 'trim|sanitize_string', 'author' => 'trim|sanitize_string']);
-        $valid = $this->validate($data, ['title' => 'required|max_len,255', 'author' => 'required|max_len,255']);
-        if ($valid !== true) { http_response_code(422); return api(['errors' => $valid]); }
-        $book = new Book(); $book->title = $data['title']; $book->author = $data['author'];
-        http_response_code(201); return api($this->save($book));
-    }
-    public function update() { $this->context(); $book = $this->find(); /* filter + validate as above, assign */ return api($this->save($book)); }
-    public function remove() { $this->context(); $this->delete(); return api(['deleted' => true]); }
+// application/services/Books/CreateBook.php  (php caligrafer.php service Books/CreateBook --scope books:write)
+use Caligrafy\Capability; use Caligrafy\Context; use Caligrafy\Service; use Caligrafy\ServiceError;
+#[Capability(name: 'create_book', description: 'Adds a book to the catalog and returns it with its id.', scope: 'books:write')]
+class CreateBook extends Service {
+    public $rules = ['title' => 'required|max_len,255', 'author' => 'required|max_len,255'];
+    public $filters = ['title' => 'trim', 'author' => 'trim'];
+    public function handle(array $input, Context $context) { return (new Book('books'))->create($input); }
 }
+// list_books, get_book (ServiceError::notFound), update_book, delete_book (destructive: true) the same way
 ```
 ```php
 // application/config/routing/web.php (inside the try, before Route::run())
-Route::get('/books', 'BookController');
-Route::get('/books/{id}', 'BookController@read');
-Route::post('/books', 'BookController@create');
-Route::put('/books/{id}', 'BookController@update');
-Route::delete('/books/{id}', 'BookController@remove');
+Route::capability('GET', '/api/books', 'list_books');          // REST
+Route::capability('GET', '/api/books/{id}', 'get_book');
+Route::capability('POST', '/api/books', 'create_book');
+Route::capability('PUT', '/api/books/{id}', 'update_book');
+Route::capability('DELETE', '/api/books/{id}', 'delete_book');
+Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);      // pages: data from capabilities
+Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
+Route::capabilities('/capabilities'); Route::mcp('/mcp');                          // JS client and AI agents
 ```
-Use the `/caligrafy-quill:new-resource` skill to scaffold this including the SQL script.
+**Only capabilities touch models**: no controller reads or writes `Book`. A thin controller only for a classic form
+post, calling the capability (`$this->call('create_book')`, then redirect or re-render with `$e->fields`).
+Use the `/caligrafy-quill:new-resource` skill to scaffold this including the SQL script and the capabilities.
 
 ### Calling the API
 ```bash
-curl -H "Accept: application/json" -H "Authorization: Bearer $API_KEY" http://localhost:8080/books
-curl -X POST -H "Accept: application/json" -H "Authorization: Bearer $API_KEY" -H "Content-Type: application/json" \
-     -d '{"title":"Dune","author":"Herbert"}' http://localhost:8080/books
+TOKEN=$(php caligrafer.php token create "my script" --scopes books:read,books:write | grep -o 'cq_[^ ]*')
+curl -H "Accept: application/json" -H "Authorization: Bearer $TOKEN" http://localhost:8080/api/books
+curl -X POST -H "Accept: application/json" -H "Authorization: Bearer $TOKEN" -H "Content-Type: application/json" \
+     -d '{"title":"Dune","author":"Herbert"}' http://localhost:8080/api/books
 ```
 Browser forms instead need `=csrf()` (and `=methodField('PUT')` for PUT/DELETE) - see G1.
 

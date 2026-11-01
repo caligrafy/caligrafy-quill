@@ -41,8 +41,10 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
    - Generic endpoint + JS client: `Route::capabilities('/capabilities');` then `php caligrafer.php client public/<app>/src/capabilities.js`
      (Vite SPA) or `public/js/capabilities.js`; use `createBook(...)` and `CapabilityError` in the Vue code.
    - MCP: `Route::mcp('/mcp');`
-   - A page on a closure route: pass `'authorized' => authorized()` to `view()`, or it renders everyone as signed out (G74).
-   - Pug page: `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`
+   - Pug page that shows the result: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);` (the
+     view gets `$book` as a plain array, `$authorized`, `$user`; a refusal sends a visitor to sign in or answers 404/403, G83).
+   - A form post: a thin controller, `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`.
+     Never `new <Model>()`, `associate()` or `save()` outside `application/services/`: only capabilities touch models.
    - Any page you build for it (Pug, or a page calling the JS client) uses the page components and the worked example of
      [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md): `main.cq-page > .cq-card`, labeled `.cq-form`, field errors
      in `.cq-error`, `.cq-list` rows with `.cq-actions`, an empty state. Check it at desktop and phone width.

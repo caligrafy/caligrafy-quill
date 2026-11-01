@@ -131,6 +131,9 @@ feature step by step, page included.
 
 + **Every experience:** server-rendered pages (Pug), Vue apps and a Vite single page application, installable mobile
   web apps, REST, and an MCP server for AI agents.
++ **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
+  (`Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
+  never follow different rules.
 + **One look:** ready-made page components (cards, forms, tabs, lists) with the Caligrafy black and white style, the
   same on every page and device.
 + **Secure by design:** sign-in, passkeys and face login for people; scoped, revocable tokens for programs and

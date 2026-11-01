@@ -121,7 +121,7 @@ Add two routes to `application/config/routing/web.php`, above `Route::run();` (a
     // BOOKS: two capabilities, a REST API and a page
     Route::capability('GET', '/api/books', 'list_books');
     Route::capability('POST', '/api/books', 'create_book');
-    Route::get('/books', function () { return view('Books/index'); });
+    Route::page('/books', 'Books/index');
 ```
 Try it:
 ```bash

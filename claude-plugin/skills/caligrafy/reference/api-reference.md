@@ -28,6 +28,7 @@ Route::get(string $route, string|callable $method = null)
 Route::post(string $route, string|callable $method = null)
 Route::put(string $route, string|callable $method = null)
 Route::delete(string $route, string|callable $method = null)
+Route::page(string $route, string $view, array $options = [])   // 2.5.0+: a GET route rendered by Caligrafy\PageController::render($view, $options)
 Route::run()                       // MUST be the last call in web.php
 Route::$currentRoute               // matched route pattern, e.g. "books/{id}"
 Route::$currentBind                // ['id' => '12', ...] (+ query string params for GET routes)
@@ -37,6 +38,7 @@ Route::$currentBind                // ['id' => '12', ...] (+ query string params
 - No match (or wrong method) falls back to the **first route declared** (keep `Route::get('/', ...)` first).
 - For controller routes: missing class/method throws `[ERROR 1001]` (404); a JSON request (`wantsJson()`) without `Auth::activateAPI()` or without a valid Bearer API key throws `[ERROR 1004] Access Denied` (401). Closure routes skip the API-key check.
 - Method spoofing: a `_method` field (`PUT`/`DELETE`) in `$_REQUEST` overrides the HTTP method.
+- `Route::page()` (2.5.0, `framework/core/{Route,PageController}.php`): registers `Route::get($route, closure)` that runs `(new PageController())->render($view, $options)`. `render()`: `level` (int) or `signedIn` (bool) without `Auth::active()` throws `LogicException`; with it, `Auth::guard('permissions', $level)` (visitors -> `/login`, lower permissions -> `/notAuthorized`). Then `with` (array) is the base data; each `data` entry `name => 'capability'` or `name => ['capability', $inputs]` runs `$this->call($capability, $inputs)` (inputs `null` = `Route::$currentBind` + the request parameters, i.e. route variables and query string), as `Context::fromRequest($request, 'web')`. A `ServiceError`: `unauthenticated` with auth active -> `redirect('/login')`; `forbidden` or `unauthenticated` without auth -> `Errors::raise(1006)` (403); anything else (`not_found`, `invalid`, `conflict`) -> `Errors::raise(1005)` (404). The view gets `array_merge(Route::$currentBind, $data, ['authorized' => Auth::active() && Auth::authorized(), 'user' => ['id','username','permissions'] or null])`: route variables (and, for GET, query parameters) first, `authorized`/`user` last (they win).
 
 ## Auth (`Caligrafy\Auth`)
 
@@ -201,8 +203,9 @@ Root `.htaccess` (mod_rewrite only, `AllowOverride FileInfo`): front controller 
 ## Auth module templates (`framework/settings/application`, copied to `application/` by initialize)
 - `models/Auth/User.php`: `findByUsername($username)`, `User::hashPassword($password)`, `verifyPassword($password)` (hash, or legacy `encryptDecrypt` value), `needsRehash()`.
 - The example controllers below are in `namespace Caligrafy\Controllers` (template routes use the full names; short names still resolve, G47).
-- `controllers/core/Auth/AuthController.php`: `index, registerForm, home, register, login, logout, notAuthorized`; login upgrades legacy passcodes. Passwords 8-72 chars, alphanumeric unique usernames.
-- `controllers/core/Auth/AdminController.php`: `ADMIN_PERMISSION = 1`; `index, editUserForm, updateUser, deleteUser` all `guard('permissions', 1)`.
+- `controllers/core/Auth/AuthController.php`: `index, registerForm, home, register, login, logout, notAuthorized`; login upgrades legacy passcodes. Passwords 8-72 chars, alphanumeric unique usernames. Since 2.5.0 `register()` checks the two passwords match, then `$this->call('register_user', [...])`: `conflict` -> "You are already registered", `invalid` -> the field errors; login/logout keep the `User` model (the session).
+- `controllers/core/Auth/AdminController.php`: `ADMIN_PERMISSION = \CaligrafyUsers::ADMIN_LEVEL` (1); `index, editUserForm, updateUser, deleteUser` all `guard('permissions', self::ADMIN_PERMISSION)`, then (2.5.0) call `list_users` / `get_user` / `update_user` / `delete_user` (route variable `id` via `currentBind()`); a refused get/update/delete redirects to `/admin` (`invalid` re-renders the form with `$e->fields`); the password confirmation stays a form check.
+- `services/Users/` (2.5.0): `CaligrafyUsers` (`ADMIN_LEVEL = 1`, `profile($user)` -> id, username, permissions, created_at, modified_at: never `passcode`); `list_users`, `get_user` (`users:read`, `level: ADMIN_LEVEL`, readOnly), `update_user` (`users:write`, level; inputs id, username `alpha_numeric|max_len,100` unique, passcode `min_len,8|max_len,72` hashed, permissions 0-255; only non-empty inputs change, sets modified_at), `delete_user` (`users:write`, level, destructive; refuses `$context->user->id === id` with `forbidden`), `register_user` (`users:write`, `public: true`; `forbidden` unless `$context->channel` is `web` or `cli`; `conflict` when the username exists; creates permissions 0).
 - `models/Auth/create_db.sql`: `CREATE TABLE IF NOT EXISTS users` (passcode varchar(255), unique username).
 - `controllers/core/AI/ClientController.php` + `views/Client/app.pug`: client apps (G15, G35). `controllers/core/AI/AIController.php`: OpenAI example using `OpenAI::type()`/`command()`.
 
@@ -399,7 +402,7 @@ URLs: `{WATSON_URL}/v2/assistants/{assistant_id}[/environments/{environment_id}]
 | 4000/4001 | Mail errors | |
 | 5000 | Key generator error | |
 
-Errors are caught in `web.php` by `Errors::handle($e)`: HTTP status from `Errors::status($code)` (1001 → 404, 1004 → 401, 3000 → 403, 1000 → 405, anything else → 500), the `[ERROR ...]` text for HTML requests and `{"error": {"code": ..., "message": "..."}}` (prefix removed) when the request wants JSON. `Errors::raise($code)` (used by the router and the CSRF check) sets the status and returns the exception, so the status is right even with an old `web.php` that only echoes. `Framework::run()` buffers output (`ob_start` 1 MB chunks), and registers `Errors::shutdown` (PHP fatals → 500, partial page discarded) and an exception handler (uncaught `Throwable` → 500); their message is only shown when `APP_DEBUG=true`, otherwise `[ERROR 500] Internal Server Error`. Before this fix every error was HTTP 200.
+Errors are caught in `web.php` by `Errors::handle($e)`: HTTP status from `Errors::status($code)` (1001 → 404, 1004 → 401, 1005 → 404 Page Not Found and 1006 → 403 Forbidden (2.5.0, raised by `PageController`), 3000 → 403, 1000 → 405, anything else → 500), the `[ERROR ...]` text for HTML requests and `{"error": {"code": ..., "message": "..."}}` (prefix removed) when the request wants JSON. `Errors::raise($code)` (used by the router and the CSRF check) sets the status and returns the exception, so the status is right even with an old `web.php` that only echoes. `Framework::run()` buffers output (`ob_start` 1 MB chunks), and registers `Errors::shutdown` (PHP fatals → 500, partial page discarded) and an exception handler (uncaught `Throwable` → 500); their message is only shown when `APP_DEBUG=true`, otherwise `[ERROR 500] Internal Server Error`. Before this fix every error was HTTP 200.
 
 ## Caligrafer CLI (`php caligrafer.php <cmd>` or `.bin/caligrafer <cmd>`)
 | Command | Effect (from caligrafer.php) |

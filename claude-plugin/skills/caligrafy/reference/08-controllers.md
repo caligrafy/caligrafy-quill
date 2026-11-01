@@ -5,6 +5,19 @@
 
 > **Where this fits.** In Caligrafy, the rules of a feature live in a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service), and a controller is the web experience of it: it calls the capability (`$this->call('create_book')`, see [Calling a capability](#callcapability)) and chooses the view. Write logic in a controller only when it belongs to one page.
 
+## When to write a controller (since 2.5.0)
+
+**Only capabilities touch models.** A capability reads and writes the data, with its rules; pages, controllers, the REST API and AI agents call capabilities. So most pages need no controller at all:
+
+| You need | Use |
+| --- | --- |
+| A page, with or without data | `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);` ([Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes)) |
+| A page that only signed-in people or administrators may open | `Route::page(..., ['signedIn' => true])` or `['level' => 1]` |
+| A form post, several capabilities with conditions, a choice between views | a thin controller whose actions call capabilities with `$this->call()` ([below](#callcapability)) |
+| Sign-in, sign-out, a session | a controller: the web session is the only thing capabilities never touch (`AuthController`) |
+
+A controller that calls `new Book(...)`, `associate()`, `save()` or `all()` keeps its rules for the web only: REST and AI agents would follow other rules. The controller methods below remain for existing projects and for learning how Caligrafy works underneath.
+
 ## Getting Started with Controllers
 A `Controller` is a key entity in an MVC architecture. It is the layer that is responsible for interfacing with both the `Model` and the `View`. It takes its input from a `View`, interfaces with the `Model` to either get information or add to the information, it calls upon any other logic that needs to be applied to the information and finally sends it back to the `View` to be displayed. 
 
@@ -163,6 +176,14 @@ class BookController extends Controller {
 }
 ```
 The same `create_book` then answers `POST /books` over REST, `createBook()` in a Vue app and the `create_book` tool of an AI agent, with the same rules.
+
+Route the form to it, and show the form and the book with `Route::page`:
+```php
+Route::page('/books/new', 'Books/form', ['signedIn' => true]);
+Route::post('/books', 'BookController@store');
+Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
+```
+The framework's own user administration works this way since 2.5.0: `AdminController` calls `list_users`, `get_user`, `update_user` and `delete_user` (see [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#usercapabilities)).
 
 ## Controller Methods & Properties
 

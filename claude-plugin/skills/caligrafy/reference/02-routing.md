@@ -57,6 +57,32 @@ Route::get('books/{id}', function() {
 ```
 By doing so, any value that you put after `books/` will be captured and you will be able to use it in your code. So if you navigate to `http://your-app/books/1`, your code will be able to capture 1. Similarly, if you replace the one with another value, your code will be able to capture that value. Later you will learn how you can fetch this value in your code.
 
+## Page Routes
+
+Since 2.5.0 a **page** has its own route method. `Route::page` renders a view through the framework's page controller, so every page is built the same way:
+```php
+Route::page('/', 'default/index');                                             // a page
+Route::page('/books', 'Books/index');                                          // its data comes from the JS client in the browser
+Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);  // its data comes from a capability
+Route::page('/account', 'Account/index', ['signedIn' => true]);                // signed-in people only
+Route::page('/admin/books', 'Books/admin', ['level' => 1, 'data' => ['books' => 'list_books']]);
+```
+
+| Option | What it does |
+| --- | --- |
+| `data` | `name => capability`: calls each capability as the person who opens the page, with the route variables and the query string as inputs (`/books/3` gives `get_book` the input `id = 3`), and passes the result to the view as `$name`. `name => ['capability', ['input' => 'value']]` gives fixed inputs instead |
+| `signedIn` | `true`: visitors are sent to `/login` |
+| `level` | people whose `permissions` are lower are sent to `/notAuthorized` (visitors to `/login`) |
+| `with` | fixed values for the view: `['with' => ['title' => 'Books']]` |
+
+**What the view receives**, on every page: `$authorized` (true when someone is signed in), `$user` (`id`, `username`, `permissions`, or `null`), the route variables (`$id`) and the `data` and `with` values. A page on a closure route (`Route::get('/books', function () { return view('Books/index'); })`) gets none of this unless the closure passes it.
+
+**When a capability refuses** the page's data: a visitor is sent to `/login`; a signed-in person gets `[ERROR 1006] Forbidden` (403) when the capability is not allowed to them, and `[ERROR 1005] Page Not Found` (404) otherwise (no record, or inputs the capability refuses).
+
+`signedIn` and `level` need the authentication module (`Auth::authentication('User', 'users');` in `web.php`): without it, such a page fails with an error that says so.
+
+**Pages never read models**: their data comes from capabilities, so a page, the REST API and AI agents follow the same rules. Use a [controller](#controllerroute) only when a page has logic of its own (a form post, several capabilities with conditions), and make it call capabilities too ([Calling a capability](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)).
+
 ## Controller Routing
 
 In an MVC structure, you most likely want to route to a controller to hand off the logic to a controller class that will handle executing that logic. In order to do this, you could define a route that will call the controller:

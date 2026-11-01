@@ -218,8 +218,10 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 header and any `if $authorized` in a page read the variable the route gives. The framework's controllers pass it
 (`AuthController`, `AdminController`, `AIController`), closure routes do not: `Route::get('/books', function () { return view('Books/index'); });`
 renders every visitor as signed out (no *Sign out*, the signed-in parts hidden). Pass it from every route of such a
-page: `view('Books/index', array('authorized' => authorized()))`, and the same for `/` and `/home`. Proof:
-`framework/helpers/corehelpers.php` (`view()`), the controllers in `framework/settings/application/controllers/core/`.
+page: `view('Books/index', array('authorized' => authorized()))`, and the same for `/` and `/home`. Since 2.5.0 use
+`Route::page('/books', 'Books/index')` instead: the page controller always passes `authorized`, `user` and the route
+variables. Proof: `framework/helpers/corehelpers.php` (`view()`), `framework/core/PageController.php`, the controllers
+in `framework/settings/application/controllers/core/`.
 
 **G75. The sign-up form accepts usernames of letters and digits only.** `AuthController::register()` validates
 `username` with `required|alpha_numeric|max_len,100`: an email address, a dot or a dash is refused ("The username
@@ -244,4 +246,39 @@ application a capability for signed-in people that calls `Tokens::create($name, 
 and refuses token contexts (`$context->token !== null`: a token must not create tokens), with a small page card that
 shows the token once and the `claude mcp add` line (the `idea` skill's `create_my_token`). It still appears in MCP
 `tools/list` for a token with its scope or `*`: its refusal there is expected.
+
+## Pages and the user capabilities (2.5.0: `Route::page`, only capabilities touch models)
+
+**G80. After upgrading to 2.5.0, a capability or class of the project can collide with the user capabilities.**
+`upgrade --apply` adds `application/services/Users/` (`list_users`, `get_user`, `update_user`, `delete_user`,
+`register_user`; classes `ListUsers`, `GetUser`, `UpdateUser`, `DeleteUser`, `RegisterUser`, `CaligrafyUsers`). A
+project service declaring one of those capability names makes the registry throw `LogicException: Two services declare
+the capability 'list_users'` on every capability call; a project class with one of those names is a PHP fatal
+("Cannot declare class"), since every file of `application/` is required in one namespace. Rename the project's own
+before `--apply`, or delete the framework file it does not want. Proof: `framework/core/Capabilities.php` (`all()`).
+
+**G81. `register_user` is refused over REST and MCP.** It is `public: true` (visitors sign up) but throws `forbidden`
+unless `$context->channel` is `web` or `cli`, so nobody can create accounts in bulk through `/capabilities/register_user`,
+a `Route::capability` route or an agent. Sign-up goes through the sign-up page (`AuthController@register` calls it) or
+`php caligrafer.php call register_user username=... passcode=...`. Proof: `application/services/Users/RegisterUser.php`.
+
+**G82. The administrator level now lives in `CaligrafyUsers::ADMIN_LEVEL`.** The user capabilities declare
+`level: CaligrafyUsers::ADMIN_LEVEL` and the 2.5.0 `AdminController` sets `ADMIN_PERMISSION` from it. A project that
+raised `ADMIN_PERMISSION` in its customized `AdminController` (kept by `upgrade`) still guards its pages with its own
+value, but the capabilities (and REST, MCP) use 1: set `ADMIN_LEVEL` in `application/services/Users/CaligrafyUsers.php`
+to the same value. Proof: `application/services/Users/*.php`, `controllers/core/Auth/AdminController.php`.
+
+**G83. `Route::page` data: inputs are the route variables and the query string, and a refusal decides the answer.**
+`'data' => ['book' => 'get_book']` calls `get_book` as the person who opens the page with `currentBind` + the request
+parameters (`/books/3?x=1` gives `id = 3`, `x = 1`; undeclared inputs are dropped by the capability). Give fixed inputs
+with `['book' => ['get_book', ['id' => 3]]]` (then the route variables are not used). A refusal ends the page: a visitor
+(`unauthenticated`) is redirected to `/login`; `forbidden` answers `[ERROR 1006]` (403); `not_found`, `invalid` and
+`conflict` answer `[ERROR 1005]` (404). So a page whose data needs sign-in is enough to protect it, and a capability
+that needs an input the URL does not give makes the page a 404. The view also receives the route variables (and, on
+GET, the query parameters) as variables. Proof: `framework/core/PageController.php`, `Controller::call()`.
+
+**G84. `Route::page` with `signedIn` or `level` needs the authentication module.** Without
+`Auth::authentication('User', 'users');` in `web.php`, such a page throws `LogicException("Route::page('...'):
+'signedIn' and 'level' need Auth::authentication(...)")` (a 500). Pages without those options work without it
+(`$authorized` is then false). Proof: `framework/core/PageController.php` (`render()`).
 

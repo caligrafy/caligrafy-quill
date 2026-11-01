@@ -29,6 +29,7 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
 (agents). `php caligrafer.php capabilities` lists them.
 
 ## Rules
+- Only capabilities touch models: pages use `Route::page` (with `data` from capabilities), controllers call `$this->call()`; never a model in a controller, a route or a view.
 - Bound queries only (`?` placeholders and `'bindings'`): never concatenate request data into SQL.
 - Every new page or client app UI uses the page components of `public/css/tokens.css` (`main.cq-page > .cq-card`, `.cq-form`,
   `.cq-tabs`, `.cq-list`): see `ui-guidelines.md`, and check it at desktop and phone width.
