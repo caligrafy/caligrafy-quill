@@ -1,46 +1,28 @@
-extends ../default/master/layoutblocks
+extends ../default/master/site
+
+block title
+  | Create account · Caligrafy
 
 block content
-    form(id='user_new_form', method='POST', enctype="multipart/form-data")
-        =csrf()
-        div(class='content-section bounded-xlarge')   
-            div(class='wrapper width-max-600')
-                .spacer-4
-                .card(class="dropshadow color0 horizontal-center equally-spaced-1")
-                    section(class='main-section horizontal-left color0 maketransparent')
-                        if $error
-                            include ../default/modules/messaging
-                        .spacer-2
-                        span(class='normal medium-text textcolor1') Sign up to Caligrafy
-                        .spacer-2
-                        .mb-3
-                            label(for='username', class=isset($errors['username']) ? 'textcolor5 error' : 'textcolor5') * username
-                            if isset($errors['username'])
-                                p(class='error')= $errors['username']
-                            input(type='text', name='username', id='username' class='form-control input-default', value=$user->username?? '', required, placeholder='Enter a username', maxlength='100')
-                        .spacer-1
-
-                        .mb-3
-                            label(for='passcode', class=isset($errors['passcode']) ? 'textcolor5 error' : 'textcolor5') * passcode
-                            if isset($errors['passcode'])
-                                p(class='error')= $errors['passcode']
-                            input(type='password', name='passcode', id='passcode' class='form-control input-default', required, placeholder='Enter a passcode', maxlength='72')
-                        .spacer-1      
-
-                        .mb-3
-                            label(for='confirmpasscode', class=isset($errors['passcode']) ? 'textcolor5 error' : 'textcolor5') * confirm passcode
-                            if isset($errors['passcode'])
-                                p(class='error')= $errors['passcode']
-                            input(type='password', name='confirmpasscode', id='confirmpasscode' class='form-control input-default', required, placeholder='Confirm your passcode', maxlength='72')
-                        .spacer-1     
-
-                        .spacer-2
-
-                        input(class='btn btn-primary btn-md w-100', type='submit' value='Sign up')
-                        .spacer-2
-
-
-                .card(class="horizontal-center color0 equally-spaced-1 dropshadow")
-                    p(class="medium-text") Have an account?
-                    a(href="{$home}login", class='btn btn-secondary input-size-150') Sign in
-        .spacer-3
+  main.cq-auth
+    h1 Create account
+    p.cq-lead Letters and digits for the username, at least 8 characters for the password.
+    include ../default/modules/notice
+    form#user_new_form(method='POST', enctype="multipart/form-data")
+      =csrf()
+      .cq-field
+        label(for='username') Username
+        input#username.form-control(type='text', name='username', value=$user->username?? '', required, autocomplete='username', autocapitalize='none', maxlength='100')
+        if isset($errors['username'])
+          p.cq-field-error= $errors['username']
+      .cq-field
+        label(for='passcode') Password
+        input#passcode.form-control(type='password', name='passcode', required, autocomplete='new-password', maxlength='72')
+        if isset($errors['passcode'])
+          p.cq-field-error= $errors['passcode']
+      .cq-field
+        label(for='confirmpasscode') Confirm password
+        input#confirmpasscode.form-control(type='password', name='confirmpasscode', required, autocomplete='new-password', maxlength='72')
+      button.btn.btn-primary(type='submit') Create account
+    .cq-or Or
+    a.btn.btn-secondary.cq-btn-block(href="{$home}login") Sign in

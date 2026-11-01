@@ -123,7 +123,7 @@ answers 404/403 (G83); add `'notFound' => 'Books/missing'` to show your own 404 
 be page data, and the view never gets the query string.
 
 ### 5. Views (only if the user wants HTML pages)
-`application/views/Books/index.pug` and `show.pug`, built with the page components of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (`main.cq-page > .cq-card`: `.cq-card-head`, `.cq-form` with labeled fields and `btn btn-primary cq-submit`, `.cq-list > .cq-item` rows with `.cq-actions`, `.cq-empty`; follow its checklist), `extends ../default/master/layoutblocks`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, a thin controller:
+`application/views/Books/index.pug` and `show.pug`, built with Caligrafy's look of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (a title band `section.cq-hero.cq-hero--page`, then `section.cq-band > .cq-inner`: a `.cq-form-grid` of labeled `.cq-field`s and `btn btn-primary`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`; follow its checklist), `extends ../default/master/site`, `block title`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, a thin controller:
 ```php
 use Caligrafy\Controller;
 use Caligrafy\ServiceError;

@@ -1,12 +1,10 @@
 <!-- Component Template -->
 
 <template>
-	<div class='horizontal-center default-text'>
-		<div class="semibold medium-text">
-			{{ header }}
-		</div>
-		{{ message }}
-	</div>
+	<section class='cq-hero cq-hero--page'>
+		<h1 class='cq-display'>{{ header }}</h1>
+		<p class='cq-lead'>{{ message }}</p>
+	</section>
 </template>
 
 <script>

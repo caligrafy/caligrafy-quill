@@ -2,17 +2,25 @@
 <html lang="en">
     <head>
         <meta charset="UTF-8">
-        <meta name="viewport" content="width=device-width, initial-scale=1">
+        <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
         <title>Caligrafy Bot</title>
 
         <!-- Stylesheet and head scripts go here -->
         <link rel="shortcut icon" href="<?php echo scripts('favicon'); ?>" type="image/x-icon" />
         <link rel="stylesheet" href="<?php echo scripts('bootstrap_css'); ?>" />
+        <link rel="stylesheet" href="<?php echo session('public').'css/theme.css';?>">
+        <link rel="stylesheet" href="<?php echo session('public').'css/tokens.css';?>">
+        <link rel="stylesheet" href="<?php echo session('public').'css/layout.css';?>">
+        <link rel="stylesheet" href="<?php echo session('public').'css/look.css';?>">
         <link rel="stylesheet" href="<?php echo session('public').'css/bot.css';?>">
+        <?php if (design_stylesheet()): ?><link rel="stylesheet" href="<?php echo design_stylesheet(); ?>"><?php endif; ?>
     </head>
 
-    <body>
-        <!-- Chat application (Vue 3) -->
+    <body class="cq-site bot-page">
+        <nav class="cq-nav" aria-label="Main">
+            <a class="cq-nav-brand" href="<?php echo session('home'); ?>"><img class="cq-nav-mark" src="<?php echo session('public').'images/resources/caligrafy-mark.svg'; ?>" alt="" width="28" height="28"><span class="semibold">Cali</span>grafy</a>
+        </nav>
+        <!-- Chat application (Vue 3): the conversation, then the answer bar -->
         <div id="app" class="bot-container" v-cloak>
             <div class="bot-messages" ref="messages">
                 <div v-for="(message, index) in messages" :key="index" class="bot-message" :class="message.human ? 'human' : 'bot'">
@@ -27,7 +35,7 @@
 
             <!-- Buttons answer (Watson "option" responses) -->
             <div v-if="action.type === 'button'" class="bot-actions">
-                <button v-for="option in action.options" :key="option.value" type="button" class="btn btn-outline-primary btn-sm" @click="answer(option.value, option.text)">{{ option.text }}</button>
+                <button v-for="option in action.options" :key="option.value" type="button" class="btn btn-secondary" @click="answer(option.value, option.text)">{{ option.text }}</button>
             </div>
 
             <!-- Free text answer -->

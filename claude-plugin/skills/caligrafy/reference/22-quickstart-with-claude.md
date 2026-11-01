@@ -3,6 +3,8 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
+![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
+
 Describe your idea in a sentence. [Claude Code](https://claude.com/claude-code) builds it the Caligrafy way, every feature written once, checks it from every side, and puts it online at `https://<name>.caligrafy.com`. You then use the same application from a web page, your phone, other programs over REST and AI agents.
 
 The [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) shows Caligrafy with a ready-made example in 5 minutes. This page goes from **your** idea to an application online, usually in 15 to 30 minutes, most of it Claude working.

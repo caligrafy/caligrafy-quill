@@ -1,43 +1,47 @@
-extends ../default/master/layoutblocks
+extends ../default/master/site
 
-//- Tasks example: built from the Caligrafy page components (public/css/tokens.css), no page-specific CSS
+//- Tasks example: built from the structure of public/css/layout.css (a title band, a form row, segments, rows),
+//- no page-specific CSS. The page, REST (/api/tasks) and AI agents (/mcp) use the same capabilities.
+
+block title
+  | Tasks · Caligrafy
 
 block content
-    main.cq-page
-        .cq-card
-            .cq-card-head
-                h2.cq-title Tasks
-                p.cq-note
-                    | The same tasks as the REST API (
-                    code /api/tasks
-                    | ) and the MCP tools (
-                    code /mcp
-                    | ): changes made by an AI agent appear here within a few seconds.
+  section.cq-hero.cq-hero--page
+    h1.cq-display Tasks
+    p.cq-lead
+      | The same tasks as the REST API (
+      code /api/tasks
+      | ) and the MCP tools (
+      code /mcp
+      | ): changes made by an AI agent appear here within a few seconds.
 
-            form#new-task.cq-form(novalidate)
-                .cq-fields.cq-fields--2
-                    div
-                        label(for='task-title') * Task
-                        input#task-title.form-control(type='text', name='title', placeholder='What has to be done?', maxlength='200', autocomplete='off')
-                    div
-                        label(for='task-notes') Notes
-                        input#task-notes.form-control(type='text', name='notes', placeholder='Optional', maxlength='1000', autocomplete='off')
-                button.btn.btn-primary.cq-submit(type='submit') Add task
+  section.cq-band.cq-band--tight
+    .cq-inner.cq-inner--narrow
+      form#new-task(novalidate)
+        .cq-form-grid
+          .cq-field
+            label(for='task-title') Task
+            input#task-title.form-control(type='text', name='title', placeholder='What has to be done?', maxlength='200', autocomplete='off')
+          .cq-field
+            label(for='task-notes') Notes
+            input#task-notes.form-control(type='text', name='notes', placeholder='Optional', maxlength='1000', autocomplete='off')
+          .cq-field
+            label.cq-hidden-label(for='add-task') &nbsp;
+            button#add-task.btn.btn-primary.cq-btn-block(type='submit') Add task
+      p#error.cq-field-error(role='alert')
 
-            p#error.cq-error(role='alert')
+      .cq-segments(role='tablist')
+        button.active(type='button', role='tab', aria-selected='true', data-status='all') All
+          span.cq-count(data-count='all') 0
+        button(type='button', role='tab', aria-selected='false', data-status='open') Open
+          span.cq-count(data-count='open') 0
+        button(type='button', role='tab', aria-selected='false', data-status='done') Done
+          span.cq-count(data-count='done') 0
 
-            .cq-tabs(role='tablist')
-                button.active(type='button', role='tab', aria-selected='true', data-status='all') All
-                    span.cq-count(data-count='all') 0
-                button(type='button', role='tab', aria-selected='false', data-status='open') Open
-                    span.cq-count(data-count='open') 0
-                button(type='button', role='tab', aria-selected='false', data-status='done') Done
-                    span.cq-count(data-count='done') 0
-
-            ul#list.cq-list
-            p#empty.cq-empty(hidden) No tasks here yet.
-
-            .cq-foot Updates every few seconds
+      ul#list.cq-rows
+      p#empty.cq-empty-state(hidden) No tasks here yet.
+      p.cq-auth-note Updates every few seconds
 
 block additional_scripts
-    script(type='module', src="{$home}public/js/tasks.js")
+  script(type='module', src="{$home}public/js/tasks.js")

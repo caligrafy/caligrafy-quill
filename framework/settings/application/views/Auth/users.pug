@@ -1,33 +1,25 @@
-extends ../default/master/layoutblocks
+extends ../default/master/site
+
+block title
+  | Team members · Caligrafy
+
+block nav_links
+  a.cq-nav-link.is-active(href="{$home}users") Team
+  a.cq-nav-link(href="{$home}logout") Sign out
 
 block content
-	.content-section
-		.spacer-2
-		.wrapper
-			.spacer-4
-			.card-unbounded.dropshadow.color0
-				h2.textcolor5.semibold.medium-text.reset-margin Team members
-				.spacer-1
-				table.table.table-hover
-					thead
-						th.fixedcol-xs.semibold Permission
-						th.fixedcol.semibold.d-none.d-lg-table-cell User Id
-						th.fixedcol.semibold Username
-						th.semibold.d-none.d-lg-table-cell Date
-					tbody
-						each $user in $users
-							tr
-								td.fixedcol-xs
-									a(href="{$home}users/{$user->id}/edit")
-										p
-											if $user->permissions > 0
-												span.badge.bg-success= $user->permissions
-											else
-												span.badge.bg-danger= $user->permissions
-								td.fixedcol.d-none.d-lg-table-cell
-									a(href="{$home}users/{$user->id}/edit") #{$user->id}
-								td.fixedcol
-									a(href="{$home}users/{$user->id}/edit") #{$user->username}
-								td.fixedcol.d-none.d-lg-table-cell
-									a(href="{$home}users/{$user->id}/edit") #{$user->modified_at}
-	.spacer-3
+  section.cq-hero.cq-hero--page
+    h1.cq-display Team members
+    p.cq-lead= count($users) . (count($users) == 1 ? ' person' : ' people') . '. Open one to change their name, password or level.'
+  section.cq-band.cq-band--tight
+    .cq-inner.cq-inner--narrow
+      ul.cq-rows
+        each $user in $users
+          li.cq-row
+            .cq-row-main
+              p.cq-row-title
+                a(href="{$home}users/{$user->id}/edit")= $user->username
+              p.cq-row-meta= 'Updated ' . $user->modified_at
+            .cq-row-actions
+              span(class="cq-badge" . ($user->permissions > 0 ? ' cq-badge--strong' : ''), title="Level")= 'Level ' . $user->permissions
+              a.btn.btn-secondary(href="{$home}users/{$user->id}/edit") Edit

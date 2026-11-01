@@ -1,41 +1,28 @@
-extends ../default/master/layoutblocks
+extends ../default/master/site
+
+block title
+  | Sign in · Caligrafy
 
 block content
-    div(class='content-section bounded-xlarge color4')
-        div(class='wrapper width-max-600')
-            .spacer-4
-            .card(class="horizontal-center color0 equally-spaced-1 dropshadow")
-                section(class='main-section horizontal-left color0')
-                    if $error
-                        include ../default/modules/messaging
-                    .spacer-2
-                    if $authorized
-                        .spacer-2
-                        p(class='medium-text') Welcome to Caligrafy. You are now signed in.
-                        .spacer-4
-                        .horizontal-center
-                            a(href="{$home}projects" class='btn btn-secondary btn-lg ') discover my projects
-                        .spacer-2
-                    else
-                        form(id='login_form', method='POST', enctype="multipart/form-data", action="{$home}login")
-                            =csrf()
-                            .mb-3
-                                label(for='username', class='default-text textcolor5') * username
-                                input(type='text', name='username', id='username' class='form-control input-default', required, placeholder='Enter a username', maxlength='100')
-
-                            .mb-3
-                                label(for='passcode', class='default-text textcolor5') * passcode
-                                input(type='password', name='passcode', id='passcode' class='form-control input-default', required, placeholder='Enter a passcode', maxlength='72')
-                            .spacer-4    
-
-
-                            input(class='btn btn-primary btn-secondary w-100', type='submit' value='Sign in')
-                            .spacer-1
-
-
-            .card(class="horizontal-center color0 equally-spaced-1 dropshadow")
-                p(class="medium-text") Don't have an account? 
-                a(href="{$home}register", class='btn btn-secondary input-size-150') Sign up
-
-    .spacer-3
-            
+  if $authorized
+    section.cq-hero
+      h1.cq-display You are signed in
+      p.cq-lead Welcome to Caligrafy.
+      .cq-cta
+        a.btn.btn-primary(href="{$home}") Continue
+        a.btn.btn-secondary(href="{$home}logout") Sign out
+  else
+    main.cq-auth
+      h1 Sign in
+      include ../default/modules/notice
+      form#login_form(method='POST', enctype="multipart/form-data", action="{$home}login")
+        =csrf()
+        .cq-field
+          label(for='username') Username
+          input#username.form-control(type='text', name='username', required, autocomplete='username', autocapitalize='none', maxlength='100')
+        .cq-field
+          label(for='passcode') Password
+          input#passcode.form-control(type='password', name='passcode', required, autocomplete='current-password', maxlength='72')
+        button.btn.btn-primary(type='submit') Sign in
+      .cq-or Or
+      a.btn.btn-secondary.cq-btn-block(href="{$home}register") Create account

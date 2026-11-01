@@ -47,8 +47,9 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
    - A form post: a thin controller, `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`.
      Never `new <Model>()`, `associate()` or `save()` outside `application/services/`: only capabilities touch models.
    - Any page you build for it (Pug, or a page calling the JS client) uses the page components and the worked example of
-     [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md): `main.cq-page > .cq-card`, labeled `.cq-form`, field errors
-     in `.cq-error`, `.cq-list` rows with `.cq-actions`, an empty state. Check it at desktop and phone width.
+     [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md): `extends ../default/master/site`, a title band, labeled
+     `.cq-field`s, field errors in `.cq-field-error`, `.cq-rows` with `.cq-row-actions`, an empty state. Check it at
+     desktop and phone width.
 4. **A token for agents** (only when MCP or a program needs it): `php caligrafer.php token create "<what it is for>" --scopes <scopes>`
    (add `--user <id>` so the user's level applies, `--expires <days>`). Show the token once and tell the user to
    store it as a secret; never write it into a file of the project. Connect Claude Code:

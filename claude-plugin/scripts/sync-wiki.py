@@ -69,6 +69,7 @@ PAGES = {
     '27-release-notes-2.8.0.md': ('Release-notes:-2.8.0.md', 'Release notes: 2.8.0'),
     '28-release-notes-2.9.0.md': ('Release-notes:-2.9.0.md', 'Release notes: 2.9.0'),
     '29-release-notes-2.10.0.md': ('Release-notes:-2.10.0.md', 'Release notes: 2.10.0'),
+    '30-release-notes-2.11.0.md': ('Release-notes:-2.11.0.md', 'Release notes: 2.11.0'),
     '22-quickstart-with-claude.md': ('Quickstart-with-Claude.md', 'Quickstart with Claude: from an idea to an application online'),
     '13-build-once-services-capabilities-mcp.md': ('11.-Build-Once:-Services,-Capabilities-and-MCP.md', '11. Build Once: Services, Capabilities and MCP'),
     '26-design-styles.md': ('Design-Styles.md', 'Design styles: another look for every page'),

@@ -1,16 +1,9 @@
 <template>
-    <div>
-        <a :href="homecard.link">
-            <div class="card animated zoomIn color0 equally-spaced-1 dropshadow">
-                <h2 class="medium-text semibold textcolor5 reset-margin">{{ homecard.title }}</h2>
-                <div class="spacer-1"></div>
-                <div class="wrapper reset-margin">
-                    <p class="textcolor5 default-text block-with-text">{{ homecard.description }}</p>
-                </div>
-                <div class="spacer-4"></div>
-            </div>
-        </a>
-    </div>	
+	<a class='cq-tile' :href='homecard.link'>
+		<h3>{{ homecard.title }}</h3>
+		<p>{{ homecard.description }}</p>
+		<span class='cq-tile-link'>Open ›</span>
+	</a>
 </template>
 
 <script>

@@ -16,7 +16,9 @@ block headers
         link(rel="stylesheet", type="text/css", href=scripts('css'))
         link(rel="stylesheet", href=scripts('bootstrap_css'))
         link(rel="stylesheet", href="{$home}public/css/theme.css")
-        link(rel="stylesheet", href="{$home}public/css/tokens.css")
+        link(rel="stylesheet", href=$home . 'public/css/tokens.css?v=' . @filemtime(PUBLIC_PATH . 'css/tokens.css'))
+        //- Caligrafy's look: white canvas, black primary actions, Inter, no shadows (a design style restyles it)
+        link(rel="stylesheet", href=$home . 'public/css/look.css?v=' . @filemtime(PUBLIC_PATH . 'css/look.css'))
 		link(rel="stylesheet", type="text/css", href=scripts('animate'))
         include ../modules/touchicons
         link(rel="stylesheet", type="text/css", href=scripts('social_buttons_css'))
@@ -39,6 +41,7 @@ block navigation_default
         nav(class='horizontal')
             h1(class='large-text horizontal-center')
                 a(href='')
+                    img(class='cq-nav-mark', src="{$home}public/images/resources/caligrafy-mark.svg", alt='', width='28', height='28')
                     span(class='semibold') Cali
                     span grafy
     
@@ -55,6 +58,7 @@ block navigation_authorized
                 li(class='color1')
             h1(class='large-text col-10 col-xl-10 col-lg-8 col-md-8 horizontal-center')
                 a(href='')
+                        img(class='cq-nav-mark', src="{$home}public/images/resources/caligrafy-mark.svg", alt='', width='28', height='28')
                         span(class='semibold') Cali
                         span grafy
                         

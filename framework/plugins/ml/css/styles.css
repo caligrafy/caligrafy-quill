@@ -1,112 +1,20 @@
-@import url('https://fonts.googleapis.com/css?family=IBM+Plex+Sans&display=swap');
+/* Machine Learning: the layout comes from public/css/camera.css (the camera fills the screen, the actions at the bottom).
+ * This file is for what these pages add: the labels, the field and the list the scripts put in the infobar.
+ * A design style restyles both (public/css/designs/<name>.css). */
 
-body {
-  margin: 0;
-  padding: 0;
-  width: 100vw;
-  height: 100vh;
-  -webkit-font-smoothing: antialiased;
-  font-family: 'IBM Plex Sans', sans-serif;    
-  font-weight: lighter;
-  font-size: 16px;
+#infobar label { display: block; margin: 12px 0 4px; font-weight: 500; color: var(--cq-camera-on-media); }
+#infobar input, #infobar select {
+  display: inline-block; vertical-align: middle; width: min(320px, 70vw); min-height: 40px; margin: 8px 4px 0; padding: 0 12px;
+  font: inherit; color: var(--cq-camera-button-ink); background: var(--cq-camera-button-bg); border: 0; border-radius: var(--cq-camera-radius);
 }
-
-header, h1 {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  font-size: 1.5em;
-}
-
-#detector {
-  display: flex;
-  justify-content: center;
-  align-items: center;
-}
-
-canvas {
-  /* will overlay the video and therefore its position will be handled in an absolute way */
-  position: absolute;
-}
-
-
-#apps {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    align-items: center;
-    margin-top: 25px;
-}
-
-#apps button {
-  color: white;
-  padding: 15px 32px;
-  font-size: 16px;
-  margin: 4px 2px;
-  cursor: pointer;
-  background-color: white;
-  color: black;
-  border: 2px solid #555555;
-}
-
-
 #infobar button {
-    display: block;
-    cursor: pointer;
-    color: white;
-    background-color: black;
-    font-size: 1em;
-    border: none;
-    width: 20em;
-    height: 3em;
-    text-align: center;
-    margin: 2em auto;
+  display: inline-block; vertical-align: middle; min-height: 40px; margin: 8px 4px 0; padding: 0 16px; border: 0; cursor: pointer;
+  border-radius: var(--cq-camera-radius); background: var(--cq-camera-primary-bg); color: var(--cq-camera-primary-ink); font: inherit; font-weight: 500;
 }
-
-#infobar select {
-  padding: 15px 32px;
-  font-size: 1em;
-  margin: 4px 2px;
-  width: 20em;
-  height: 3em;
-  cursor: pointer;
-  background-color: white;
-  color: black;
-  border: 2px solid #555555;	
-}
-
-#infobar input {
-    display: block;
-    width: 20em;
-    height: 2em;
-    margin: 1em 0;
-    font-size: 1em;
-}
-
-
-#infobar label {
-    display: block;
-    width: 20em;
-    font-weight: bold;
-}
-
-/* Eliminating the bullets from the unordered list */
-ul {
-    display: flex;
-    list-style-type: none;
-    justify-content: center;
-    align-items: center;
-    padding: 0;
-}
-
-li {
-    padding: 0 15px;
-}
-
-.show {
-    visibility: visible
-}
-
-.hide {
-    visibility: hidden
+#infobar ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin: 8px 0 0; padding: 0; list-style: none; }
+#infobar li { padding: 0; }
+#infobar p { margin: 8px 0 0; }
+#apps button {
+  min-height: 44px; padding: 0 20px; border: 0; border-radius: var(--cq-camera-radius); cursor: pointer;
+  background: var(--cq-camera-button-bg); color: var(--cq-camera-button-ink); font: inherit; font-weight: 500;
 }

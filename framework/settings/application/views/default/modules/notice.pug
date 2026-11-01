@@ -1,0 +1,7 @@
+//- A message above a form (site.pug pages): $error, $status (danger, success, info), $message_header, $message
+if $error
+  div.cq-alert(class=($status == 'danger' ? 'cq-alert--error' : null), role="alert")
+    if $message_header
+      strong= $message_header
+      br
+    = $message

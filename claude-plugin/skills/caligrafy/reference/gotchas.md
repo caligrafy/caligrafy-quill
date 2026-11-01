@@ -124,7 +124,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 ## Payments
 
-**G37. Stripe (stripe-php 22).** `createCheckout()` returns `'url'`: redirect to it (Stripe.js removed `redirectToCheckout`; the example view `default/pages/checkout` takes `checkoutUrl`). `$paymentType` defaults to null: current API versions reject `payment_method_types` on checkout sessions (payment methods come from the dashboard). `createPaymentIntent()` enables automatic payment methods; the payment page uses the **Payment Element** (`stripe_client.js`, `stripe.confirmPayment`, `#payment-element`). Amounts are in cents; methods return `['action_success' => bool, 'data' | 'error' => ...]`. `createTransaction()` (Charges + tokens) is legacy and needs raw-card access for card arrays. The QA suite runs `Payment` against stripe-mock.
+**G37. Stripe (stripe-php 22).** `createCheckout()` returns `'url'`: redirect to it (Stripe.js removed `redirectToCheckout`; the example view `default/pages/checkout` takes `checkoutUrl`). `$paymentType` defaults to null: current API versions reject `payment_method_types` on checkout sessions (payment methods come from the dashboard). `createPaymentIntent()` enables automatic payment methods; the payment page uses the **Payment Element** (`stripe_client.js`, `stripe.confirmPayment`, `#payment-element`; since 2.11.0 it reads the page's tokens for its colors and Inter). Amounts are in cents; methods return `['action_success' => bool, 'data' | 'error' => ...]`. `createTransaction()` (Charges + tokens) is legacy and needs raw-card access for card arrays. The QA suite runs `Payment` against stripe-mock.
 
 ## Testing the framework
 
@@ -182,7 +182,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G58. The channel classes moved to `framework/interfaces/` (2.1.2).** `Rest.php`, `Client.php` and `Mcp/{Server,Http}.php` left `framework/core/`; class names and namespaces are unchanged (`Caligrafy\Rest`, `Caligrafy\Mcp\Server`). A framework copied over 2.1.0/2.1.1 keeps the old copies: `Framework`/`Caligrafer` skip them (`FRAMEWORK_MOVED_FILES` in `initialize.php`), so no class is declared twice, and `doctor` warns `Framework files: old copies ...` with the `rm` command. `git pull` removes them by itself.
 
-**G59. The Caligrafy header is fixed: content starts under it.** `header` is `position: fixed` (`public/css/styles.css`, about 80px tall) and `block content` of `layoutblocks.pug` starts at the top of the page, so a page that begins with a heading or `.spacer-2` hides its title under the header. Wrap pages in `main.cq-page` (top padding that clears the header, `tokens.css`), or `.content-section` + `.spacer-4` as the sign-in view does. See [ui-guidelines.md](ui-guidelines.md).
+**G59. The Caligrafy header of `layoutblocks.pug` is fixed: content starts under it.** (Pages on `site.pug`, 2.11.0+, have a sticky top bar instead: nothing hides under it.) `header` is `position: fixed` (`public/css/styles.css`, about 80px tall) and `block content` of `layoutblocks.pug` starts at the top of the page, so a page that begins with a heading or `.spacer-2` hides its title under the header. Wrap pages in `main.cq-page` (top padding that clears the header, `tokens.css`), or `.content-section` + `.spacer-4` as the sign-in view does. See [ui-guidelines.md](ui-guidelines.md).
 
 **G60. The theme overrides some Bootstrap utilities on cards and buttons.** `styles.css` caps `.card` at 600px, adds 40px padding and centers it vertically (`align-self: center`), and the theme sizes `.btn`, so `w-100` on a button and wide `.card`s do not do what Bootstrap says. Use the page components instead: `.cq-card` (600px like the sign-in card since 2.4.0, 640px before; `.cq-page--wide` 960px; no padding of its own) and `btn btn-primary cq-submit` (at least 150px, on the left since 2.4.0; full width before).
 
@@ -213,7 +213,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G72. Before 2.7.0, `php caligrafer.php cloud login` needs a terminal to paste into** (2.7.0+: it is approved in the browser, G88; `--paste` keeps the prompt). It reads the token from a hidden prompt; run without a keyboard (an IDE "Run" button, a pipe) it reads nothing and stops with "This is not a Caligrafy token". Ask the user to run it in their own terminal, or `read -rs T && php caligrafer.php cloud login --token "$T"; unset T`. Never ask for the token in chat. It is kept in `.caligrafy/cloud.json` (0600, git-ignored since 2.4.0).
 
-**G73. Stripe accounts with Managed Payments refuse a Checkout product without a tax code.** `Payment::createCheckout()` then returns `action_success => false` with "the product tax code is missing". Add `'tax_code' => 'txcd_...'` to its `$productData` (the 4th argument: it goes into `price_data.product_data`), for example `txcd_10701100` (Website Hosting), `txcd_10103001` (SaaS, business use), `txcd_10000000` (electronically supplied services). `GET https://api.stripe.com/v1/tax_codes/<code>` checks a code.
+**G73. Stripe accounts with Managed Payments refuse a Checkout product without a tax code.** New Stripe accounts have Managed Payments on by default (Stripe collects the sales tax): a Checkout line item without a tax code fails with "the product tax code is missing". Before 2.11.0 `Payment::createCheckout()` then returned `action_success => false`, so the example `/checkout` page and every app's checkout failed on a new account. Since 2.11.0 a call without `tax_code` creates a classic Checkout (`managed_payments[enabled]=false`); to keep Managed Payments, add `'tax_code' => 'txcd_...'` to its `$productData` (the 4th argument: it goes into `price_data.product_data`), for example `txcd_10701100` (Website Hosting), `txcd_10103001` (SaaS, business use), `txcd_10000000` (electronically supplied services). `'managed_payments'` in `$payment_intent_data` (the 10th argument, merged into the session) decides either way. `GET https://api.stripe.com/v1/tax_codes/<code>` checks a code. Proof: `framework/core/Payment.php` (`createCheckout`).
 
 ## Building an application from an idea (the `idea` skill, plugin 1.16)
 
@@ -417,3 +417,32 @@ and installs it (`claude plugin install caligrafy-quill@<name> --scope project`)
 `caligrafy` registration made from the project's folder (claude opened before quickstart), so the next clone
 registers its own; `doctor` warns. The framework's own
 repository keeps `caligrafy`: it is the source added from GitHub. Proof: `framework/core/PluginSource.php`.
+
+## Caligrafy's look (2.11.0: `site.pug`, `layout.css`, `look.css`, `camera.css`)
+
+**G98. In a Caligrafy Pug view, `+` does not join strings.** Caligrafy renders Pug with PHP expressions: `"a" + $b`
+is an addition, and with two strings PHP 8 throws "Unsupported operand types: string + string", so the page becomes a
+template error. It only shows when that line runs: in 2.11.0's first build the message block of the sign-in pages
+(`modules/notice.pug`) did it, and a wrong password gave an error page instead of "Invalid credentials" (fixed before
+release; the QA test now checks the rendered alert). Join with `.` (`'Hello ' . $name`), or let Pug merge classes:
+`div.cq-alert(class=($status == 'danger' ? 'cq-alert--error' : null))`. Proof:
+`framework/settings/application/views/default/modules/notice.pug`.
+
+**G99. New pages extend `default/master/site.pug`, not `layoutblocks.pug`.** Since 2.11.0 Caligrafy's own pages use
+`site.pug` and the classes of `public/css/layout.css` (no cards, see [ui-guidelines.md](ui-guidelines.md));
+`layoutblocks.pug` and the card components of `tokens.css` still work for older pages and get the new look from
+`look.css`. A project before 2.11.0 has neither `site.pug` nor `layout.css`/`look.css`/`camera.css`: `php caligrafer.php
+update` adds the stylesheets and `upgrade --apply` the view templates (a template changed by hand is kept, the new
+version written next to it). The SPA template imports `layout.css` and `look.css` in `src/main.js`: an SPA made
+before 2.11.0 adds the two imports and rebuilds.
+
+**G100. The top bar has a button: find yours by id.** `site.pug` puts `button.cq-nav-toggle` (Menu, for phones)
+before the page. A script that takes `document.querySelector('button')` gets the Menu button: caligrafy.com's card
+payment read its Stripe key from it, so Stripe started with an empty key and no card field appeared. Use ids
+(`#submit`) or a class of your own. Proof: `framework/settings/application/views/default/master/site.pug`.
+
+**G101. Stylesheets and scripts carry their modification time.** `site.pug` links `tokens.css`, `layout.css` and
+`look.css` with `?v=<filemtime>`, so a deploy reaches browsers at once. Link your own assets the same way
+(`src=$home . 'public/js/app.js?v=' . @filemtime(PUBLIC_PATH . 'js/app.js')`): an unversioned script stays cached and
+a fixed page keeps running the old code. When checking a page in a browser after a change, reload it: navigating to
+the same URL with only a new `#hash` does not reload.

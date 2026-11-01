@@ -5,7 +5,7 @@ const list = document.getElementById('list')
 const empty = document.getElementById('empty')
 const form = document.getElementById('new-task')
 const errorBox = document.getElementById('error')
-const tabs = document.querySelectorAll('.cq-tabs button')
+const tabs = document.querySelectorAll('.cq-segments button')
 let status = 'all'
 let editing = false
 
@@ -40,33 +40,33 @@ function button (label, className, onClick) {
 function row (task) {
   const done = Boolean(Number(task.done))
   const li = document.createElement('li')
-  li.className = 'cq-item' + (done ? ' is-done' : '')
+  li.className = 'cq-row' + (done ? ' is-done' : '')
 
   const check = document.createElement('input')
   check.type = 'checkbox'
-  check.className = 'form-check-input cq-check'
+  check.className = 'form-check-input cq-row-check'
   check.checked = done
   check.setAttribute('aria-label', (done ? 'Reopen ' : 'Complete ') + task.title)
   check.addEventListener('change', () => run(() => updateTask({ id: task.id, done: check.checked })))
 
   const body = document.createElement('div')
-  body.className = 'cq-item-body'
+  body.className = 'cq-row-main'
   const title = document.createElement('p')
-  title.className = 'cq-item-title'
+  title.className = 'cq-row-title'
   title.textContent = task.title
   body.append(title)
   if (task.notes) {
     const notes = document.createElement('p')
-    notes.className = 'cq-item-meta'
+    notes.className = 'cq-row-meta'
     notes.textContent = task.notes
     body.append(notes)
   }
 
   const actions = document.createElement('div')
-  actions.className = 'cq-actions'
+  actions.className = 'cq-row-actions'
   actions.append(
     button('Edit', 'btn-secondary', () => edit(body, actions, task)),
-    button('Delete', 'btn-outline-dark', () => {
+    button('Delete', 'btn-secondary', () => {
       if (confirm('Delete "' + task.title + '"?')) run(() => deleteTask({ id: task.id }))
     })
   )

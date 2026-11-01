@@ -1,9 +1,33 @@
 # What a design style has to restyle
 
-Every Caligrafy page is drawn by four stylesheets, in this order: `styles.css` (the original Caligrafy classes),
-Bootstrap 5.3, `theme.css` (Caligrafy's black and white Bootstrap), `tokens.css` (design tokens and the `.cq-*` page
-components). `public/css/designs/<name>.css` comes last. Rules prefixed with `html body` outrank all of them without
-`!important`.
+Every Caligrafy page is drawn by these stylesheets, in this order: `styles.css` (the original Caligrafy classes),
+Bootstrap 5.3, `theme.css` (Caligrafy's black and white Bootstrap), `tokens.css` (design tokens and the card
+components), then since 2.11.0 `layout.css` (the structure of Caligrafy's pages), `camera.css` (camera pages only) and
+`look.css` (Caligrafy's look). `public/css/designs/<name>.css` comes last. Rules prefixed with `html body` outrank all
+of them without `!important` (look.css uses the same prefix: the design stylesheet wins by coming after it).
+
+## Caligrafy's look (2.11.0+): start here
+
+`look.css` defines the look as `--design-*` tokens and maps them onto the `--cq-*` tokens every page reads. A design
+style redefines the same names in its `:root`:
+
+| Token (look.css) | Default | Role |
+| --- | --- | --- |
+| `--design-canvas` | `#ffffff` | the page (`--cq-color-canvas`, `--cq-color-page`) |
+| `--design-surface` | `#f4f4f4` | tiles, surface bands, secondary buttons, alerts (`--cq-color-surface`, `--cq-color-paper`) |
+| `--design-surface-raised` | `#ffffff` | fields and rows on a surface |
+| `--design-ink` / `--design-body` / `--design-muted` | `#171a20` / `#393c41` / `#5c5e62` | headings / text / secondary text |
+| `--design-hairline` / `--design-hairline-strong` | `#e2e3e3` / `#d0d1d2` | row dividers / field edges |
+| `--design-primary` / `-hover` / `--design-on-primary` | `#000000` / `#333333` / `#ffffff` | the main action (`--cq-color-primary`) |
+| `--design-error` / `--design-success` | `#b3261e` / `#1f7a4d` | messages |
+| `--design-font` / `--design-font-code` | Inter / JetBrains Mono | type |
+| `--design-radius-control` / `--design-radius-card` | `4px` / `12px` | buttons and fields / tiles |
+| `--cq-camera-*` (camera.css) | white main action, see-through buttons | camera pages |
+
+The structure classes of `layout.css` (`.cq-nav`, `.cq-hero`, `.cq-band`, `.cq-auth`, `.cq-field`, `.cq-rows`,
+`.cq-tiles`, `.cq-segments`, `.cq-account`, `.cq-footer`...) read those tokens: restyle a selector only where the
+design differs in shape (a bordered tile, a pill segment, an underlined link). The sections below map the older
+surfaces, still used by pages on `layoutblocks.pug` and by `styles.css`.
 
 ## Tokens to replace in `:root`
 

@@ -3,7 +3,7 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-> **Where this fits.** Views are the web experience of your application. New pages are built with the [page components](#pagecomponents) (a card, a form, tabs, a list: the Caligrafy look with no CSS to write) and get their data from your capabilities, through a controller (`$this->call()`) or the JS client.
+> **Where this fits.** Views are the web experience of your application. New pages extend the master `default/master/site` and are built with [Caligrafy's look](#pagecomponents) (a top bar, a title band, forms, rows, tiles: no CSS to write, responsive at every size) and get their data from your capabilities, through a route (`Route::page`), a controller (`$this->call()`) or the JS client.
 
 Views are the front-end layer of your application. This is what gets displayed on the screen for your users.
 In an MVC structure, the `View` interfaces with the `Controller` and the `Controller` determines what gets displayed to the `View`.
@@ -24,8 +24,13 @@ The same code in HTML would look like this:
 </body>
 ```
 
+### The two masters
+Since 2.11.0, Caligrafy's own pages (sign-in, account, admin, welcome, the Tasks example, payment) extend **`default/master/site`**: a light top bar with the Caligrafy mark, then the page, then a footer, with [Caligrafy's look](#pagecomponents) (`public/css/layout.css` and `public/css/look.css`). Its blocks are `title`, `brand` (the name after the mark), `nav_links` (the links on the right; on phones a Menu button opens them), `content`, `footer`, `additional_css` and `additional_scripts`. Build new pages on it. Its stylesheet links carry their modification time (`?v=...`), so browsers get every change; do the same for your own scripts.
+
+The older master `default/master/layoutblocks` keeps working for existing pages (it loads `look.css` too). The rest of this section describes it.
+
 ### Default layout and Bootstrap 5
-The views provided in `/application/views/default` extend the layout `default/master/layoutblocks`, which loads Bootstrap 5.3 (`scripts('bootstrap_css')` and `scripts('bootstrap_script')`) and Caligrafy's styles. jQuery is not loaded: use Bootstrap 5 classes (`mb-3`, `w-100`, `d-none d-md-block`, `badge bg-success`, `row`/`col-*`) and plain JavaScript in your views. `public/css/theme.css` keeps the Caligrafy black and white look on top of Bootstrap 5: 14px body text, Caligrafy cards, black `btn-primary`, white `btn-secondary` with black text, black focus rings. Buttons inside forms are at most 150px wide (`form .btn` in `styles.css`): keep their labels short.
+The views provided in `/application/views/default` before 2.11.0 extend the layout `default/master/layoutblocks`, which loads Bootstrap 5.3 (`scripts('bootstrap_css')` and `scripts('bootstrap_script')`) and Caligrafy's styles. jQuery is not loaded: use Bootstrap 5 classes (`mb-3`, `w-100`, `d-none d-md-block`, `badge bg-success`, `row`/`col-*`) and plain JavaScript in your views. `public/css/theme.css` keeps the Caligrafy black and white look on top of Bootstrap 5: 14px body text, Caligrafy cards, black `btn-primary`, white `btn-secondary` with black text, black focus rings. Buttons inside forms are at most 150px wide (`form .btn` in `styles.css`): keep their labels short.
 
 `theme.css` also keeps the Bootstrap 3 layout of the Caligrafy pages: the page `.container` stays full width, headings of the Pug layout keep their Bootstrap 3 margins (they center the header title), and a `.row` inside a Caligrafy `.wrapper` or `.bounded*` block keeps the wrapper centered (15px columns, no negative margins). The signed-in header keeps its Bootstrap 3 columns too (15px padding, title next to the menu icon on phones). Bootstrap 5 breakpoints are one step lower than Bootstrap 3's: a Bootstrap 3 `col-sm-*` (768px and up) is a Bootstrap 5 `col-md-*`, `col-md-*` is `col-lg-*`, `col-lg-*` is `col-xl-*`, `hidden-xs` is `d-none d-md-block` and `hidden-sm hidden-xs` is `d-none d-lg-block`. Put the columns in a `.row`:
 
@@ -210,66 +215,91 @@ Experiences differ in layout (a dense page on a desktop, touch-first on a tablet
 ```
 Use the tokens in your own styles (`color: var(--cq-color-text)`) so that every experience of the application stays the same. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#experiences).
 
-## Page components: every page looks the same
+## Caligrafy's look: every page looks the same
 
-Since 2.1.3, `public/css/tokens.css` also holds the **page components**: the look of the sign-in and face login screens, ready for every new page. A page is one centered white card under the header, made of stacked parts:
+Since 2.11.0 every page of Caligrafy shares one look: **a white canvas, a light top bar with the Caligrafy mark, one message per screen, full-width bands, narrow columns for forms, rows for lists, large tiles for links, Caligrafy black for the main action, Inter type, no cards and no shadows**. It works at every size: phones, tablets and desktops. Three stylesheets give it, and the master `site.pug`, the Vue app template and the single page application template link them for you:
+
+| Stylesheet | What it holds |
+| --- | --- |
+| `public/css/layout.css` | the structure: top bar, title bands, bands, forms, rows, tiles, an account area, the footer |
+| `public/css/look.css` | the look: its tokens (`--design-*`, feeding the `--cq-*` tokens), Inter, black buttons, fields, the mark |
+| `public/css/camera.css` | full-screen camera pages: face detection, machine learning, face sign-in |
+
+A page is a title band and bands, made of these parts:
 
 ```pug
-extends ../default/master/layoutblocks
+extends ../default/master/site
+
+block title
+  | Tasks · My app
 
 block content
-    main.cq-page
-        .cq-card
-            .cq-card-head
-                h2.cq-title Tasks
-                p.cq-note Everything that has to be done.
+  section.cq-hero.cq-hero--page
+    h1.cq-display Tasks
+    p.cq-lead Everything that has to be done.
 
-            form#new-task.cq-form(novalidate)
-                .cq-fields.cq-fields--2
-                    div
-                        label(for='task-title') * Task
-                        input#task-title.form-control(type='text', name='title', placeholder='What has to be done?')
-                    div
-                        label(for='task-notes') Notes
-                        input#task-notes.form-control(type='text', name='notes', placeholder='Optional')
-                button.btn.btn-primary.cq-submit(type='submit') Add task
+  section.cq-band.cq-band--tight
+    .cq-inner.cq-inner--narrow
+      form#new-task(novalidate)
+        .cq-form-grid
+          .cq-field
+            label(for='task-title') Task
+            input#task-title.form-control(type='text', name='title', placeholder='What has to be done?')
+          .cq-field
+            label(for='task-notes') Notes
+            input#task-notes.form-control(type='text', name='notes', placeholder='Optional')
+          .cq-field
+            label.cq-hidden-label(for='add-task') &nbsp;
+            button#add-task.btn.btn-primary.cq-btn-block(type='submit') Add task
+      p#error.cq-field-error(role='alert')
 
-            p#error.cq-error(role='alert')
+      .cq-segments(role='tablist')
+        button.active(type='button', role='tab', aria-selected='true') All
+          span.cq-count 2
+        button(type='button', role='tab', aria-selected='false') Open
+          span.cq-count 1
 
-            .cq-tabs(role='tablist')
-                button.active(type='button', role='tab', aria-selected='true') All
-                    span.cq-count 2
-                button(type='button', role='tab', aria-selected='false') Open
-                    span.cq-count 1
-
-            ul.cq-list
-                li.cq-item
-                    input.form-check-input.cq-check(type='checkbox')
-                    .cq-item-body
-                        p.cq-item-title Buy milk
-                        p.cq-item-meta 2 liters
-                    .cq-actions
-                        button.btn.btn-secondary(type='button') Edit
-                        button.btn.btn-outline-dark(type='button') Delete
-            p.cq-empty(hidden) No tasks yet: add the first one above.
-
-            .cq-foot Updates every few seconds
+      ul.cq-rows
+        li.cq-row
+          input.form-check-input.cq-row-check(type='checkbox')
+          .cq-row-main
+            p.cq-row-title Buy milk
+            p.cq-row-meta 2 liters
+          .cq-row-actions
+            button.btn.btn-secondary(type='button') Edit
+            button.btn.btn-secondary(type='button') Delete
+      p.cq-empty-state(hidden) No tasks yet: add the first one above.
 ```
 
 | Part | Classes |
 | --- | --- |
-| Page and card | `main.cq-page` (starts below the fixed header, centers) > `.cq-card` (600px, the sign-in card's look; `.cq-page--wide` for 960px). Several cards stack, with a gap (since 2.3.0; in 2.2.0 they sat side by side: copy `public/css/tokens.css` from 2.3.0) |
-| Header | `.cq-card-head > h2.cq-title + p.cq-note` |
-| Form | `form.cq-form > .cq-fields` (`--2`, `--3` columns from 576px up) `> div > label + .form-control`, `button.btn.btn-primary.cq-submit` |
-| Messages | `p.cq-error` for errors, `p.cq-empty` for empty lists, `.cq-foot` for a footer line |
-| Tabs | `.cq-tabs > button` (`.active`) with `span.cq-count` |
-| List | `ul.cq-list > li.cq-item` (`.is-done` greys it) with `.cq-check`, `.cq-item-body` (`.cq-item-title`, `.cq-item-meta`), `.cq-actions` |
-| Anything else | `.cq-section` (same padding as the card), `.cq-split` (list and detail side by side from tablets up) |
+| Full-screen message | `section.cq-hero > h1.cq-display + p.cq-lead + .cq-cta > .btn` (a landing, a welcome) |
+| Title band | `section.cq-hero.cq-hero--page`, same children: the title of an ordinary page |
+| Band | `section.cq-band > .cq-inner > h2.cq-heading + p.cq-lead + ...`; `.cq-band--surface` (ash), `.cq-band--tight`, `.cq-inner--narrow` (720px), `.cq-center` |
+| Sign-in style form | `main.cq-auth > h1 + form > .cq-field (label + .form-control) + .btn`; `.cq-auth--wide`, `.cq-or`, `p.cq-auth-note` |
+| Form on a page | `.cq-form-grid(.cq-form-grid--2) > .cq-field`: fields side by side from tablets up |
+| Messages | `.cq-alert` (`.cq-alert--error`) above a form (`include ../default/modules/notice` shows `$error` and `$message`), `p.cq-field-error` under it, `p.cq-empty-state` for empty lists |
+| Choices | `.cq-segments > button` (`.active`) with `span.cq-count` |
+| List | `ul.cq-rows > li.cq-row` (`.is-done` greys it) with `.cq-row-check`, `.cq-row-main` (`.cq-row-title`, `.cq-row-meta`), `.cq-row-actions` |
+| Links | `.cq-tiles > a.cq-tile > h3 + p + span.cq-tile-link`: one, two or three columns by width |
+| Figures | `.cq-stats > .cq-stat > .cq-stat-value + .cq-stat-label`, `span.cq-badge` |
+| Account area | `.cq-account > nav.cq-account-nav > a(href='#section')` + `.cq-account-main > section(id)`: a side menu on desktops that marks the section on screen |
+| Text and code | `.cq-doc` (long text), `.cq-code`, `pre.cq-pre` |
 
-The same classes work in Vue apps and the single page application (`tokens.css` is linked there too). Keep to black and white (`btn-primary` is black, `btn-secondary` white): no Bootstrap color classes. The [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) builds every new page with these components.
+The same classes work in Vue apps and the single page application. Keep to black and white (`btn-primary` is black, `btn-secondary` ash): no Bootstrap color classes. The [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) builds every new page with this look.
+
+Two things to know when writing these views: Caligrafy renders Pug with PHP expressions, so join strings with `.` (`'Hello ' . $name`), never `+`; and the top bar has its own button (Menu), so scripts find their elements by id, never with `document.querySelector('button')`.
+
+### Camera pages
+
+Face detection, machine learning and face sign-in fill the screen with the camera (`camera.css`): the title and the status float at the top, the actions at the bottom (the main one white over the camera), an oval guides the face, and a sheet holds a form over the camera. See [Face Detection](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition) and [Machine Learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning).
+
+### Older pages: the card components
+
+Pages built on `layoutblocks.pug` before 2.11.0 keep their card components (`public/css/tokens.css`, since 2.1.3): `main.cq-page > .cq-card` with `.cq-card-head` (`h2.cq-title + p.cq-note`), `form.cq-form > .cq-fields`, `button.btn.btn-primary.cq-submit`, `p.cq-error`, `.cq-tabs`, `ul.cq-list > li.cq-item` with `.cq-actions`, `p.cq-empty`, `.cq-foot`, `.cq-section` and `.cq-split`. They take the new look from `look.css` too. A project made before 2.11.0 gets the new stylesheets with `php caligrafer.php update` and the new templates with `php caligrafer.php upgrade --apply`.
 
 ## Another look: design styles
 
-The page components are the default look. To give the whole application another one, pick a [design style](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles) (`php caligrafer.php design use <name>`, `DESIGN_STYLE` in `.env`) and let Claude write its stylesheet (`/caligrafy-quill:design`): the layout loads `public/css/designs/<name>.css` after `tokens.css`, so the same markup takes the new look and your views do not change. An empty `DESIGN_STYLE` is the Caligrafy look again.
+Caligrafy's look is the default. To give the whole application another one, pick a [design style](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles) (`php caligrafer.php design use <name>`, `DESIGN_STYLE` in `.env`) and let Claude write its stylesheet (`/caligrafy-quill:design`): the masters load `public/css/designs/<name>.css` last, after `look.css`, so the same markup takes the new look and your views do not change. An empty `DESIGN_STYLE` is the Caligrafy look again.
 
 >[Next Section: Learn about Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)

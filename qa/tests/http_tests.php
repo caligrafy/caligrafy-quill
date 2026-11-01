@@ -529,12 +529,17 @@ qa_test('register stores a password_hash() hash', function () use ($alice) {
 qa_test('login with the right password', function () use ($alice) {
     $r = $alice->login('alice', 'Passw0rdQa');
     qa_contains('/home', $r['location'], substr(strip_tags($r['body']), 0, 300));
-    qa_contains('You are currently logged in', $alice->get('/home')['body']);
+    qa_contains('You are signed in', $alice->get('/home')['body']);
 });
 
 qa_test('login with a wrong password fails', function () {
     $b = new QaBrowser();
-    qa_contains('Invalid credentials', $b->login('alice', 'nope12345')['body']);
+    $r = $b->login('alice', 'nope12345');
+    qa_equals(200, $r['status']);
+    qa_contains('Invalid credentials', $r['body']);
+    // the message block of the sign-in page (modules/notice.pug) renders, not a template error
+    qa_contains('cq-alert cq-alert--error', $r['body']);
+    qa_not_contains('Unsupported operand', $r['body']);
 });
 
 qa_test('a LIKE wildcard username cannot log in as somebody else', function () {
@@ -674,7 +679,7 @@ $SEED = 1000;
 qa_test('the face login app and the facedetect scaffold load, with their scripts and models', function () use ($guest) {
     $r = $guest->get('/apps/qafacelogin');
     qa_equals(200, $r['status']);
-    foreach (['face-api.min.js', 'detect.js', 'passkey.js', 'loadEnvironment(', 'css/theme.css', 'caligrafy-header', 'class="guide"', 'id="detection"'] as $s) { qa_contains($s, $r['body']); }
+    foreach (['face-api.min.js', 'detect.js', 'passkey.js', 'loadEnvironment(', 'css/camera.css', 'class="cq-camera"', 'cq-camera-oval', 'id="detection"'] as $s) { qa_contains($s, $r['body']); }
     $js = $guest->get('/public/qafacelogin/scripts/main.js');
     qa_equals(200, $js['status']);
     qa_not_contains("'blink'", $js['body']);
@@ -1096,7 +1101,7 @@ qa_test('Route::page gives the welcome page who is signed in', function () {
     qa_contains('Welcome to Caligrafy', (new QaBrowser())->get('/')['body']);
     $a = new QaBrowser();
     $a->login('alice', 'Passw0rdQa');
-    qa_contains('You are currently logged in', $a->get('/')['body']);
+    qa_contains('You are signed in', $a->get('/')['body']);
 });
 
 qa_test('Route::page data: a capability as the signed-in person, a visitor is sent to sign in, a missing record is a 404', function () {

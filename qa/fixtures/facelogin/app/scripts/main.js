@@ -18,6 +18,7 @@ const app = Vue.createApp({
   computed: {
     signedIn() { return !!this.user; },
     cameraVisible() { return this.tab === 'login' ? !this.signedIn : this.enrollStep === 2; },
+    sheet() { return this.tab === 'login' ? this.signedIn : this.enrollStep !== 2; },   // forms and results open over the camera
     viewportState() { return this.tab === 'login' ? this.loginState : (this.busy ? 'scanning' : ''); }
   },
   methods: {

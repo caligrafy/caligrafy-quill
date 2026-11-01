@@ -1,12 +1,17 @@
-/* Caligrafy Bot client */
+/* Caligrafy Bot client: a full-height conversation under the top bar (public/css/layout.css), the answer bar at the
+ * bottom. Colors and radii come from the tokens, so a design style restyles it (public/css/designs/<name>.css). */
 [v-cloak] { display: none; }
-body { background: #f5f6f8; }
-.bot-container { max-width: 640px; margin: 2rem auto; display: flex; flex-direction: column; height: calc(100vh - 4rem); background: #fff; border-radius: 12px; box-shadow: 0 2px 12px rgba(0, 0, 0, .08); }
-.bot-messages { flex: 1; overflow-y: auto; padding: 1rem; display: flex; flex-direction: column; gap: .5rem; }
-.bot-message { max-width: 80%; padding: .6rem .9rem; border-radius: 14px; line-height: 1.4; word-wrap: break-word; }
-.bot-message.bot { align-self: flex-start; background: #eef1f6; color: #222; }
-.bot-message.human { align-self: flex-end; background: #0d6efd; color: #fff; }
+.bot-page { display: flex; flex-direction: column; height: 100vh; height: 100dvh; }
+.bot-page .cq-nav { flex: none; }
+.bot-container { flex: 1; min-height: 0; display: flex; flex-direction: column; width: 100%; max-width: 760px; margin: 0 auto; }
+.bot-messages { flex: 1; overflow-y: auto; padding: 32px var(--cq-gutter, 24px) 16px; display: flex; flex-direction: column; gap: 12px; }
+.bot-message { max-width: 80%; padding: 12px 16px; border-radius: var(--cq-radius-card, 12px); line-height: 1.45; word-wrap: break-word; font-size: 15px; }
+.bot-message.bot { align-self: flex-start; background: var(--cq-color-surface, #f4f4f4); color: var(--cq-color-text, #333); }
+.bot-message.human { align-self: flex-end; background: var(--cq-color-primary, #000); color: var(--cq-color-on-primary, #fff); }
 .bot-message.typing { opacity: .6; }
-.bot-image { display: block; max-width: 100%; margin-top: .5rem; border-radius: 8px; }
-.bot-actions { display: flex; flex-wrap: wrap; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid #eee; }
-.bot-input { display: flex; gap: .5rem; padding: .75rem 1rem; border-top: 1px solid #eee; }
+.bot-image { display: block; max-width: 100%; margin-top: 8px; border-radius: var(--cq-radius-control, 4px); }
+.bot-actions { display: flex; flex-wrap: wrap; gap: 8px; padding: 12px var(--cq-gutter, 24px) max(16px, env(safe-area-inset-bottom)); }
+.bot-input { display: flex; gap: 8px; padding: 12px var(--cq-gutter, 24px) max(16px, env(safe-area-inset-bottom)); border-top: 1px solid var(--cq-color-border, #e2e3e3); background: var(--cq-color-canvas, #fff); }
+.bot-input .form-control { flex: 1; }
+.bot-input .btn { min-width: 96px; }
+@media (max-width: 575px) { .bot-message { max-width: 90%; } }

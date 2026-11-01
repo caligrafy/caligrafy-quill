@@ -6,6 +6,31 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.11.0] - 2026-11-01
+
+### Added
+- Caligrafy's new look on every out-of-the-box page: sign-in, create account, the account and admin pages, the
+  welcome page, the AI page, the Tasks example, payment and checkout, the bot, the Vue app and single page application
+  templates. A white canvas, a light top bar with the Caligrafy mark, one message per screen, full-width bands, rows
+  and tiles, Caligrafy black for the main action, Inter type, no cards; responsive on phones, tablets and desktops.
+  - `public/css/layout.css` (the structure), `public/css/look.css` (the look, as `--design-*` tokens feeding the `--cq-*`
+    tokens) and `public/css/camera.css` (full-screen camera pages).
+  - The master `default/master/site.pug` (blocks `title`, `brand`, `nav_links`, `content`, `footer`,
+    `additional_css`, `additional_scripts`; a Menu button on phones; versioned stylesheet links) and the modules
+    `notice.pug` (messages above a form) and `share.pug`. `layoutblocks.pug` stays and loads `look.css` too.
+  - The Caligrafy mark, `public/images/resources/caligrafy-mark.svg`, and the documentation banner
+    `public/images/resources/build-once-banner.png`, now black.
+- Face detection, machine learning and the face sign-in recipe fill the screen with the camera: the title and status
+  at the top, the actions at the bottom, an oval guide and a sheet for forms over the camera.
+- The Stripe Payment Element of `default/pages/payment` takes the page's colors, corners and type from its tokens.
+
+### Fixed
+- `Payment::createCheckout()` failed on Stripe accounts with Managed Payments (the default for new accounts) when the
+  product had no tax code. Without `tax_code` it now creates a classic Checkout (`managed_payments` off); with one,
+  Managed Payments stays on; `managed_payments` in `$payment_intent_data` decides either way.
+- The single page application template (`framework/librairies/app`) imports `layout.css` and `look.css` and its
+  components use the new look (top bar with the mark, title band, tiles).
+
 ## [2.10.2] - 2026-11-01
 
 ### Fixed

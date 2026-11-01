@@ -3,7 +3,7 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-> **Where this fits.** Every Caligrafy page has the same look out of the box: the sign-in card, the [page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents), black and white. A design style gives an application another look, taken from a design system description, without touching that default: one setting picks it, one stylesheet applies it, and emptying the setting brings the Caligrafy look back.
+> **Where this fits.** Every Caligrafy page has the same look out of the box (2.11.0+): [Caligrafy's look](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents), a white canvas, a light top bar with the Caligrafy mark, black for the main action, Inter type, no cards. A design style gives an application another look, taken from a design system description, without touching that default: one setting picks it, one stylesheet applies it, and emptying the setting brings the Caligrafy look back.
 
 ## What a design style is
 
@@ -49,15 +49,15 @@ A `DESIGN.md` is read by an AI agent, which writes the stylesheet. In Claude Cod
 /caligrafy-quill:design linear.app
 ```
 
-Claude reads the whole `DESIGN.md` (its tokens and its prose), looks at the pages of your project, and writes **one** file, `public/css/designs/linear.app.css`: the design's colors, fonts (free substitutes from Google Fonts), radii and spacing applied to the layout (header, footer), the sign-in pages, the buttons and fields, and every page component (`.cq-card`, `.cq-form`, `.cq-tabs`, `.cq-list`...). It selects the style, then opens the sign-in pages and your pages in a browser at desktop and phone width and fixes what does not read well. `/caligrafy-quill:design off` goes back to the Caligrafy look.
+Claude reads the whole `DESIGN.md` (its tokens and its prose), looks at the pages of your project, and writes **one** file, `public/css/designs/linear.app.css`: the design's colors, fonts (free substitutes from Google Fonts), radii and spacing applied to Caligrafy's look (its `--design-*` tokens first), the top bar and footer, the sign-in pages, the buttons and fields, every part of the pages (`.cq-hero`, `.cq-band`, `.cq-rows`, `.cq-tiles`, `.cq-segments`...), the camera pages and the older card components. It selects the style, then opens the sign-in pages and your pages in a browser at desktop and phone width and fixes what does not read well. `/caligrafy-quill:design off` goes back to the Caligrafy look.
 
 ## How it works
 
-+ The layout (`application/views/default/master/layoutblocks.pug`) and the Vue app template (`public/<app>/index.php`) link `public/css/designs/<name>.css` **after** `styles.css`, Bootstrap, `theme.css` and `tokens.css`, with `design_stylesheet()`. The stylesheet overrides the design tokens (`--cq-color-ink`, `--cq-color-paper`...) and the Caligrafy selectors; `tokens.css`, `theme.css`, `styles.css` and the views are never edited.
++ The masters (`application/views/default/master/site.pug` and the older `layoutblocks.pug`), the Vue app template (`public/<app>/index.php`) and the camera apps link `public/css/designs/<name>.css` **last**, after `styles.css`, Bootstrap, `theme.css`, `tokens.css`, `layout.css`, `camera.css` and `look.css`, with `design_stylesheet()`. The stylesheet overrides the tokens of Caligrafy's look (`--design-canvas`, `--design-primary`, `--design-font`... in `look.css`, which feed `--cq-color-ink`, `--cq-color-primary`...) and the Caligrafy selectors; `look.css`, `layout.css`, `tokens.css`, `theme.css`, `styles.css` and the views are never edited.
 + Nothing is linked when `DESIGN_STYLE` is empty, names no style, or names a style whose stylesheet is not written yet: those pages keep the Caligrafy look.
 + The link carries the stylesheet's modification time (`?v=...`), so browsers pick up every change.
 + Several stylesheets can live side by side in `public/css/designs/`: switching is `design use <other>`.
-+ A Vite single page application imports its CSS at build time: add `import '../../css/designs/<name>.css'` to its `src/main.js` (the skill does it) and rebuild.
++ A Vite single page application imports its CSS at build time: add `import '../../css/designs/<name>.css'` to its `src/main.js`, after the `look.css` import (the skill does it), and rebuild.
 + `php caligrafer.php doctor` reports the selected style: `OK` with its stylesheet, `WARN` for an unknown name or a style whose stylesheet is not written yet.
 
 ## Online

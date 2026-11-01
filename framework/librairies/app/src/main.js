@@ -12,6 +12,11 @@ import '../../css/styles.css'
 import '../../css/theme.css'
 import '../../css/tokens.css'
 import '../../css/animate.css'
+// Caligrafy's look: the structure of its pages (top bar, title band, tiles, rows) and its style (white, black actions, Inter)
+import '../../css/layout.css'
+import '../../css/look.css'
+// a design style (DESIGN_STYLE): import '../../css/designs/<name>.css' here, after look.css
+document.body.classList.add('cq-site')
 
 
 const app = createApp(App)

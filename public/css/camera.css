@@ -1,0 +1,126 @@
+@import url('https://fonts.googleapis.com/css2?family=IBM+Plex+Sans:wght@300;400;500&display=swap');
+/* camera.css: full-screen camera pages (face detect, machine learning, face sign-in).
+ * The camera fills the screen; a flat scrim keeps the type readable; the title and the status float at the top, the
+ * actions at the bottom. Media and drawings share one box (object-fit: cover on both), so face boxes and keypoints stay
+ * on the person: give the <video> and its <canvas> the same width and height attributes (640 x 480, a webcam's 4:3).
+ *
+ * Markup: body.cq-camera-body > .cq-camera > .cq-camera-media (video, canvas...) + .cq-camera-top (h1.cq-camera-title,
+ * .cq-camera-status) + .cq-camera-bottom (.cq-camera-actions > button), optional .cq-camera-oval and .cq-camera-sheet.
+ * The ids the scripts look for stay: #detector (media), #infobar (status), #apps (actions).
+ * A design style restyles these classes (public/css/designs/<name>.css, linked after this file). */
+
+:root {
+  --cq-camera-font: 'IBM Plex Sans', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  --cq-camera-canvas: #000000;
+  --cq-camera-scrim: rgba(0, 0, 0, .28);
+  --cq-camera-on-media: #ffffff;
+  --cq-camera-on-media-muted: rgba(255, 255, 255, .78);
+  --cq-camera-button-bg: rgba(255, 255, 255, .16);     /* over the camera: see-through buttons, white type */
+  --cq-camera-button-ink: #ffffff;
+  --cq-camera-primary-bg: #ffffff;                       /* the main action: white */
+  --cq-camera-primary-ink: #000000;
+  --cq-camera-sheet-primary-bg: #000000;                 /* in a sheet: the main action is black */
+  --cq-camera-sheet-primary-ink: #ffffff;
+  --cq-camera-sheet-bg: #ffffff;
+  --cq-camera-sheet-ink: #000000;
+  --cq-camera-sheet-muted: #535150;
+  --cq-camera-field-border: #d9d9d9;
+  --cq-camera-ok: #ffffff;
+  --cq-camera-error: #ffb4a8;
+  --cq-camera-radius: 4px;
+  --cq-camera-sheet-radius: 7px;
+  --cq-camera-title-size: 28px;
+}
+
+html, body.cq-camera-body { margin: 0; height: 100%; background: var(--cq-camera-canvas); }
+body.cq-camera-body { overflow: hidden; -webkit-font-smoothing: antialiased; }
+[v-cloak] { display: none; }
+
+.cq-camera {
+  position: fixed; inset: 0; overflow: hidden;
+  font-family: var(--cq-camera-font); font-weight: 400; color: var(--cq-camera-on-media);
+}
+.cq-camera * { box-sizing: border-box; }
+
+/* the camera and what is drawn on it: one full-screen box */
+.cq-camera-media { position: absolute; inset: 0; overflow: hidden; background: var(--cq-camera-canvas); }
+.cq-camera-media video, .cq-camera-media canvas, .cq-camera-media img {
+  position: absolute; inset: 0; width: 100% !important; height: 100% !important;   /* p5 sets inline pixel sizes */
+  object-fit: cover; display: block;
+}
+.cq-camera-media canvas { z-index: 1; }   /* drawings over the camera */
+.cq-camera-media::after { content: ''; position: absolute; inset: 0; background: var(--cq-camera-scrim); pointer-events: none; }
+.cq-camera-mirror video, .cq-camera-mirror canvas { transform: scaleX(-1); }      /* a selfie camera */
+.cq-camera .hide { visibility: hidden; }
+.cq-camera .show { visibility: visible; }
+
+/* title and status, over the camera */
+.cq-camera-top {
+  position: absolute; top: 0; left: 0; right: 0; z-index: 2;
+  padding: max(28px, env(safe-area-inset-top)) 24px 0; text-align: center; pointer-events: none;
+}
+.cq-camera-top > * { pointer-events: auto; }
+.cq-camera-title { margin: 0; font-size: var(--cq-camera-title-size); font-weight: 500; line-height: 1.2; color: var(--cq-camera-on-media); }
+.cq-camera-status { margin: 8px auto 0; max-width: 640px; font-size: 15px; line-height: 1.45; color: var(--cq-camera-on-media-muted); }
+.cq-camera-status.is-error { color: var(--cq-camera-error); }
+.cq-camera-status ul { display: flex; flex-wrap: wrap; justify-content: center; gap: 4px 12px; margin: 0; padding: 0; list-style: none; }
+.cq-camera-status li { padding: 0; }
+.cq-camera-prompt { margin: 16px 0 0; font-size: 22px; font-weight: 500; color: var(--cq-camera-on-media); }
+
+/* actions, at the bottom */
+.cq-camera-bottom {
+  position: absolute; left: 0; right: 0; bottom: 0; z-index: 2;
+  padding: 16px 16px max(28px, env(safe-area-inset-bottom)); display: flex; flex-direction: column; align-items: center; gap: 12px;
+}
+.cq-camera-actions { display: flex; flex-wrap: wrap; justify-content: center; gap: 8px; max-width: 960px; }
+.cq-camera-actions button, .cq-camera-button {
+  min-height: 44px; padding: 0 20px; border: 0; border-radius: var(--cq-camera-radius); cursor: pointer;
+  background: var(--cq-camera-button-bg); color: var(--cq-camera-button-ink);
+  font-family: var(--cq-camera-font); font-size: 14px; font-weight: 500; text-decoration: none;
+  display: inline-flex; align-items: center; justify-content: center;
+  transition: background-color .33s, color .33s, box-shadow .25s;
+  -webkit-backdrop-filter: blur(10px); backdrop-filter: blur(10px);
+}
+.cq-camera-button.is-primary { background: var(--cq-camera-primary-bg); color: var(--cq-camera-primary-ink); }
+.cq-camera-actions button:disabled, .cq-camera-button:disabled { opacity: .55; cursor: default; }
+.cq-camera-actions button:focus-visible, .cq-camera-button:focus-visible, .cq-camera-link:focus-visible { outline: 2px solid var(--cq-camera-on-media); outline-offset: 2px; }
+.cq-camera-link { background: none; border: 0; padding: 4px; cursor: pointer; font: inherit; font-size: 14px; color: var(--cq-camera-on-media-muted); text-decoration: none; }
+.cq-camera-link:hover { color: var(--cq-camera-on-media); text-decoration: underline; text-underline-offset: 3px; }
+
+/* face guide: an oval, the rest of the camera slightly darker */
+.cq-camera-oval {
+  position: absolute; left: 50%; top: 53%; z-index: 1; height: min(46vh, 400px, 77vw); aspect-ratio: 3 / 4;   /* clear of the title and the buttons */
+  transform: translate(-50%, -50%); border-radius: 50%; border: 2px solid rgba(255, 255, 255, .9);
+  box-shadow: 0 0 0 200vmax rgba(0, 0, 0, .25); transition: border-color .33s; pointer-events: none;
+}
+.cq-camera-oval.is-scanning { border-color: var(--cq-camera-on-media); border-width: 3px; }
+.cq-camera-oval.is-success { border-color: var(--cq-camera-ok); border-width: 4px; }
+.cq-camera-oval.is-failed { border-color: var(--cq-camera-error); }
+
+/* a sheet over the camera, for forms */
+.cq-camera-backdrop { position: absolute; inset: 0; z-index: 3; background: rgba(0, 0, 0, .45); }
+.cq-camera-sheet {
+  position: absolute; z-index: 4; left: 50%; top: 50%; transform: translate(-50%, -50%);
+  width: min(400px, calc(100vw - 32px)); max-height: calc(100vh - 32px); overflow: auto; padding: 32px;
+  background: var(--cq-camera-sheet-bg); color: var(--cq-camera-sheet-ink); border-radius: var(--cq-camera-sheet-radius);
+}
+.cq-camera-sheet h2 { margin: 0 0 4px; font-size: 22px; font-weight: 500; color: var(--cq-camera-sheet-ink); }
+.cq-camera-sheet p { margin: 0 0 20px; font-size: 14px; color: var(--cq-camera-sheet-muted); }
+.cq-camera-sheet label { display: block; margin: 0 0 14px; font-size: 14px; font-weight: 500; color: var(--cq-camera-sheet-ink); }
+.cq-camera-sheet input {
+  display: block; width: 100%; margin-top: 6px; min-height: 44px; padding: 0 12px; font: inherit; font-weight: 400;
+  color: var(--cq-camera-sheet-ink); background: var(--cq-camera-sheet-bg);
+  border: 1px solid var(--cq-camera-field-border); border-radius: var(--cq-camera-radius);
+}
+.cq-camera-sheet input:focus { outline: 0; border-color: var(--cq-camera-sheet-ink); box-shadow: inset 0 0 0 1px var(--cq-camera-sheet-ink); }
+.cq-camera-sheet .cq-camera-button { width: 100%; margin-top: 8px; }
+.cq-camera-sheet .cq-camera-button.is-primary { background: var(--cq-camera-sheet-primary-bg); color: var(--cq-camera-sheet-primary-ink); }
+.cq-camera-sheet .cq-camera-button:not(.is-primary) { background: transparent; color: var(--cq-camera-sheet-ink); border: 1px solid var(--cq-camera-field-border); }
+.cq-camera-sheet .cq-camera-link { color: var(--cq-camera-sheet-muted); }
+.cq-camera-sheet .cq-camera-error { color: #990000; margin: 12px 0 0; font-size: 14px; }
+
+@media (max-width: 575px) {
+  :root { --cq-camera-title-size: 24px; }
+  .cq-camera-actions { width: 100%; }
+  .cq-camera-actions button, .cq-camera-bottom > .cq-camera-button { flex: 1 1 calc(50% - 8px); }
+}

@@ -27,7 +27,7 @@ Caligrafy is the whole way from zero to one, in one project, with one command li
 | **1. Start** | a running application, database included | `.bin/caligrafer quickstart` |
 | **2. Your data** | the tables and their models | `create_db.sql`, models and relationships |
 | **3. Build once** | each feature, written once, with its rules | a capability (`php caligrafer.php service`) |
-| **4. Experience everywhere** | web pages, a Vue app, a phone and tablet app, a REST API, AI agents | page components, the JS client, `Route::capability`, `Route::mcp` |
+| **4. Experience everywhere** | web pages, a Vue app, a phone and tablet app, a REST API, AI agents | Caligrafy's look, the JS client, `Route::capability`, `Route::mcp` |
 | **5. People and trust** | sign-in, permissions, tokens for programs and agents, an audit log | `scope` and `level`, `php caligrafer.php token` |
 | **6. Ship** | tests, a review, a health check | PHPUnit, the reviewer, `php caligrafer.php doctor` |
 | **7. Online** | your application at a public address | the production `Dockerfile`, `php caligrafer.php cloud deploy` |
@@ -151,8 +151,8 @@ feature step by step, page included.
 + **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
   (`Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
   never follow different rules.
-+ **One look, or yours:** ready-made page components (cards, forms, tabs, lists) with the Caligrafy black and white
-  style, the same on every page and device. Or pick one of 85 [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
++ **One look, or yours:** Caligrafy's look on every page: a light top bar with the Caligrafy mark, title bands, forms,
+  rows and tiles, Caligrafy black for the main action, full-screen camera apps, the same on every device. Or pick one of 85 [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
   (`DESIGN_STYLE` in `.env`, or your own `DESIGN.md`) and let `/caligrafy-quill:design` restyle every page.
 + **Secure by design:** sign-in, passkeys and face login for people; scoped, revocable tokens for programs and
   agents; CSRF protection; an audit log of every change; server files never served.

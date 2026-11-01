@@ -11,6 +11,7 @@
 const app = Vue.createApp({
     data () {
         return {
+            env: env,
             capabilities: [],
             error: ''
         }

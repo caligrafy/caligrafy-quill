@@ -1,0 +1,8 @@
+//- Share links for the footer of site.pug pages ($metadata: site_url, image, description)
+- $shareUrl = urlencode($metadata['site_url'] ?? '')
+p.cq-share
+  | Share: 
+  a(href="https://www.facebook.com/sharer/sharer.php?u={$shareUrl}", target="_blank", rel="noopener") Facebook
+  a(href="https://twitter.com/intent/tweet?url={$shareUrl}", target="_blank", rel="noopener") X
+  a(href="https://www.linkedin.com/sharing/share-offsite/?url={$shareUrl}", target="_blank", rel="noopener") LinkedIn
+  a(href="https://www.pinterest.com/pin/create/button/?url={$shareUrl}&media=" . urlencode($metadata['image'] ?? '') . "&description=" . urlencode($metadata['description'] ?? ''), target="_blank", rel="noopener") Pinterest

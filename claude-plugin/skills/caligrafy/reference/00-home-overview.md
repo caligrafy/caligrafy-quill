@@ -30,7 +30,7 @@ Caligrafy is the whole way from zero to one, in one project, with one command li
 | **1. Start** | a running application, database included | `.bin/caligrafer quickstart` |
 | **2. Your data** | the tables and their models | `create_db.sql`, models and relationships |
 | **3. Build once** | each feature, written once, with its rules | a capability (`php caligrafer.php service`) |
-| **4. Experience everywhere** | web pages, a Vue app, a phone and tablet app, a REST API, AI agents | page components, the JS client, `Route::capability`, `Route::mcp` |
+| **4. Experience everywhere** | web pages, a Vue app, a phone and tablet app, a REST API, AI agents | Caligrafy's look, the JS client, `Route::capability`, `Route::mcp` |
 | **5. People and trust** | sign-in, permissions, tokens for programs and agents, an audit log | `scope` and `level`, `php caligrafer.php token` |
 | **6. Ship** | tests, a review, a health check | PHPUnit, the reviewer, `php caligrafer.php doctor` |
 | **7. Online** | your application at a public address | the production `Dockerfile`, `php caligrafer.php cloud deploy` |
@@ -145,8 +145,8 @@ feature step by step, page included.
 + **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
   (`Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
   never follow different rules.
-+ **One look:** ready-made page components (cards, forms, tabs, lists) with the Caligrafy black and white style, the
-  same on every page and device.
++ **One look:** Caligrafy's look on every page (2.11.0+): a light top bar with the Caligrafy mark, title bands,
+  forms, rows and tiles, Caligrafy black for the main action, full-screen camera apps, the same on every device.
 + **Secure by design:** sign-in, passkeys and face login for people; scoped, revocable tokens for programs and
   agents; CSRF protection; an audit log of every change; server files never served.
 + **Batteries included:** card, ACH and crypto payments, OpenAI and open-model AI (Llama on Groq, OpenRouter,
@@ -166,7 +166,7 @@ feature step by step, page included.
 | --- | --- |
 | Get a feel for it | [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude) or the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart), then [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
 | Build a feature | [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability), then [Capabilities in depth](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP) |
-| Build a web page | [Views and page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents) |
+| Build a web page | [Views and Caligrafy's look](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents) |
 | Build a Vue app or a single page application | [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library), [the single page application](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application) |
 | Let AI agents use your application | [MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#mcp) |
 | Store data | [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models) and [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships) |

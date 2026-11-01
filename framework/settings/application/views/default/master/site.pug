@@ -1,0 +1,94 @@
+doctype html
+//- The master of Caligrafy's own pages (sign-in, admin, the welcome page, the Tasks example): a light top bar, then the
+//- page's blocks built from public/css/layout.css (no cards). Pages built on layoutblocks.pug keep working as before.
+//- Blocks: title, brand (the name in the top bar), nav_links (the links on the right of the top bar), content, footer, additional_css, additional_scripts
+html(lang="en")
+  - $home = session('home');
+  - $analytics_id = strtolower(APP_ENV) == 'production'? GOOGLE_ANALYTICS_ID : '';
+  head
+    meta(charset="UTF-8")
+    meta(name="viewport", content="width=device-width, initial-scale=1, viewport-fit=cover")
+    meta(name='apple-mobile-web-app-capable', content='yes')
+    meta(name='theme-color', content='#ffffff')
+    title
+      block title
+        | Caligrafy
+    link(rel='manifest', href="{$home}public/manifest.webmanifest")
+    if $metadata
+      include ../modules/metadata
+    link(rel='shortcut icon', href=scripts('favicon'), type='image/x-icon')
+    include ../modules/touchicons
+    link(rel="stylesheet", href=scripts('bootstrap_css'))
+    link(rel="stylesheet", href="{$home}public/css/theme.css")
+    link(rel="stylesheet", href=$home . 'public/css/tokens.css?v=' . @filemtime(PUBLIC_PATH . 'css/tokens.css'))
+    link(rel="stylesheet", href=$home . 'public/css/layout.css?v=' . @filemtime(PUBLIC_PATH . 'css/layout.css'))
+    //- Caligrafy's look: white canvas, black primary actions, Inter, no shadows (a design style restyles it)
+    link(rel="stylesheet", href=$home . 'public/css/look.css?v=' . @filemtime(PUBLIC_PATH . 'css/look.css'))
+    block additional_css
+    //- DESIGN_STYLE in .env: the stylesheet of the selected design style (public/css/designs/<name>.css), loaded last
+    - $design_css = design_stylesheet();
+    if $design_css
+      link(rel="stylesheet", href=$design_css)
+    if $analytics_id
+      script(async src="https://www.googletagmanager.com/gtag/js?id={$analytics_id}")
+      script.
+        window.dataLayer = window.dataLayer || [];
+        function gtag(){dataLayer.push(arguments);}
+        gtag('js', new Date());
+        gtag('config', '#{$analytics_id}');
+
+  body.cq-site
+    nav.cq-nav#cq-nav(aria-label="Main")
+      a.cq-nav-brand(href="{$home}")
+        img.cq-nav-mark(src="{$home}public/images/resources/caligrafy-mark.svg", alt="", width="28", height="28")
+        block brand
+          span.semibold Cali
+          span grafy
+      button.cq-nav-toggle(type="button", aria-expanded="false", aria-controls="cq-nav-links") Menu
+      .cq-nav-links#cq-nav-links
+        block nav_links
+          if $authorized
+            a.cq-nav-link(href="{$home}logout") Sign out
+          else
+            a.cq-nav-link(href="{$home}login") Sign in
+            a.cq-nav-link(href="{$home}register") Create account
+    if $metadata
+      include ../modules/metadata_body
+
+    block content
+
+    block footer
+      footer.cq-footer
+        p Copyright &copy; #{copyright()}
+
+    script.
+      // phones: the links of the top bar open under it
+      (function () {
+        var nav = document.getElementById('cq-nav'), toggle = nav && nav.querySelector('.cq-nav-toggle');
+        if (!toggle) return;
+        toggle.addEventListener('click', function () {
+          var open = nav.classList.toggle('is-open');
+          toggle.setAttribute('aria-expanded', open ? 'true' : 'false');
+        });
+      })();
+      // account pages: the side menu marks the section on screen
+      (function () {
+        var links = document.querySelectorAll('.cq-account-nav a[href^="#"]');
+        if (!links.length || !('IntersectionObserver' in window)) return;
+        var byId = {};
+        links.forEach(function (a) { byId[a.getAttribute('href').slice(1)] = a; });
+        var observer = new IntersectionObserver(function (entries) {
+          entries.forEach(function (entry) {
+            if (!entry.isIntersecting) return;
+            links.forEach(function (a) { a.classList.remove('is-active'); });
+            if (byId[entry.target.id]) byId[entry.target.id].classList.add('is-active');
+          });
+        }, { rootMargin: '-30% 0px -60% 0px' });
+        Object.keys(byId).forEach(function (id) { var el = document.getElementById(id); if (el) observer.observe(el); });
+      })();
+    script(src=scripts('bootstrap_script'))
+    include ../modules/standalone
+    include ../modules/serviceworker
+    if $install
+      include ../modules/install
+    block additional_scripts

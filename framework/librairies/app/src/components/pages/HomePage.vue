@@ -5,17 +5,16 @@
 -->
 
 <template>
-    <div id='vue-home'>
-		<div class="spacer-4"></div>
+    <main id='vue-home'>
 		<show-message header="Welcome to Caligrafy" message="Start from the ground up with this light MVC framework"></show-message>
-		<div class="spacer-4"></div>
-		<div class="row">
-			<div class="col-md-6 col-lg-4" v-for="homecard in homecards" :key="homecard.id">
-				<show-card :homecard="homecard" ></show-card>
+		<section class='cq-band'>
+			<div class='cq-inner'>
+				<div class='cq-tiles'>
+					<show-card v-for="homecard in homecards" :key="homecard.id" :homecard="homecard"></show-card>
+				</div>
 			</div>
-		</div>
-		<div class='spacer-2'></div>
-    </div>
+		</section>
+    </main>
 </template>
 
 <script>

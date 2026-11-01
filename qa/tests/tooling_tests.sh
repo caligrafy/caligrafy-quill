@@ -139,13 +139,13 @@ foreach (["css/tokens.css", "css/theme.css", "css/styles.css"] as $c) { if (strp
 echo implode("; ", $bad);')
 [ -z "$OUT" ] && ok "design skill examples: one override stylesheet per style, every Caligrafy surface, no !important; the Caligrafy stylesheets untouched" || ko "design skill examples" "$OUT"
 
-# --- page components: every .cq- class the UI guidelines teach exists in public/css/tokens.css -----------------
+# --- page components: every .cq- class the UI guidelines teach exists in Caligrafy's stylesheets ------------------
 OUT=$(php -r '
 preg_match_all("/\\.(cq-[a-z0-9-]+)/", file_get_contents("claude-plugin/skills/caligrafy/reference/ui-guidelines.md"), $m);
-$css = file_get_contents("public/css/tokens.css"); $bad = [];
+$css = ""; foreach (["tokens", "layout", "look", "camera"] as $f) { $css .= file_get_contents("public/css/$f.css"); } $bad = [];
 foreach (array_unique($m[1]) as $c) { if (!preg_match("/\\." . preg_quote($c, "/") . "(?![a-z0-9-])/", $css)) $bad[] = $c; }
 echo implode(", ", $bad);')
-[ -z "$OUT" ] && ok "every page component of ui-guidelines.md is defined in public/css/tokens.css" || ko "page components missing from tokens.css" "$OUT"
+[ -z "$OUT" ] && ok "every class of ui-guidelines.md is defined in tokens.css, layout.css, look.css or camera.css" || ko "classes of ui-guidelines.md missing from the stylesheets" "$OUT"
 
 # --- a framework copied over 2.1.0/2.1.1 keeps old copies of the files that moved to framework/interfaces --------
 mkdir -p "$TMP/moved" && cd "$TMP/moved"

@@ -1,28 +1,32 @@
-extends ../master/layoutblocks
+extends ../master/site
 - $home = session('home');
 
-//- Stripe Payment Element (public/js/services/stripe_client.js), built with the page components of tokens.css.
-//- The controller passes $clientSecret (a PaymentIntent) and $publicKey. stripe_global.css is not used: it styles the whole page.
+//- Stripe Payment Element (public/js/services/stripe_client.js): the controller passes $clientSecret (a PaymentIntent)
+//- and $publicKey. Stripe draws the payment fields; Caligrafy's look sets their colors (stripe_client.js reads the tokens).
+
+block title
+  | Payment · Caligrafy
 
 block additional_css
-    style.
-        #payment-form .hidden { display: none; }
-        #payment-element { margin-bottom: 16px; }
+  style.
+    #payment-form .hidden { display: none; }
+    #payment-element { margin-bottom: 24px; min-height: 48px; }
+    #payment-message:empty { display: none; }
+    #payment-message { margin: 0 0 16px; font-size: 14px; }
+    #submit .spinner-border { vertical-align: -2px; }
 
-block additional_scripts 
-    script(src="https://js.stripe.com/v3/")
-    script(src=session('appService')."stripe_client.js")
-  
 block content
-    main.cq-page
-        .cq-card
-            .cq-card-head
-                h2.cq-title Payment
-                p.cq-note Your card details go straight to Stripe.
-            form#payment-form.cq-form
-                #payment-element
-                p#payment-message.cq-error(role="alert")
-                button#submit.btn.btn-primary.cq-submit(type="submit", data-secret="{$clientSecret}", public-key="{$publicKey}")
-                    #spinner.spinner-border.spinner-border-sm.hidden(role="status")
-                    span#button-text Pay
-                p.result-message.hidden Payment succeeded
+  main.cq-auth.cq-auth--wide
+    h1 Payment
+    p.cq-lead Your card details go straight to Stripe.
+    form#payment-form
+      #payment-element
+      p#payment-message.cq-error(role="alert")
+      button#submit.btn.btn-primary(type="submit", data-secret="{$clientSecret}", public-key="{$publicKey}")
+        span#spinner.spinner-border.spinner-border-sm.hidden(role="status")
+        span#button-text Pay
+      p.result-message.cq-alert.hidden(role="status") Payment succeeded
+
+block additional_scripts
+  script(src="https://js.stripe.com/v3/")
+  script(src=session('appService')."stripe_client.js")

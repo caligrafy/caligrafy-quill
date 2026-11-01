@@ -1,79 +1,54 @@
-extends ../default/master/layoutblocks
+extends ../default/master/site
+
+//- OpenAI: text (analyze, summarize, complete...) or an image, from a prompt (AIController)
+
+block title
+  | OpenAI · Caligrafy
 
 block content
-
-    .spacer-4
+  main.cq-auth.cq-auth--wide
+    h1 OpenAI
+    p.cq-lead Ask for text or an image. The request goes from the server: the key never reaches the page.
+    include ../default/modules/notice
+    form#ai_form(method='POST', enctype="multipart/form-data")
+      =csrf()
+      .cq-form-grid.cq-form-grid--2
+        .cq-field
+          label(for='type') Type
+          select#type.form-select(name="type")
+            option(value="TEXT", selected=isset($parameters['type'])&&$parameters['type']=='TEXT') Text
+            option(value="IMAGE", selected=isset($parameters['type'])&&$parameters['type']=='IMAGE') Image
+          if isset($errors['type'])
+            p.cq-field-error= $errors['type']
+        .cq-field
+          label(for='command') Command
+          select#command.form-select(name="command")
+            each $label, $value in array('ANALYZE' => 'Analyze', 'SUMMARIZE' => 'Summarize', 'COMPLETE' => 'Complete', 'CORRECT' => 'Correct', 'CLASSIFY' => 'Classify', 'CONVERSE' => 'Converse', 'PREDICT' => 'Predict', 'RECOMMEND' => 'Recommend')
+              option(value=$value, selected=isset($parameters['command'])&&$parameters['command']==$value)= $label
+          if isset($errors['command'])
+            p.cq-field-error= $errors['command']
+      .cq-field
+        label(for='input') Input
+        textarea#input.form-control(name="input", maxlength="4000", rows="8", placeholder="What would you like the machine to know?", required)= isset($parameters['input'])? $parameters['input'] : ''
+        if isset($errors['input'])
+          p.cq-field-error= $errors['input']
+      .cq-field
+        label(for='outcome') Outcome (optional)
+        textarea#outcome.form-control(name="outcome", maxlength="4000", rows="4", placeholder="What you would like the machine to give you")= isset($parameters['outcome'])? $parameters['outcome'] : ''
+        if isset($errors['outcome'])
+          p.cq-field-error= $errors['outcome']
+      button.btn.btn-primary(type='submit') Submit
 
     if !empty($response)
-        .card(class="horizontal-center color0 equally-spaced-1 dropshadow")
-            .horizontal-left
-                p(class="medium-text") Response
-                each $item in $response['response']
-                    if isset($item['message']['content'])
-                        p= $item['message']['content']
-                    else if isset($item['b64_json'])
-                        img.img-fluid(src="data:image/png;base64," . $item['b64_json'], alt="Generated image")
-                    else if isset($item['url'])
-                        p
-                            a.btn-link(href=$item['url']) View generated image
-                    else if !empty($item['message'])
-                        p Sorry the AI could not generate a response what
-                        p= $item['message']
-    
-    form(id='ai_form', method='POST', enctype="multipart/form-data")
-        =csrf()
-        div(class='content-section bounded-xlarge')   
-            div(class='wrapper width-max-600')
-                .spacer-2
-                .card(class="dropshadow color0 horizontal-center equally-spaced-1")
-                    section(class='main-section horizontal-left color0 maketransparent')
-                        if $error
-                            include ../default/modules/messaging
-                        .spacer-2
-                        span(class='normal medium-text textcolor1') OpenAI
-                        .spacer-2
-                        .mb-3
-                            label(for='type', class="textcolor5") * Type
-                            if isset($errors['type'])
-                                p(class="error")= $errors['type']
-                            select.form-control.btn-sm.w-100(id="type", name="type")
-                                option(value="TEXT", selected=isset($parameters['type'])&&$parameters['type']=='TEXT') TEXT
-                                option(value="IMAGE", selected=isset($parameters['type'])&&$parameters['type']=='IMAGE') IMAGE
-                        
-                        .spacer-1  
-
-                        .mb-3
-                            label(for='command', class="textcolor5") * Command
-                            if isset($errors['command'])
-                                p(class="error")= $errors['command']
-                            select.form-control.btn-sm.w-100(id="command", name="command")
-                                option(value="ANALYZE", selected=isset($parameters['command'])&&$parameters['command']=='ANALYZE') ANALYZE
-                                option(value="SUMMARIZE", selected=isset($parameters['command'])&&$parameters['command']=='SUMMARIZE') SUMMARIZE
-                                option(value="COMPLETE", selected=isset($parameters['command'])&&$parameters['command']=='COMPLETE') COMPLETE
-                                option(value="CORRECT", selected=isset($parameters['command'])&&$parameters['command']=='CORRECT') CORRECT
-                                option(value="CLASSIFY", selected=isset($parameters['command'])&&$parameters['command']=='CLASSIFY') CLASSIFY
-                                option(value="CONVERSE", selected=isset($parameters['command'])&&$parameters['command']=='CONVERSE') CONVERSE
-                                option(value="PREDICT", selected=isset($parameters['command'])&&$parameters['command']=='PREDICT') PREDICT
-                                option(value="RECOMMEND", selected=isset($parameters['command'])&&$parameters['command']=='RECOMMEND') RECOMMEND
-
-                        .mb-3
-                            label(for='input', class="textcolor5") * input
-                            if isset($errors['input'])
-                                p(class="error")= $errors['input']
-                            textarea(class="form-control", name="input", id="input", maxlength="4000", rows="10", placeholder="What would you like the machine to know?", required)= isset($parameters['input'])? $parameters['input'] : ''
-
-                        .spacer-2
-
-                        .mb-3
-                            label(for='input', class="textcolor5") outcome
-                            if isset($errors['outcome'])
-                                p(class="error")= $errors['outcome']
-                            textarea(class="form-control", name="outcome", id="outcome", maxlength="4000", rows="10", placeholder="If need be, specify what you would like the machine to give you")= isset($parameters['outcome'])? $parameters['outcome'] : ''
-                        
-                        .spacer-2
-
-                        input(class='btn btn-primary btn-md w-100', type='submit' value='Submit')
-                    
-                        .spacer-2
-
-        .spacer-3
+      section.cq-stack.cq-response
+        h2.cq-heading Response
+        each $item in $response['response']
+          if isset($item['message']['content'])
+            p= $item['message']['content']
+          else if isset($item['b64_json'])
+            img.img-fluid(src="data:image/png;base64," . $item['b64_json'], alt="Generated image")
+          else if isset($item['url'])
+            p
+              a(href=$item['url']) View the generated image
+          else if !empty($item['message'])
+            p.cq-alert.cq-alert--error= 'The AI could not give a response: ' . $item['message']

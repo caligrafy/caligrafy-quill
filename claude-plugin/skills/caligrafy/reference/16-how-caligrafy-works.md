@@ -3,6 +3,8 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
+![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
+
 Caligrafy is built around one idea: **build once, experience everywhere**. A feature is written once, as a capability, and every experience of your application (web pages, Vue apps, a REST API, AI agents) uses that same capability. From the first command to a public address, it is one project. This page explains the few ideas behind it. To try it first, follow the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
 
 ## A capability is a feature, written once
@@ -81,13 +83,13 @@ Online, every experience still calls the same capabilities: the pages, the apps,
 application/
 ├── services/      capabilities: each feature, once (Users/: the people who sign in)
 ├── models/        the data: one class per table, and its create_db.sql
-├── views/         the web pages (Pug), built with the page components
+├── views/         the web pages (Pug), on the master default/master/site with Caligrafy's look
 ├── controllers/   only for pages with logic of their own (form posts, sign-in): they call capabilities
 └── config/routing/web.php   the routes: Route::page, Route::capability, Route::capabilities, Route::mcp
 Dockerfile                   the production image (php caligrafer.php deploy runs when it starts)
 public/
 ├── js/capabilities.js       the generated JS client
-├── css/tokens.css           the Caligrafy look and the page components
+├── css/layout.css, look.css  Caligrafy's look (tokens.css: the design tokens; camera.css: camera apps)
 └── <app>/                   Vue apps and the single page application
 ```
 

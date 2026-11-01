@@ -49,6 +49,13 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.23.0** - Caligrafy Quill 2.11.0: Caligrafy's new look. `ui-guidelines.md` builds every new page on the master
+  `site.pug` with the classes of `layout.css` and `look.css` (title band, bands, `.cq-field`, `.cq-rows`, `.cq-tiles`,
+  the account area), camera apps full screen with `camera.css`, the older card components for existing pages; the
+  `idea`, `new-app`, `new-capability` and `new-resource` skills follow it; the `design` skill restyles the new look
+  through its `--design-*` tokens; gotchas G98-G101 (no `+` between strings in Pug, `site.pug` for new pages, find
+  elements by id under the top bar, versioned assets) and G73 (Checkout on new Stripe accounts); the Views, Design
+  styles, Stripe, Face detection and Machine learning mirrors, and the 2.11.0 release notes.
 - **1.22.2** - Caligrafy Quill 2.10.2: G97 says that `plugin` also removes a `caligrafy` registration made from the
   project's folder before `quickstart` renamed it.
 - **1.22.1** - Caligrafy Quill 2.10.1: each project's plugin source has its own name (gotcha G97: one shared

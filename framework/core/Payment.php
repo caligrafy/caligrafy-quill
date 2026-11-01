@@ -214,7 +214,13 @@ class Payment extends \stdClass {
 			// Append to input when needed
 			$parameters = array_merge($parameters, $locales, $emails);
 			if (!empty($paymentType)) { $parameters['payment_method_types'] = $paymentType; }
-			
+
+			// Stripe Managed Payments (on by default for new accounts) rejects products without a tax code:
+			// without 'tax_code' in $productData, the session is a classic Checkout; with one, Managed Payments stays on
+			if (empty($productData['tax_code']) && !isset($payment_intent_data['managed_payments'])) {
+				$parameters['managed_payments'] = ['enabled' => false];
+			}
+
 			// If success URL specified, then add to parameters
 			if (isset($successUrl) && trim($successUrl) != '') { $parameters = array_merge($parameters, ['success_url' => $successUrl]); }
 			

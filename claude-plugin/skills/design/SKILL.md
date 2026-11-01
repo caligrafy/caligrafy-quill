@@ -16,13 +16,15 @@ How it fits together (Quill 2.8+):
   [VoltAgent/awesome-design-md](https://github.com/VoltAgent/awesome-design-md), MIT, attribution in its `README.md`
   and `LICENSE`). `framework/design/README.md` explains the layout; `design list` shows each style's source.
 + `DESIGN_STYLE=<name>` in `.env` selects one; empty is Caligrafy's own look.
-+ The layout (`layoutblocks.pug`) and the Vue app template (`framework/plugins/app/index.php`) link
-  `public/css/designs/<name>.css` **after** styles.css, Bootstrap, theme.css and tokens.css, through
-  `design_stylesheet()`, only when that file exists. Unknown name or no stylesheet: the Caligrafy look, unchanged.
++ The masters (`site.pug`, Caligrafy's pages since 2.11.0, and the older `layoutblocks.pug`), the Vue app template
+  (`framework/plugins/app/index.php`) and the camera apps (face detection, machine learning) link
+  `public/css/designs/<name>.css` **last**: after styles.css, Bootstrap, theme.css, tokens.css, layout.css, camera.css
+  and look.css (Caligrafy's look, 2.11.0+), through `design_stylesheet()`, only when that file exists. Unknown name or
+  no stylesheet: the Caligrafy look, unchanged.
 + `php caligrafer.php design list | show <name> | use <name> | off | status`; `doctor` reports the selected style.
 
-**The one rule: write only `public/css/designs/<name>.css`.** Never edit `tokens.css`, `tokens.json` (the QA suite
-checks they match), `theme.css`, `styles.css`, the layout or the views to restyle: the user's Caligrafy look must come
+**The one rule: write only `public/css/designs/<name>.css`.** Never edit `look.css`, `layout.css`, `camera.css`,
+`tokens.css`, `tokens.json` (the QA suite checks they match), `theme.css`, `styles.css`, the masters or the views to restyle: the user's Caligrafy look must come
 back intact the moment `DESIGN_STYLE` is emptied. If a page truly cannot be styled without a markup change, tell the
 user which one and why instead of making it.
 
@@ -59,16 +61,23 @@ are prose only: take the hex values and sizes from their tables. Note before wri
 
 Pages share a few surfaces, so one stylesheet covers them all ([surfaces.md](reference/surfaces.md) maps every
 selector to its design role and the Caligrafy rule it has to beat):
-- the layout: `header` (fixed, 60px, `.color0`, the "Caligrafy" wordmark in `h1.large-text`), body background,
-  `footer`, the `.shadowCoverTop` / `.radialShadowTop` strips;
-- the sign-in pages (`Auth/login.pug`, `register.pug`): `.card.color0.dropshadow` cards, `.form-control.input-default`,
-  `label.textcolor5`, `.btn.btn-primary.btn-secondary` (the main action), `.btn-secondary` (Sign up), alerts;
-- the page components of `tokens.css`: `.cq-page`, `.cq-card`, `.cq-card-head`, `.cq-title`, `.cq-note`, `.cq-form`,
-  `.cq-submit`, `.cq-error`, `.cq-tabs`, `.cq-count`, `.cq-list`, `.cq-item`, `.cq-check`, `.cq-actions`, `.cq-empty`,
-  `.cq-foot`, `.cq-section`, `.cq-split`;
+- Caligrafy's look (2.11.0+, `look.css`): its `--design-*` tokens (canvas, surface, ink, body, muted, hairline,
+  primary and its hover and text, error, success, font, radii) feed the `--cq-*` tokens: overriding the `--design-*`
+  values in `:root` restyles most of every page at once;
+- the pages on `site.pug` (`layout.css`): the top bar `.cq-nav` (sticky, 56px, `.cq-nav-mark` the Caligrafy mark,
+  `.cq-nav-brand`, `.cq-nav-link`, `.cq-nav-toggle` on phones), `.cq-hero`, `.cq-display`, `.cq-lead`, `.cq-cta`,
+  `.cq-band(--surface)`, `.cq-heading`, `.cq-auth` (sign-in, register), `.cq-field`, `.cq-form-grid`, `.cq-or`,
+  `.cq-alert(--error)`, `.cq-field-error`, `.cq-segments`, `.cq-count`, `.cq-rows`, `.cq-row`, `.cq-row-actions`,
+  `.cq-tiles`, `.cq-tile`, `.cq-stats`, `.cq-badge`, `.cq-account`, `.cq-account-nav`, `.cq-doc`, `.cq-code`,
+  `.cq-pre`, `.cq-empty-state`, `.cq-footer`;
+- the camera pages (`camera.css`): `.cq-camera` and its `--cq-camera-*` tokens (the main action over the camera,
+  the see-through buttons, the oval, the sheet);
+- older pages on `layoutblocks.pug`: `header` (fixed, 60px, `.color0`), `footer`, and the card components of
+  `tokens.css`: `.cq-page`, `.cq-card`, `.cq-card-head`, `.cq-title`, `.cq-note`, `.cq-form`, `.cq-submit`,
+  `.cq-error`, `.cq-tabs`, `.cq-list`, `.cq-item`, `.cq-actions`, `.cq-empty`, `.cq-foot`;
 - the project's own views and apps: `grep -rhoE "class=['\"][^'\"]+|\.[a-z][a-z0-9-]+" application/views` and the
   `public/<app>/index.php` templates. Vite SPAs (`public/<app>/src/main.js`) import the stylesheets at build time:
-  add `import '../../css/designs/<name>.css'` after the tokens import there and say so (it is then always on for
+  add `import '../../css/designs/<name>.css'` after the `look.css` import there and say so (it is then always on for
   that SPA until removed).
 
 ## 4. Write `public/css/designs/<name>.css`
@@ -82,22 +91,26 @@ from your notes, never from the example's values:
 2. Fonts: `@import` the free substitutes from Google Fonts at the very top. Never link or embed proprietary fonts
    (Söhne, SF Pro, Copernicus, Styrene, Circular...): name them first in `font-family` only when the DESIGN.md does,
    followed by the substitute and a generic family.
-3. `:root`: the design's values as `--design-*` custom properties, and the Caligrafy tokens they replace
-   (`--cq-color-ink`, `--cq-color-paper`, `--cq-color-page`, `--cq-color-text`, `--cq-color-text-muted`,
-   `--cq-color-border`, `--cq-color-accent-dark`, `--cq-color-accent-red`, `--cq-radius-control`). Every rule below
-   uses these variables, never repeated hex values.
+3. `:root`: the design's values as the `--design-*` custom properties of `look.css` (same names, so every Caligrafy
+   rule follows), then the Caligrafy tokens they replace (`--cq-color-ink`, `--cq-color-paper`, `--cq-color-page`,
+   `--cq-color-canvas`, `--cq-color-surface`, `--cq-color-primary`, `--cq-color-on-primary`, `--cq-color-text`,
+   `--cq-color-text-muted`, `--cq-color-border`, `--cq-radius-control`, `--cq-radius-card`) and, for the camera pages,
+   `--cq-camera-*`. Every rule below uses these variables, never repeated hex values.
 4. Layout, then sign-in surfaces, then Bootstrap controls (buttons through their `--bs-btn-*` variables, fields, focus),
    then the page components, then phone width (`@media (max-width: 575px)`).
 
 Rules that keep it working:
 - Beat the Caligrafy selectors by **specificity**, not `!important`: prefix with `html body` (theme.css uses
-  `html .btn-primary`, styles.css `body *`). `!important` only against an inline `style` or a Bootstrap utility.
+  `html .btn-primary`, styles.css `body *`, look.css `html body`: loaded after it, the same prefix wins). `!important`
+  only against an inline `style` or a Bootstrap utility.
 - `styles.css` sets `font-family` and `font-weight: lighter` on `body *`: reset both on `html body *` and restore
   weights on headings, labels, buttons and `.semibold`.
-- Keep the structure: the 60px fixed header, `.cq-page`'s 76px top padding, card widths, the one-column phone
-  layout. Change colors, type, radii, borders, shadows, spacing inside cards; not the page skeleton.
-- A dark style restyles everything that is white by default: `.color0`, `.card.color0`, `.cq-card`, `.cq-tabs button`,
-  `.cq-count`, `.form-control` (text, placeholder, background, autofill), alerts, `.cq-note code`, `.btn-secondary`.
+- Keep the structure: the sticky top bar, the bands and columns of `layout.css`, the full-screen camera, the
+  one-column phone layout (and on older pages the 60px fixed header, `.cq-page`'s 76px top padding, card widths).
+  Change colors, type, radii, borders, shadows, spacing; not the page skeleton.
+- A dark style restyles everything that is white by default: the canvas, `.cq-nav` (frosted white), `.cq-tile`,
+  `.cq-band--surface`, `.cq-segments button`, `.cq-count`, `.form-control` (text, placeholder, background, autofill),
+  alerts, `.cq-code`, `.cq-pre`, `.btn-secondary`, the camera sheet; on older pages `.color0`, `.card.color0`, `.cq-card`.
 - Accessible: text contrast at least 4.5:1 (3:1 for large text and control borders), visible focus on buttons,
   fields, tabs and checkboxes, touch targets stay 44px (`--cq-touch-target`).
 - The application keeps its own name and logo: never add the inspiring site's logo, wordmark, brand name, product
@@ -109,9 +122,10 @@ so the browser picks up every edit).
 
 ## 5. Check every page in a browser, desktop and phone
 
-Open the pages at 1280 px and 375 px wide (the built-in browser or Claude in Chrome): `/login`, `/register`, each page
+Open the pages at 1280 px and 375 px wide (the built-in browser or Claude in Chrome): `/`, `/login`, `/register`, each page
 of `application/views` and its routes (the Tasks example at `/tasks` with a few tasks added, an empty state, a done
-task, a tab switched), the client apps (`/apps/<name>`), signed out and signed in. For each one:
+task, a segment switched), the client apps (`/apps/<name>`, a camera app with the camera allowed), signed out and
+signed in, and the phone Menu opened. For each one:
 - compare with the DESIGN.md: canvas, card, primary button, fields, type, radii, the "Don't" list;
 - nothing unreadable (white on white, dark text on a dark card, placeholders, disabled buttons, autofill);
 - focus a field and a button with the keyboard; hover the buttons; no horizontal scroll on the phone;

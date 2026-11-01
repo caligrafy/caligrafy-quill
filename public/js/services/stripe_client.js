@@ -34,8 +34,28 @@ if (returnSecret) {
   });
 }
 
+// Stripe draws its fields in an iframe: pass it the page's tokens so they follow the design style
+var token = function (name, fallback) {
+  var value = getComputedStyle(document.documentElement).getPropertyValue(name).trim();
+  return value || fallback;
+};
+var appearance = {
+  theme: 'stripe',
+  variables: {
+    colorPrimary: token('--cq-color-primary', '#000000'),
+    colorText: token('--cq-color-text', '#171a20'),
+    colorDanger: token('--design-error', '#b3261e'),
+    borderRadius: token('--cq-radius-control', '4px'),
+    fontFamily: 'Inter, -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif'
+  }
+};
+
 if (clientSecret) {
-  elements = stripe.elements({ clientSecret: clientSecret, appearance: { theme: 'stripe' } });
+  elements = stripe.elements({
+    clientSecret: clientSecret,
+    appearance: appearance,
+    fonts: [{ cssSrc: 'https://fonts.googleapis.com/css2?family=Inter:wght@400;500&display=swap' }]
+  });
   var paymentElement = elements.create("payment", { layout: "tabs" });
   paymentElement.mount("#payment-element");
 } else {

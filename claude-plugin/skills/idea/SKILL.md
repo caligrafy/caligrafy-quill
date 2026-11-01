@@ -119,8 +119,9 @@ calls it, then shows the token once and the line to paste:
 - `Route::capabilities('/capabilities');` and `Route::mcp('/mcp');` (quickstart adds them: keep one of each);
 - the JS client: `docker compose exec dev-box php caligrafer.php client` (run it again after any capability change).
 
-**The page** `application/views/<Folder>/index.pug` + `public/js/<things>.js`: the page components only
-(`main.cq-page > .cq-card`, `.cq-form`, `.cq-list` / `.cq-item` / `.cq-actions`, `.cq-empty`, `.cq-error`), the JS client
+**The page** `application/views/<Folder>/index.pug` + `public/js/<things>.js`: `extends ../default/master/site` and the
+classes of Caligrafy's look only (a title band `section.cq-hero.cq-hero--page`, `section.cq-band > .cq-inner`, a
+`.cq-form-grid` of `.cq-field`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`, `.cq-field-error`), the JS client
 for every call (never `fetch` by hand, never a key in the page), like the Tasks example. Tabs with counts are
 optional: keep them only when the list capability gives what they need. No `style` block, no
 Bootstrap colors.
