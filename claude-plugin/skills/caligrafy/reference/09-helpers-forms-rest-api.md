@@ -216,6 +216,8 @@ If you have an APP_KEY and API_KEY already defined in your ```.env``` file or if
 
 > **How API keys work:** an `API_KEY` is the `APP_KEY` encrypted with itself, so every key generated from the same `APP_KEY` is valid and they cannot be revoked one by one: changing the `APP_KEY` revokes all of them (and logs every user out). Also, the `API_KEY` is given to the browser in the `env` of the Vue apps served by Caligrafy, so treat it as a public identifier of your application rather than a secret: protect private data with authentication (`authorized()`, `guard()`) as well.
 
+> **Legacy key, tokens and pages:** these keys are the legacy API key, kept for old programs. Caligrafy Cloud turns it off (`LEGACY_API_KEY=false`). Give each program or agent a personal access token instead (`php caligrafer.php token create <name> --scopes "*"` for the controller routes, learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#tokens)). Pages served by the app send neither: since 2.7.0 they send the session and its CSRF token in an `X-CSRF-Token` header (`{ headers: apiHeaders() }`, see [Requests](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.3-Requests)).
+
 **2. Enabling API Access:**
 In the `/application/config/routing/web.php`, you will need to activate API access and define the routes. By default the API access is enabled through ```Auth::activateAPI()```. By commenting out the statement, you disable all API accesses.
 
@@ -297,7 +299,7 @@ In the `Headers` tab, add an 'Accept' key and give it a value 'application/json'
 This instructs the server that the client needs a JSON output.
 
 + **Authorization:** For all requests, you need to add an `Authorization` header:
-In Postman, you can go to the `Authorization` tab and select `Bearer Token` from the `Type` selector. You will need to enter the `API_KEY` in the `Token` field provided.
+In Postman, you can go to the `Authorization` tab and select `Bearer Token` from the `Type` selector. You will need to enter a personal access token in the `Token` field provided (`php caligrafer.php token create Postman --scopes "*"`). The legacy `API_KEY` also works where `LEGACY_API_KEY` is not `false`.
 
 + **GET and DELETE:** For `GET` and `DELETE`, you can test them without any additional settings. All you need to do is enter the respective URI for each.
 
@@ -319,7 +321,7 @@ Then you could type directly in the body the content you want to send in the des
 
     | Status | Error | When |
     | - | - | - |
-    | `401` | `1004` Access Denied | an API call to a controller route with a missing or invalid API key, or without `Auth::activateAPI()` (closure routes are not checked) |
+    | `401` | `1004` Access Denied | an API call to a controller route without a valid personal access token, legacy API key or session with its `X-CSRF-Token` header (2.7.0+), or without `Auth::activateAPI()` (closure routes are not checked). The message ends with the reason |
     | `403` | `3000` Cross Site Forgery | form post without a valid `_token` |
     | `403` | `1006` Forbidden | a `Route::page` whose data capability is not allowed to the signed-in person (2.5.0+) |
     | `404` | `1001` Invalid Controller or Action | the route points to a missing controller or method |
@@ -328,9 +330,9 @@ Then you could type directly in the body the content you want to send in the des
     | `500` | any other error | exceptions caught by the `catch` of `web.php` keep their message; for PHP fatal errors and errors outside the routes `try`, the message is only shown when `APP_DEBUG=true` |
 
     ```json
-    {"error": {"code": 1004, "message": "Access Denied"}}
+    {"error": {"code": 1004, "message": "Access Denied: the legacy API key is turned off (LEGACY_API_KEY=false, the default on Caligrafy Cloud): pages send the X-CSRF-Token header with the session, programs and agents a personal access token"}}
     ```
-    HTML requests still receive the same text as before (for example `[ERROR 1001] Invalid Controller or Action`). API calls skip the CSRF check: they need the API key, not a `_token`. Check the status code in your clients: earlier versions answered errors with `200`. A status that your own controller sets with `http_response_code()` before `api()` is kept.
+    Since 2.7.0 the `1004` message ends with the reason after a colon (`[ERROR 1004] Access Denied: ...` for HTML requests). HTML requests still receive the same text as before (for example `[ERROR 1001] Invalid Controller or Action`). API calls do not read `_token`: programs send a personal access token, and pages send the session with its CSRF token in an `X-CSRF-Token` header (`apiHeaders()`). Check the status code in your clients: earlier versions answered errors with `200`. A status that your own controller sets with `http_response_code()` before `api()` is kept.
 
 + **PUT:** For `PUT`, since our framework spoofs a `POST` method, options 1 and 2 above won't work. Only option 3 with a JSON body could work. If your application supports file uploading, then you should test the API as a `POST` and add a `_method` key in the `Body` that has the value `PUT`. 
 

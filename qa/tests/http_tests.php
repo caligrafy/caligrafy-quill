@@ -260,7 +260,38 @@ qa_test('a JSON call without the API key is denied', function () use ($guest) {
     $r = $guest->get('/qa/books/5', ['headers' => ['Accept: application/json']]);
     qa_equals(401, $r['status']);
     qa_contains('application/json', $r['headers']);
-    qa_equals(['error' => ['code' => 1004, 'message' => 'Access Denied']], json_decode($r['body'], true));
+    qa_equals(1004, json_decode($r['body'], true)['error']['code'] ?? null);
+    qa_contains('Access Denied: send the page\'s CSRF token in an X-CSRF-Token header', json_decode($r['body'], true)['error']['message'] ?? '');
+});
+
+qa_test('a JSON call from a page (session cookie and its X-CSRF-Token) reaches a controller route without any key', function () {
+    $page = new QaBrowser();
+    $r = qa_json('GET', '/qa/books/5', null, null, $page, ['X-CSRF-Token: ' . qa_csrf($page)]);
+    qa_equals(200, $r['status'], $r['body']);
+});
+
+qa_test('a JSON body sent without the JSON Accept header passes the CSRF check with X-CSRF-Token', function () {
+    $page = new QaBrowser();
+    $csrf = qa_csrf($page);
+    $r = $page->request('POST', '/facelogin/password', ['headers' => ['Content-Type: application/json', 'X-CSRF-Token: ' . $csrf],
+        'form' => json_encode(['username' => 'nobody', 'password' => 'wrong'])]);
+    qa_assert(strpos($r['body'], 'ERROR 3000') === false, 'not refused by the CSRF check: ' . $r['body']);
+    $r = $page->request('POST', '/facelogin/password', ['headers' => ['Content-Type: application/json', 'X-CSRF-Token: wrong'],
+        'form' => json_encode(['username' => 'nobody', 'password' => 'wrong'])]);
+    qa_contains('ERROR 3000', $r['body']);
+});
+
+qa_test('a JSON call with the CSRF token of another session is denied', function () {
+    $csrf = qa_csrf(new QaBrowser());
+    $r = qa_json('GET', '/qa/books/5', null, null, new QaBrowser(), ['X-CSRF-Token: ' . $csrf]);
+    qa_equals(401, $r['status']);
+});
+
+qa_test('a JSON post from a page to a controller route (session and X-CSRF-Token, no key) is accepted', function () {
+    $page = new QaBrowser();
+    $r = qa_json('POST', '/facelogin/password', ['username' => 'nobody', 'password' => 'wrong'], null, $page, ['X-CSRF-Token: ' . qa_csrf($page)]);
+    // the controller answered (a wrong password), not the API check
+    qa_assert(($r['json']['error'] ?? null) === 'Invalid username or password', 'reached the controller: ' . $r['body']);
 });
 
 qa_test('a JSON call with a wrong API key is denied with 401', function () use ($guest) {

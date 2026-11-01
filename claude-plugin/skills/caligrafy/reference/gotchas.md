@@ -7,9 +7,12 @@ a project initialized before it keeps the old `application/` copies until it is 
 
 ## Requests, API and security
 
-**G1. JSON/API calls need `Accept: application/json` + `Authorization: Bearer <API_KEY>`; form posts need `_token`.**
+**G1. JSON calls from a page need `Accept: application/json` + `X-CSRF-Token` (2.7.0+); programs a Bearer token; form posts `_token`.**
 `Request::wantsJson()` is true only when `Accept` contains `application/json` and NOT `text/html`.
-- When `wantsJson()` is true, `Route::execute()` requires `Auth::activateAPI()` in web.php and a valid Bearer API key for controller routes, else `[ERROR 1004] Access Denied`. CSRF is skipped.
+- When `wantsJson()` is true, `Route::execute()` accepts a controller route call from a page of the application (the
+  session cookie and `X-CSRF-Token: <session token>`, 2.7.0+: `apiHeaders()`, G87), or, with `Auth::activateAPI()` in
+  web.php, `Authorization: Bearer` with a personal access token granting `*` or the legacy API key; else `[ERROR 1004]
+  Access Denied: <why>`. Before 2.7.0 only the Bearer was accepted. The form CSRF check is skipped.
 - When it is false, every POST/PUT/DELETE must carry `_token` (= `session('token')`) in `$_POST`, else `[ERROR 3000]`. Use `=csrf()` in pug forms, `formData.append('_token', env.token)` in JS.
 - `axios` sends `Accept: application/json, text/plain, */*` by default (counts as JSON); `fetch()` sends `*/*` (does NOT). Always set `Accept: application/json` explicitly for API calls.
 - The token is read from `$_POST` only. A JSON body (`Content-Type: application/json`) without the JSON Accept header always fails CSRF.
@@ -32,7 +35,7 @@ Proof: `framework/core/Model.php`, `framework/settings/application/models/Auth/U
 
 **G5. `redirect()` does not stop the script.** It only sends a `Location` header. Write `redirect('/x'); exit;` (or `return`) when code follows. `logout()` and `guard()` do exit. Proof: `corehelpers.php` (`redirect`), `Auth.php`.
 
-**G27. Client app pages expose `API_KEY` to the browser.** `views/Client/app.pug` injects `apiKey => API_KEY` into the JS `env`, so anyone who can load a client-app page can call the JSON API. Every API key is `encryptDecrypt('encrypt', APP_KEY, APP_KEY)`: all keys generated from one APP_KEY are equivalent and can only be revoked together by changing `APP_KEY`. Protect sensitive data routes with `authorized()`/`guard()` too. Proof: `views/Client/app.pug`, `Request::authorizeApiRequest`, `Caligrafer::generateKeys`.
+**G27. Client app pages expose `API_KEY` to the browser** (while the legacy key is on: since 2.7.0 `env.apiKey` is `null` with `LEGACY_API_KEY=false`, and pages call with `apiHeaders()`, G87). `views/Client/app.pug` injects `apiKey => API_KEY` into the JS `env`, so anyone who can load a client-app page can call the JSON API. Every API key is `encryptDecrypt('encrypt', APP_KEY, APP_KEY)`: all keys generated from one APP_KEY are equivalent and can only be revoked together by changing `APP_KEY`. Protect sensitive data routes with `authorized()`/`guard()` too. Proof: `views/Client/app.pug`, `Request::authorizeApiRequest`, `Caligrafer::generateKeys`.
 
 **G28. Closure routes skip the API-key check.** Only `'Controller@action'` routes enforce `Auth::activateAPI()` + Bearer key; closures run for any JSON request. Proof: `Route.php` (`execute`).
 
@@ -161,7 +164,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 ## Build once: services, capabilities, tokens and MCP (Quill 2.1)
 
-**G50. The legacy API key is public.** `views/Client/app.pug` passes `API_KEY` to every client page and the Vite SPA builds `VITE_API_KEY` into its bundle (`framework/librairies/app/src/main.js`), while JSON requests skip the CSRF check (`Request::checkCSRF()`): anyone who opens an app page can read the key and call every JSON controller route, writes included, from anywhere. Every key from `generatekeys`/`generateapikey` encrypts the same `APP_KEY` (`Request::isLegacyApiKey()`), so none can be revoked alone. For browser clients use the session (the generated JS client, G54); for programs and agents use personal access tokens (`php caligrafer.php token create`, `Caligrafy\Tokens`); then set `LEGACY_API_KEY=false` (doctor reports the setting).
+**G50. The legacy API key is public.** `views/Client/app.pug` passes `API_KEY` to every client page and the Vite SPA builds `VITE_API_KEY` into its bundle (`framework/librairies/app/src/main.js`), while JSON requests skip the CSRF check (`Request::checkCSRF()`): anyone who opens an app page can read the key and call every JSON controller route, writes included, from anywhere. Every key from `generatekeys`/`generateapikey` encrypts the same `APP_KEY` (`Request::isLegacyApiKey()`), so none can be revoked alone. For browser clients use the session (the generated JS client, G54; `apiHeaders()` for controller routes since 2.7.0, G87); for programs and agents use personal access tokens (`php caligrafer.php token create`, `Caligrafy\Tokens`); then set `LEGACY_API_KEY=false` (doctor reports the setting).
 
 **G51. Closure routes are not protected for JSON.** `Route::execute()` checks the API key only for `'Controller@action'` routes, and `Request` skips CSRF for JSON: `Route::post('/x', function () {...})` accepts a JSON post with no key and no token. Put anything sensitive behind a controller route or a capability (`Route::capability()` checks the context itself).
 
@@ -208,7 +211,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G71. MySQL 8.4 with its defaults needs more than 256 MB.** Given a 256 MB limit it is killed while it initializes (`OOMKilled`, exit 137, restarting), and the half-initialized volume never gets its application user: the app then fails with `SQLSTATE[HY000] [1130] Host '...' is not allowed to connect`. For a small app database: `performance_schema = OFF`, `innodb_buffer_pool_size = 64M` and about 384 MB; if it was already killed and holds no data, recreate its volume.
 
-**G72. `php caligrafer.php cloud login` needs a terminal to paste into.** It reads the token from a hidden prompt; run without a keyboard (an IDE "Run" button, a pipe) it reads nothing and stops with "This is not a Caligrafy token". Ask the user to run it in their own terminal, or `read -rs T && php caligrafer.php cloud login --token "$T"; unset T`. Never ask for the token in chat. It is kept in `.caligrafy/cloud.json` (0600, git-ignored since 2.4.0).
+**G72. Before 2.7.0, `php caligrafer.php cloud login` needs a terminal to paste into** (2.7.0+: it is approved in the browser, G88; `--paste` keeps the prompt). It reads the token from a hidden prompt; run without a keyboard (an IDE "Run" button, a pipe) it reads nothing and stops with "This is not a Caligrafy token". Ask the user to run it in their own terminal, or `read -rs T && php caligrafer.php cloud login --token "$T"; unset T`. Never ask for the token in chat. It is kept in `.caligrafy/cloud.json` (0600, git-ignored since 2.4.0).
 
 **G73. Stripe accounts with Managed Payments refuse a Checkout product without a tax code.** `Payment::createCheckout()` then returns `action_success => false` with "the product tax code is missing". Add `'tax_code' => 'txcd_...'` to its `$productData` (the 4th argument: it goes into `price_data.product_data`), for example `txcd_10701100` (Website Hosting), `txcd_10103001` (SaaS, business use), `txcd_10000000` (electronically supplied services). `GET https://api.stripe.com/v1/tax_codes/<code>` checks a code.
 
@@ -308,3 +311,37 @@ running it, CI), quickstart skips the database instead of using the defaults: ne
 which MySQL answers on that port. Proof: `framework/core/Quickstart.php` (`stacks()`,
 `localSite()`).
 
+**G87. Pages call their routes with the session, never the API key: online the key is off.** Caligrafy Cloud writes
+`LEGACY_API_KEY=false` for every app (`Cloud::envFile()`), so a page that sends `Authorization: Bearer ' + apiKey`
+works locally and gets `[ERROR 1004] Access Denied` online (verified on a FacePass deploy: the header reached PHP, the
+key was refused). Since 2.7.0 `Route::execute()` accepts a JSON call to a controller route that carries the session's
+CSRF token in `X-CSRF-Token` (`Request::authorizeSessionRequest()`): the controller sees the signed-in user or a
+visitor, exactly as for a form post. In a client app, `apiHeaders()` of `public/js/services/app.js` gives
+`Accept` and `X-CSRF-Token` (`env.csrf`), never `Content-Type` (axios 1.x would send a `FormData` as JSON); `env.apiKey` is `null` when the key is off. Capabilities
+already worked this way through the JS client (G54). The refusal now says why: no CSRF token and no Bearer, a token
+that is unknown or lacks `*`, `LEGACY_API_KEY=false`, the API not activated, or a key of another `APP_KEY`.
+`doctor` warns about `public/*/scripts/*.js` that send the key. Before 2.7.0, call capabilities with the JS client
+instead of controller routes. Proof: `framework/core/Route.php` (`execute`), `framework/core/Request.php`
+(`authorizeSessionRequest`, `apiRefusal`), `framework/settings/application/views/Client/app.pug`.
+
+**G88. `cloud login` is approved in the browser (2.7.0+).** Without `--token` it calls `start_cli_login` (no token),
+prints a code and `https://deploy.caligrafy.com/cli?code=XXXX-XXXX`, opens it (not from inside Docker: `/.dockerenv`,
+or with `--no-browser` / `CALIGRAFY_NO_BROWSER`), and polls `poll_cli_login` every 3 seconds for 10 minutes. The owner
+signs in (or signs up, then back to the page), checks the code and approves; the command saves the token in
+`.caligrafy/cloud.json`. A visitor who is not signed in is sent to `/login` and comes back to the approval after it.
+The account must have confirmed its email. Tokens are listed and revoked on the dashboard. `--token cq_...` and
+`--paste` keep the old ways. Run from Claude, start it in the background and open the URL for the user when it runs
+in the Docker server. Proof: `framework/core/CloudClient.php` (`browserLogin`), Caligrafy Cloud `StartCliLogin`,
+`PollCliLogin`, `ApproveCliLogin`.
+
+**G89. A pipe hides the exit code of a command.** `php caligrafer.php cloud deploy <name> | tail -15` exits 0 even when
+Caligrafy Cloud refused the deploy ("has no time left"): the shell reports `tail`'s status. `cloud` exits 1 on every
+refusal and failed build; run it whole (in the background when long) or with `set -o pipefail`. The same holds for
+`doctor`, `call` and `qa/run.sh`.
+
+**G90. Every new app on Caligrafy Cloud is free for its first 30 minutes, from its first deploy.** Since November 2026
+the free minutes belong to the app, not the account (before, an account had 30 minutes once). An app whose minutes
+are used answers `deploy_app` with "has no time left (its free 30 minutes are used): buy a week (2 credits)...";
+`cloud extend <name> week|month|year` then deploy again. `cloud status <name>` shows the time left; `my_account` gives
+`free_minutes_per_app`. A private repository needs its read-only deploy key on GitHub first: since 2.7.0 `cloud create`
+saves it in `.caligrafy/<name>-deploy-key.pub` (`cloud key <name>`), for `gh repo deploy-key add`.

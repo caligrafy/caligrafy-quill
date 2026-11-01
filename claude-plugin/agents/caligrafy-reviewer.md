@@ -16,7 +16,7 @@ Scope: the files or diff you are given; otherwise `git diff` / recently modified
 Check for, citing the gotcha id:
 1. SQL built from input: `all(['condition' => ... $var ...])` without `'bindings'` (G8), string-concatenated `Database::execute()`, `search()` scopes built from request data (G2) - require bound `?` parameters.
 2. Validation: `check()` result compared with `!== true` when filters are passed (G6); missing filter/validate on request parameters; `is_value` (G18).
-3. Requests: JS calls without `Accept: application/json` + `Authorization: Bearer` (G1); forms without `=csrf()` / `_token`; PUT/DELETE without `_method`; `fetch()` without explicit Accept.
+3. Requests: JS calls from a page without `Accept: application/json` + `X-CSRF-Token` (`apiHeaders()`, G1, G87), or with `'Bearer ' + apiKey` (refused online, G87); forms without `=csrf()` / `_token`; PUT/DELETE without `_method`; `fetch()` without explicit Accept.
 4. Routes: `Route::run()` missing or not last; `/` not first (G4); controller/action names that do not exist (case-sensitive); `{id}` on nested create routes (G23); sensitive closure routes relying on the API key (G28); private data protected only by the API key (G27).
 5. Controllers: overriding built-in methods (`find`, `save`, `delete`, `all`, `search`, `view`, `api`, `check`, `validate`, `filter`, `associate`, `table`); missing `associate()` before CRUD; code after `redirect()` without `exit`/`return` (G5); status codes set after `api()` (G21).
 6. Models: properties not matching columns; relationships with wrong FK direction (`belongsTo` misuse G9); code that relies on `save()` dropping falsy values, or that sets 0/''/false via `save()` on an older framework (G7, G39); duplicate global class names (G19).

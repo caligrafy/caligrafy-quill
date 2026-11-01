@@ -180,9 +180,11 @@ class Route extends \stdClass
                 exit;
             }
 
-            // Generate Exception if it is an API access and it is not allowed
-            if (self::$_request->wantsJson() && (!Auth::$api || !self::$_request->authorizeApiRequest())) {
-                throw Errors::raise(1004);
+            // JSON calls need a page of this application (the session's CSRF token in X-CSRF-Token) or, when the API
+            // is activated, a personal access token that grants everything or the legacy key; the refusal says why
+            if (self::$_request->wantsJson() && !self::$_request->authorizeSessionRequest()
+                && (!Auth::$api || !self::$_request->authorizeApiRequest())) {
+                throw Errors::raise(1004, self::$_request->apiRefusal());
                 exit;
             }
         

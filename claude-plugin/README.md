@@ -6,9 +6,10 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 48 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G86) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 49 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G90) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
-| Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then pushes to GitHub and deploys to Caligrafy Cloud |
+| Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
+| Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
@@ -46,6 +47,13 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.19.0** - Caligrafy Quill 2.7.0, from an idea to online without hand-offs: the new `ship` skill and its
+  `scripts/github.sh` (publish, push, deploy-key, login: SSH, then HTTPS with the GitHub CLI, then its browser
+  approval, opened for the user); `idea` asks once, at the plan, and ships by itself; `deploy` points to `ship` and the
+  browser-approved `cloud login`; pages call their routes with `apiHeaders()` in the recipes, `caligrafy` and
+  `new-app` (G1, G27 updated); gotchas G87 (pages and the key that is off online), G88 (`cloud login` approved in the
+  browser), G89 (a pipe hides the exit code), G90 (30 free minutes per new app, the deploy key file); reviewer check 3
+  flags `'Bearer ' + apiKey` in pages.
 - **1.18.0** - Caligrafy Quill 2.6.0: the quickstart from Composer on MAMP, XAMPP, LAMP or Docker (`composer
   create-project`, `created`, the launcher's choice of server, local addresses and MySQL settings) in the `server` skill,
   the API reference and the wiki mirrors; G86 (a local server's real web folder and ports, a Docker MySQL holding 3306).

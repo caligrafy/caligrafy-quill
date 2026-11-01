@@ -155,7 +155,7 @@ Route::capability('DELETE', '/v2/books/{id}', 'delete_book');
     ```json
     {"error": {"code": "invalid", "message": "Some of the inputs are invalid", "fields": {"title": "The Title field is required"}}}
     ```
-+ **Who calls**: `Authorization: Bearer <personal access token>`, the legacy API key, or the session of a signed-in user. A call made with the session that changes data needs the CSRF token in an `X-CSRF-Token` header (the JS client does it). Without any of these: `401` with `WWW-Authenticate: Bearer`.
++ **Who calls**: `Authorization: Bearer <personal access token>` (programs and agents), the session of a signed-in user (pages), or the legacy API key (old programs only; off on Caligrafy Cloud). A call made with the session that changes data needs the CSRF token in an `X-CSRF-Token` header (the JS client does it). Without any of these: `401` with `WWW-Authenticate: Bearer`.
 
 ```bash
 curl -H "Accept: application/json" -H "Authorization: Bearer $TOKEN" http://localhost:8080/v2/books
@@ -182,7 +182,7 @@ php caligrafer.php token revoke 3
 ```
 LEGACY_API_KEY=false
 ```
-`doctor` reminds you while they are allowed. Never put a token or a key in a page or a Vue bundle: browser clients use the session (next section).
+`doctor` reminds you while they are allowed. Never put a token or a key in a page or a Vue bundle: browser clients use the session (next section). Since 2.7.0 this also holds for the controller routes of `web.php`: a page calls them with `{ headers: apiHeaders() }` (the session and its `X-CSRF-Token`), and a page that still sends `'Bearer ' + apiKey` gets `[ERROR 1004] Access Denied: ...` once the key is off.
 
 ## Vue apps and the Vite SPA: the JS client
 

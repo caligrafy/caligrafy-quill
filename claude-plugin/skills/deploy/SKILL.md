@@ -36,23 +36,30 @@ php caligrafer.php doctor --only project
 
 ## 2a. Caligrafy Cloud (default)
 
+**To ship without hand-offs** (the repository, the sign-in, the deploy key, the deploy, all done for the user), follow
+the [ship skill](../ship/SKILL.md). The steps below are the same commands, one by one.
+
 The user needs an account at https://deploy.caligrafy.com (sign-up and the confirmation email are theirs: never create
 an account or type a password).
 
-1. **Token.** `test -f .caligrafy/cloud.json || echo "not signed in"`. If not signed in, ask the user to create a token on
-   the dashboard (*Command line and AI agents*) and run, in their own terminal (G72):
+1. **Sign in.** `test -f .caligrafy/cloud.json && php caligrafer.php cloud account`. If not signed in, run in the
+   background (2.7.0+, G88):
    ```bash
    php caligrafer.php cloud login
    ```
-   Never ask for the token in chat, never pass it on a command line you write, never read `.caligrafy/cloud.json`.
+   It prints a code and opens `https://deploy.caligrafy.com/cli?code=...` (from the Docker server, open that URL for
+   the user): they sign in and approve the same code; the command collects the token. Before 2.7.0 it reads a token
+   pasted from the dashboard (G72). Never ask for the token in chat, never read `.caligrafy/cloud.json`.
 2. **The app.** `php caligrafer.php cloud apps`. If the name is new:
    ```bash
    php caligrafer.php cloud create <name>                 # repo from git origin, branch main (--repo, --branch)
    ```
    Names: 3 to 30 lowercase letters, digits and hyphens, starting with a letter; some are reserved (`www`, `admin`, `api`, `deploy`...); a taken name
-   answers a conflict: propose another. For a **private repository** the answer contains a read-only deploy key: show it
-   and ask the user to add it on GitHub (*Settings, Deploy keys, Add deploy key*, *Allow write access* off) before the
-   deploy; GitHub may ask them for their password.
+   answers a conflict: propose another. For a **private repository** the answer contains a read-only deploy key, saved
+   in `.caligrafy/<name>-deploy-key.pub` (2.7.0+, `cloud key <name>`): add it with
+   `bash claude-plugin/skills/ship/scripts/github.sh deploy-key <owner>/<repo> .caligrafy/<name>-deploy-key.pub`
+   (the GitHub CLI, signed in by a browser approval when needed), or on GitHub (*Settings, Deploy keys*, *Allow write
+   access* off).
 3. **Settings.** The database and the keys are written for the app. For each service the project uses (`OPEN_AI_KEY`,
    `PAY_*`, `MAIL_*`...), the user sets it; it is applied at the next deploy:
    ```bash
@@ -63,7 +70,8 @@ an account or type a password).
    ```bash
    php caligrafer.php cloud deploy <name>
    ```
-   The first deploy of an account starts its free 30 minutes. Then check it: `curl -s -o /dev/null -w '%{http_code}' https://<name>.caligrafy.com/`.
+   Run it whole, never through `| tail` (G89): it exits 1 on a refusal. The first deploy of every new app starts its own
+   free 30 minutes (G90). Then check it: `curl -s -o /dev/null -w '%{http_code}' https://<name>.caligrafy.com/`.
 5. **Keep it online.** Time left: `cloud status <name>`. Credits: `cloud credits 5|10|25|50` prints a Stripe page for the
    user to pay (never pay for them); `cloud extend <name> week|month|year` spends 2, 5 or 50 credits, and a paused app
    starts again. Spending credits and deleting (`cloud delete <name> --yes`, permanent) need the user's explicit OK.

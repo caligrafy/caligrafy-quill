@@ -102,7 +102,7 @@ The configuration is `phpunit.xml.dist`: test suite `unit` (the folder `qa/unit`
 | - | - |
 | `RouteTest.php` | `Route::resolveController()`: a global class wins over the example namespace, namespaced controllers with or without a leading backslash, short names that fall back to `Caligrafy\Controllers`, unknown controllers |
 | `ErrorsTest.php` | `Errors::status()` (404, 401, 403, 500), `Errors::raise()`, the JSON error body for API requests and the plain text for HTML requests |
-| `RequestTest.php` | `Request::wantsJson()` and the API key check (`authorizeApiRequest()`) with valid, invalid and missing keys |
+| `RequestTest.php` | `Request::wantsJson()`, the API key check (`authorizeApiRequest()`) with valid, invalid and missing keys, the session check (`authorizeSessionRequest()`, the `X-CSRF-Token` header) and the reason of a refusal (`apiRefusal()`) |
 | `ModelTest.php` | `prepareInputs()` keeps `0`, `''` and `false` and drops `null` and restricted properties; identifier quoting accepts safe names and rejects unsafe ones |
 | `ControllerTest.php` | `validate()` and `filter()` (GUMP) |
 | `UpgraderTest.php` | `caligrafer upgrade` in a temporary project: the classification of files, the template history, `--apply` only replaces untouched files and never touches `.env` |

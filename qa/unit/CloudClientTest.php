@@ -97,4 +97,65 @@ final class CloudClientTest extends TestCase
         $this->assertSame([], $this->calls);
         $this->assertStringContainsString('--yes', $out);
     }
+
+    public function testLoginWithoutATokenIsApprovedInTheBrowser(): void
+    {
+        putenv('CALIGRAFY_NO_BROWSER=1');
+        $polls = 0;
+        $client = new CloudClient($this->root, function ($method, $url, $headers, $body) use (&$polls) {
+            $this->calls[] = [$url, json_decode($body, true), $headers];
+            switch (basename($url)) {
+                case 'start_cli_login':
+                    return [200, '{"data":{"device_code":"' . str_repeat('d', 64) . '","user_code":"BCDF-GH23","verification_url":"https://cloud.test/cli?code=BCDF-GH23","expires_in":600,"interval":3}}'];
+                case 'poll_cli_login':
+                    return [200, ++$polls < 2 ? '{"data":{"status":"pending"}}' : '{"data":{"status":"approved","token":"cq_9_abc"}}'];
+                case 'my_account':
+                    return [200, '{"data":{"email":"me@example.com","credits":5}}'];
+            }
+            return [404, '{}'];
+        }, function () {});
+        try {
+            [$code, $out] = $this->exec($client, ['login']);
+        } finally {
+            putenv('CALIGRAFY_NO_BROWSER');
+        }
+        $this->assertSame(0, $code, $out);
+        $this->assertStringContainsString('BCDF-GH23', $out);
+        $this->assertStringContainsString('https://cloud.test/cli?code=BCDF-GH23', $out);
+        $this->assertStringContainsString('Signed in as me@example.com', $out);
+        $this->assertSame('cq_9_abc', json_decode(file_get_contents($this->root . '/.caligrafy/cloud.json'), true)['token']);
+        // start and poll go without a token; my_account with the new one
+        $this->assertNotContains('Authorization: Bearer cq_9_abc', $this->calls[0][2]);
+        $this->assertContains('Authorization: Bearer cq_9_abc', end($this->calls)[2]);
+        $this->assertSame(2, $polls);
+    }
+
+    public function testADeniedBrowserLoginFails(): void
+    {
+        putenv('CALIGRAFY_NO_BROWSER=1');
+        $client = new CloudClient($this->root, function ($method, $url) {
+            return basename($url) === 'start_cli_login'
+                ? [200, '{"data":{"device_code":"x","user_code":"BCDF-GH23","verification_url":"https://cloud.test/cli?code=BCDF-GH23","expires_in":600,"interval":3}}']
+                : [200, '{"data":{"status":"denied"}}'];
+        }, function () {});
+        try {
+            [$code, $out] = $this->exec($client, ['login']);
+        } finally {
+            putenv('CALIGRAFY_NO_BROWSER');
+        }
+        $this->assertSame(1, $code);
+        $this->assertStringContainsString('denied', $out);
+        $this->assertFileDoesNotExist($this->root . '/.caligrafy/cloud.json');
+    }
+
+    public function testCreateKeepsTheDeployKeyForTheGithubCli(): void
+    {
+        @mkdir($this->root . '/.caligrafy');
+        file_put_contents($this->root . '/.caligrafy/cloud.json', json_encode(['url' => 'https://cloud.test', 'token' => 'cq_7_abc']));
+        [$code, $out] = $this->exec($this->client(['create_app' => [200, '{"data":{"url":"https://shop.caligrafy.com","repo_url":"https://github.com/me/shop","branch":"main","deploy_key":"ssh-ed25519 AAAA caligrafy-cloud-shop"}}']]),
+            ['create', 'shop', '--repo', 'https://github.com/me/shop']);
+        $this->assertSame(0, $code, $out);
+        $this->assertStringContainsString('gh repo deploy-key add .caligrafy/shop-deploy-key.pub', $out);
+        $this->assertSame("ssh-ed25519 AAAA caligrafy-cloud-shop\n", file_get_contents($this->root . '/.caligrafy/shop-deploy-key.pub'));
+    }
 }

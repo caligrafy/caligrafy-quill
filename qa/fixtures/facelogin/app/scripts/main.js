@@ -12,7 +12,7 @@ const app = Vue.createApp({
       loginState: 'waiting', loginMessage: 'Starting the camera…', overlay: '', scanToken: 0,
       status: '', error: '', busy: false,
       passkeys: PasskeyClient.supported(),
-      config: { headers: { 'Authorization': 'Bearer ' + apiKey, 'Accept': 'application/json', 'Content-Type': 'application/json' }, timeout: 30000 }
+      config: { headers: apiHeaders(), timeout: 30000 }   // the session and its X-CSRF-Token, never the API key (G50, G87)
     };
   },
   computed: {

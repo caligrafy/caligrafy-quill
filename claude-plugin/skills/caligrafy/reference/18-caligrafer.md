@@ -209,11 +209,13 @@ What the production `Dockerfile` runs before Apache starts. It waits for the dat
 
 ### `cloud`
 ```bash
-php caligrafer.php cloud login                          # a token from the dashboard of deploy.caligrafy.com (hidden prompt)
-php caligrafer.php cloud login --token cq_...           # the same, for scripts
+php caligrafer.php cloud login                          # approve the code in the browser page it opens (2.7.0+)
+php caligrafer.php cloud login --no-browser             # only prints the address to open (it does that by itself in Docker)
+php caligrafer.php cloud login --token cq_...           # a token created on the dashboard, for scripts (--paste: a hidden prompt)
 php caligrafer.php cloud account                        # your email and credits
 php caligrafer.php cloud create myapp                   # from this project's GitHub repository (git origin), branch main
 php caligrafer.php cloud create myapp --repo https://github.com/me/myapp --branch live
+php caligrafer.php cloud key myapp                      # the read-only deploy key of a private repository (also in .caligrafy/myapp-deploy-key.pub)
 php caligrafer.php cloud deploy myapp                   # build and start it, following the build (--no-wait: do not follow)
 php caligrafer.php cloud apps                           # your apps, their status and time left
 php caligrafer.php cloud status myapp
@@ -226,7 +228,7 @@ php caligrafer.php cloud secret delete myapp OPEN_AI_KEY
 php caligrafer.php cloud delete myapp --yes             # the app, its database and its files, for good
 php caligrafer.php cloud logout
 ```
-Puts the project online with [Caligrafy Cloud](https://deploy.caligrafy.com): `https://<name>.caligrafy.com`, built from its GitHub repository with its `Dockerfile`, with its own MySQL database. The first 30 minutes of an account are free; then credits keep an app online. The token is kept in `.caligrafy/cloud.json` (ignored by git); `CALIGRAFY_CLOUD_TOKEN` and `CALIGRAFY_CLOUD_URL` override it. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud).
+Puts the project online with [Caligrafy Cloud](https://deploy.caligrafy.com): `https://<name>.caligrafy.com`, built from its GitHub repository with its `Dockerfile`, with its own MySQL database. Every new app is free for its first 30 minutes online, from its first deploy; then credits keep it online. `login` is approved in the browser and keeps its token in `.caligrafy/cloud.json` (ignored by git); `CALIGRAFY_CLOUD_TOKEN` and `CALIGRAFY_CLOUD_URL` override it. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud).
 
 ### `generatekeys`, `generateapikey`
 ```bash

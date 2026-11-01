@@ -120,6 +120,17 @@ class Doctor
         $legacy = strtolower(trim((string) $this->env('LEGACY_API_KEY')));
         in_array($legacy, ['false', '0', 'off', 'no'], true) ? $this->add('project', 'Legacy API key', 'OK', 'off: API clients use personal access tokens')
             : $this->add('project', 'Legacy API key', 'OK', 'allowed (every generated key is the same key: full access, no revocation); set LEGACY_API_KEY=false once clients use tokens');
+        // pages that send the legacy key break where it is off (Caligrafy Cloud turns it off): they use apiHeaders()
+        $senders = array();
+        foreach (glob($this->root . '/public/*/scripts/*.js') ?: array() as $script) {
+            if (preg_match('/Bearer\s*[\'"]?\s*\+\s*apiKey/', (string) @file_get_contents($script))) {
+                $senders[] = substr($script, strlen($this->root) + 1);
+            }
+        }
+        if ($senders) {
+            $this->add('project', 'Pages and the API key', 'WARN', implode(', ', $senders) . ' send the legacy API key: public in the page, and refused where LEGACY_API_KEY=false (Caligrafy Cloud)',
+                "send { headers: apiHeaders() } instead: the session and its X-CSRF-Token (public/js/services/app.js)");
+        }
         // error details are for development: on a site served over HTTPS they show file paths and SQL to visitors
         $debug = in_array(strtolower(trim((string) $this->env('APP_DEBUG'))), ['true', '1', 'on', 'yes'], true);
         if ($debug && strtolower(trim((string) $this->env('APP_PROTOCOL'))) === 'https') {

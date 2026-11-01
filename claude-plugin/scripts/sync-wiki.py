@@ -65,6 +65,7 @@ PAGES = {
     '21-release-notes-2.4.0.md': ('Release-notes:-2.4.0.md', 'Release notes: 2.4.0'),
     '23-release-notes-2.5.0.md': ('Release-notes:-2.5.0.md', 'Release notes: 2.5.0'),
     '24-release-notes-2.6.0.md': ('Release-notes:-2.6.0.md', 'Release notes: 2.6.0'),
+    '25-release-notes-2.7.0.md': ('Release-notes:-2.7.0.md', 'Release notes: 2.7.0'),
     '22-quickstart-with-claude.md': ('Quickstart-with-Claude.md', 'Quickstart with Claude: from an idea to an application online'),
     '13-build-once-services-capabilities-mcp.md': ('11.-Build-Once:-Services,-Capabilities-and-MCP.md', '11. Build Once: Services, Capabilities and MCP'),
     'wiki-sidebar.md': ('_Sidebar.md', 'Wiki sidebar (table of contents)'),

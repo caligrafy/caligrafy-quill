@@ -40,6 +40,9 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
   and trust, ship, online); Claude Code users run `/caligrafy-quill:idea`.
 - Putting it online (2.4.0+): the root `Dockerfile` is the production image and runs `php caligrafer.php deploy` at
   start (new or changed `create_db.sql`: keep them safe to run again); `php caligrafer.php cloud` deploys to
-  `https://<name>.caligrafy.com`. The user signs in with `cloud login` in their own terminal: never handle the token.
+  `https://<name>.caligrafy.com`. `cloud login` (2.7.0+) is approved by the user in the browser page it opens: never
+  handle the token. Claude Code users run `/caligrafy-quill:ship`.
+- Pages call their own JSON routes with the session: `apiHeaders()` (`X-CSRF-Token`) or the JS client, never the
+  legacy API key, which is off online (`LEGACY_API_KEY=false` on Caligrafy Cloud).
 - After changing PHP, run `php -l <file>`; check the project with `php caligrafer.php doctor` (read-only).
 - Framework changes need the QA suite: `vendor/bin/phpunit` and `./qa/run.sh` (see `CONTRIBUTING.md`).

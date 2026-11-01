@@ -36,7 +36,7 @@ class BookController extends Controller {
     public $fullUri; // retrieves the the full URI including the query parameters
     public $uriComponents; // retrieves an array of the URI segments
     public $host; // retrieves the Host header
-    public $authorization; // retrieves the Authorization header (Bearer API key for API calls)
+    public $authorization; // retrieves the Authorization header (Bearer personal access token of a program; pages send X-CSRF-Token with the session instead)
     public $accept; // retrieves the Accept header
     public $userAgent; // retrieves the User Agent of the request
     public $cookie; // retrieves the Cookie headers

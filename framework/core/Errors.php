@@ -82,13 +82,15 @@ class Errors extends \stdClass
      * Creates the exception of a framework error and sets its HTTP status code right away, so that the status is
      * correct even when the exception is caught by an application that only echoes the message
      * @param int $errorCode identifies the error code
+     * @param string|null $detail why, added to the message: '[ERROR 1004] Access Denied: <detail>'
      * @return \Exception to be thrown
     */
-    public static function raise($errorCode) {
+    public static function raise($errorCode, $detail = null) {
         if (!headers_sent()) {
             http_response_code(self::status($errorCode));
         }
-        return new \Exception(self::get($errorCode), (int)$errorCode);
+        $message = self::get($errorCode);
+        return new \Exception($detail ? rtrim($message) . ': ' . $detail : $message, (int)$errorCode);
     }
 
     /**

@@ -6,6 +6,39 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.7.0] - 2026-11-01
+
+From an idea to an application online without handing the work to anyone: pages work online as they do locally,
+Caligrafy Cloud signs in with a browser approval, and Claude ships the project by itself.
+
+### Added
+- JSON calls from a page to a controller route are accepted with the session and its CSRF token in an
+  `X-CSRF-Token` header (`Request::authorizeSessionRequest()`), as capabilities already were: the controller sees the
+  signed-in user or a visitor, exactly as for a form post. Pages no longer need the shared API key, which Caligrafy
+  Cloud turns off (`LEGACY_API_KEY=false`). The form CSRF check accepts the same header, so a JSON body sent without
+  the JSON `Accept` header passes it too.
+- `apiHeaders()` in `public/js/services/app.js`: the headers of a call from a client app to its own routes (`Accept` and
+  `X-CSRF-Token`; axios sets `Content-Type` itself); `env.csrf` holds the token.
+- `php caligrafer.php cloud login` is approved in the browser: it prints a code, opens
+  `https://deploy.caligrafy.com/cli?code=...` (from a Docker server it prints the address), and collects the token
+  once the owner approves it. No token to create or copy; `--token` and `--paste` keep the old ways, `--no-browser`
+  only prints the address.
+- `php caligrafer.php cloud key <name>`: the read-only deploy key of an app built from a private repository; `cloud
+  create` also saves it in `.caligrafy/<name>-deploy-key.pub`, for `gh repo deploy-key add`.
+- `doctor` warns about client app scripts that send the legacy API key.
+- Claude Code plugin 1.19.0: the `ship` skill (commit, the GitHub repository over SSH, HTTPS or a browser approval, the
+  Cloud sign-in, the deploy key, the deploy and the check, all without hand-offs) and an `idea` skill that asks once.
+
+### Changed
+- `[ERROR 1004] Access Denied` says why: no CSRF token and no bearer, a token that is unknown or lacks `*`, the legacy
+  key turned off (`LEGACY_API_KEY=false`), the API not activated, or a key of another application. `Errors::raise()`
+  takes an optional detail.
+- `views/Client/app.pug` gives pages `apiKey` only while the legacy key is on (`null` with `LEGACY_API_KEY=false`).
+- The face-login recipe, the bot template (`framework/plugins/bot`) and the documentation examples call their routes
+  with `apiHeaders()` instead of the API key.
+- Caligrafy Cloud: every new app is free for its first 30 minutes online, from its first deploy (the free minutes
+  were once per account); a refused deploy says how many credits the account has.
+
 ## [2.6.0] - 2026-11-01
 
 A quickstart from Composer, on the server you already have: MAMP, XAMPP, LAMP or Docker.

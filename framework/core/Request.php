@@ -177,6 +177,40 @@ class Request extends \stdClass {
     }
 
     /**
+     * Whether a JSON call comes from a page of this application: it carries the session's CSRF token in an
+     * X-CSRF-Token header (or _token), which only pages of this origin can read. The controller then sees the
+     * signed-in user, or a visitor, exactly as for a form post
+     */
+    public function authorizeSessionRequest()
+    {
+        $headers = array_change_key_case((array) $this->_request, CASE_LOWER);
+        $sent = $headers['x-csrf-token'] ?? ($_POST['_token'] ?? null);
+        return is_string($sent) && $sent !== '' && isset($_SESSION['token']) && is_string($_SESSION['token'])
+            && hash_equals($_SESSION['token'], $sent);
+    }
+
+    /**
+     * Why a JSON call to a controller route was refused, for the [ERROR 1004] message
+     */
+    public function apiRefusal()
+    {
+        $bearer = $this->bearer();
+        if ($bearer === null) {
+            return 'send the page\'s CSRF token in an X-CSRF-Token header (pages, with the session cookie) or Authorization: Bearer <personal access token> (programs and agents)';
+        }
+        if (Tokens::looksLikeToken($bearer)) {
+            return 'this personal access token is unknown, expired or revoked, or does not grant everything (*) as controller routes need: call capabilities with scoped tokens';
+        }
+        if (self::legacyKeysDisabled()) {
+            return 'the legacy API key is turned off (LEGACY_API_KEY=false, the default on Caligrafy Cloud): pages send the X-CSRF-Token header with the session, programs and agents a personal access token';
+        }
+        if (!Auth::api()) {
+            return 'the API is not activated (Auth::activateAPI() in web.php)';
+        }
+        return 'this API key does not belong to this application (APP_KEY)';
+    }
+
+    /**
      * The bearer value of the Authorization header (null when there is none)
      */
     public function bearer()
@@ -310,6 +344,11 @@ class Request extends \stdClass {
 
         // a request that carries a bearer token cannot come from a cross-site form (a form cannot set Authorization)
         if ($this->bearer() !== null) {
+            return;
+        }
+
+        // nor can it send a custom header: X-CSRF-Token with the session's token is a page of this application (2.7.0)
+        if ($this->authorizeSessionRequest()) {
             return;
         }
 

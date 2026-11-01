@@ -67,4 +67,41 @@ final class RequestTest extends TestCase
         // cq_ prefix but not the token format: refused, and never sent to the legacy key check
         $this->assertFalse($this->request(['authorization' => 'Bearer cq_1_short'])->authorizeApiRequest());
     }
+
+    private function withHeaders(array $headers): Request
+    {
+        $request = $this->request([]);
+        $property = new ReflectionProperty(Request::class, '_request');
+        $property->setAccessible(true);
+        $property->setValue($request, $headers);
+        return $request;
+    }
+
+    public function testSessionRequestNeedsTheCsrfTokenOfTheSession(): void
+    {
+        $saved = $_SESSION['token'] ?? null;
+        $_SESSION['token'] = str_repeat('a', 64);
+        try {
+            $this->assertTrue($this->withHeaders(['X-CSRF-Token' => str_repeat('a', 64)])->authorizeSessionRequest());
+            $this->assertTrue($this->withHeaders(['x-csrf-token' => str_repeat('a', 64)])->authorizeSessionRequest());
+            $this->assertFalse($this->withHeaders(['X-CSRF-Token' => str_repeat('b', 64)])->authorizeSessionRequest());
+            $this->assertFalse($this->withHeaders([])->authorizeSessionRequest());
+            unset($_SESSION['token']);
+            $this->assertFalse($this->withHeaders(['X-CSRF-Token' => ''])->authorizeSessionRequest());
+        } finally {
+            if ($saved === null) unset($_SESSION['token']); else $_SESSION['token'] = $saved;
+        }
+    }
+
+    public function testApiRefusalSaysWhy(): void
+    {
+        $this->assertStringContainsString('X-CSRF-Token', $this->request(['authorization' => ''])->apiRefusal());
+        $this->assertStringContainsString('personal access token is unknown', $this->request(['authorization' => 'Bearer cq_1_' . str_repeat('0', 40)])->apiRefusal());
+        putenv('LEGACY_API_KEY=false');
+        try {
+            $this->assertStringContainsString('LEGACY_API_KEY=false', $this->request(['authorization' => 'Bearer something'])->apiRefusal());
+        } finally {
+            putenv('LEGACY_API_KEY');
+        }
+    }
 }

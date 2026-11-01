@@ -53,8 +53,8 @@ claude
 /caligrafy-quill:idea A reading list: I add books I want to read, mark them as read, and rate them from 1 to 5.
 ```
 Claude plans it with you (tables, capabilities, who may do what), builds every feature once, checks it from the page,
-REST and an AI agent, then pushes it to GitHub and deploys it to `https://<name>.caligrafy.com`. You answer a few
-questions and sign in where only you can. See
+REST and an AI agent, then creates your GitHub repository and deploys it to `https://<name>.caligrafy.com`. You say OK
+to the plan once; after that you only approve sign-ins in the browser pages Claude opens. See
 [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude).
 
 <br/>
@@ -102,14 +102,15 @@ In Cursor, add to `.cursor/mcp.json`:
 { "mcpServers": { "myapp": { "url": "http://localhost:8080/mcp", "headers": { "Authorization": "Bearer <the token>" } } } }
 ```
 
-**4. Put it online.** Push the project to a GitHub repository (`git init`, commit, push), sign up at
-[deploy.caligrafy.com](https://deploy.caligrafy.com) and create a token on its dashboard, then:
+**4. Put it online.** Push the project to a GitHub repository (`git init`, commit, push), then:
 ```bash
-docker compose exec dev-box php caligrafer.php cloud login                 # paste the token
+docker compose exec dev-box php caligrafer.php cloud login                 # open the address it prints, approve the code
 docker compose exec dev-box php caligrafer.php cloud create myapp --repo https://github.com/<you>/myapp
 docker compose exec dev-box php caligrafer.php cloud deploy myapp          # https://myapp.caligrafy.com
 ```
-The first 30 minutes are free. The Tasks example is open to everyone, online too: see
+`cloud login` opens [deploy.caligrafy.com](https://deploy.caligrafy.com), where you sign in (or sign up) and approve.
+Every new app is free for its first 30 minutes online. With Claude Code, `/caligrafy-quill:ship myapp` does all of
+this for you, the GitHub repository included. The Tasks example is open to everyone, online too: see
 [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online) before you share the address.
 
 That is the whole idea: the Tasks feature lives in five small files in `application/services/Tasks/`, and every
@@ -161,7 +162,8 @@ feature step by step, page included.
   online, and `AGENTS.md` for other coding agents.
 + **Online in a few commands:** a production `Dockerfile` in every project, the database prepared at every start,
   and [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud):
-  `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, the first 30 minutes free.
+  `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, every new app free for its first 30
+  minutes, and `/caligrafy-quill:ship` does it all for you, from the GitHub repository to the check online.
 + **Tools:** `php caligrafer.php doctor` checks your setup and services, `call` tries a capability in one line,
   `upgrade` updates a project and tells you what to check, `version` tells you which release you run.
 
@@ -177,7 +179,7 @@ feature step by step, page included.
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
-| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.6](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.6.0), [2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
+| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.7](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.7.0), [2.6](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.6.0), [2.5](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.5.0), [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
 | Contribute | [Contributing](CONTRIBUTING.md), [how the framework is built](ARCHITECTURE.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
 
 Other ways to install (your own Apache, MySQL and PHP; `composer create-project`) are in

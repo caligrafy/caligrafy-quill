@@ -2,7 +2,7 @@
 
 > Written from the framework source (`framework/core/OpenAI.php`, `framework/core/Agent.php`, `httpRequest()` in
 > `framework/helpers/corehelpers.php`) and a working proof app. Signatures: [api-reference.md](api-reference.md).
-> Related gotchas: G27 (client apps read `apiKey`), G46 (`.env` keys), G47 (controller names), G48 (error status codes).
+> Related gotchas: G27 and G87 (pages call with `apiHeaders()`, not `apiKey`), G46 (`.env` keys), G47 (controller names), G48 (error status codes).
 
 End result: a Vue client app (`/caligrafy-quill:new-app app chat`) that talks to data routes of one controller.
 The browser never sees `OPEN_AI_KEY`, `GROQ_API_KEY` or any other provider key: every provider call is made by PHP.
@@ -249,7 +249,7 @@ $r = (new Agent(provider: 'openrouter'))->delegate('meta-llama/llama-4-maverick'
 ## 6. Vue client (Caligrafy black and white chat UI)
 
 `public/chat/index.php` is scaffolded by `caligrafer app chat` and calls `loadEnvironment()`, which sets the globals
-`env` and `apiKey` (G27). Layout and classes follow the new-app skill "look" bullet (G40).
+`env` and `csrfToken`; `apiHeaders()` gives the headers of a call to the app's own routes (G87). Layout and classes follow the new-app skill "look" bullet (G40).
 
 ```js
 // public/chat/scripts/main.js
@@ -257,8 +257,8 @@ const app = Vue.createApp({
   data() {
     return {
       env: env, provider: 'openai', models: [], model: '', input: '', messages: [], busy: false, error: '',
-      config: { headers: { 'Authorization': 'Bearer ' + apiKey, 'Accept': 'application/json', 'Content-Type': 'application/json' },
-                timeout: 120000 }                       // images take 20-60 s: never use a short axios timeout
+      config: { headers: apiHeaders(), timeout: 120000 }   // the session and its X-CSRF-Token, never the API key (G87);
+                                                            // images take 20-60 s: never use a short axios timeout
     };
   },
   computed: { base() { return this.env.home + (this.provider === 'agent' ? 'chat/agent/' : 'chat/'); } },

@@ -69,8 +69,9 @@ global or namespaced by hand, and their names must be unique (the user capabilit
    request asks for JSON or its user agent is in `APPROVED_AGENTS`), keeps the routes with the same method and segment
    count, matches the path, binds the route variables (`{id}`; for GET the query string is merged in), then:
    - **no route matches: the first route runs** (an unknown address shows the first page with 200, not a 404);
-   - `'Controller@action'`: a missing class or method raises 1001 (404); a JSON request is checked against the legacy
-     API key (1004, 401); then `new Controller()` and the action;
+   - `'Controller@action'`: a missing class or method raises 1001 (404); a JSON request needs the session's CSRF token
+     in `X-CSRF-Token` (a page, 2.7.0+) or, with `Auth::activateAPI()`, a bearer: a token granting `*` or the legacy
+     key (else 1004, 401, with the reason); then `new Controller()` and the action;
    - a closure: called as is. `Route::page`, `Route::capability`, `Route::capabilities` and `Route::mcp` register
      closures that hand the request to the page controller, `Rest` or `Mcp\Http`.
 6. The answer is a view (`view()` renders the Pug file), JSON (`api()`, the REST and MCP adapters), or a redirect.

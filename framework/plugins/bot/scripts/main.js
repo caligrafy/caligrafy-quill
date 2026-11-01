@@ -19,13 +19,8 @@ const app = Vue.createApp({
             action: { type: null, options: [], context: null },
             text: '',
             waiting: false,
-            config: {
-                headers: {
-                    "Authorization": "Bearer " + apiKey,
-                    "Accept": "application/json",
-                    "Content-Type": "application/json"
-                }
-            }
+            // the session and its X-CSRF-Token (public/js/services/app.js): never the API key, which is off online
+            config: { headers: apiHeaders() }
         };
     },
     methods: {

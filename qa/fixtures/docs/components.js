@@ -8,12 +8,7 @@ const app = Vue.createApp({
             shown: '',
             response: null,
             error: null,
-            config: {
-                headers: {
-                    'Accept': 'application/json',
-                    'Authorization': 'Bearer ' + apiKey
-                }
-            }
+            config: { headers: apiHeaders() }
         }
     },
     methods: {
