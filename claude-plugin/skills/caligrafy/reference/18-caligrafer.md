@@ -35,6 +35,8 @@
 | [`audit`](#audit) | Shows the latest capability calls and refusals |
 | [`doctor`](#doctor) | Checks the project, the database and every configured service |
 | [`upgrade`](#upgrade) | Updates the `application/` templates of a project to the framework's |
+| [`deploy`](#deploy) | Prepares the database in production (what the production image runs at start) |
+| [`cloud`](#cloud) | Puts the project online at `https://<name>.caligrafy.com` with Caligrafy Cloud |
 | [`generatekeys`, `generateapikey`](#keys) | Generates application keys and legacy API keys |
 
 ## Set up a project
@@ -192,6 +194,36 @@ php caligrafer.php upgrade --force application/views/Auth/login.pug   # replace 
 php caligrafer.php upgrade --apply --keep application/views/default/index.pug   # keep a default page that is now yours
 ```
 After you update the framework of a project (`git pull`, or a new release copied over `framework/`), `upgrade` compares your `application/` with the framework's templates. Files you never changed are updated (with a backup in `backups/caligrafy-upgrade-<time>/`); files you changed are kept, and the new version is written next to them as `<file>.caligrafy-new` for you to merge; your routes are never replaced. `--keep` keeps a page that is an untouched copy of an older template (a default page that became a page of your site, like the home page): the new version is written next to it, and later upgrades remember it. It also reports, without changing anything: client apps in `public/` that differ from their template, settings of `framework/settings/.env.example` missing from your `.env` and obsolete ones (`CRYPTO_PAY_KEY`), and views or apps that still use Bootstrap 3 classes (`col-xs-`, `pull-left`, `btn-default`...), which break under Bootstrap 5. Learn more in [Security and upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
+
+## Put it online
+
+### `deploy`
+```bash
+php caligrafer.php deploy                 # framework tables, then every new or changed create_db.sql
+php caligrafer.php deploy --wait 120      # wait up to 2 minutes for the database (default 60)
+```
+What the production `Dockerfile` runs before Apache starts. It waits for the database, creates the framework tables, then runs every `application/models/<folder>/create_db.sql` that is new or changed since its last run, and records it in the `caligrafy_scripts` table. A changed script that drops, deletes or truncates is never run again on its own (run it with [`sql`](#sql) when you mean it); `seed.sql` is never run. It exits with `1` when the database cannot be prepared. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#deploy).
+
+### `cloud`
+```bash
+php caligrafer.php cloud login                          # a token from the dashboard of deploy.caligrafy.com (hidden prompt)
+php caligrafer.php cloud login --token cq_...           # the same, for scripts
+php caligrafer.php cloud account                        # your email and credits
+php caligrafer.php cloud create bookshelf               # from this project's GitHub repository (git origin), branch main
+php caligrafer.php cloud create bookshelf --repo https://github.com/me/bookshelf --branch live
+php caligrafer.php cloud deploy bookshelf               # build and start it, following the build (--no-wait: do not follow)
+php caligrafer.php cloud apps                           # your apps, their status and time left
+php caligrafer.php cloud status bookshelf
+php caligrafer.php cloud logs bookshelf                 # the build while it deploys, then what the app prints
+php caligrafer.php cloud extend bookshelf week          # week (2 credits), month (5) or year (50)
+php caligrafer.php cloud credits 10                     # buy 5, 10, 25 or 50 credits on Stripe (1 credit = 1 USD)
+php caligrafer.php cloud secret set bookshelf OPEN_AI_KEY=sk-...   # a setting of its .env, applied at the next deploy
+php caligrafer.php cloud secret list bookshelf          # the names of its settings
+php caligrafer.php cloud secret delete bookshelf OPEN_AI_KEY
+php caligrafer.php cloud delete bookshelf --yes         # the app, its database and its files, for good
+php caligrafer.php cloud logout
+```
+Puts the project online with [Caligrafy Cloud](https://deploy.caligrafy.com): `https://<name>.caligrafy.com`, built from its GitHub repository with its `Dockerfile`, with its own MySQL database. The first 30 minutes of an account are free; then credits keep an app online. The token is kept in `.caligrafy/cloud.json` (ignored by git); `CALIGRAFY_CLOUD_TOKEN` and `CALIGRAFY_CLOUD_URL` override it. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud).
 
 ### `generatekeys`, `generateapikey`
 ```bash

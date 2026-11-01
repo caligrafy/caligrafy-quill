@@ -6,6 +6,37 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.4.0] - 2026-11-01
+
+Putting an application online: a production image in every project, the database prepared at every start, and
+Caligrafy Cloud.
+
+### Added
+- `Dockerfile` and `Dockerfile.dockerignore`: the production image of a project (PHP 8.5 and Apache, the extensions
+  Caligrafy uses, `composer.lock` without development packages, the production `php.ini`). `.env` stays out of the
+  image: give the container its `.env` as a file at `/var/www/html/.env`. `docker/Dockerfile` remains the development
+  image of `docker-compose.yaml`.
+- `php caligrafer.php deploy [--wait <seconds>]`: what the production image runs before Apache starts. It waits for the
+  database, creates the framework tables, then runs every `application/models/<folder>/create_db.sql` that is new or
+  changed since its last run, recorded in the new `caligrafy_scripts` table. A changed script that drops, deletes or
+  truncates is never run again on its own; `seed.sql` is never run.
+- `php caligrafer.php cloud <login | account | create | deploy | apps | status | logs | extend | credits | secret |
+  delete | logout>`: puts the project online at `https://<name>.caligrafy.com` with Caligrafy Cloud
+  (https://deploy.caligrafy.com): built from its GitHub repository, its own MySQL database, the first 30 minutes free,
+  then credits (a week 2, a month 5, a year 50; 1 credit = 1 USD). The token is kept in `.caligrafy/cloud.json`, now
+  ignored by git; `CALIGRAFY_CLOUD_TOKEN` and `CALIGRAFY_CLOUD_URL` override it.
+- The production image keeps PHP sessions in `/var/lib/php/sessions`: a volume there keeps people signed in across
+  deploys.
+
+### Changed
+- The page components of `public/css/tokens.css` take the look of the Caligrafy sign-in card: 600px cards with the
+  soft shadow and no grey outline, light labels, the 150px primary button on the left, a white footer section, the
+  page just under the header. No markup changes: copy `public/css/tokens.css` from the release.
+
+### Fixed
+- With `APP_DEBUG=true`, the SMTP conversation of the mailer was printed into the page or into the JSON answer of an
+  API call; it now goes to the server log.
+
 ## [2.3.0] - 2026-10-31
 
 What upgrading a real site (caligrafy.com, from a September 2025 project) and building the course on 2.2.0 uncovered.

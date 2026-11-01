@@ -52,6 +52,11 @@
 + [Machine learning in the browser](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning)
 + [Metadata and social cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards) · [search and analytics](https://github.com/caligrafy/caligrafy-quill/wiki/9.4-Search-Referencing-and-Analytics)
 
+## Put it online
+
++ [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): the production image, the database at every start
+    > + [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud) · [your own server](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#ownserver)
+
 ## Build with AI
 
 + [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
@@ -63,5 +68,5 @@
 + [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing) · [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request) · [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers) · [Views](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views)
 + [Vue: flow of information](https://github.com/caligrafy/caligrafy-quill/wiki/9.7-Understanding-the-flow-of-information) · [routes](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.2-Routes) · [validations](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.5-Validations)
 + [Security and upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading)
-+ Release notes: [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0) · [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0) · [October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026) · [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md)
++ Release notes: [2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0) · [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0) · [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0) · [October 2026](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-October-2026) · [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md)
 + [Testing Caligrafy (contributors)](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy)

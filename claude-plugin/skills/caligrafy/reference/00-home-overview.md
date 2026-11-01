@@ -91,6 +91,9 @@ feature step by step, page included.
   Ollama...), chatbots, face detection and machine learning in the browser, search and social metadata.
 + **Made for AI-assisted development:** a [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
   that knows the framework and builds features the Caligrafy way, and `AGENTS.md` for other coding agents.
++ **Online in a few commands:** a production `Dockerfile` in every project, the database prepared at every start,
+  and [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud):
+  `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, the first 30 minutes free.
 + **Tools:** `php caligrafer.php doctor` checks your setup and services, `upgrade` updates a project, `version`
   tells you which release you run.
 
@@ -106,6 +109,7 @@ feature step by step, page included.
 | Store data | [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models) and [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships) |
 | Let people sign in | [Sign-in, users and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) |
 | Take payments, add AI, face login... | the **Built-in features** of the sidebar |
+| Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Build with Claude | [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) |
 | Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course) |
 | Use the command line (set up, create, tokens, check, upgrade) | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |

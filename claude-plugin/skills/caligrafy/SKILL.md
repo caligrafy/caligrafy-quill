@@ -16,10 +16,10 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Topic | Read |
 | - | - |
 | **Start here**: set up a project in one command (`.bin/caligrafer quickstart`), the ideas, a complete first feature | [15-quickstart.md](reference/15-quickstart.md), [16-how-caligrafy-works.md](reference/16-how-caligrafy-works.md), [17-your-first-capability.md](reference/17-your-first-capability.md) |
-| Learning Caligrafy from zero (a user asks for a tutorial or course): the Caligrafy course builds Bookshelf capabilities first in 14 lessons, each with a manual track and a With Claude track (point the user to it; its lessons match these docs) | https://github.com/caligrafy/caligrafy-quill-course/wiki |
-| Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
+| Learning Caligrafy from zero (a user asks for a tutorial or course): the Caligrafy course builds Bookshelf capabilities first in 15 lessons, up to putting it online, each with a manual track and a With Claude track (point the user to it; its lessons match these docs) | https://github.com/caligrafy/caligrafy-quill-course/wiki |
+| Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade, deploy, cloud | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G66) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G73) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -35,6 +35,8 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Build once: services, `#[Capability]`, REST (`Route::capability`), the JS client, personal access tokens, MCP for agents, audit log, design tokens | [13-build-once-services-capabilities-mcp.md](reference/13-build-once-services-capabilities-mcp.md), [api-reference.md](reference/api-reference.md) (Build once section), G50-G58 |
 | This Claude Code plugin (commands, agent, install) | [10-claude-code-plugin.md](reference/10-claude-code-plugin.md) |
 | Upgrading a project to 2.1 (build once): checklist, what is new, behavior changes, the legacy API key | [14-release-notes-2.1.0.md](reference/14-release-notes-2.1.0.md) |
+| **Putting a project online**: the production `Dockerfile`, `caligrafer deploy` (database at every start), Caligrafy Cloud (`caligrafer cloud`, https://<name>.caligrafy.com, trial and credits), own server (Coolify, Docker); use the `deploy` skill | [20-putting-it-online.md](reference/20-putting-it-online.md), G67-G73 |
+| What 2.4.0 changed: production image, `deploy`, `cloud`, sessions volume, the sign-in look of the page components, upgrading from 2.3.0 | [21-release-notes-2.4.0.md](reference/21-release-notes-2.4.0.md) |
 | What 2.3.0 changed: `caligrafer call`, the upgrade reports and `--keep`, doctor warnings, fixed templates, one time zone, upgrading from 2.2.0 | [19-release-notes-2.3.0.md](reference/19-release-notes-2.3.0.md) |
 | Every change of October 2026: upgrade checklist for existing projects, what can break, `.env` settings | [11-release-notes-october-2026.md](reference/11-release-notes-october-2026.md) |
 | Changing the framework itself: QA suite phases, PHPUnit tests in `qa/unit`, mocks, adding a test, release process | [12-testing-caligrafy.md](reference/12-testing-caligrafy.md) |

@@ -1,0 +1,94 @@
+---
+name: deploy
+description: Put a Caligrafy Quill project online - check it is ready for production (Dockerfile, composer.lock, create_db.sql scripts safe to run again, no secrets in git, pushed to GitHub), then deploy it to Caligrafy Cloud (https://<name>.caligrafy.com) with php caligrafer.php cloud, or prepare it for the user's own server (Coolify, Docker).
+when_to_use: The user asks to deploy, publish, host, ship or put online a Caligrafy Quill project, to use Caligrafy Cloud or deploy.caligrafy.com, to run php caligrafer.php cloud or deploy, or a production build, start or database fails ("caligrafer deploy: the database is not prepared", a paused page, a private repository Caligrafy Cloud cannot read).
+argument-hint: "[app-name] [--own-server]"
+---
+
+# Put a Caligrafy project online
+
+Target: `$ARGUMENTS` (an app name for Caligrafy Cloud; `--own-server` to prepare the project for Coolify or Docker
+instead). Read [20-putting-it-online.md](../caligrafy/reference/20-putting-it-online.md), gotchas G67-G73 in
+[gotchas.md](../caligrafy/reference/gotchas.md), and the `deploy` and `cloud` rows of the CLI table in
+[api-reference.md](../caligrafy/reference/api-reference.md). Needs Caligrafy Quill 2.4.0+ (`php caligrafer.php version`).
+
+## 1. Is the project ready? (read-only, report every point)
+
+```bash
+php caligrafer.php version                        # 2.4.0 or later; older: upgrade first (release notes 2.4.0)
+ls Dockerfile Dockerfile.dockerignore composer.lock
+git status --short && git log origin/HEAD..HEAD --oneline 2>/dev/null   # uncommitted or unpushed work
+git remote get-url origin                         # a GitHub repository
+git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'  # must print nothing
+php caligrafer.php doctor --only project
+```
+
++ **Dockerfile and `Dockerfile.dockerignore`** at the root: 2.4.0 projects have them; an upgraded project copies them
+  from the release (they are not templates).
++ **`composer.lock` committed** (G69).
++ **No secrets in git**: no `.env` (or `.env.production`...) tracked, no keys in code or in `public/`. If one is tracked,
+  stop: it must be removed from git *and* rotated (new `APP_KEY`/`API_KEY`, new service keys), because it stays in the
+  history. Never print a secret's value; name the file and the key only.
++ **Every `application/models/*/create_db.sql` is safe to run again** (G68): `CREATE TABLE IF NOT EXISTS`, no `DROP`
+  or `DELETE`, columns added with `ALTER TABLE ... ADD COLUMN`. Report the scripts that are not.
++ **Committed and pushed**: the host builds what is on GitHub, not the working folder. Commit and push only with the
+  user's OK.
+
+## 2a. Caligrafy Cloud (default)
+
+The user needs an account at https://deploy.caligrafy.com (sign-up and the confirmation email are theirs: never create
+an account or type a password).
+
+1. **Token.** `test -f .caligrafy/cloud.json || echo "not signed in"`. If not signed in, ask the user to create a token on
+   the dashboard (*Command line and AI agents*) and run, in their own terminal (G72):
+   ```bash
+   php caligrafer.php cloud login
+   ```
+   Never ask for the token in chat, never pass it on a command line you write, never read `.caligrafy/cloud.json`.
+2. **The app.** `php caligrafer.php cloud apps`. If the name is new:
+   ```bash
+   php caligrafer.php cloud create <name>                 # repo from git origin, branch main (--repo, --branch)
+   ```
+   Names: 3 to 30 lowercase letters, digits and hyphens, starting with a letter; some are reserved (`www`, `admin`, `api`, `deploy`...); a taken name
+   answers a conflict: propose another. For a **private repository** the answer contains a read-only deploy key: show it
+   and ask the user to add it on GitHub (*Settings, Deploy keys, Add deploy key*, *Allow write access* off) before the
+   deploy; GitHub may ask them for their password.
+3. **Settings.** The database and the keys are written for the app. For each service the project uses (`OPEN_AI_KEY`,
+   `PAY_*`, `MAIL_*`...), the user sets it; it is applied at the next deploy:
+   ```bash
+   php caligrafer.php cloud secret set <name> KEY=value   # the user runs it with their value; you never type a real secret
+   php caligrafer.php cloud secret list <name>            # names only
+   ```
+4. **Deploy** (several minutes: run it in the background and wait for it):
+   ```bash
+   php caligrafer.php cloud deploy <name>
+   ```
+   The first deploy of an account starts its free 30 minutes. Then check it: `curl -s -o /dev/null -w '%{http_code}' https://<name>.caligrafy.com/`.
+5. **Keep it online.** Time left: `cloud status <name>`. Credits: `cloud credits 5|10|25|50` prints a Stripe page for the
+   user to pay (never pay for them); `cloud extend <name> week|month|year` spends 2, 5 or 50 credits, and a paused app
+   starts again. Spending credits and deleting (`cloud delete <name> --yes`, permanent) need the user's explicit OK.
+
+## 2b. Own server (`--own-server`)
+
+Prepare, do not deploy: the user's server, account and keys are theirs.
++ Write `.env.production` from `.env` **only with the user's OK, never committed** (it is ignored by `Dockerfile.dockerignore`;
+  check `.gitignore` covers it): `APP_ROOT=` empty, `APP_ENV=production`, `APP_DEBUG=false`, new keys
+  (`php caligrafer.php generatekeys`), `DB_ACTIVATE=true` and the production `DB_*`.
++ Coolify: a *Dockerfile* application, a MySQL database, the `.env` as a file storage at `/var/www/html/.env`, volumes at
+  `/var/www/html/public/uploads` and `/var/lib/php/sessions` (G70). A MySQL with a small memory limit needs the
+  configuration of G71.
++ Docker: the `docker run` of 20-putting-it-online.md (`#ownserver`), behind HTTPS.
++ Environment-variable-only hosts (Railway, Render, DigitalOcean App Platform) are not supported yet (G67): say so.
+
+## 3. When it fails
+
+| Symptom | Look at | Usual fix |
+| --- | --- | --- |
+| Build fails | `php caligrafer.php cloud logs <name>` | commit `composer.lock`; a PHP extension the image lacks |
+| `caligrafer deploy: the database is not prepared` | the line above it in the logs | a SQL error in a `create_db.sql`; on an own server `DB_*` or `--wait` |
+| `Host ... is not allowed to connect` | own server only | G71: recreate the empty database volume |
+| `create` or `deploy` refuses the repository | the message | private repository without the deploy key; no `Dockerfile` on that branch |
+| Paused page at the address | `cloud status <name>` | time ended: `cloud extend`; or still deploying; or a wrong name |
+| Signed out after every deploy, uploads gone | own server | G70 volumes |
+
+Report what you checked, what you changed (with the user's OK), the URL, and the time left.

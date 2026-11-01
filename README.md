@@ -92,6 +92,9 @@ feature step by step, page included.
   Ollama...), chatbots, face detection and machine learning in the browser, search and social metadata.
 + **Made for AI-assisted development:** a [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
   that knows the framework and builds features the Caligrafy way, and `AGENTS.md` for other coding agents.
++ **Online in a few commands:** a production `Dockerfile` in every project, the database prepared at every start,
+  and [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud):
+  `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, the first 30 minutes free.
 + **Tools:** `php caligrafer.php doctor` checks your setup and services, `call` tries a capability in one line,
   `upgrade` updates a project and tells you what to check, `version` tells you which release you run.
 
@@ -103,10 +106,11 @@ feature step by step, page included.
 | --- | --- |
 | Get started | [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart), then [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) |
 | Understand the idea | [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) |
-| Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course): build a complete application in 14 lessons, capabilities first, by hand or with Claude |
+| Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course): build a complete application in 15 lessons, capabilities first, by hand or with Claude, up to putting it online |
 | Look something up | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki) |
+| Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Use the command line | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
-| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
+| See what changed | [Changelog](CHANGELOG.md) and the release notes ([2.4](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.4.0), [2.3](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.3.0), [2.1](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.1.0)) |
 | Contribute | [Contributing](CONTRIBUTING.md) and [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) |
 
 Other ways to install (your own Apache, MySQL and PHP; `composer create-project`) are in

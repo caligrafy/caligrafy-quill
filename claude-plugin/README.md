@@ -6,12 +6,13 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 44 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G66) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 46 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G73) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + Controller (filter/validate CRUD) + REST routes |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
 | Skill | `/caligrafy-quill:db <script.sql\|tables\|query "...">` | Runs SQL scripts in the `mysql` container (or local MySQL), with safety checks for destructive scripts |
+| Skill | `/caligrafy-quill:deploy [app-name] [--own-server]` | Puts the project online: checks it is ready (Dockerfile, `composer.lock`, no secrets in git, `create_db.sql` safe to run again, pushed), then deploys it to Caligrafy Cloud (`https://<name>.caligrafy.com`) or prepares it for Coolify or Docker |
 | Agent | `caligrafy-reviewer` | Reviews Caligrafy code against the framework's real behavior |
 | Hook | PostToolUse `php -l` | Syntax-checks every `.php` file Claude writes or edits (skipped when PHP is not installed) |
 
@@ -44,6 +45,12 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.15.0** - Caligrafy Quill 2.4.0, putting a project online: the new `/caligrafy-quill:deploy` skill (readiness
+  checks, then Caligrafy Cloud or an own server); `php caligrafer.php deploy` and `cloud` in the API reference and the
+  `caligrafy` skill; gotchas G67-G73 (`.env` as a file only, `create_db.sql` run again when changed, `composer.lock`,
+  sessions and uploads volumes, MySQL 8.4 memory, `cloud login` in a terminal, Stripe Managed Payments tax codes);
+  G60 and the UI guidelines follow the page components' sign-in look; wiki mirrors, including Putting it online and
+  the 2.4.0 release notes.
 - **1.14.0** - Caligrafy Quill 2.3.0: `php caligrafer.php call` (try a capability in one line) in the API reference,
   the `caligrafy` skill and `new-capability`; the new `upgrade` reports (settings, Bootstrap 3) and `--keep`, the
   doctor warnings (`APP_DEBUG` over HTTPS, `CRYPTO_PAY_KEY`) and `DB_TIMEZONE`; G61, G62 and G65 updated for the
