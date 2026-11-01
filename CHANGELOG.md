@@ -6,6 +6,17 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.12.1] - 2026-11-01
+
+### Fixed
+- The last pages outside Caligrafy's look:
+  - `public/offline.html` (shown by the service worker when a page cannot load): the top bar with the Caligrafy mark,
+    one message and a black action, still self-contained.
+  - `modules/messaging.pug` and `modules/social.pug` (pages of the older masters): the message is an `.alert` /
+    `.cq-alert` that `look.css` styles; the share links are plain links (they needed an icon font no page loads).
+- The bot template (`php caligrafer.php app <name>` of type bot) no longer calls `__bots__/<app>/undefined`, which
+  answered 500, when the address has no `?botSkillId=`: it says so at once.
+
 ## [2.12.0] - 2026-11-01
 
 ### Added

@@ -58,6 +58,8 @@ const app = Vue.createApp({
 
         // Connect to the bot
         connect() {
+            // no ?botSkillId= in the address: nothing to connect to (the server would answer 500 for "undefined")
+            if (!this.botId) return Promise.resolve(false);
             return axios.post(this.route + this.botId, {}, this.config)
                 .then(response => {
                     if (response.data !== true) console.log('Connection could not be established');

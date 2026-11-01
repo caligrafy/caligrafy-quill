@@ -49,6 +49,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.24.1** - Caligrafy Quill 2.12.1: the offline page, the bot template and the modules of the older masters in
+  Caligrafy's look (no skill change).
 - **1.24.0** - Caligrafy Quill 2.12.0: a list and its detail side by side (`.cq-split > section.cq-split-main +
   aside.cq-split-detail`) in `ui-guidelines.md` (a part, a section with its markup, the checklist), the Views mirror
   (and its `.cq-split` example without `+` between strings), the 2.12.0 release notes.

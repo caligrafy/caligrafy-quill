@@ -1,11 +1,8 @@
-- $alertIcon = $status == 'danger'? '⚠': ($status == 'success' ? '✓' : ($status == 'info'? 'ℹ' : ''))
-.show
-    .spacer-2
-    div(class="horizontal-center bounded")
-        div(class="alert alert-{$status}", role="alert", style="margin:0;")
-            p(class="medium-text horizontal-left semibold")
-                span(aria-hidden="true")= $alertIcon . ' '
-                = $message_header
-            span(class="visually-hidden")= $status
-            p(class="horizontal-left")= $message
-            .spacer-1
+//- A message above a form, for pages of the older masters (layout.pug, layoutblocks.pug); pages of site.pug use
+//- modules/notice. $status (danger, success, info), $message_header, $message. look.css gives .alert Caligrafy's look.
+div.alert.cq-alert(class=($status == 'danger' ? 'alert-danger cq-alert--error' : 'alert-' . $status), role="alert")
+    span.visually-hidden= $status
+    if $message_header
+        strong= $message_header
+        br
+    = $message

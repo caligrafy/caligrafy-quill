@@ -202,7 +202,8 @@
     ],
     "views/default/modules/messaging.pug": [
         "cb8da2effa8e3722ee372785c9b20c1465b6b19ae729598fb871c05b2db0937b",
-        "e1abe7c9591cc8fdf958055a8d08b40d8d5ec9f50c300eb37dd398f1cd8c3b97"
+        "e1abe7c9591cc8fdf958055a8d08b40d8d5ec9f50c300eb37dd398f1cd8c3b97",
+        "eeee34eb657cb7b11c85519cdce47222755f1d4385ec0d7fa18d3577c07adb05"
     ],
     "views/default/modules/metadata.pug": [
         "4dc37449485282f316919c1facb3f18aab483ec4cb8bf9559b0467e970a7928f"
@@ -221,7 +222,8 @@
         "976e17b68b661051282ae90b92233086b693a196db7e9dbc2e4414abe2e49a04"
     ],
     "views/default/modules/social.pug": [
-        "208cc3a56bfbfba683b4d5149d52c8309aeb7b7091966f18af363dd0efd91be4"
+        "208cc3a56bfbfba683b4d5149d52c8309aeb7b7091966f18af363dd0efd91be4",
+        "7238283f336a1c26d20c1371f036a0a5220d9f14abb29e458f08f905c642e0fb"
     ],
     "views/default/modules/standalone.pug": [
         "daa921c5e6af0eb7f6612a8dcebca240c55e4db42a7568d3ec3883e04360672d"
