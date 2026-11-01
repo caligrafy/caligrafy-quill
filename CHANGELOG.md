@@ -6,6 +6,13 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.9.1] - 2026-11-01
+
+### Fixed
+- `php caligrafer.php update` no longer adds the release's documents (`LICENSE`, `README.md`, `CHANGELOG.md`...) to a
+  project that does not have them: a project's documents are its own, and the framework's `LICENSE` must not license
+  it. They are still replaced when the project has an untouched copy.
+
 ## [2.9.0] - 2026-11-01
 
 A project updates in one command: `php caligrafer.php update` moves it to the latest release and applies everything

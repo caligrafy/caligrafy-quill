@@ -33,7 +33,8 @@ class Updater
     const SKIP = array('/^qa\//', '/^tests\//', '/^\.github\//', '/^composer\.lock$/', '/^public\/uploads\//', '/^application\//');
     // merged instead of compared
     const MERGED = array('composer.json', '.gitignore');
-    // replaced when untouched, else left alone without a .caligrafy-new (the project's own documents)
+    // replaced when untouched, else left alone without a .caligrafy-new, never added (the project's own documents:
+    // a release's LICENSE must not license a project)
     const DOCS = array('README.md', 'CHANGELOG.md', 'CONTRIBUTING.md', 'CODE_OF_CONDUCT.md', 'ARCHITECTURE.md', 'LICENSE');
     const NEW_SUFFIX = '.caligrafy-new';
     const ENV_EXAMPLE = 'framework/settings/.env.example';
@@ -172,6 +173,7 @@ class Updater
     private function releaseFile($file, $old, $new, $check, $backup, array &$plan)
     {
         $mine = "$this->root/$file";
+        if (!is_file($mine) && in_array($file, self::DOCS, true)) return;   // the project's own documents: never added
         if (!is_file($mine)) {
             $plan['add'][] = $file;
             if (!$check) self::put($mine, "$new/$file");
