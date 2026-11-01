@@ -206,7 +206,7 @@ try {
 **Over HTTP** (a deployed application): create a token, then add the server to the agent. For Claude Code:
 ```bash
 php caligrafer.php token create "Claude Code" --scopes books:read,books:write
-claude mcp add --transport http bookshelf http://localhost:8080/mcp --header "Authorization: Bearer cq_..."
+claude mcp add --transport http myapp http://localhost:8080/mcp --header "Authorization: Bearer cq_..."
 ```
 + Answers JSON-RPC 2.0 `POST` requests with JSON (`initialize`, `ping`, `tools/list`, `tools/call`); `GET` answers `405`.
 + Only personal access tokens are accepted (not the legacy key): `401` otherwise.
@@ -214,8 +214,8 @@ claude mcp add --transport http bookshelf http://localhost:8080/mcp --header "Au
 
 **Over stdio** (a local agent on your machine, in the project folder):
 ```bash
-claude mcp add bookshelf -- php caligrafer.php mcp
-claude mcp add bookshelf -- docker compose exec -T dev-box php caligrafer.php mcp    # with the Docker server
+claude mcp add myapp -- php caligrafer.php mcp
+claude mcp add myapp -- docker compose exec -T dev-box php caligrafer.php mcp    # with the Docker server
 CALIGRAFY_TOKEN=cq_... php caligrafer.php mcp      # limited to a token's scopes
 ```
 Without a token, stdio has full access, like any script you run yourself.

@@ -9,8 +9,8 @@ Caligrafy Quill **2.4.0** takes your application the last step: **online**. Ever
 
 ```bash
 php caligrafer.php cloud login                 # a token from https://deploy.caligrafy.com
-php caligrafer.php cloud create bookshelf      # from this project's GitHub repository
-php caligrafer.php cloud deploy bookshelf      # https://bookshelf.caligrafy.com
+php caligrafer.php cloud create myapp          # from this project's GitHub repository
+php caligrafer.php cloud deploy myapp          # https://myapp.caligrafy.com
 ```
 
 [Caligrafy Cloud](https://deploy.caligrafy.com) builds your project from GitHub (public, or private with a read-only deploy key), gives it its own MySQL database, its keys and an HTTPS address, and keeps your settings encrypted.

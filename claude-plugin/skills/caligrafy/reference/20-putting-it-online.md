@@ -62,8 +62,8 @@ If the database cannot be prepared, the log says why and Apache starts anyway, s
 
 ```bash
 php caligrafer.php cloud login                       # paste a token from the dashboard ("Command line and AI agents")
-php caligrafer.php cloud create bookshelf            # the repository of this project (git origin), branch main
-php caligrafer.php cloud deploy bookshelf            # builds and starts it, and follows the build
+php caligrafer.php cloud create myapp                # the repository of this project (git origin), branch main
+php caligrafer.php cloud deploy myapp                # builds and starts it, and follows the build
 ```
 
 `login` asks for the token without showing it: run it in a terminal where you can paste. The token is kept in `.caligrafy/cloud.json` (ignored by git); `CALIGRAFY_CLOUD_TOKEN` overrides it, for scripts.
@@ -71,13 +71,13 @@ php caligrafer.php cloud deploy bookshelf            # builds and starts it, and
 **4. Keep it online, change it, watch it.**
 
 ```bash
-php caligrafer.php cloud status bookshelf            # running, paused..., and the time left
-php caligrafer.php cloud logs bookshelf              # the build while it deploys, then what the app prints
-php caligrafer.php cloud secret set bookshelf OPEN_AI_KEY=sk-...    # a setting of its .env, applied at the next deploy
-php caligrafer.php cloud deploy bookshelf            # after a git push, or a new setting
+php caligrafer.php cloud status myapp                # running, paused..., and the time left
+php caligrafer.php cloud logs myapp                  # the build while it deploys, then what the app prints
+php caligrafer.php cloud secret set myapp OPEN_AI_KEY=sk-...    # a setting of its .env, applied at the next deploy
+php caligrafer.php cloud deploy myapp                # after a git push, or a new setting
 php caligrafer.php cloud credits 10                  # opens the Stripe payment page
-php caligrafer.php cloud extend bookshelf month      # 5 credits; a paused app starts again
-php caligrafer.php cloud delete bookshelf --yes      # the app, its database and its files, for good
+php caligrafer.php cloud extend myapp month          # 5 credits; a paused app starts again
+php caligrafer.php cloud delete myapp --yes          # the app, its database and its files, for good
 ```
 
 The database settings and the keys of the app are written for you, and your settings cannot replace them; `APP_ENV`, `APP_DEBUG` and the rest of `.env` are yours to set (`APP_ENV=production` and `APP_DEBUG=false` by default). Settings are stored encrypted and never shown again: `cloud secret list` gives their names. Every command is listed in [Caligrafer: cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#cloud).

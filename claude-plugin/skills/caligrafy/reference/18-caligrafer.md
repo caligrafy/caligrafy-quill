@@ -209,18 +209,18 @@ What the production `Dockerfile` runs before Apache starts. It waits for the dat
 php caligrafer.php cloud login                          # a token from the dashboard of deploy.caligrafy.com (hidden prompt)
 php caligrafer.php cloud login --token cq_...           # the same, for scripts
 php caligrafer.php cloud account                        # your email and credits
-php caligrafer.php cloud create bookshelf               # from this project's GitHub repository (git origin), branch main
-php caligrafer.php cloud create bookshelf --repo https://github.com/me/bookshelf --branch live
-php caligrafer.php cloud deploy bookshelf               # build and start it, following the build (--no-wait: do not follow)
+php caligrafer.php cloud create myapp                   # from this project's GitHub repository (git origin), branch main
+php caligrafer.php cloud create myapp --repo https://github.com/me/myapp --branch live
+php caligrafer.php cloud deploy myapp                   # build and start it, following the build (--no-wait: do not follow)
 php caligrafer.php cloud apps                           # your apps, their status and time left
-php caligrafer.php cloud status bookshelf
-php caligrafer.php cloud logs bookshelf                 # the build while it deploys, then what the app prints
-php caligrafer.php cloud extend bookshelf week          # week (2 credits), month (5) or year (50)
+php caligrafer.php cloud status myapp
+php caligrafer.php cloud logs myapp                     # the build while it deploys, then what the app prints
+php caligrafer.php cloud extend myapp week              # week (2 credits), month (5) or year (50)
 php caligrafer.php cloud credits 10                     # buy 5, 10, 25 or 50 credits on Stripe (1 credit = 1 USD)
-php caligrafer.php cloud secret set bookshelf OPEN_AI_KEY=sk-...   # a setting of its .env, applied at the next deploy
-php caligrafer.php cloud secret list bookshelf          # the names of its settings
-php caligrafer.php cloud secret delete bookshelf OPEN_AI_KEY
-php caligrafer.php cloud delete bookshelf --yes         # the app, its database and its files, for good
+php caligrafer.php cloud secret set myapp OPEN_AI_KEY=sk-...   # a setting of its .env, applied at the next deploy
+php caligrafer.php cloud secret list myapp              # the names of its settings
+php caligrafer.php cloud secret delete myapp OPEN_AI_KEY
+php caligrafer.php cloud delete myapp --yes             # the app, its database and its files, for good
 php caligrafer.php cloud logout
 ```
 Puts the project online with [Caligrafy Cloud](https://deploy.caligrafy.com): `https://<name>.caligrafy.com`, built from its GitHub repository with its `Dockerfile`, with its own MySQL database. The first 30 minutes of an account are free; then credits keep an app online. The token is kept in `.caligrafy/cloud.json` (ignored by git); `CALIGRAFY_CLOUD_TOKEN` and `CALIGRAFY_CLOUD_URL` override it. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud).

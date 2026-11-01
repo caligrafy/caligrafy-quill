@@ -111,7 +111,7 @@ When something does not work (database connection, API keys, models not availabl
 Puts the project online. It first checks, without changing anything, that the project is ready: Caligrafy Quill 2.4.0 or later with its `Dockerfile`, `composer.lock` committed, no `.env` or keys in git, `create_db.sql` scripts that are safe to run at every start, and everything committed and pushed to GitHub. Then it deploys to [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud) with `php caligrafer.php cloud`: it creates the app, shows the deploy key of a private repository for you to add on GitHub, and follows the build until `https://<name>.caligrafy.com` answers. You sign in with `php caligrafer.php cloud login` yourself: Claude never asks for the token or a secret, and asks before spending credits or deleting. With `--own-server` it prepares the project for [Coolify or Docker](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#ownserver) instead.
 
 ```
-/caligrafy-quill:deploy bookshelf
+/caligrafy-quill:deploy myapp
 ```
 
 ### `/caligrafy-quill:db <script.sql | tables | query "SQL">`
