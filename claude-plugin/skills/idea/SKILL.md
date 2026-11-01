@@ -27,7 +27,7 @@ Run every `php caligrafer.php` command in the Docker server: `docker compose exe
 
 - Check Docker is running (`docker info`) and that ports 8080, 8077 and 3306 are free (`lsof -nP -iTCP:<port> -sTCP:LISTEN`);
   if one is taken (another project), use a `docker-compose.override.yml` with other host ports as the
-  [server skill](../server/SKILL.md) says, and use those ports in every URL (quickstart still prints `8080`).
+  [server skill](../server/SKILL.md) says, and use those ports in every URL (quickstart still prints `8080`, G78).
 - If `application/` does not exist, set the project up:
   `.bin/caligrafer quickstart` (without `--example`). It asks to delete the framework's `.git`: say why (the app gets
   its own history) and answer only with the user's OK. If the project is set up already, check it with
@@ -63,7 +63,7 @@ data in it.
 
 **Capabilities**: one command per capability,
 `docker compose exec dev-box php caligrafer.php service <Folder>/<PascalName> --scope <scope> [--read-only]` (the scope
-is required: without it the attribute gets `scope: ''`), then fill it as `/caligrafy-quill:new-capability` says (a description written for an AI agent, `$rules` for every
+is required: without it the attribute gets `scope: ''`, G76), then fill it as `/caligrafy-quill:new-capability` says (a description written for an AI agent, `$rules` for every
 input, bound queries, `ServiceError` refusals, `readOnly`, `destructive`, `public: true` only for reads anyone may do).
 
 **Sign-in** (unless everything is public): in `web.php` uncomment `Auth::authentication('User', 'users');` and the
@@ -71,11 +71,11 @@ authentication routes (`/login`, `/logout`, `/notAuthorized`, `/register`, both 
 sign-in lands) to the main page instead of `AuthController@home`. Run `application/models/Auth/create_db.sql`. Add to
 the main page a line with *Sign in* / *Sign up* links for visitors and *Sign out* for signed-in people. A view gets
 `$authorized` only when its route passes it: `Route::get('/<things>', function () { return view('<Folder>/index', array('authorized' => authorized())); });`,
-and the same for `/` and `/home`. The sign-up page accepts usernames of letters and digits only (no email address):
-say so next to the *Sign up* link. A capability that is not `public` is refused (401) to visitors: the page
+and the same for `/` and `/home` (G74). The sign-up page accepts usernames of letters and digits only (no email
+address, G75): say so next to the *Sign up* link. A capability that is not `public` is refused (401) to visitors: the page
 shows its message in `.cq-error`.
 
-**A token page** (so AI agents can use the app online, where there is no command line): a capability
+**A token page** (so AI agents can use the app online, where there is no command line, G79): a capability
 `create_my_token` in `application/services/Tokens/CreateMyToken.php`, for signed-in people only:
 ```php
 #[Capability(name: 'create_my_token', description: 'Creates a personal access token of the signed-in person, for an AI agent or a program. It is shown once.', scope: 'tokens:write')]
@@ -124,7 +124,7 @@ Bootstrap colors.
 - The page: open `http://localhost:8080/<things>` (in a browser if you have one): sign up, add, change, delete; check it
   at phone width (375px).
 - MCP: with a local token (`php caligrafer.php token create "check" --scopes "*"`, revoke it afterwards with
-  `token revoke <id>`, the number after `#` in `token list`), `tools/list` shows the capabilities and `tools/call` works.
+  `token revoke <id>`, the number after `#` in `token list`, G77), `tools/list` shows the capabilities and `tools/call` works.
 - `docker compose exec dev-box php caligrafer.php doctor`, and ask the `caligrafy-reviewer` agent to review the new files.
 Fix what fails before going on.
 

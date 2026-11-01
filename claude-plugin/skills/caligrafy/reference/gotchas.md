@@ -212,3 +212,36 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G73. Stripe accounts with Managed Payments refuse a Checkout product without a tax code.** `Payment::createCheckout()` then returns `action_success => false` with "the product tax code is missing". Add `'tax_code' => 'txcd_...'` to its `$productData` (the 4th argument: it goes into `price_data.product_data`), for example `txcd_10701100` (Website Hosting), `txcd_10103001` (SaaS, business use), `txcd_10000000` (electronically supplied services). `GET https://api.stripe.com/v1/tax_codes/<code>` checks a code.
 
+## Building an application from an idea (the `idea` skill, plugin 1.16)
+
+**G74. A view only knows who is signed in when its route says so.** `view()` passes nothing on its own; the layout's
+header and any `if $authorized` in a page read the variable the route gives. The framework's controllers pass it
+(`AuthController`, `AdminController`, `AIController`), closure routes do not: `Route::get('/books', function () { return view('Books/index'); });`
+renders every visitor as signed out (no *Sign out*, the signed-in parts hidden). Pass it from every route of such a
+page: `view('Books/index', array('authorized' => authorized()))`, and the same for `/` and `/home`. Proof:
+`framework/helpers/corehelpers.php` (`view()`), the controllers in `framework/settings/application/controllers/core/`.
+
+**G75. The sign-up form accepts usernames of letters and digits only.** `AuthController::register()` validates
+`username` with `required|alpha_numeric|max_len,100`: an email address, a dot or a dash is refused ("The username
+must only contain letters and digits"). Say so next to the *Sign up* link of an application, or change the rule in the
+project's copy of the controller.
+
+**G76. `php caligrafer.php service` without `--scope` writes `scope: ''`.** The template's `{{scope}}` becomes an empty
+string, so the capability needs no scope from a token: any token can call it. Always pass `--scope <resource:action>`
+(one `service` command per capability), or set the scope in the attribute right away. Proof: `caligrafer.php`
+(`case 'service'`), `framework/settings/service.php.template`.
+
+**G77. `token revoke` takes the number, not `#2`.** `token list` prints tokens as `#2 name ...`; `token revoke #2`
+reads `(int) '#2'` = 0 and answers "No active token #0", revoking nothing. Use `php caligrafer.php token revoke 2`.
+
+**G78. `quickstart` prints `localhost:8080` even when the ports are remapped.** In Docker its closing `claude mcp add`
+line always uses `http://localhost:8080`; with a `docker-compose.override.yml` (port 8080 taken by another project),
+use the remapped port in that line and in every URL you give the user. Proof: `framework/core/Quickstart.php`.
+
+**G79. Tokens for an application online come from a page, not the command line.** A deployed application (Caligrafy
+Cloud, Coolify) has no shell for `php caligrafer.php token create`, so AI agents could not connect to it. Give the
+application a capability for signed-in people that calls `Tokens::create($name, $scopes, $context->user->id, $expiresAt)`
+and refuses token contexts (`$context->token !== null`: a token must not create tokens), with a small page card that
+shows the token once and the `claude mcp add` line (the `idea` skill's `create_my_token`). It still appears in MCP
+`tools/list` for a token with its scope or `*`: its refusal there is expected.
+

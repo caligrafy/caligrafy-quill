@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 47 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G73) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 47 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G79) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + Controller (filter/validate CRUD) + REST routes |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then pushes to GitHub and deploys to Caligrafy Cloud |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
@@ -46,6 +46,11 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.16.1** - What building an application with `/caligrafy-quill:idea` showed: gotchas G74-G79 (views on closure
+  routes need `authorized` passed, sign-up usernames are letters and digits only, `service` without `--scope` writes
+  an empty scope, `token revoke` takes the bare number, `quickstart` prints port 8080 even when remapped, tokens for an
+  application online come from a page); the `idea`, `new-capability` and `server` skills refer to them; reviewer
+  check 19 for applications built from an idea and put online.
 - **1.16.0** - The Quickstart with Claude: the new `/caligrafy-quill:idea` skill takes an idea to an application
   online (plan, tables, capabilities, sign-in, a page on the page components, REST, MCP and a token page so agents
   can use the app online, checks of every experience, GitHub, Caligrafy Cloud); the `caligrafy` skill points to it;

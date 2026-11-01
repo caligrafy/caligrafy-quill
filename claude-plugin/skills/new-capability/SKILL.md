@@ -27,7 +27,7 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
 
 ## Steps
 1. **Scaffold**: `php caligrafer.php service <Folder>/<PascalName> --scope <scope> [--read-only]`
-   (create_book -> `Books/CreateBook`). Never hand-write the attribute boilerplate.
+   (create_book -> `Books/CreateBook`), one command per capability; without `--scope` the attribute gets `scope: ''` (G76). Never hand-write the attribute boilerplate.
 2. **Fill the service** (`application/services/<Folder>/<Name>.php`):
    - `description`: what it does and returns, written for an AI agent choosing a tool (one or two sentences).
    - `$rules` for EVERY input `handle()` reads (`''` when there is no rule, G52), `$filters` (trim), `$descriptions`.
@@ -41,6 +41,7 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
    - Generic endpoint + JS client: `Route::capabilities('/capabilities');` then `php caligrafer.php client public/<app>/src/capabilities.js`
      (Vite SPA) or `public/js/capabilities.js`; use `createBook(...)` and `CapabilityError` in the Vue code.
    - MCP: `Route::mcp('/mcp');`
+   - A page on a closure route: pass `'authorized' => authorized()` to `view()`, or it renders everyone as signed out (G74).
    - Pug page: `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`
    - Any page you build for it (Pug, or a page calling the JS client) uses the page components and the worked example of
      [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md): `main.cq-page > .cq-card`, labeled `.cq-form`, field errors

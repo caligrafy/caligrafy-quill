@@ -29,7 +29,7 @@ can be run again. It asks before `initialize` deletes `.git` (G25); never pass `
    lsof -nP -iTCP:<port> -sTCP:LISTEN
    docker ps --format '{{.Names}} {{.Ports}}' | grep ':<port>->'
    ```
-   If a port is taken by something that is not this project's container, do NOT stop the other process. Propose remapping the host side (e.g. `8081:80`, `8078:80`, `3307:3306`) in a `docker-compose.override.yml` (see Troubleshooting) rather than in the committed `docker-compose.yaml`, apply it only after the user agrees, and use the new ports in every URL you report.
+   If a port is taken by something that is not this project's container, do NOT stop the other process. (`quickstart` still prints `localhost:8080` in its closing lines: use the remapped port, G78.) Propose remapping the host side (e.g. `8081:80`, `8078:80`, `3307:3306`) in a `docker-compose.override.yml` (see Troubleshooting) rather than in the committed `docker-compose.yaml`, apply it only after the user agrees, and use the new ports in every URL you report.
 4. **`.env` for Docker** (G11, `.env` overrides compose env). If `.env` exists check, without printing secret values:
    - `DB_HOST=mysql` when `DB_ACTIVATE=true`;
    - `APP_ROOT=` empty (the dev-box serves the project at the web root);

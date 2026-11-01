@@ -35,6 +35,8 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
 - Never put an API key or a personal access token in a page, a `VITE_` variable or a bundle: browser clients use the
   session through the generated JS client; programs and agents use tokens (`php caligrafer.php token create`).
 - Never print or commit secrets from `.env`. `php caligrafer.php initialize` deletes `.git`: ask before running it.
+- From an idea to an application online: follow the seven steps (start, data, capabilities, experiences, people
+  and trust, ship, online); Claude Code users run `/caligrafy-quill:idea`.
 - Putting it online (2.4.0+): the root `Dockerfile` is the production image and runs `php caligrafer.php deploy` at
   start (new or changed `create_db.sql`: keep them safe to run again); `php caligrafer.php cloud` deploys to
   `https://<name>.caligrafy.com`. The user signs in with `cloud login` in their own terminal: never handle the token.
