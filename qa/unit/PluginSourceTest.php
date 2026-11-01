@@ -81,4 +81,21 @@ final class PluginSourceTest extends TestCase
         $this->assertSame(0, $code);
         $this->assertStringContainsString('start claude', $said[0]);
     }
+
+    public function testConnectRemovesTheSharedSourceThisFolderRegisteredBeforeItsRename(): void
+    {
+        $name = PluginSource::ensureOwn($this->dir);
+        file_put_contents("$this->home/.claude/plugins/known_marketplaces.json", json_encode([
+            'caligrafy' => ['installLocation' => realpath($this->dir)], 'other' => ['installLocation' => '/x']]));
+        $commands = [];
+        $run = function ($command) use (&$commands) { $commands[] = $command; return [0, '']; };
+        PluginSource::connect($this->dir, function () {}, $run);
+        $this->assertStringContainsString("claude plugin marketplace remove 'caligrafy'", $commands[1]);
+        $this->assertStringStartsWith('cd ', $commands[1]);
+        // a shared source registered from another folder is that folder's business
+        file_put_contents("$this->home/.claude/plugins/known_marketplaces.json", json_encode(['caligrafy' => ['installLocation' => '/elsewhere']]));
+        $commands = [];
+        PluginSource::connect($this->dir, function () {}, $run);
+        $this->assertStringNotContainsString("remove 'caligrafy'", implode(' ', $commands));
+    }
 }

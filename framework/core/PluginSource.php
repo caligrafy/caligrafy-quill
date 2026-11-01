@@ -102,6 +102,12 @@ class PluginSource
             $say("Claude Code (claude) is not on this computer's PATH: start claude in $folder and accept the plugin source and the plugin");
             return 0;
         }
+        // a shared "caligrafy" registered from this folder (claude was opened before quickstart renamed it) would give
+        // the next clone this folder's plugin, or none once it is deleted: it goes
+        $shared = $name !== self::SHARED ? self::registeredPath(self::SHARED) : null;
+        if ($shared !== null && realpath($shared) === $folder) {
+            call_user_func($run, 'cd ' . escapeshellarg(sys_get_temp_dir()) . ' && claude plugin marketplace remove ' . escapeshellarg(self::SHARED));
+        }
         $registered = self::registeredPath($name);
         if ($registered !== null && realpath($registered) !== $folder) {
             // from a neutral folder: run inside a project, remove also deletes the source from that project's settings

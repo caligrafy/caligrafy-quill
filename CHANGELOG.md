@@ -6,6 +6,14 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.10.2] - 2026-11-01
+
+### Fixed
+- A new project opened in Claude Code before `quickstart` (the Quickstart with Claude: clone, `claude`, then
+  `/caligrafy-quill:idea`) registers the shared `caligrafy` source from its folder. Once `quickstart` gives the project
+  its own name, `php caligrafer.php plugin` (which `quickstart` runs) now removes that `caligrafy` registration when it
+  points to this folder, so the next clone registers its own instead of loading this one's plugin.
+
 ## [2.10.1] - 2026-11-01
 
 ### Fixed

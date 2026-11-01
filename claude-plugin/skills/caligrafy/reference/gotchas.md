@@ -413,5 +413,7 @@ project's plugin (an older one: `/caligrafy-quill:design` "unknown command" in a
 project got any once that folder was deleted. An already trusted folder is never asked again, so starting `claude`
 there does not fix it. Since 2.10.1 `initialize` names the source `caligrafy-<folder>-<4 hex>` and `update` renames it;
 `php caligrafer.php plugin` renames, registers (`claude plugin marketplace add <folder>`, replacing another folder's)
-and installs it (`claude plugin install caligrafy-quill@<name> --scope project`); `doctor` warns. The framework's own
+and installs it (`claude plugin install caligrafy-quill@<name> --scope project`); since 2.10.2 it also removes a
+`caligrafy` registration made from the project's folder (claude opened before quickstart), so the next clone
+registers its own; `doctor` warns. The framework's own
 repository keeps `caligrafy`: it is the source added from GitHub. Proof: `framework/core/PluginSource.php`.

@@ -49,6 +49,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.22.2** - Caligrafy Quill 2.10.2: G97 says that `plugin` also removes a `caligrafy` registration made from the
+  project's folder before `quickstart` renamed it.
 - **1.22.1** - Caligrafy Quill 2.10.1: each project's plugin source has its own name (gotcha G97: one shared
   `caligrafy` name gave every project the first one's plugin); `php caligrafer.php plugin` in the API reference, the
   Caligrafer and plugin mirrors, and the Quickstart with Claude troubleshooting.
