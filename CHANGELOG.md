@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [Unreleased]
+
+### Fixed
+- `php caligrafer.php plugin` in the framework's own repository renamed its plugin source from `caligrafy` (the name
+  people add from GitHub) to a project name; it now keeps it, as `doctor` already did (`PluginSource::isFramework()`).
+- `php caligrafer.php plugin` took another project's install for this one when that project's source name started with
+  this one's (`caligrafy` and `caligrafy-myapp-1a2b` in `claude plugin list`), and did not install the plugin. It now
+  reads Claude Code's install record for this folder.
+
 ## [2.13.1] - 2026-11-02
 
 ### Fixed

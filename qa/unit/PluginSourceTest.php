@@ -66,12 +66,14 @@ final class PluginSourceTest extends TestCase
         $name = PluginSource::ensureOwn($this->dir);
         file_put_contents("$this->home/.claude/plugins/known_marketplaces.json", json_encode([$name => ['installLocation' => '/gone/elsewhere']]));
         $this->assertSame('/gone/elsewhere', PluginSource::registeredPath($name));
+        file_put_contents("$this->home/.claude/plugins/installed_plugins.json", json_encode(['plugins' => [
+            "caligrafy-quill@$name" => [['scope' => 'project', 'projectPath' => realpath($this->dir), 'version' => '1.0.0']]]]));
         $commands = [];
-        $run = function ($command) use (&$commands, $name) { $commands[] = $command; return [0, strpos($command, 'plugin list') ? "caligrafy-quill@$name" : '']; };
+        $run = function ($command) use (&$commands) { $commands[] = $command; return [0, '']; };
         PluginSource::connect($this->dir, function () {}, $run);
         $this->assertStringContainsString("claude plugin marketplace remove '$name'", $commands[1]);
         $this->assertStringContainsString('claude plugin marketplace add', $commands[2]);
-        $this->assertStringNotContainsString('install', implode(' ', $commands));       // already installed
+        $this->assertStringNotContainsString('install', implode(' ', $commands));       // already installed here
     }
 
     public function testWithoutClaudeItOnlySaysWhatToDo(): void
@@ -117,10 +119,10 @@ final class PluginSourceTest extends TestCase
         $this->assertSame('1.24.4', PluginSource::installedVersion($name, $this->dir));
         $this->assertSame('1.25.1', PluginSource::projectVersion($this->dir));
         $commands = []; $said = [];
-        $run = function ($command) use (&$commands, $name) { $commands[] = $command; return [0, strpos($command, 'plugin list') ? "caligrafy-quill@$name" : '']; };
+        $run = function ($command) use (&$commands) { $commands[] = $command; return [0, '']; };
         $this->assertSame(0, PluginSource::connect($this->dir, function ($line) use (&$said) { $said[] = $line; }, $run));
-        $this->assertStringContainsString("claude plugin marketplace update '$name'", $commands[2]);
-        $this->assertStringContainsString("claude plugin update 'caligrafy-quill@$name' --scope project", $commands[3]);
+        $this->assertStringContainsString("claude plugin marketplace update '$name'", $commands[1]);
+        $this->assertStringContainsString("claude plugin update 'caligrafy-quill@$name' --scope project", $commands[2]);
         $this->assertStringContainsString('1.24.4, now 1.25.1', $said[0]);
     }
 
@@ -129,9 +131,36 @@ final class PluginSourceTest extends TestCase
         $name = PluginSource::ensureOwn($this->dir);
         $this->installed($name, '1.25.1');
         $commands = [];
-        $run = function ($command) use (&$commands, $name) { $commands[] = $command; return [0, strpos($command, 'plugin list') ? "caligrafy-quill@$name" : '']; };
+        $run = function ($command) use (&$commands) { $commands[] = $command; return [0, '']; };
         PluginSource::connect($this->dir, function () {}, $run);
         $this->assertStringNotContainsString('update', implode(' ', $commands));
         $this->assertNull(PluginSource::installedVersion('caligrafy-other-1234', $this->dir));
+    }
+
+    public function testTheFrameworksOwnRepositoryKeepsTheSharedName(): void
+    {
+        mkdir("$this->dir/qa", 0755, true);
+        touch("$this->dir/qa/run.sh");
+        $this->assertTrue(PluginSource::isFramework($this->dir));
+        $this->assertNull(PluginSource::ensureOwn($this->dir));
+        $this->assertSame('caligrafy', PluginSource::name($this->dir));
+        mkdir("$this->dir/application");                        // a project, even one with a qa folder, gets its own name
+        $this->assertFalse(PluginSource::isFramework($this->dir));
+        $this->assertNotNull(PluginSource::ensureOwn($this->dir));
+    }
+
+    public function testAnotherProjectsInstallWithALongerNameIsNotThisOne(): void
+    {
+        // the framework's "caligrafy" and a project's "caligrafy-myapp-1a2b": only this folder's record counts
+        file_put_contents("$this->home/.claude/plugins/known_marketplaces.json", json_encode(['caligrafy' => ['installLocation' => realpath($this->dir)]]));
+        file_put_contents("$this->home/.claude/plugins/installed_plugins.json", json_encode(['plugins' => [
+            'caligrafy-quill@caligrafy-myapp-1a2b' => [['scope' => 'project', 'projectPath' => '/somewhere/myapp', 'version' => '1.25.1']],
+            'caligrafy-quill@caligrafy' => [['scope' => 'project', 'projectPath' => '/another/clone', 'version' => '1.25.1']]]]));
+        mkdir("$this->dir/qa", 0755, true);
+        touch("$this->dir/qa/run.sh");
+        $commands = [];
+        $run = function ($command) use (&$commands) { $commands[] = $command; return [0, 'caligrafy-quill@caligrafy-myapp-1a2b']; };
+        PluginSource::connect($this->dir, function () {}, $run);
+        $this->assertStringContainsString("claude plugin install 'caligrafy-quill@caligrafy' --scope project", end($commands));
     }
 }

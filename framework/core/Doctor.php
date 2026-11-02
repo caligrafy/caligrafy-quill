@@ -133,7 +133,7 @@ class Doctor
         }
         // the Claude Code plugin: its own source name (a shared "caligrafy" gives every project the first one's plugin)
         $source = class_exists('Caligrafy\\PluginSource') ? PluginSource::name($this->root) : null;
-        $frameworkRepository = is_file($this->root . '/qa/run.sh');   // the source people add from GitHub keeps its name
+        $frameworkRepository = PluginSource::isFramework($this->root);   // the source people add from GitHub keeps its name
         if ($source === PluginSource::SHARED && $frameworkRepository) {
             $this->add('project', 'Claude Code plugin', 'OK', 'caligrafy-quill@caligrafy: the framework\'s own repository');
         } elseif ($source === PluginSource::SHARED && is_dir($this->root . '/application')) {

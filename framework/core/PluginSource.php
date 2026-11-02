@@ -45,7 +45,7 @@ class PluginSource
         $root = rtrim($root, '/');
         $marketplace = self::read("$root/" . self::MARKETPLACE);
         $settings = self::read("$root/" . self::SETTINGS);
-        if (($marketplace['name'] ?? null) !== self::SHARED || $settings === null) {
+        if (($marketplace['name'] ?? null) !== self::SHARED || $settings === null || self::isFramework($root)) {
             return null;
         }
         $name = self::newName($root);
@@ -157,8 +157,9 @@ class PluginSource
                 return 1;
             }
         }
-        list($code, $out) = call_user_func($run, 'cd ' . escapeshellarg($folder) . ' && claude plugin list');
-        if (strpos($out, self::PLUGIN . '@' . $name) === false) {
+        // installed for this folder (or for the user): Claude Code's own record, not `claude plugin list`, which also
+        // lists other projects' installs, and whose names can start with this one (caligrafy, caligrafy-myapp-1a2b)
+        if (self::installedVersion($name, $root) === null) {
             list($code, $out) = call_user_func($run, 'cd ' . escapeshellarg($folder) . ' && claude plugin install ' . escapeshellarg(self::PLUGIN . '@' . $name) . ' --scope project');
             if ($code !== 0) {
                 $say("claude plugin install did not work: $out");
@@ -176,6 +177,13 @@ class PluginSource
         }
         $say("Claude Code reads the plugin from $folder/claude-plugin: restart claude in this folder to load it");
         return 0;
+    }
+
+    // the framework's own repository (its QA suite, no application/): its source stays "caligrafy", the name people add from GitHub
+    public static function isFramework($root = '.')
+    {
+        $root = rtrim($root, '/');
+        return is_file("$root/qa/run.sh") && !is_dir("$root/application");
     }
 
     // caligrafy-<folder>-<4 hex>: readable, and unique even for projects with the same folder name (or "html" in Docker)
