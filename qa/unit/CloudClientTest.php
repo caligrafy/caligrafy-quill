@@ -158,4 +158,40 @@ final class CloudClientTest extends TestCase
         $this->assertStringContainsString('gh repo deploy-key add .caligrafy/shop-deploy-key.pub', $out);
         $this->assertSame("ssh-ed25519 AAAA caligrafy-cloud-shop\n", file_get_contents($this->root . '/.caligrafy/shop-deploy-key.pub'));
     }
+
+    public function testSubmitSendsTheMarketplaceFileThenDeploys(): void
+    {
+        putenv('CALIGRAFY_CLOUD_TOKEN=cq_7_abc123');
+        mkdir("$this->root/.caligrafy");
+        $png = base64_decode('iVBORw0KGgoAAAANSUhEUgAAAAEAAAABCAYAAAAfFcSJAAAADUlEQVR42mNkYPhfDwAChwGA60e6kgAAAABJRU5ErkJggg==');
+        file_put_contents("$this->root/.caligrafy/shot.png", $png);
+        file_put_contents("$this->root/.caligrafy/same.png", $png);
+        file_put_contents("$this->root/.caligrafy/marketplace.json", json_encode(['title' => 'Books', 'description' => 'A catalog.',
+            'prompt' => 'Build a catalog...', 'pages' => [['path' => '/', 'caption' => 'Home']], 'images' => [['file' => 'shot.png', 'caption' => 'Signed in'], ['file' => 'same.png', 'caption' => 'Again']],
+            'price' => ['low' => 19, 'high' => 39, 'rationale' => 'Like starter kits.']]));
+        [$code, $out] = $this->exec($this->client([
+            'submit_app_listing' => [200, '{"data":{"status":"processing"}}'],
+            'deploy_app' => [200, '{"data":{"url":"https://books.caligrafy.com"}}'],
+        ]), ['submit', 'books', '--no-wait']);
+        putenv('CALIGRAFY_CLOUD_TOKEN');
+        $this->assertSame(0, $code, $out);
+        $this->assertStringContainsString('Submitted the marketplace listing of books', $out);
+        $sent = $this->calls[0][1];
+        $this->assertSame('https://cloud.test/capabilities/submit_app_listing', $this->calls[0][0]);
+        $this->assertSame(['books', 'Books', '19', '39'], [$sent['name'], $sent['title'], $sent['price_low'], $sent['price_high']]);
+        $this->assertSame([['path' => '/', 'caption' => 'Home']], json_decode($sent['pages'], true));
+        $this->assertStringStartsWith('data:image/png;base64,', json_decode($sent['images'], true)[0]['image']);
+        $this->assertCount(1, json_decode($sent['images'], true), 'the same screen twice is sent once');
+        $this->assertSame('https://cloud.test/capabilities/deploy_app', $this->calls[1][0]);
+    }
+
+    public function testSubmitNeedsTheMarketplaceFile(): void
+    {
+        putenv('CALIGRAFY_CLOUD_TOKEN=cq_7_abc123');
+        [$code, $out] = $this->exec($this->client([]), ['submit', 'books']);
+        putenv('CALIGRAFY_CLOUD_TOKEN');
+        $this->assertSame(1, $code);
+        $this->assertStringContainsString('/caligrafy-quill:marketplace', $out);
+        $this->assertSame([], $this->calls);
+    }
 }

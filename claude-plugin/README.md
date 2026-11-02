@@ -16,6 +16,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
 | Skill | `/caligrafy-quill:db <script.sql\|tables\|query "...">` | Runs SQL scripts in the `mysql` container (or local MySQL), with safety checks for destructive scripts |
 | Skill | `/caligrafy-quill:deploy [app-name] [--own-server]` | Puts the project online: checks it is ready (Dockerfile, `composer.lock`, no secrets in git, `create_db.sql` safe to run again, pushed), then deploys it to Caligrafy Cloud (`https://<name>.caligrafy.com`) or prepares it for Coolify or Docker |
+| Skill | `/caligrafy-quill:marketplace [app-name]` | Packages an app hosted on Caligrafy Cloud for the marketplace of caligrafy.com: reads the whole code and writes one private file (`.caligrafy/marketplace.json`: title, description, key pages to screenshot, the prompt that recreates the app, an estimated price window from a market study), then `php caligrafer.php cloud submit` sends it to Caligrafy and redeploys the app. The maker earns 25% of every sale |
 | Skill | `/caligrafy-quill:update [version]` | Updates the project to the latest release (or one): runs `php caligrafer.php update --check`, then `update` (framework, untouched release files, `composer.json`, `.gitignore`, new `.env` settings, `upgrade --apply`), merges every `.caligrafy-new` file into the project's own version, and checks the project with `doctor` and the release notes |
 | Agent | `caligrafy-reviewer` | Reviews Caligrafy code against the framework's real behavior |
 | Hook | PostToolUse `php -l` | Syntax-checks every `.php` file Claude writes or edits (skipped when PHP is not installed) |
@@ -49,6 +50,11 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.25.0** - Caligrafy Quill 2.13.0, selling an app: the new `marketplace` skill (reads the whole code, runs the app as
+  a separate Docker project and walks it with `scripts/journey.sh` for 5 screenshots of its key features, a fake camera
+  for camera apps, writes `.caligrafy/marketplace.json` with the title, description, the prompt that recreates the app
+  and an estimated price window, then `php caligrafer.php cloud submit`); the Caligrafer, Putting it online and 2.13.0
+  release notes mirrors; G102 (computed Pug attribute values).
 - **1.24.4** - Caligrafy Quill 2.12.4: ui-guidelines and the Views mirror say that the top bar's Sign in / Sign out follow
   the session (`authorized()`), whatever the page's controller passes.
 - **1.24.3** - Caligrafy Quill 2.12.3: the Caligrafer mirror says how `cloud account` and `cloud apps` show an unlimited

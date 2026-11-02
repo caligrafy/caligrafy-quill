@@ -86,6 +86,25 @@ The database settings and the keys of the app are written for you, and your sett
 
 **AI agents.** Caligrafy Cloud is itself a Caligrafy application: the dashboard, the `cloud` commands and AI agents call the same capabilities. An agent connects to `https://deploy.caligrafy.com/mcp` with the same token (see [MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#mcp)) and can list, deploy and extend your apps. With the [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin), `/caligrafy-quill:ship <name>` does all of this for you: it commits, creates the GitHub repository and pushes (with your SSH key, else over HTTPS with the GitHub CLI, else a code to approve in your browser), signs in to Caligrafy Cloud with the approval above, adds the deploy key, deploys and checks the app. You only approve in your browser, and say yes before credits are spent. `/caligrafy-quill:deploy` checks that a project is ready, or prepares it for your own server.
 
+## Selling your app on the marketplace
+
+An app online on Caligrafy Cloud can be offered on the [marketplace of caligrafy.com](https://caligrafy.com/marketplace):
+Caligrafy sells a prompt that recreates it with Caligrafy and Claude Code, and you earn 25% of every sale.
+
+1. On the app's page in the App console (deploy.caligrafy.com), **Marketplace**: say where we pay you (your country;
+   wire details where Stripe does not pay out), then **Offer it to the marketplace**.
+2. In Claude Code, in the app's folder, run the marketplace skill. It reads the whole code, runs the app on your
+   computer and walks through it to screenshot its key features (5 at most), writes the title, the description, the
+   prompt that recreates the app and an estimated price window in one private file, `.caligrafy/marketplace.json`
+   (ignored by git), then sends it to Caligrafy and redeploys the app. It takes a while, often 15 to 30 minutes.
+   ```
+   /caligrafy-quill:marketplace myapp
+   ```
+   Without Claude Code, write the file yourself and send it: `php caligrafer.php cloud submit myapp`.
+3. Caligrafy reviews the listing, sets the final price and publishes it, or turns it down with a reason (offer it
+   again after the changes). Published apps on caligrafy.com shows its sales and your earnings: get paid from 50 USD,
+   once a month, 14 days after each sale.
+
 ## Your own server
 
 The same image runs on any host that builds a Dockerfile and lets you give it a file and a database:

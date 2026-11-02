@@ -446,3 +446,15 @@ payment read its Stripe key from it, so Stripe started with an empty key and no 
 (`src=$home . 'public/js/app.js?v=' . @filemtime(PUBLIC_PATH . 'js/app.js')`): an unversioned script stays cached and
 a fixed page keeps running the old code. When checking a page in a browser after a change, reload it: navigating to
 the same URL with only a new `#hash` does not reload.
+
+**G102. Pug (PHP mode): a computed attribute value can fail to parse.** An attribute whose value is an expression with parentheses and concatenation, such as
+`aria-label=($i + 1) . ' of ' . count($items)`, or a last attribute ending in a comparison such as `hidden=$i !== 0)`,
+fails with *ParseError: syntax error, unexpected token ")"* on the line of the tag. Compute the value first on a code
+line and pass the variable, or use a simpler comparison:
+```pug
+each $shot, $i in $shots
+  - $position = sprintf('%d of %d', $i + 1, count($shots))
+  figure(aria-label=$position, hidden=$i > 0)
+```
+(found building the marketplace pages of caligrafy.com, 2.13.0).
+

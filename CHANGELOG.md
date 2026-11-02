@@ -6,6 +6,17 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.13.0] - 2026-11-01
+
+### Added
+- Selling an app on the marketplace of caligrafy.com (Caligrafy sells a prompt that recreates it; its maker earns 25%
+  of every sale). The Claude Code plugin's new `marketplace` skill reads the whole code, runs the app as a separate
+  Docker project and walks it to screenshot its key features (5 at most, a fake camera for camera apps), writes the
+  title, the description, the prompt and an estimated price window in `.caligrafy/marketplace.json` (ignored by git),
+  then submits it. See [Release notes: 2.13.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.13.0).
+- `php caligrafer.php cloud submit <name> [--file <path>] [--no-deploy] [--no-wait]`: sends the listing and its
+  screenshots to Caligrafy Cloud with the project's sign-in, then deploys the app.
+
 ## [2.12.4] - 2026-11-01
 
 ### Fixed

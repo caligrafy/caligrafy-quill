@@ -267,10 +267,11 @@ php caligrafer.php cloud credits 10                     # buy 5, 10, 25 or 50 cr
 php caligrafer.php cloud secret set myapp OPEN_AI_KEY=sk-...   # a setting of its .env, applied at the next deploy
 php caligrafer.php cloud secret list myapp              # the names of its settings
 php caligrafer.php cloud secret delete myapp OPEN_AI_KEY
+php caligrafer.php cloud submit myapp                   # the marketplace listing (.caligrafy/marketplace.json), sent privately, then deploy (--no-deploy)
 php caligrafer.php cloud delete myapp --yes             # the app, its database and its files, for good
 php caligrafer.php cloud logout
 ```
-Puts the project online with [Caligrafy Cloud](https://deploy.caligrafy.com): `https://<name>.caligrafy.com`, built from its GitHub repository with its `Dockerfile`, with its own MySQL database. Every new app is free for its first 30 minutes online, from its first deploy; then credits keep it online. An unlimited account (set by the platform, 2.12.3+ shows it) spends no credits: its apps stay online with no end, and `extend` only restarts a paused one. `login` is approved in the browser and keeps its token in `.caligrafy/cloud.json` (ignored by git); `CALIGRAFY_CLOUD_TOKEN` and `CALIGRAFY_CLOUD_URL` override it. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud).
+Puts the project online with [Caligrafy Cloud](https://deploy.caligrafy.com): `https://<name>.caligrafy.com`, built from its GitHub repository with its `Dockerfile`, with its own MySQL database. Every new app is free for its first 30 minutes online, from its first deploy; then credits keep it online. An unlimited account (set by the platform, 2.12.3+ shows it) spends no credits: its apps stay online with no end, and `extend` only restarts a paused one. `login` is approved in the browser and keeps its token in `.caligrafy/cloud.json` (ignored by git); `CALIGRAFY_CLOUD_TOKEN` and `CALIGRAFY_CLOUD_URL` override it. `submit` (2.13.0+) sends the listing the `/caligrafy-quill:marketplace` skill wrote to Caligrafy, for the [marketplace of caligrafy.com](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#marketplace). Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud).
 
 ### `generatekeys`, `generateapikey`
 ```bash

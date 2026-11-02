@@ -114,6 +114,16 @@ class CloudClient
                     $checkout = $this->call('buy_credits', array('pack' => (int) $name));
                     $this->out(" Pay on Stripe, then the credits appear in a few seconds:\n {$checkout['url']}");
                     return 0;
+                case 'submit':
+                    // the listing the marketplace skill wrote (.caligrafy/marketplace.json), sent privately, then a deploy
+                    if (!$name) return $this->usage('submit <name> [--file .caligrafy/marketplace.json] [--no-deploy]');
+                    $profile = $this->call('submit_app_listing', $this->listing($name, $this->option($args, '--file') ?: '.caligrafy/marketplace.json'));
+                    $this->out(" Submitted the marketplace listing of $name: Caligrafy reviews it, sets the final price and publishes it ({$profile['status']}).");
+                    if (in_array('--no-deploy', $args, true)) return 0;
+                    // a new deployment: the key pages are screenshot once it is online
+                    $app = $this->call('deploy_app', array('name' => $name));
+                    $this->out(" Deploying {$app['url']} again, for the screenshots of its key pages...");
+                    return in_array('--no-wait', $args, true) ? 0 : $this->follow($name);
                 case 'secret':
                     return $this->secret(strtolower($args[1] ?? ''), $args[2] ?? null, $args[3] ?? null);
                 case 'delete':
@@ -264,6 +274,40 @@ class CloudClient
         return $file;
     }
 
+    /**
+     * The input of submit_app_listing from the marketplace file: {"title", "description", "prompt", "images": [{"file",
+     * "caption"}] (1 to 5 screenshots next to the file, all different), "pages": [{"path", "caption"}] (optional),
+     * "price": {"low", "high", "rationale"}}
+     */
+    private function listing($name, $path)
+    {
+        $file = strpos($path, '/') === 0 ? $path : $this->root . '/' . $path;
+        if (!is_file($file)) throw new \RuntimeException("No $path: run the marketplace skill of the Claude Code plugin first (/caligrafy-quill:marketplace)");
+        $data = json_decode((string) file_get_contents($file), true);
+        if (!is_array($data)) throw new \RuntimeException("$path is not valid JSON");
+        foreach (array('title', 'description', 'prompt') as $key) {
+            if (!is_string($data[$key] ?? null) || trim($data[$key]) === '') throw new \RuntimeException("$path has no $key");
+        }
+        if (!isset($data['price']['low'], $data['price']['high'])) throw new \RuntimeException("$path has no estimated price (price.low, price.high)");
+        $images = array();
+        $seen = array();
+        foreach ((array) ($data['images'] ?? array()) as $image) {
+            $source = dirname($file) . '/' . ltrim((string) ($image['file'] ?? ''), '/');
+            $type = is_file($source) ? (array('png' => 'image/png', 'jpg' => 'image/jpeg', 'jpeg' => 'image/jpeg', 'webp' => 'image/webp')[strtolower(pathinfo($source, PATHINFO_EXTENSION))] ?? null) : null;
+            if (!$type || filesize($source) > 1000000) throw new \RuntimeException("Image {$image['file']}: a PNG, JPEG or WebP file of 1 MB at most, next to $path");
+            // the same screen twice is sent once
+            if (isset($seen[sha1_file($source)])) continue;
+            $seen[sha1_file($source)] = true;
+            $images[] = array('image' => "data:$type;base64," . base64_encode(file_get_contents($source)), 'caption' => (string) ($image['caption'] ?? ''));
+        }
+        if (!$images && empty($data['pages'])) throw new \RuntimeException("$path has no screenshots (images): the skill takes them along the experience");
+        if (count($images) > 5) throw new \RuntimeException("$path has more than 5 screenshots");
+        return array('name' => $name, 'title' => $data['title'], 'description' => $data['description'], 'prompt' => $data['prompt'],
+            'pages' => json_encode(array_values((array) ($data['pages'] ?? array()))), 'images' => json_encode($images),
+            'price_low' => (string) $data['price']['low'], 'price_high' => (string) $data['price']['high'],
+            'price_rationale' => (string) ($data['price']['rationale'] ?? ''));
+    }
+
     // waits for the deployment: running (exit 0) or failed (the end of the build log, exit 1)
     private function follow($name)
     {
@@ -360,6 +404,7 @@ class CloudClient
             . "  cloud apps | status <name> | logs <name>\n"
             . "  cloud extend <name> week|month|year   2, 5 or 50 credits\n"
             . "  cloud credits 5|10|25|50              buy credits (1 credit = 1 USD) on Stripe\n"
+            . "  cloud submit <name> [--no-deploy]     send the marketplace listing (.caligrafy/marketplace.json), then deploy\n"
             . "  cloud secret set <name> KEY=value | secret list <name> | secret delete <name> KEY\n"
             . "  cloud delete <name> --yes             the app, its database and files, for good\n"
             . "  cloud logout");

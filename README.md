@@ -165,6 +165,9 @@ feature step by step, page included.
   and [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud):
   `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, every new app free for its first 30
   minutes, and `/caligrafy-quill:ship` does it all for you, from the GitHub repository to the check online.
++ **Sell what you built:** offer an app online on the [marketplace of caligrafy.com](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#marketplace):
+  Caligrafy sells a prompt that recreates it and you earn 25% of every sale. `/caligrafy-quill:marketplace` reads
+  your code, screenshots its key features and submits the listing (`php caligrafer.php cloud submit`).
 + **Tools:** `php caligrafer.php doctor` checks your setup and services, `call` tries a capability in one line,
   `update` moves a project to the latest release in one command (keeping what you changed), `upgrade` updates its
   `application/` templates and tells you what to check, `version` tells you which release you run.
