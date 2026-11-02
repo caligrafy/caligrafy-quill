@@ -156,9 +156,14 @@ feature step by step, page included.
   online, and `AGENTS.md` for other coding agents.
 + **Online in a few commands:** a production `Dockerfile` in every project, the database prepared at every start,
   and [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud):
-  `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, the first 30 minutes free.
-+ **Tools:** `php caligrafer.php doctor` checks your setup and services, `upgrade` updates a project, `version`
-  tells you which release you run.
+  `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, the first 30 minutes free, and
+  `/caligrafy-quill:ship` does it all for you, from the GitHub repository to the check online.
++ **Sell what you built:** offer an app online on the [marketplace of caligrafy.com](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#marketplace):
+  Caligrafy sells a prompt that recreates it and you earn 25% of every sale. `/caligrafy-quill:marketplace` reads
+  your code, screenshots its key features and submits the listing (`php caligrafer.php cloud submit`).
++ **Tools:** `php caligrafer.php doctor` checks your setup and services, `call` tries a capability in one line,
+  `update` moves a project to the latest release in one command (keeping what you changed), `upgrade` updates its
+  `application/` templates, `version` tells you which release you run.
 
 ## Where to go next
 
@@ -173,6 +178,7 @@ feature step by step, page included.
 | Let people sign in | [Sign-in, users and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) |
 | Take payments, add AI, face login... | the **Built-in features** of the sidebar |
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
+| Sell your app | [Selling your app on the marketplace](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#marketplace): a prompt that recreates it, 25% of every sale |
 | Build with Claude | [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) |
 | Learn step by step, from zero | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course) |
 | Use the command line (set up, create, tokens, check, upgrade) | [Caligrafer: every command](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
