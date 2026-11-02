@@ -56,7 +56,7 @@ class CloudClient
                     $a = $this->call('my_account');
                     $this->out(" {$a['email']}: " . (!empty($a['unlimited']) ? 'unlimited (no credits needed, your apps stay online with no end)'
                         : "{$a['credits']} credits, every new app is free for its first " . ($a['free_minutes_per_app'] ?? 30) . ' minutes')
-                        . ($a['verified'] ? '' : ' (confirm your email to deploy)'));
+                        . ($a['verified'] ? '' : ' (confirm your email: open the link Caligrafy sent)'));
                     return 0;
                 case 'apps':
                     $apps = $this->call('list_apps');

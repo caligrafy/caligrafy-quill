@@ -6,6 +6,14 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.13.4] - 2026-11-02
+
+### Changed
+- Caligrafy accounts (caligrafy.com and Caligrafy Cloud) sign in with their email once it is confirmed, and have a
+  *Forgot your password?* with a 6-digit emailed code. The `ship` skill tells the user what to do at each step (the
+  confirmation email, the code), the wiki (Putting it online, Quickstart with Claude) says it, and
+  `php caligrafer.php cloud account` asks to open the confirmation link.
+
 ## [2.13.3] - 2026-11-02
 
 ### Fixed

@@ -86,6 +86,13 @@ With AskUserQuestion, ask whether to review the course (do nothing without a yes
 - `python3 tools/check-pages.py` and `python3 tools/check-pages.py ../caligrafy-quill-course.wiki` report 0 problems,
   and `diff -r -x .git wiki ../caligrafy-quill-course.wiki` prints nothing; then commit and push both.
 
+## 5b. A change on the sites that the plugin describes
+
+caligrafy.com and Caligrafy Cloud are documented by the plugin and the wiki (the `ship`, `deploy`, `marketplace` and
+`idea` skills, Putting it online, Quickstart with Claude): sign-up and sign-in, emails, deploys, credits, payouts. When
+a change on a site alters what they say, it is a framework change too: `grep -rn` the plugin and the wiki for it, update
+them, and release (steps 1 to 4) before deploying the sites, so that every project's Claude says what the sites do.
+
 ## 6. Ask: update the sites?
 
 With AskUserQuestion, ask whether to update and deploy caligrafy.com and Caligrafy Cloud (deploy.caligrafy.com),

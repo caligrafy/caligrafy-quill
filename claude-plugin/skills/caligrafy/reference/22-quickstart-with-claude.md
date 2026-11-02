@@ -81,9 +81,11 @@ Every experience calls the same capabilities: the same rules, the same permissio
 | `/caligrafy-quill:idea` is not a command | run `php caligrafer.php plugin` in `myapp` (it registers the project's plugin with Claude Code), then restart `claude` there |
 | Docker is not running | start Docker Desktop, then tell Claude to go on |
 | A port is already in use (8080, 8077, 3306) | Claude proposes other ports with `docker-compose.override.yml`; see the [server skill](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) |
-| Sign-up refuses your email address | usernames are letters and digits only, for example `sam42` |
+| Your app's sign-up refuses an email address | your app's usernames are letters and digits only, for example `sam42` (Caligrafy's own accounts use your email) |
 | The name is taken on Caligrafy Cloud or GitHub | Claude proposes another name |
 | The browser page did not open | Claude prints its address: open it, approve the code, Claude goes on |
+| Caligrafy Cloud says *Confirm your email first* | open the link of the email from Caligrafy (look in spam), then sign in on the same page; it can send the link again |
+| You forgot your Caligrafy password | *Forgot your password?* on the sign-in page emails a 6-digit code, then you choose a new password |
 | The free 30 minutes of the app are used | say yes when Claude asks to spend credits; to buy some, Claude opens the Stripe page (`cloud credits 5`) |
 | The page works locally but its calls are refused online (`[ERROR 1004] Access Denied: the legacy API key is turned off`) | the page sends the shared API key, which Caligrafy Cloud turns off: ask Claude to call the routes with `apiHeaders()` (2.7.0+) |
 

@@ -67,12 +67,18 @@ caligrafer cloud login
 ```
 It prints a code and `https://deploy.caligrafy.com/cli?code=XXXX-XXXX`, then waits up to 10 minutes. On this computer
 it opens the page itself; from the Docker server it cannot, so open it for the user (`open <url>` on macOS,
-`xdg-open <url>` on Linux). Tell them: "Caligrafy Cloud opened in your browser: sign in (or sign up the first time,
-then confirm your email), check that it shows the code XXXX-XXXX, and approve." The command saves the token and prints
+`xdg-open <url>` on Linux). Tell them: "Caligrafy Cloud opened in your browser: sign in with your email (or create an
+account the first time), check that it shows the code XXXX-XXXX, and approve." The command saves the token and prints
 `Signed in as ...`. Denied or expired: start it again once, then say what happened.
 
-A new account must confirm its email before creating apps: if `cloud account` says *confirm your email*, tell the user
-to open the email from Caligrafy Cloud, then go on.
+Caligrafy accounts (the same for caligrafy.com and Caligrafy Cloud) sign in with their email, once it is confirmed:
+- **A new account**: *Create account* asks for the email and the password twice, then emails a link. Signing in waits
+  for it: the sign-in page says *Confirm your email first* and offers to send the link again. Tell the user to open the
+  email from Caligrafy (and to look in spam), then to sign in on the page that is still open; the command keeps waiting.
+- **A forgotten password**: *Forgot your password?* on the sign-in page emails a 6-digit code (10 minutes, 5 tries),
+  then asks for the code and the new password twice.
+- **Too many tries**: sign-in pauses for 15 minutes after 10 failures; *Forgot your password?* still works.
+Never ask the user for their password or the code: they type them in the browser.
 
 ## 4. The app, its key, its deploy
 

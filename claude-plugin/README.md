@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.25.4** - Caligrafy Quill 2.13.4: the `ship` skill knows Caligrafy's accounts: email as the username, signing in
+  once the email is confirmed (the link again from the sign-in page), *Forgot your password?* with a 6-digit code.
 - **1.25.3** - Caligrafy Quill 2.13.3: every form has `method='POST'`, also when a script sends it (gotcha G104, UI
   guidelines, the `idea`, `new-capability` and `new-resource` skills); field errors under their own field; G1-G104.
 - **1.25.2** - Caligrafy Quill 2.13.2, Describe it. Approve it. Ship it.: the plugin, the `idea` skill and the

@@ -54,7 +54,7 @@ If the database cannot be prepared, the log says why and Apache starts anyway, s
 | When the time ends | the app is paused (its address shows a paused page) and you get an email. Its data is kept 7 days, then deleted |
 | Limits | 5 apps per account, 256 MB of memory and a quarter of a CPU per app |
 
-**1. An account.** Sign up at [deploy.caligrafy.com](https://deploy.caligrafy.com/signup) and open the link of the confirmation email (the sign-up page can send it again).
+**1. An account.** Create it at [deploy.caligrafy.com](https://deploy.caligrafy.com/signup): your email is your username, and the same account signs in to caligrafy.com. Open the link of the confirmation email: signing in waits for it (the sign-in page sends it again). A forgotten password: *Forgot your password?* on the sign-in page emails you a 6-digit code.
 
 **2. Your code on GitHub.** Commit and push the project, with its `Dockerfile` (`git push`). A public repository needs nothing more. A private one gets a read-only **deploy key**: the app page shows it, and `cloud create` saves it in `.caligrafy/<name>-deploy-key.pub` (2.7.0+; `cloud key <name>` prints it again). Add it with the GitHub CLI, `gh repo deploy-key add .caligrafy/myapp-deploy-key.pub -R <owner>/<repo> --title "Caligrafy Cloud"`, or in GitHub, *Settings, Deploy keys, Add deploy key*, with *Allow write access* off.
 
