@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.13.1] - 2026-11-02
+
+### Fixed
+- A new skill of the Claude Code plugin was missing after an update (`/caligrafy-quill:marketplace` after updating to
+  2.13.0): Claude Code runs a copy of the plugin made at install time, which `update` did not refresh. `update` and
+  `php caligrafer.php plugin` now refresh it when the project's plugin is newer (`claude plugin marketplace update`,
+  `claude plugin update ... --scope project`), and `doctor` warns while it is older. In Docker, the update says to run
+  `php caligrafer.php plugin` on the computer.
+
 ## [2.13.0] - 2026-11-01
 
 ### Added

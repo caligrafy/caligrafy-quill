@@ -16,6 +16,8 @@ namespace Caligrafy;
  * project opened wins, every other project gets that project's plugin (an older one), and none gets any once that
  * folder is deleted. initialize and update give the project its own name: caligrafy-<folder>-<4 hex>.
  * The framework's own repository keeps "caligrafy": it is the source people add from GitHub.
+ * Claude Code runs a copy of the plugin it makes at install time (~/.claude/plugins/cache), not the project's folder:
+ * after an update brings a newer claude-plugin/, connect() refreshes that copy, and doctor warns while it is older.
  */
 class PluginSource
 {
@@ -23,6 +25,7 @@ class PluginSource
     const PLUGIN = 'caligrafy-quill';
     const SETTINGS = '.claude/settings.json';
     const MARKETPLACE = '.claude-plugin/marketplace.json';
+    const MANIFEST = 'claude-plugin/.claude-plugin/plugin.json';
 
     /**
      * The name of the project's plugin source, or null when the project has no plugin source files
@@ -81,6 +84,39 @@ class PluginSource
     }
 
     /**
+     * The version of the plugin in the project's claude-plugin/ folder, or null
+     */
+    public static function projectVersion($root = '.')
+    {
+        $manifest = self::read(rtrim($root, '/') . '/' . self::MANIFEST);
+        return is_string($manifest['version'] ?? null) ? $manifest['version'] : null;
+    }
+
+    /**
+     * The version of the copy Claude Code runs for this project (~/.claude/plugins/installed_plugins.json: installed
+     * for the project, else for the user), or null when the plugin is not installed
+     */
+    public static function installedVersion($name, $root = '.', $home = null)
+    {
+        $home = $home ?? (getenv('HOME') ?: '');
+        $installed = self::read(rtrim($home, '/') . '/.claude/plugins/installed_plugins.json');
+        $entries = $installed['plugins'][self::PLUGIN . '@' . $name] ?? null;
+        if (!is_array($entries)) {
+            return null;
+        }
+        $entries = isset($entries['version']) ? array($entries) : $entries;
+        $folder = realpath($root) ?: $root;
+        $user = null;
+        foreach ($entries as $entry) {
+            if (!is_array($entry)) continue;
+            $path = $entry['projectPath'] ?? null;
+            if ($path !== null && (realpath($path) ?: $path) === $folder) return $entry['version'] ?? null;
+            if (($entry['scope'] ?? '') === 'user') $user = $entry['version'] ?? null;
+        }
+        return $user;
+    }
+
+    /**
      * Registers the project's plugin source with Claude Code on this computer and installs the plugin for the project
      * (claude plugin marketplace add <folder>, claude plugin install caligrafy-quill@<name> --scope project). An
      * already trusted folder is never asked again, so starting claude there does not register a renamed source
@@ -99,7 +135,7 @@ class PluginSource
         }
         list($found) = call_user_func($run, 'command -v claude');
         if ($found !== 0) {
-            $say("Claude Code (claude) is not on this computer's PATH: start claude in $folder and accept the plugin source and the plugin");
+            $say("Claude Code (claude) is not on this PATH (in Docker?): on your computer, run php caligrafer.php plugin in this folder, then restart claude there (it registers the plugin and refreshes Claude Code's copy of it)");
             return 0;
         }
         // a shared "caligrafy" registered from this folder (claude was opened before quickstart renamed it) would give
@@ -128,6 +164,15 @@ class PluginSource
                 $say("claude plugin install did not work: $out");
                 return 1;
             }
+        } elseif (($installed = self::installedVersion($name, $root)) !== null && ($version = self::projectVersion($root)) !== null && $installed !== $version) {
+            // Claude Code runs its own copy of the plugin: an update of claude-plugin/ reaches it only through these
+            call_user_func($run, 'cd ' . escapeshellarg($folder) . ' && claude plugin marketplace update ' . escapeshellarg($name));
+            list($code, $out) = call_user_func($run, 'cd ' . escapeshellarg($folder) . ' && claude plugin update ' . escapeshellarg(self::PLUGIN . '@' . $name) . ' --scope project');
+            if ($code !== 0) {
+                $say("claude plugin update did not work: $out");
+                return 1;
+            }
+            $say("Claude Code's copy of the plugin: $installed, now $version");
         }
         $say("Claude Code reads the plugin from $folder/claude-plugin: restart claude in this folder to load it");
         return 0;

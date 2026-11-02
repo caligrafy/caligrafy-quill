@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.25.1** - Caligrafy Quill 2.13.1: the Claude Code Plugin and Caligrafer mirrors say that `update` and `plugin`
+  refresh Claude Code's copy of the plugin; G103 (a new skill missing after an update); the update skill restarts claude.
 - **1.25.0** - Caligrafy Quill 2.13.0, selling an app: the new `marketplace` skill (reads the whole code, runs the app as
   a separate Docker project and walks it with `scripts/journey.sh` for 5 screenshots of its key features, a fake camera
   for camera apps, writes `.caligrafy/marketplace.json` with the title, description, the prompt that recreates the app

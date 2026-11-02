@@ -133,6 +133,9 @@ class Updater
             if (!class_exists('Caligrafy\\PluginSource')) require_once "$this->root/framework/core/PluginSource.php";
             if ($name = PluginSource::ensureOwn($this->root)) {
                 $this->out(" Claude Code plugin source: $name (its own name: the shared \"caligrafy\" gave every project the first one's plugin)");
+            }
+            // the new claude-plugin/ reaches Claude Code only through its own copy: registered, installed, refreshed
+            if (PluginSource::name($this->root) !== null) {
                 PluginSource::connect($this->root, function ($line) { $this->out(" $line"); }, $this->runner);
             }
         }

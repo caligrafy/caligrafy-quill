@@ -62,6 +62,10 @@ php caligrafer.php upgrade --local  # should report nothing outdated in applicat
 + The release notes of every version passed (`https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-<version>`):
   do what they ask of projects (for example 2.7.0: client apps call their routes with `apiHeaders()`; `doctor` lists
   the scripts that still send the key).
++ The plugin: `doctor`'s "Claude Code plugin" line must be OK. Claude Code runs its own copy of the plugin (G103):
+  when the update ran in Docker, or `doctor` says "Claude Code runs caligrafy-quill X, this project has Y", run
+  `php caligrafer.php plugin` on this computer (not in Docker). Then tell the user to restart `claude` in the folder: the
+  new skills of this session are only there after a restart.
 + Open the main pages (or curl them) and try one capability (`php caligrafer.php call <name> ...`).
 + Commit with the user's OK: "Caligrafy Quill <from> to <to>". The backups are in `backups/` (git-ignored).
 + Online: redeploy (`php caligrafer.php cloud deploy <name>`, or the ship skill).

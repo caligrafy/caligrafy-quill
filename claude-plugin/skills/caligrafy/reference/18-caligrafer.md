@@ -228,7 +228,7 @@ In Docker, run each `php` line with `docker compose exec dev-box` in front.
 ```bash
 php caligrafer.php plugin
 ```
-Connects the project's Claude Code plugin (`claude-plugin/`) to Claude Code on this computer. It gives the plugin source of `.claude/settings.json` and `.claude-plugin/marketplace.json` the project's own name (`caligrafy-<folder>-<4 letters>`) when it is still the shared `caligrafy`, then, when the `claude` command is here, registers it (`claude plugin marketplace add <folder>`, replacing a registration from another folder) and installs the plugin for the project. Restart `claude` in the folder to load it. `initialize`, `quickstart` and `update` do it for you; run it when a `/caligrafy-quill:...` command is unknown.
+Connects the project's Claude Code plugin (`claude-plugin/`) to Claude Code on this computer. It gives the plugin source of `.claude/settings.json` and `.claude-plugin/marketplace.json` the project's own name (`caligrafy-<folder>-<4 letters>`) when it is still the shared `caligrafy`, then, when the `claude` command is here, registers it (`claude plugin marketplace add <folder>`, replacing a registration from another folder) and installs the plugin for the project. Claude Code runs its own copy of the plugin, made when it was installed: when the project's plugin is newer (after an update), it refreshes that copy (2.13.1+). Restart `claude` in the folder to load it. `initialize`, `quickstart` and `update` do it for you; run it when a `/caligrafy-quill:...` command is unknown.
 
 ### `upgrade`
 ```bash

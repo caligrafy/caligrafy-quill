@@ -79,7 +79,7 @@ final class PluginSourceTest extends TestCase
         $said = [];
         $code = PluginSource::connect($this->dir, function ($line) use (&$said) { $said[] = $line; }, fn ($c) => [1, '']);
         $this->assertSame(0, $code);
-        $this->assertStringContainsString('start claude', $said[0]);
+        $this->assertStringContainsString('php caligrafer.php plugin', $said[0]);
     }
 
     public function testConnectRemovesTheSharedSourceThisFolderRegisteredBeforeItsRename(): void
@@ -97,5 +97,41 @@ final class PluginSourceTest extends TestCase
         $commands = [];
         PluginSource::connect($this->dir, function () {}, $run);
         $this->assertStringNotContainsString("remove 'caligrafy'", implode(' ', $commands));
+    }
+
+    // Claude Code runs a copy of the plugin made at install time: a newer claude-plugin/ is refreshed into it
+    private function installed(string $name, string $version): void
+    {
+        mkdir("$this->dir/claude-plugin/.claude-plugin", 0755, true);
+        file_put_contents("$this->dir/claude-plugin/.claude-plugin/plugin.json", json_encode(['name' => 'caligrafy-quill', 'version' => '1.25.1']));
+        file_put_contents("$this->home/.claude/plugins/known_marketplaces.json", json_encode([$name => ['installLocation' => realpath($this->dir)]]));
+        file_put_contents("$this->home/.claude/plugins/installed_plugins.json", json_encode(['version' => 2, 'plugins' => [
+            "caligrafy-quill@$name" => [['scope' => 'project', 'projectPath' => realpath($this->dir), 'version' => $version],
+                ['scope' => 'project', 'projectPath' => '/another/project', 'version' => '0.9.0']]]]));
+    }
+
+    public function testAnOlderCopyOfThePluginIsRefreshed(): void
+    {
+        $name = PluginSource::ensureOwn($this->dir);
+        $this->installed($name, '1.24.4');
+        $this->assertSame('1.24.4', PluginSource::installedVersion($name, $this->dir));
+        $this->assertSame('1.25.1', PluginSource::projectVersion($this->dir));
+        $commands = []; $said = [];
+        $run = function ($command) use (&$commands, $name) { $commands[] = $command; return [0, strpos($command, 'plugin list') ? "caligrafy-quill@$name" : '']; };
+        $this->assertSame(0, PluginSource::connect($this->dir, function ($line) use (&$said) { $said[] = $line; }, $run));
+        $this->assertStringContainsString("claude plugin marketplace update '$name'", $commands[2]);
+        $this->assertStringContainsString("claude plugin update 'caligrafy-quill@$name' --scope project", $commands[3]);
+        $this->assertStringContainsString('1.24.4, now 1.25.1', $said[0]);
+    }
+
+    public function testACurrentCopyIsLeftAlone(): void
+    {
+        $name = PluginSource::ensureOwn($this->dir);
+        $this->installed($name, '1.25.1');
+        $commands = [];
+        $run = function ($command) use (&$commands, $name) { $commands[] = $command; return [0, strpos($command, 'plugin list') ? "caligrafy-quill@$name" : '']; };
+        PluginSource::connect($this->dir, function () {}, $run);
+        $this->assertStringNotContainsString('update', implode(' ', $commands));
+        $this->assertNull(PluginSource::installedVersion('caligrafy-other-1234', $this->dir));
     }
 }

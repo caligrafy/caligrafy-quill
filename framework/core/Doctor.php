@@ -143,8 +143,14 @@ class Doctor
             $where = PluginSource::registeredPath($source);
             if ($where !== null && realpath($where) !== realpath($this->root)) {
                 $this->add('project', 'Claude Code plugin', 'WARN', "$source is read from $where, not this folder", 'php caligrafer.php plugin');
+            } elseif ($where !== null && ($installed = PluginSource::installedVersion($source, $this->root)) !== null
+                && ($version = PluginSource::projectVersion($this->root)) !== null && $installed !== $version) {
+                // Claude Code runs its own copy of the plugin, made at install time: the project's newer skills are missing
+                $this->add('project', 'Claude Code plugin', 'WARN', "Claude Code runs caligrafy-quill $installed, this project has $version: its newer skills are missing",
+                    'php caligrafer.php plugin (refreshes Claude Code\'s copy), then restart claude here');
             } else {
-                $this->add('project', 'Claude Code plugin', 'OK', "caligrafy-quill@$source" . ($where === null ? ' (not registered yet: php caligrafer.php plugin, or start claude here)' : ''));
+                $this->add('project', 'Claude Code plugin', 'OK', "caligrafy-quill@$source" . ($where === null ? ' (not registered yet: php caligrafer.php plugin, or start claude here)'
+                    : (($v = PluginSource::installedVersion($source, $this->root)) !== null ? " $v" : '')));
             }
         }
         // error details are for development: on a site served over HTTPS they show file paths and SQL to visitors

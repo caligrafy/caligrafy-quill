@@ -458,3 +458,13 @@ each $shot, $i in $shots
 ```
 (found building the marketplace pages of caligrafy.com, 2.13.0).
 
+**G103. A new skill is missing after an update: Claude Code runs its own copy of the plugin.** Installing the plugin
+copies `claude-plugin/` into `~/.claude/plugins/cache/<source>/caligrafy-quill/<version>/`
+(`~/.claude/plugins/installed_plugins.json` records it per project), and Claude Code loads that copy. Before 2.13.1
+`php caligrafer.php update` replaced the folder but not the copy: a project updated to 2.13.0 kept plugin 1.24.4,
+without `/caligrafy-quill:marketplace` (verified). Since 2.13.1 `update` and `php caligrafer.php plugin` run
+`claude plugin marketplace update <source>` and `claude plugin update caligrafy-quill@<source> --scope project` when
+the installed version differs from `claude-plugin/.claude-plugin/plugin.json`, and `doctor` warns. In Docker, where
+`claude` is missing, run `php caligrafer.php plugin` on the computer. Then restart `claude` in the folder. Proof:
+`PluginSource::installedVersion()`, `connect()`.
+
