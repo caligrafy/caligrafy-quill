@@ -135,7 +135,15 @@ class Doctor
         $source = class_exists('Caligrafy\\PluginSource') ? PluginSource::name($this->root) : null;
         $frameworkRepository = PluginSource::isFramework($this->root);   // the source people add from GitHub keeps its name
         if ($source === PluginSource::SHARED && $frameworkRepository) {
-            $this->add('project', 'Claude Code plugin', 'OK', 'caligrafy-quill@caligrafy: the framework\'s own repository');
+            // the framework's own repository is never updated: its plugin changes with every release, so compare too
+            $installed = PluginSource::installedVersion($source, $this->root);
+            $version = PluginSource::projectVersion($this->root);
+            if ($installed !== null && $version !== null && $installed !== $version) {
+                $this->add('project', 'Claude Code plugin', 'WARN', "Claude Code runs caligrafy-quill $installed, this repository has $version: its newer skills are missing",
+                    'php caligrafer.php plugin (refreshes Claude Code\'s copy), then restart claude here');
+            } else {
+                $this->add('project', 'Claude Code plugin', 'OK', 'caligrafy-quill@caligrafy: the framework\'s own repository' . ($installed !== null ? " $installed" : ''));
+            }
         } elseif ($source === PluginSource::SHARED && is_dir($this->root . '/application')) {
             $this->add('project', 'Claude Code plugin', 'WARN', 'its source is named "caligrafy", like every other project: Claude Code may load another project\'s plugin, or none',
                 'php caligrafer.php plugin (gives it its own name and registers it)');

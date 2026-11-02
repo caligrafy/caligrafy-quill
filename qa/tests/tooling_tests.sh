@@ -395,6 +395,12 @@ fi
 if command -v claude >/dev/null 2>&1; then
     OUT=$(claude plugin validate ./claude-plugin --strict 2>&1) && ok "claude plugin validate --strict" || ko "claude plugin validate" "$OUT"
     OUT=$(claude plugin validate . --strict 2>&1) && ok "claude plugin validate (marketplace)" || ko "marketplace validate" "$OUT"
+    # Claude Code runs its own copy of the plugin: in this repository it must be the version being released
+    HAVE=$(php -r 'require "framework/core/PluginSource.php"; echo Caligrafy\PluginSource::installedVersion("caligrafy", ".") ?? "";')
+    WANT=$(php -r 'require "framework/core/PluginSource.php"; echo Caligrafy\PluginSource::projectVersion(".") ?? "";')
+    if [ -z "$HAVE" ]; then echo "  SKIP Claude Code's copy of the plugin (not installed here: php caligrafer.php plugin)"
+    elif [ "$HAVE" = "$WANT" ]; then ok "Claude Code runs this repository's plugin ($WANT)"
+    else ko "Claude Code runs caligrafy-quill $HAVE here, the repository has $WANT" "php caligrafer.php plugin, then restart claude here"; fi
 else
     echo "  SKIP claude plugin validate (claude CLI not installed)"
 fi

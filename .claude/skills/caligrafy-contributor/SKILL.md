@@ -37,6 +37,11 @@ What projects' Claude knows comes from here, so it must describe the change:
   page gets a line in `PAGES` of `sync-wiki.py` and a row in the reference map of `skills/caligrafy/SKILL.md`.
 - the version: `claude-plugin/.claude-plugin/plugin.json` (minor with a framework minor, patch otherwise) and a line at
   the top of the changelog in `claude-plugin/README.md`. `claude plugin validate ./claude-plugin --strict`.
+- **Claude Code's copy, every time the plugin changes**: Claude Code runs a copy of the plugin made at install time,
+  not `claude-plugin/`. Run `php caligrafer.php plugin` in this repository right after changing the plugin (it
+  refreshes the copy and keeps the source name `caligrafy`); `doctor` must say `the framework's own repository
+  <plugin version>`, and the tooling tests fail while the copy is older. Never call a release done while any folder's
+  copy is behind (step 6).
 
 ## 2. The README (GitHub's front page)
 
@@ -89,9 +94,18 @@ which run on Caligrafy themselves (do nothing without a yes). For each one, in i
 1. commit or stash its own work first; `php caligrafer.php update X.Y.Z`;
 2. both keep customized views: delete the `application/**/*.caligrafy-new` files `upgrade` writes next to them, unless
    the change must reach those views (then merge it by hand);
-3. check it locally (the pages the change touches, sign-in, `doctor`), then commit and push;
+3. check it locally (the pages the change touches, sign-in, `doctor`: its line `Claude Code plugin` must show the new
+   plugin version; if not, `php caligrafer.php plugin` there), then commit and push;
 4. deploy through Coolify with the maintainer's own access (its address, token and app ids live outside this
    repository), wait for the deployment to finish, and check the live pages.
+
+Do the same update for the maintainer's other Caligrafy apps in `~/www` (every folder with
+`framework/core/Framework.php`), and deploy them on Caligrafy Cloud with the maintainer's OK. Before reporting, check
+every folder: its `Framework::VERSION` is the release, and Claude Code runs the release's plugin there:
+```bash
+for d in ~/www/*/; do [ -f "$d/framework/core/Framework.php" ] && (cd "$d" && printf '%s ' "$(basename "$d")" && php caligrafer.php doctor --only project 2>&1 | grep -E 'Quill [0-9]|Claude Code plugin' | tr -s ' ' | tr '\n' ' '; echo); done
+```
+Any folder behind is not done.
 
 Report at the end what was done in each place and what was left (a step skipped, a question unanswered, a check that
 could not be made).

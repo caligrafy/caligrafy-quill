@@ -6,6 +6,13 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [Unreleased]
+
+### Fixed
+- `doctor` in the framework's own repository said its Claude Code plugin was fine without comparing versions; it now
+  warns when Claude Code runs an older copy than `claude-plugin/`, as it does in projects. The tooling tests fail in
+  that case, so a release cannot go out with a stale copy.
+
 ## [2.13.2] - 2026-11-02
 
 ### Changed
