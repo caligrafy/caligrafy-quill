@@ -3,11 +3,11 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
+![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
 
 Caligrafy Quill ships with its own **[Claude Code](https://code.claude.com) plugin**. When you open a Quill project in Claude Code, Claude knows the framework inside out: routes, controllers, models, relationships, validation, Pug views, the REST API, authentication, payments, Vue apps, bots, FaceDetect, machine learning and the OpenAI/Groq integrations.
 
-It follows the Caligrafy way, **build once, experience everywhere**: asked for a feature that pages, Vue apps, an API or AI agents need, Claude writes it once as a capability (`/caligrafy-quill:new-capability`) and wires every experience to it.
+With it, Caligrafy is **Describe it. Approve it. Ship it.**: you describe your idea to `/caligrafy-quill:idea`, approve the plan, and Claude builds a complete app and ships it to GitHub and Caligrafy Cloud. Along the way it follows the Caligrafy way, **build once, experience everywhere**: asked for a feature that pages, Vue apps, an API or AI agents need, Claude writes it once as a capability (`/caligrafy-quill:new-capability`) and wires every experience to it.
 
 The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin) folder of the Caligrafy Quill repository.
 
@@ -16,7 +16,7 @@ The plugin lives in the [`claude-plugin/`](https://github.com/caligrafy/caligraf
 | Component | Name | What it does |
 | - | - | - |
 | Skill (automatic) | `caligrafy` | The complete Caligrafy documentation (every page of this wiki), a source-verified API reference, a list of verified gotchas, security notes and documentation errata, and end-to-end recipes for OpenAI/Groq chat apps and face login. Loads automatically whenever Claude works in a Quill project, and UI guidelines so every new page is built with the page components |
-| Command | `/caligrafy-quill:idea` | From an idea to an application online, with one confirmation: plans it with you, builds every feature once, checks every experience, then ships it to GitHub and Caligrafy Cloud by itself ([Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude)) |
+| Command | `/caligrafy-quill:idea` | Describe it. Approve it. Ship it. Your idea turned into a complete app online, with one confirmation: plans it with you, builds every feature once, checks every experience, then ships it to GitHub and Caligrafy Cloud by itself ([Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude)) |
 | Command | `/caligrafy-quill:ship` | Puts the project online without handing you work: the GitHub repository (SSH, HTTPS or a browser approval), the Caligrafy Cloud sign-in approved in your browser, the deploy key, the deploy and the check |
 | Command | `/caligrafy-quill:marketplace` | Packages an app online on Caligrafy Cloud for the marketplace of caligrafy.com: reads the whole code, runs the app and screenshots its key features, writes the title, description, the prompt that recreates it and an estimated price in one private file, then sends it to Caligrafy (`cloud submit`) and redeploys the app. You earn 25% of every sale |
 | Command | `/caligrafy-quill:new-capability` | Builds a feature once as a capability and serves it to every experience: the service, its REST routes, the JS client for Vue apps, a Pug page, MCP for AI agents and a token, then checks that every channel answers and refuses the same way |

@@ -3,9 +3,9 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
+![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
 
-Caligrafy is built around one idea: **build once, experience everywhere**. A feature is written once, as a capability, and every experience of your application (web pages, Vue apps, a REST API, AI agents) uses that same capability. From the first command to a public address, it is one project. This page explains the few ideas behind it. To try it first, follow the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
+With Caligrafy you **describe** your idea, **approve** the plan and **ship** a complete app: Claude does the work, you keep the final say. What makes the app complete is one idea: **build once, experience everywhere**. A feature is written once, as a capability, and every experience of your application (web pages, Vue apps, a REST API, AI agents) uses that same capability. From the first command to a public address, it is one project. This page explains the few ideas behind it. To try it first, follow the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
 
 ## A capability is a feature, written once
 
@@ -75,7 +75,7 @@ Build once does not end on your computer. The project you build is the project y
 + when it starts, `php caligrafer.php deploy` creates and updates the tables from your `create_db.sql` scripts;
 + `php caligrafer.php cloud deploy <name>` puts it at `https://<name>.caligrafy.com` with [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud), or you run the same image on [your own server](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#ownserver).
 
-Online, every experience still calls the same capabilities: the pages, the apps, the REST API and the AI agents of the public address follow the same rules as on your computer. From the first command to that address, the steps are: start, your data, build once, experience everywhere, people and trust, ship, online.
+Online, every experience still calls the same capabilities: the pages, the apps, the REST API and the AI agents of the public address follow the same rules as on your computer. From the first command to that address, the steps are the same three, whether Claude does them or you do: **describe it** (start, your data, build once), **approve it** (experience everywhere, people and trust, the checks) and **ship it** (online).
 
 ## Where things live
 

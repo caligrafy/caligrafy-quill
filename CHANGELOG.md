@@ -8,6 +8,12 @@ same number. Check the version of a project with `php caligrafer.php version`.
 
 ## [Unreleased]
 
+### Changed
+- Caligrafy's new positioning: **Describe it. Approve it. Ship it.** Your idea turned into a complete app. The README,
+  the wiki (Home, sidebar, Quickstart with Claude, Quickstart, How Caligrafy works, Claude Code Plugin), the plugin,
+  `CLAUDE.md`, `AGENTS.md` and `composer.json` lead with the three steps; build once, experience everywhere is what
+  makes the app complete. A new black banner, `public/images/resources/describe-approve-ship-banner.png`.
+
 ### Fixed
 - `php caligrafer.php plugin` in the framework's own repository renamed its plugin source from `caligrafy` (the name
   people add from GitHub) to a project name; it now keeps it, as `doctor` already did (`PluginSource::isFramework()`).

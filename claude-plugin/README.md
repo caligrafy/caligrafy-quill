@@ -1,14 +1,14 @@
 # caligrafy-quill - Claude Code plugin
 
-![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
+![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
 
-Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligrafy/caligrafy-quill), the "Build Once, Experience Everywhere" framework: Claude writes a feature once as a capability and serves it to web pages, Vue apps, REST and AI agents.
+Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligrafy/caligrafy-quill): **Describe it. Approve it. Ship it.** The user describes an idea, approves the plan, and Claude turns it into a complete app online (`/caligrafy-quill:idea`), writing every feature once as a capability served to web pages, Vue apps, REST and AI agents (build once, experience everywhere).
 
 | Component | Name | What it does |
 | - | - | - |
 | Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 53 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G97) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
-| Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: from an idea to an application online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
+| Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: describe it, approve it, ship it. Your idea turned into a complete app online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
 | Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **Unreleased** - Describe it. Approve it. Ship it.: the plugin, the `idea` skill (it reports progress by step) and
+  the `caligrafy` skill lead with the three steps; new banner; wiki mirrors synced.
 - **1.25.1** - Caligrafy Quill 2.13.1: the Claude Code Plugin and Caligrafer mirrors say that `update` and `plugin`
   refresh Claude Code's copy of the plugin; G103 (a new skill missing after an update); the update skill restarts claude.
 - **1.25.0** - Caligrafy Quill 2.13.0, selling an app: the new `marketplace` skill (reads the whole code, runs the app as

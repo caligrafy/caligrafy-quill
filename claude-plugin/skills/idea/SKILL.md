@@ -1,11 +1,14 @@
 ---
 name: idea
-description: From an idea to an application online, in one conversation and one confirmation - turn the user's idea into a plan, set up a Caligrafy Quill project, write the tables and capabilities once, serve them to a web page, a REST API, the JS client and AI agents (MCP), check every experience, then ship it to GitHub and https://<name>.caligrafy.com by itself (the ship skill). The user only approves in the browser. The Quickstart with Claude.
+description: Describe it. Approve it. Ship it. - the user's idea turned into a complete app online, in one conversation and one confirmation - turn the user's idea into a plan, set up a Caligrafy Quill project, write the tables and capabilities once, serve them to a web page, a REST API, the JS client and AI agents (MCP), check every experience, then ship it to GitHub and https://<name>.caligrafy.com by itself (the ship skill). The user only approves in the browser. The Quickstart with Claude.
 when_to_use: The user describes an application they want ("I want an app where...", "build me a ... app", "/caligrafy-quill:idea a reading list..."), asks Claude to build and deploy something from scratch with Caligrafy, or follows the Quickstart with Claude.
 argument-hint: "<your idea, in a sentence or two>"
 ---
 
-# From an idea to an application online
+# Describe it. Approve it. Ship it.
+
+The user describes the idea, approves the plan once, and you build the complete app and ship it: say which of the
+three steps you are in when you report progress.
 
 Idea: `$ARGUMENTS` (if empty, ask the user to describe it in a sentence or two: who uses it, what they do with it).
 

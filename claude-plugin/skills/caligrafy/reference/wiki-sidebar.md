@@ -3,12 +3,12 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/_Sidebar
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-**Caligrafy: build once, experience everywhere.** Write a feature once and use it from web pages, Vue apps, a REST API and AI agents.
+**Caligrafy: Describe it. Approve it. Ship it.** Your idea turned into a complete app: every feature built once, for web pages, Vue apps, a REST API and AI agents, and online.
 
 ## Start here
 
-1. [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude): your idea, built and online
-    > or the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): a working application in 5 minutes
+1. [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude): describe it, approve it, ship it
+    > or the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): the same three steps by hand, in 5 minutes
 2. [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works): the ideas in 5 minutes
 3. [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability): build a feature, page included
 

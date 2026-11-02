@@ -6,7 +6,7 @@ when_to_use: The working directory contains caligrafer.php, framework/core/Contr
 
 # Caligrafy Quill
 
-Caligrafy Quill is the "Build Once, Experience Everywhere" framework: a PHP MVC framework (PHP >= 8.3, MySQL via PDO) with Pug templates (Phug), GUMP validation,
+Caligrafy Quill is "Describe it. Approve it. Ship it.": an idea turned into a complete app, built once and experienced everywhere. It is a PHP MVC framework (PHP >= 8.3, MySQL via PDO) with Pug templates (Phug), GUMP validation,
 a REST API built into every route, and Vue 3 client apps. It covers the whole way from zero to one in one project:
 start (`quickstart`), data, capabilities written once, every experience (pages, Vue and phone apps, REST, MCP agents),
 people and trust, ship (tests, `doctor`, review), online (`Dockerfile`, `caligrafer cloud deploy`). When a user
@@ -38,7 +38,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Build once: services, `#[Capability]`, REST (`Route::capability`), the JS client, personal access tokens, MCP for agents, audit log, design tokens | [13-build-once-services-capabilities-mcp.md](reference/13-build-once-services-capabilities-mcp.md), [api-reference.md](reference/api-reference.md) (Build once section), G50-G58 |
 | This Claude Code plugin (commands, agent, install) | [10-claude-code-plugin.md](reference/10-claude-code-plugin.md) |
 | Upgrading a project to 2.1 (build once): checklist, what is new, behavior changes, the legacy API key | [14-release-notes-2.1.0.md](reference/14-release-notes-2.1.0.md) |
-| **A user describes an application to build** (an idea, "build me an app that..."): take it from idea to online with the `idea` skill (the Quickstart with Claude) | [22-quickstart-with-claude.md](reference/22-quickstart-with-claude.md), the `idea` skill |
+| **A user describes an application to build** (an idea, "build me an app that..."): describe it, approve it, ship it with the `idea` skill (the Quickstart with Claude) | [22-quickstart-with-claude.md](reference/22-quickstart-with-claude.md), the `idea` skill |
 | **Putting a project online**: the production `Dockerfile`, `caligrafer deploy` (database at every start), Caligrafy Cloud (`caligrafer cloud`, https://<name>.caligrafy.com, trial and credits), own server (Coolify, Docker); use the `deploy` skill | [20-putting-it-online.md](reference/20-putting-it-online.md), G67-G73 |
 | What 2.4.0 changed: production image, `deploy`, `cloud`, sessions volume, the sign-in look of the page components, upgrading from 2.3.0 | [21-release-notes-2.4.0.md](reference/21-release-notes-2.4.0.md) |
 | What 2.3.0 changed: `caligrafer call`, the upgrade reports and `--keep`, doctor warnings, fixed templates, one time zone, upgrading from 2.2.0 | [19-release-notes-2.3.0.md](reference/19-release-notes-2.3.0.md) |

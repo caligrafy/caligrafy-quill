@@ -3,11 +3,13 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
+![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
 
-Describe your idea in a sentence. [Claude Code](https://claude.com/claude-code) builds it the Caligrafy way, every feature written once, checks it from every side, and puts it online at `https://<name>.caligrafy.com`. You then use the same application from a web page, your phone, other programs over REST and AI agents.
+**Describe it. Approve it. Ship it.** Your idea turned into a complete app: describe it to [Claude Code](https://claude.com/claude-code) in a sentence, approve the plan, and Claude builds it the Caligrafy way, every feature written once, checks it from every side, and ships it to `https://<name>.caligrafy.com`. You then use the same application from a web page, your phone, other programs over REST and AI agents.
 
-The [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) shows Caligrafy with a ready-made example in 5 minutes. This page goes from **your** idea to an application online, usually in 15 to 30 minutes, most of it Claude working.
+The [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) does the same three steps by hand, with a ready-made example, in 5 minutes. This page goes from **your** idea to an application online, usually in 15 to 30 minutes, most of it Claude working.
+
+**Start from a proven prompt.** The [marketplace of caligrafy.com](https://caligrafy.com/marketplace) sells the prompts behind apps that already shipped: give one to `/caligrafy-quill:idea` instead of your own sentence.
 
 ## What you need
 
@@ -29,21 +31,25 @@ Trust the folder when Claude Code asks: that turns on the Caligrafy plugin that 
 /caligrafy-quill:idea A reading list: I add books I want to read with their author, mark them as read, and rate them from 1 to 5.
 ```
 
-## What Claude does, and when it asks you
+## Describe it. Approve it. Ship it.
 
-Claude asks you **once**, at the plan. Your OK covers the rest: setting the project up, building it, creating a
-private GitHub repository and putting it online. After that it never asks you to run a command or copy a key: it does
-the work and opens your browser when only you can approve something.
+You describe it, you approve it **once**, at the plan, and your OK covers the rest: setting the project up, building
+it, creating a private GitHub repository and shipping it. After that Claude never asks you to run a command or copy a
+key: it does the work and opens your browser when only you can approve something.
 
-| Step | What happens | You |
+| | What happens | You |
 | --- | --- | --- |
-| **1. The plan** | turns the idea into a name, tables, capabilities, who may do what, pages and sample data, and says what your OK lets it do | read it, change it, say OK |
-| **2. Start** | sets the project up with `quickstart`: the Docker server, the database, the framework tables (your app gets its own git history) | nothing |
-| **3. Build once** | writes the tables, each feature once as a capability, sign-in, the page, the REST routes, MCP for agents | nothing |
-| **4. Check** | calls every capability, the REST API with and without sign-in, the MCP tools, `doctor`, a code review | nothing |
-| **5. Everywhere, locally** | shows you the page at `http://localhost:8080`, a `curl` line, the line to connect an agent | try it if you like |
-| **6. Ship** | commits the code, creates your private GitHub repository and pushes it: with your SSH key when GitHub knows it, else over HTTPS with the GitHub CLI | only if neither is set up: approve the code GitHub shows in the browser page Claude opens |
-| **7. Online** | signs in to Caligrafy Cloud, creates the app, adds its read-only deploy key to the repository, deploys and checks it | approve the code on the Caligrafy Cloud page Claude opens (sign up and confirm your email the first time) |
+| **1. Describe it** | | |
+| The plan | Claude turns the idea into a name, tables, capabilities, who may do what, pages and sample data, and says what your OK lets it do | your idea, in a sentence |
+| **2. Approve it** | | |
+| Your OK | | read the plan, change it, say OK |
+| Start | sets the project up with `quickstart`: the Docker server, the database, the framework tables (your app gets its own git history) | nothing |
+| Build once | writes the tables, each feature once as a capability, sign-in, the page, the REST routes, MCP for agents | nothing |
+| Check | calls every capability, the REST API with and without sign-in, the MCP tools, `doctor`, a code review | nothing |
+| Everywhere, locally | shows you the page at `http://localhost:8080`, a `curl` line, the line to connect an agent | try it if you like |
+| **3. Ship it** | | |
+| GitHub | commits the code, creates your private GitHub repository and pushes it: with your SSH key when GitHub knows it, else over HTTPS with the GitHub CLI | only if neither is set up: approve the code GitHub shows in the browser page Claude opens |
+| Online | signs in to Caligrafy Cloud, creates the app, adds its read-only deploy key to the repository, deploys and checks it | approve the code on the Caligrafy Cloud page Claude opens (sign up and confirm your email the first time) |
 
 Claude never asks you for a password, a token or a key: approvals happen in your browser, on GitHub's and Caligrafy
 Cloud's own pages. It asks before spending credits. The online part is the [`ship` skill](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin):

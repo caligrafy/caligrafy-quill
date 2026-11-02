@@ -41,7 +41,7 @@ What projects' Claude knows comes from here, so it must describe the change:
 ## 2. The README (GitHub's front page)
 
 Read `README.md` against the change: the feature list, commands, versions, anything that is no longer true. Keep the
-banner at the top (`public/images/resources/build-once-banner.png`, black). Also `claude-plugin/README.md`. Change only
+banner at the top (`public/images/resources/describe-approve-ship-banner.png`, black, no subline: "Describe it. Approve it. Ship it." leads every front page, build once is the proof of a complete app). Also `claude-plugin/README.md`. Change only
 what the change makes wrong or incomplete; no rewrite for its own sake.
 
 ## 3. The wiki (`../caligrafy-quill.wiki`)

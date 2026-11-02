@@ -3,12 +3,44 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-# Caligrafy - Build Once, Experience Everywhere
-![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
+# Caligrafy - Describe it. Approve it. Ship it.
+![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
 
-**Write a feature once. Use it everywhere.** In Caligrafy, a feature of your application (add a task, list the
-books, place an order) is written once, as a **capability**: its inputs, its rules, who may use it, and what it does.
-Caligrafy then serves that same capability to every way people and machines reach your application:
+**Your idea turned into a complete app.** Describe it to [Claude Code](https://claude.com/claude-code), approve the
+plan, and Caligrafy ships it: the database, sign-in, web pages, a phone and tablet app, a REST API and tools for AI
+agents, online at `https://<name>.caligrafy.com`, with the code in your own GitHub repository.
+
+## Get started quickly
+
+With Claude Code, three steps take your idea to a complete app online:
+
+| | You | Claude and Caligrafy |
+| --- | --- | --- |
+| **1. Describe it** | your idea, in a sentence: `/caligrafy-quill:idea A reading list where I rate the books I read` | turn it into a plan: a name, the tables, every feature, who may do what, the pages |
+| **2. Approve it** | read the plan, change it, say OK | build every feature once, then check it from a page, REST and an AI agent |
+| **3. Ship it** | approve the sign-ins in your browser | create your GitHub repository, deploy it, check it online |
+
+```bash
+git clone https://github.com/caligrafy/caligrafy-quill.git myapp
+cd myapp
+claude
+```
+```
+/caligrafy-quill:idea A reading list: I add books I want to read, mark them as read, and rate them from 1 to 5.
+```
+You say OK once, at the plan; after that you only approve sign-ins on GitHub's and Caligrafy Cloud's own pages,
+which Claude opens for you. It never asks for a password or a key, and asks before spending credits. See
+[Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude).
+
+**Start from a proven prompt.** The [marketplace of caligrafy.com](https://caligrafy.com/marketplace) sells the
+prompts behind apps that already shipped: describe it with one of them instead. And once yours is online,
+`/caligrafy-quill:marketplace` offers it there: you earn 25% of every sale of its prompt.
+
+## A complete app: build once, experience everywhere
+
+What makes the app complete is how Caligrafy builds it. A feature (add a task, list the books, place an order) is
+written once, as a **capability**: its inputs, its rules, who may use it, and what it does. Caligrafy then serves
+that same capability to every way people and machines reach your application:
 
 | Experience | How it uses the capability |
 | --- | --- |
@@ -18,47 +50,23 @@ Caligrafy then serves that same capability to every way people and machines reac
 | **AI agents** such as Claude or Cursor | an MCP tool: `create_task` |
 
 The same validation messages, the same permissions and the same audit log, whichever way it is called. You never
-write a feature twice, and the experiences never drift apart. And it does not stop at your computer: the same
-project goes online in a few commands.
+write a feature twice, and the experiences never drift apart.
 
-## From an idea to an application online
+## By hand: the same three steps
 
-Caligrafy is the whole way from zero to one, in one project, with one command line:
+Everything Claude does is plain Caligrafy you can do yourself, with one command line, in one project:
 
 | Step | What you do | With |
 | --- | --- | --- |
-| **1. Start** | a running application, database included | `.bin/caligrafer quickstart` |
-| **2. Your data** | the tables and their models | `create_db.sql`, models and relationships |
-| **3. Build once** | each feature, written once, with its rules | a capability (`php caligrafer.php service`) |
-| **4. Experience everywhere** | web pages, a Vue app, a phone and tablet app, a REST API, AI agents | Caligrafy's look, the JS client, `Route::capability`, `Route::mcp` |
-| **5. People and trust** | sign-in, permissions, tokens for programs and agents, an audit log | `scope` and `level`, `php caligrafer.php token` |
-| **6. Ship** | tests, a review, a health check | PHPUnit, the reviewer, `php caligrafer.php doctor` |
-| **7. Online** | your application at a public address | the production `Dockerfile`, `php caligrafer.php cloud deploy` |
+| **1. Describe it** | a running application, then your tables and each feature, written once with its rules | `.bin/caligrafer quickstart`, `create_db.sql` and models, a capability (`php caligrafer.php service`) |
+| **2. Approve it** | every experience and every permission, checked: web pages, a Vue app, a phone and tablet app, a REST API, AI agents, sign-in and tokens; tests, a review, a health check | Caligrafy's look, the JS client, `Route::capability`, `Route::mcp`, `scope` and `level`, PHPUnit, the reviewer, `php caligrafer.php doctor` |
+| **3. Ship it** | your application at a public address | the production `Dockerfile`, `php caligrafer.php cloud deploy` |
 
-With [Claude Code](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin), the plugin that ships
-in every project does each step with you, or all of them at once: `/caligrafy-quill:idea` takes an idea to an
-application online. The
-[course](https://github.com/caligrafy/caligrafy-quill-course) follows these seven steps from an empty folder to an
-application on the internet.
+The plugin that ships in every project helps at each step (`/caligrafy-quill:new-capability`,
+`/caligrafy-quill:ship`...). The [course](https://github.com/caligrafy/caligrafy-quill-course) follows these three
+steps from an empty folder to an application on the internet, so you know what you approve.
 
-## Quickstart with Claude: from your idea to online
-
-Describe an application in a sentence; [Claude Code](https://claude.com/claude-code) builds it the Caligrafy way and
-puts it online for you to use everywhere:
-```bash
-git clone https://github.com/caligrafy/caligrafy-quill.git myapp
-cd myapp
-claude
-```
-```
-/caligrafy-quill:idea A reading list: I add books I want to read, mark them as read, and rate them from 1 to 5.
-```
-Claude plans it with you (tables, capabilities, who may do what), builds every feature once, checks it from the page,
-REST and an AI agent, then pushes it to GitHub and deploys it to `https://<name>.caligrafy.com`. You answer a few
-questions and sign in where only you can. See
-[Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude).
-
-## Quickstart: 5 minutes
+## Quickstart by hand: 5 minutes
 
 You need [Git](https://git-scm.com/) and [Docker Desktop](https://www.docker.com/products/docker-desktop/)
 (running). Nothing else: PHP, MySQL and Composer run in Docker.
@@ -101,14 +109,15 @@ In Cursor, add to `.cursor/mcp.json`:
 { "mcpServers": { "myapp": { "url": "http://localhost:8080/mcp", "headers": { "Authorization": "Bearer <the token>" } } } }
 ```
 
-**4. Put it online.** Push the project to a GitHub repository (`git init`, commit, push), sign up at
-[deploy.caligrafy.com](https://deploy.caligrafy.com) and create a token on its dashboard, then:
+**4. Ship it.** Push the project to a GitHub repository (`git init`, commit, push), then:
 ```bash
-docker compose exec dev-box php caligrafer.php cloud login                 # paste the token
+docker compose exec dev-box php caligrafer.php cloud login                 # open the address it prints, approve the code
 docker compose exec dev-box php caligrafer.php cloud create myapp --repo https://github.com/<you>/myapp
 docker compose exec dev-box php caligrafer.php cloud deploy myapp          # https://myapp.caligrafy.com
 ```
-The first 30 minutes are free. The Tasks example is open to everyone, online too: see
+`cloud login` opens [deploy.caligrafy.com](https://deploy.caligrafy.com), where you sign in (or sign up) and approve.
+Every new app is free for its first 30 minutes online. With Claude Code, `/caligrafy-quill:ship myapp` does all of
+this for you, the GitHub repository included. The Tasks example is open to everyone, online too: see
 [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online) before you share the address.
 
 That is the whole idea: the Tasks feature lives in five small files in `application/services/Tasks/`, and every
@@ -145,8 +154,9 @@ feature step by step, page included.
 + **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
   (`Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
   never follow different rules.
-+ **One look:** Caligrafy's look on every page (2.11.0+): a light top bar with the Caligrafy mark, title bands,
-  forms, rows and tiles, Caligrafy black for the main action, full-screen camera apps, the same on every device.
++ **One look, or yours:** Caligrafy's look on every page: a light top bar with the Caligrafy mark, title bands, forms,
+  rows and tiles, Caligrafy black for the main action, full-screen camera apps, the same on every device. Or pick one of 85 [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
+  (`DESIGN_STYLE` in `.env`, or your own `DESIGN.md`) and let `/caligrafy-quill:design` restyle every page.
 + **Secure by design:** sign-in, passkeys and face login for people; scoped, revocable tokens for programs and
   agents; CSRF protection; an audit log of every change; server files never served.
 + **Batteries included:** card, ACH and crypto payments, OpenAI and open-model AI (Llama on Groq, OpenRouter,
@@ -156,14 +166,14 @@ feature step by step, page included.
   online, and `AGENTS.md` for other coding agents.
 + **Online in a few commands:** a production `Dockerfile` in every project, the database prepared at every start,
   and [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud):
-  `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, the first 30 minutes free, and
-  `/caligrafy-quill:ship` does it all for you, from the GitHub repository to the check online.
+  `php caligrafer.php cloud deploy` puts it at `https://<name>.caligrafy.com`, every new app free for its first 30
+  minutes, and `/caligrafy-quill:ship` does it all for you, from the GitHub repository to the check online.
 + **Sell what you built:** offer an app online on the [marketplace of caligrafy.com](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#marketplace):
   Caligrafy sells a prompt that recreates it and you earn 25% of every sale. `/caligrafy-quill:marketplace` reads
   your code, screenshots its key features and submits the listing (`php caligrafer.php cloud submit`).
 + **Tools:** `php caligrafer.php doctor` checks your setup and services, `call` tries a capability in one line,
   `update` moves a project to the latest release in one command (keeping what you changed), `upgrade` updates its
-  `application/` templates, `version` tells you which release you run.
+  `application/` templates and tells you what to check, `version` tells you which release you run.
 
 ## Where to go next
 
