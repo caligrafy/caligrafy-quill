@@ -145,7 +145,7 @@ block content
                 h2.cq-title Books
                 p.cq-note The catalog, from the list_books and create_book capabilities.
 
-            form#new-book.cq-form(novalidate)
+            form#new-book.cq-form(method='POST', novalidate)
                 .cq-fields.cq-fields--2
                     div
                         label(for='book-title') * Title

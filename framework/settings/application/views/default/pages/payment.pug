@@ -19,7 +19,7 @@ block content
   main.cq-auth.cq-auth--wide
     h1 Payment
     p.cq-lead Your card details go straight to Stripe.
-    form#payment-form
+    form#payment-form(method='POST')
       #payment-element
       p#payment-message.cq-error(role="alert")
       button#submit.btn.btn-primary(type="submit", data-secret="{$clientSecret}", public-key="{$publicKey}")

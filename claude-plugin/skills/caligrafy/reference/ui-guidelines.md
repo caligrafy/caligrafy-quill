@@ -54,7 +54,8 @@ and `$user` for the signed-in parts (G74); data comes from capabilities only, ne
 | Sign-in style form | `main.cq-auth > h1 + p.cq-lead + form > .cq-field (label + .form-control) + .btn` | 380px column, full-width button. `.cq-auth--wide`: 560px. `.cq-or` between two choices, `p.cq-auth-note` under |
 | Form on a page | `.cq-form-grid(.cq-form-grid--2) > .cq-field` | Fields side by side from tablets up. A button in the grid: `label.cq-hidden-label` + `.btn.cq-btn-block` |
 | Message | `.cq-alert` / `.cq-alert.cq-alert--error` | Above a form. Server messages: `include ../default/modules/notice` (`$error`, `$status`, `$message`) |
-| Field error | `p.cq-field-error(role='alert')` | Under the form; show `ServiceError` / `CapabilityError` field messages here, near the action that failed |
+| Field error | `p.cq-field-error(role='alert')` | Under its own field, one per field (`CapabilityError`'s `fields`); a message without a field goes under the button |
+| Form | `form(method='POST')` | Always a method, also for a form a script sends: without one it falls back to a GET, its fields in the address, when the script does not run (G104). The page loads the script that handles it. A page posted by a controller adds `=csrf()` |
 | Choices | `.cq-segments(role='tablist') > button(.active)` + `span.cq-count` | Filters and views of the same list |
 | List | `ul.cq-rows > li.cq-row > .cq-row-main (p.cq-row-title + p.cq-row-meta) + .cq-row-actions > .btn` | `li.cq-row.is-done` greys it; `input.form-check-input.cq-row-check` first; `.cq-row--link` for a whole-row link |
 | Inline edit | `.cq-inline-edit > input.form-control.form-control-sm` | Replace the title in place; Save / Cancel in `.cq-row-actions` |

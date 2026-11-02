@@ -128,7 +128,7 @@ calls it, then shows the token once and the line to paste:
 **The page** `application/views/<Folder>/index.pug` + `public/js/<things>.js`: `extends ../default/master/site` and the
 classes of Caligrafy's look only (a title band `section.cq-hero.cq-hero--page`, `section.cq-band > .cq-inner`, a
 `.cq-form-grid` of `.cq-field`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`, `.cq-field-error`), the JS client
-for every call (never `fetch` by hand, never a key in the page), like the Tasks example. Tabs with counts are
+for every call (never `fetch` by hand, never a key in the page), like the Tasks example; every `form` has `method='POST'`, also when a script sends it (a form with no method falls back to a GET with its fields in the address when the script does not run, G104), and the page loads that script. Tabs with counts are
 optional: keep them only when the list capability gives what they need. No `style` block, no
 Bootstrap colors. **Field messages**: a refused input comes back with a message per field (`CapabilityError`'s
 `fields`): show each one in a `p.cq-field-error` right under its own field, never as one list under the button, and
@@ -141,8 +141,8 @@ clear them on the next submit.
   refused for the writes (unless public).
 - REST: `curl -s -H "Accept: application/json" http://localhost:8080/api/<things>`; a write without sign-in gets 401.
 - The page: open `http://localhost:8080/<things>` (in a browser if you have one): sign up, then sign in (sign-up
-  does not sign in), add, change, delete; submit an empty form: each message shows under its own field; check it at
-  phone width (375px).
+  does not sign in), add, change, delete; submit an empty form: each message shows under its own field, and the address gets no `?`; check it
+  at phone width (375px).
 - MCP: with a local token (`php caligrafer.php token create "check" --scopes "*"`, revoke it afterwards with
   `token revoke <id>`, the number after `#` in `token list`, G77), `tools/list` shows the capabilities and `tools/call` works.
 - `docker compose exec dev-box php caligrafer.php doctor`, and ask the `caligrafy-reviewer` agent to review the new files.

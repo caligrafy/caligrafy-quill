@@ -161,6 +161,13 @@ class Doctor
                     : (($v = PluginSource::installedVersion($source, $this->root)) !== null ? " $v" : '')));
             }
         }
+        // a form handled by a script and sent with no method falls back to GET when the script does not run: its fields,
+        // passwords included, end up in the address, the browser history and the server logs
+        $forms = self::formsWithoutMethod($this->root);
+        if ($forms) {
+            $this->add('project', 'Forms', 'WARN', 'no method on a form with an email or a password: ' . implode(', ', $forms) . ' (sent as a GET, in the address, when its script does not run)',
+                "add method='POST' to the form (its script still sends it; without the script it is never a GET)");
+        }
         // error details are for development: on a site served over HTTPS they show file paths and SQL to visitors
         $debug = in_array(strtolower(trim((string) $this->env('APP_DEBUG'))), ['true', '1', 'on', 'yes'], true);
         if ($debug && strtolower(trim((string) $this->env('APP_PROTOCOL'))) === 'https') {
@@ -616,6 +623,36 @@ class Doctor
     /**
      * Masks a secret: known prefix + last 4 characters, never more than a quarter of the value
      */
+    /**
+     * The forms of application/views (Pug) with an email or a password field and no method: "file:line" each
+     */
+    public static function formsWithoutMethod($root)
+    {
+        $found = array();
+        $views = $root . '/application/views';
+        if (!is_dir($views)) return $found;
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($views, \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $file) {
+            if (substr($file->getFilename(), -4) !== '.pug') continue;
+            $lines = file($file->getPathname(), FILE_IGNORE_NEW_LINES) ?: array();
+            foreach ($lines as $i => $line) {
+                if (!preg_match('/^(\s*)form(?=[#.(\s]|$)/', $line, $m) || preg_match('/\bmethod\s*=/i', $line)) continue;
+                $indent = strlen($m[1]);
+                // the form's own lines: those indented under it
+                for ($j = $i + 1; $j < count($lines); $j++) {
+                    if (trim($lines[$j]) === '') continue;
+                    if (strlen($lines[$j]) - strlen(ltrim($lines[$j])) <= $indent) break;
+                    if (preg_match('/type\s*=\s*[\'"](password|email)[\'"]|name\s*=\s*[\'"](password|passcode|email)[\'"]/i', $lines[$j])) {
+                        $found[] = substr($file->getPathname(), strlen($root) + 1) . ':' . ($i + 1);
+                        break;
+                    }
+                }
+            }
+        }
+        sort($found);
+        return $found;
+    }
+
     public static function mask($value)
     {
         $value = trim((string)$value);

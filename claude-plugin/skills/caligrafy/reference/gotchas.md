@@ -468,3 +468,12 @@ the installed version differs from `claude-plugin/.claude-plugin/plugin.json`, a
 `claude` is missing, run `php caligrafer.php plugin` on the computer. Then restart `claude` in the folder. Proof:
 `PluginSource::installedVersion()`, `connect()`.
 
+**G104. A form with no method leaks its fields into the address when its script does not run.** A `form` without
+`method` is a GET form: a page whose script sends it (the JS client, `event.preventDefault()`) works while the script
+runs, but when it is not loaded, fails or is still loading, the browser submits the form itself, as
+`GET /page?email=...&password=...`: in the address bar, the history and the server's logs (verified on Caligrafy
+Cloud's sign-up page, whose view did not load its script). Give every form `method='POST'` (the script still sends it;
+without the script the post is refused by the CSRF check, never shown in an address), make sure the page loads the
+script, and send each form once in a browser: the address must not get a `?`. Since 2.13.3 `doctor` warns about a
+Pug form in `application/views` with an email or a password field and no method. Proof: `Doctor::formsWithoutMethod()`,
+`qa/unit/DoctorFormsTest.php`.

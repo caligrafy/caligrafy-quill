@@ -118,7 +118,8 @@ Insert inside the `try` block, after the existing `/` route and before `Route::r
     Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
 ```
 Keep one `Route::capabilities('/capabilities');` and one `Route::mcp('/mcp');` in the file (add them if missing), then
-`php caligrafer.php client` for the JS client. A capability that refuses a page's data sends a visitor to sign in or
+`php caligrafer.php client` for the JS client. Every form of its pages has `method='POST'`, also when a script sends
+it (G104). A capability that refuses a page's data sends a visitor to sign in or
 answers 404/403 (G83); add `'notFound' => 'Books/missing'` to show your own 404 view. Only `readOnly` capabilities can
 be page data, and the view never gets the query string.
 

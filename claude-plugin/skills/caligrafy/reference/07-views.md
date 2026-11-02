@@ -244,7 +244,7 @@ block content
 
   section.cq-band.cq-band--tight
     .cq-inner.cq-inner--narrow
-      form#new-task(novalidate)
+      form#new-task(method='POST', novalidate)
         .cq-form-grid
           .cq-field
             label(for='task-title') Task

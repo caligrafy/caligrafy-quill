@@ -6,9 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
-## [Unreleased]
+## [2.13.3] - 2026-11-02
 
 ### Fixed
+- A form with no `method` leaks its fields into the address when its script does not run: the browser sends it as a
+  GET (found on Caligrafy Cloud's sign-up page, whose view did not load its script: the email and the password went
+  into the address). The Tasks example's form and the template payment page now have `method='POST'`, and `doctor`
+  warns about a Pug form of `application/views` with an email or a password field and no method
+  (`Doctor::formsWithoutMethod()`). The UI guidelines, the `idea`, `new-capability` and `new-resource` skills and the
+  new gotcha G104 say it: every form has a method, the page loads its script, field errors go under their own field.
 - `doctor` in the framework's own repository said its Claude Code plugin was fine without comparing versions; it now
   warns when Claude Code runs an older copy than `claude-plugin/`, as it does in projects. The tooling tests fail in
   that case, so a release cannot go out with a stale copy.
