@@ -114,5 +114,17 @@ for d in ~/www/*/; do [ -f "$d/framework/core/Framework.php" ] && (cd "$d" && pr
 ```
 Any folder behind is not done.
 
-Report at the end what was done in each place and what was left (a step skipped, a question unanswered, a check that
-could not be made).
+## 7. The report, every time
+
+End every framework update with this report to the maintainer, each answer checked now, never from memory, and say
+plainly what is not done:
+1. **Claude plugin updated?** Its version (`plugin.json`), `claude plugin validate ./claude-plugin --strict`, the
+   changelog line, and whether its skills and references cover every change (site behavior they describe included).
+2. **README, docs and wiki updated?** The README, `sync-wiki.py ../caligrafy-quill.wiki --check` (out of date: none),
+   the "Current version" line of the Claude Code Plugin page, the release notes page.
+3. **Course updated?** Its pinned release, the lessons the change touches, `tools/check-pages.py` (0 problems), the
+   course wiki identical, both pushed.
+4. **Inventory of the apps**: a table of every Caligrafy folder in `~/www` (the loop of step 6), with its Caligrafy
+   version, the Claude plugin version Claude Code runs there, and whether it is pushed and deployed.
+
+Also say what was left (a step skipped, a question unanswered, a check that could not be made).
