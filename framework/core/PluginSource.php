@@ -183,7 +183,8 @@ class PluginSource
     public static function isFramework($root = '.')
     {
         $root = rtrim($root, '/');
-        return is_file("$root/qa/run.sh") && !is_dir("$root/application");
+        // the framework's own repository: no application/, or only the one the QA suite generates there
+        return is_file("$root/qa/run.sh") && (!is_dir("$root/application") || is_file("$root/application/.qa-generated"));
     }
 
     // caligrafy-<folder>-<4 hex>: readable, and unique even for projects with the same folder name (or "html" in Docker)

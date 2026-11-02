@@ -6,13 +6,17 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
-## [Unreleased]
+## [2.13.2] - 2026-11-02
 
 ### Changed
 - Caligrafy's new positioning: **Describe it. Approve it. Ship it.** Your idea turned into a complete app. The README,
   the wiki (Home, sidebar, Quickstart with Claude, Quickstart, How Caligrafy works, Claude Code Plugin), the plugin,
   `CLAUDE.md`, `AGENTS.md` and `composer.json` lead with the three steps; build once, experience everywhere is what
   makes the app complete. A new black banner, `public/images/resources/describe-approve-ship-banner.png`.
+- The `idea` skill follows the three steps. When the user asks to review before shipping ("stop before putting it
+  online"), it builds and checks the app, reports what changed since the plan, and waits; later changes get a plan
+  first too. Its pages show each refused input's message under its own field, and its check signs in after signing
+  up. Found by running the new course (caligrafy-quill-course) with Claude.
 
 ### Fixed
 - `php caligrafer.php plugin` in the framework's own repository renamed its plugin source from `caligrafy` (the name
@@ -20,6 +24,8 @@ same number. Check the version of a project with `php caligrafer.php version`.
 - `php caligrafer.php plugin` took another project's install for this one when that project's source name started with
   this one's (`caligrafy` and `caligrafy-myapp-1a2b` in `claude plugin list`), and did not install the plugin. It now
   reads Claude Code's install record for this folder.
+- During a QA run (`qa/run.sh`, which generates an `application/` in the framework's folder), the framework's own
+  repository was taken for a project: `doctor` warned about its shared plugin name and `plugin` could rename it.
 
 ## [2.13.1] - 2026-11-02
 

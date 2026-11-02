@@ -50,8 +50,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
-- **Unreleased** - Describe it. Approve it. Ship it.: the plugin, the `idea` skill (it reports progress by step) and
-  the `caligrafy` skill lead with the three steps; new banner; wiki mirrors synced.
+- **1.25.2** - Caligrafy Quill 2.13.2, Describe it. Approve it. Ship it.: the plugin, the `idea` skill and the
+  `caligrafy` skill lead with the three steps; `idea` stops for a review before shipping when asked, puts each field's
+  message under its field and signs in after signing up in its check; new banner; wiki mirrors synced.
 - **1.25.1** - Caligrafy Quill 2.13.1: the Claude Code Plugin and Caligrafer mirrors say that `update` and `plugin`
   refresh Claude Code's copy of the plugin; G103 (a new skill missing after an update); the update skill restarts claude.
 - **1.25.0** - Caligrafy Quill 2.13.0, selling an app: the new `marketplace` skill (reads the whole code, runs the app as

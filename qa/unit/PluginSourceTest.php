@@ -144,7 +144,11 @@ final class PluginSourceTest extends TestCase
         $this->assertTrue(PluginSource::isFramework($this->dir));
         $this->assertNull(PluginSource::ensureOwn($this->dir));
         $this->assertSame('caligrafy', PluginSource::name($this->dir));
-        mkdir("$this->dir/application");                        // a project, even one with a qa folder, gets its own name
+        mkdir("$this->dir/application");
+        touch("$this->dir/application/.qa-generated");           // the QA suite's application/: still the framework
+        $this->assertTrue(PluginSource::isFramework($this->dir));
+        $this->assertNull(PluginSource::ensureOwn($this->dir));
+        unlink("$this->dir/application/.qa-generated");           // a project, even one with a qa folder, gets its own name
         $this->assertFalse(PluginSource::isFramework($this->dir));
         $this->assertNotNull(PluginSource::ensureOwn($this->dir));
     }

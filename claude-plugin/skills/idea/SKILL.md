@@ -12,8 +12,11 @@ three steps you are in when you report progress.
 
 Idea: `$ARGUMENTS` (if empty, ask the user to describe it in a sentence or two: who uses it, what they do with it).
 
-This is the Quickstart with Claude: you take the idea through the seven steps of Caligrafy (start, data, build
-once, experience everywhere, people and trust, ship, online), **without stopping**. Keep it **small and finished**: 1 to 3 tables, 4 to 12
+This is the Quickstart with Claude: **describe it** (the idea becomes a plan), **approve it** (the user's OK, then you
+build once and check every experience) and **ship it** (GitHub and Caligrafy Cloud), **without stopping** after the OK.
+**Review first**: when the user's OK asks to review before shipping ("stop before putting it online"), build and
+check it here, end with the report of step 5 and what changed since the plan, and wait: ship only when they say so
+(then the ship skill). Their later changes follow the same three steps: a plan first, their OK, then build and check. Keep it **small and finished**: 1 to 3 tables, 4 to 12
 capabilities, one page per main table. A working first version online beats a big plan. Read
 [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) and the Tasks example
 (`framework/settings/examples/tasks/`: its services, model, `views/Tasks/index.pug` and `public/js/tasks.js`):
@@ -127,7 +130,9 @@ classes of Caligrafy's look only (a title band `section.cq-hero.cq-hero--page`, 
 `.cq-form-grid` of `.cq-field`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`, `.cq-field-error`), the JS client
 for every call (never `fetch` by hand, never a key in the page), like the Tasks example. Tabs with counts are
 optional: keep them only when the list capability gives what they need. No `style` block, no
-Bootstrap colors.
+Bootstrap colors. **Field messages**: a refused input comes back with a message per field (`CapabilityError`'s
+`fields`): show each one in a `p.cq-field-error` right under its own field, never as one list under the button, and
+clear them on the next submit.
 
 ## 4. Check every experience (before saying it works)
 
@@ -135,8 +140,9 @@ Bootstrap colors.
 - `php caligrafer.php call <name> key=value` for each one; an invalid input gives the field messages; `--guest` is
   refused for the writes (unless public).
 - REST: `curl -s -H "Accept: application/json" http://localhost:8080/api/<things>`; a write without sign-in gets 401.
-- The page: open `http://localhost:8080/<things>` (in a browser if you have one): sign up, add, change, delete; check it
-  at phone width (375px).
+- The page: open `http://localhost:8080/<things>` (in a browser if you have one): sign up, then sign in (sign-up
+  does not sign in), add, change, delete; submit an empty form: each message shows under its own field; check it at
+  phone width (375px).
 - MCP: with a local token (`php caligrafer.php token create "check" --scopes "*"`, revoke it afterwards with
   `token revoke <id>`, the number after `#` in `token list`, G77), `tools/list` shows the capabilities and `tools/call` works.
 - `docker compose exec dev-box php caligrafer.php doctor`, and ask the `caligrafy-reviewer` agent to review the new files.
