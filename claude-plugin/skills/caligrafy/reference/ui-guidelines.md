@@ -167,6 +167,14 @@ The older `.cq-split` of `tokens.css` (list a third, detail two thirds, unstyled
 Caligrafy renders Pug with PHP expressions: `+` adds numbers and never joins strings (G98). Join with `.`, or let Pug
 merge classes: `div.cq-alert(class=($failed ? 'cq-alert--error' : null))`. Version your own assets the way the
 master does, so a deploy reaches every browser: `script(src=$home . 'public/js/app.js?v=' . @filemtime(PUBLIC_PATH . 'js/app.js'))`.
+A dollar sign before digits vanishes (`$40` shows nothing): write `&#36;40` (G105). Never put code on the line of a
+`- if (...)` or `- foreach (...)`: use `if` / `each` with the lines under them (G106). `doctor` names both.
+
+A section of your own page with its own colors (a dark banner, a colored band) must also restyle the buttons in it:
+`look.css` sets them with `html body .btn-primary` and `html body .btn-secondary:not(.btn-primary)` (and their `:hover`,
+`a.btn-primary:link`, `:visited`), so a rule like `.my-band .btn-primary` loses. Scope yours the same way, in the page's
+own stylesheet: `html body .my-band .cq-cta .btn.btn-primary { background-color: #fff; border-color: #fff; color: #0a0a0b; }`,
+with its `:hover`, `:link` and `:visited`; check the buttons at rest, hovered and after a visit.
 
 ## Vue client apps (`public/<app>/index.php`) and the SPA
 

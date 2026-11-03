@@ -750,6 +750,11 @@ function load_script($params){
  */
 function redirect($url)
 {
+    // a full address (another site, Caligrafy Cloud...) is used as it is; a path is one of this site
+    if (preg_match('#^https?://#i', (string) $url)) {
+        header('Location: ' . $url);
+        return;
+    }
     header('Location: '. session('home') . sanitizePath($url) );
 }
 

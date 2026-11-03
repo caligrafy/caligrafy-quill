@@ -50,6 +50,10 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.25.5** - Caligrafy Quill 2.13.5: a changed `create_db.sql` keeps its `ALTER TABLE ... ADD` lines (G68),
+  `redirect()` to a full address (G107), Pug's vanishing `$40` and one-line `- if` (G105, G106, doctor warns), buttons
+  of a page's own colored section (UI guidelines); caligrafy.com's Listings, Earnings, Tasks, Library, the three ways to
+  get an app and Submit your idea (the `marketplace` skill, Putting it online, home); G1-G107.
 - **1.25.4** - Caligrafy Quill 2.13.4: the `ship` skill knows Caligrafy's accounts: email as the username, signing in
   once the email is confirmed (the link again from the sign-in page), *Forgot your password?* with a 6-digit code.
 - **1.25.3** - Caligrafy Quill 2.13.3: every form has `method='POST'`, also when a script sends it (gotcha G104, UI

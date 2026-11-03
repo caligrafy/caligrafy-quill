@@ -168,6 +168,13 @@ class Doctor
             $this->add('project', 'Forms', 'WARN', 'no method on a form with an email or a password: ' . implode(', ', $forms) . ' (sent as a GET, in the address, when its script does not run)',
                 "add method='POST' to the form (its script still sends it; without the script it is never a GET)");
         }
+        // two Pug mistakes that do not show until the page renders: a $ before digits is read as a variable and vanishes
+        // ($40 shows as nothing), and code on the same line as a one-line - if / - foreach does not compile
+        $pug = self::pugPitfalls($this->root);
+        if ($pug) {
+            $this->add('project', 'Pug', 'WARN', implode(', ', array_slice($pug, 0, 6)) . (count($pug) > 6 ? ' and ' . (count($pug) - 6) . ' more' : ''),
+                "write &#36; for a dollar sign before digits; put the code of - if / - foreach on the lines under it (or use an expression)");
+        }
         // error details are for development: on a site served over HTTPS they show file paths and SQL to visitors
         $debug = in_array(strtolower(trim((string) $this->env('APP_DEBUG'))), ['true', '1', 'on', 'yes'], true);
         if ($debug && strtolower(trim((string) $this->env('APP_PROTOCOL'))) === 'https') {
@@ -646,6 +653,37 @@ class Doctor
                         $found[] = substr($file->getPathname(), strlen($root) + 1) . ':' . ($i + 1);
                         break;
                     }
+                }
+            }
+        }
+        sort($found);
+        return $found;
+    }
+
+    /**
+     * Pug mistakes of application/views that only show when the page renders: "file:line $digits" for a dollar sign
+     * before digits (outside comments), "file:line - if" for code on the same line as a one-line - if / - foreach
+     */
+    public static function pugPitfalls($root)
+    {
+        $found = array();
+        $views = $root . '/application/views';
+        if (!is_dir($views)) return $found;
+        $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator($views, \FilesystemIterator::SKIP_DOTS));
+        foreach ($files as $file) {
+            if (substr($file->getFilename(), -4) !== '.pug') continue;
+            $where = substr($file->getPathname(), strlen($root) + 1);
+            foreach (file($file->getPathname(), FILE_IGNORE_NEW_LINES) ?: array() as $i => $line) {
+                if (preg_match('#^\s*//#', $line)) continue;
+                if (preg_match('/(?<![\\\w])\$\d/', $line)) $found[] = "$where:" . ($i + 1) . ' $digits';
+                if (preg_match('/^\s*-\s*(if|elseif|foreach|for|while)\s*\(/', $line, $m)) {
+                    // what follows the condition's closing parenthesis: nothing, { or : is fine
+                    $depth = 0;
+                    for ($k = strlen($m[0]) - 1; $k < strlen($line); $k++) {
+                        if ($line[$k] === '(') $depth++;
+                        if ($line[$k] === ')' && --$depth === 0) break;
+                    }
+                    if (!in_array(trim(substr($line, $k + 1)), array('', '{', ':'), true)) $found[] = "$where:" . ($i + 1) . ' one-line - ' . $m[1];
                 }
             }
         }

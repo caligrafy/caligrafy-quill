@@ -133,3 +133,5 @@ until Caligrafy publishes it.
 The app's page on Caligrafy Cloud now shows the submission as **Processing**: the title, the description, the
 screenshots and the estimated price. Caligrafy reviews it, may polish it, sets the
 final price and publishes it; the page then shows it on sale, with every purchase and the maker's 25%.
+On caligrafy.com (signed in with the same account), **Listings** follows it, **Tasks** says when Caligrafy asks for
+a change, and **Earnings** shows its sales and the maker's payouts.

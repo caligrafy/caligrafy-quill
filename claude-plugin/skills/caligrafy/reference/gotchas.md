@@ -203,7 +203,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G67. Production reads a `.env` file, never plain environment variables.** `index.php` and `caligrafer.php` load `.env` with Dotenv (`createUnsafeMutable`): its values replace environment variables of the same name, and `caligrafer.php` copies `.env.example` to `.env` when the file is missing. So the production image needs its settings as a file at `/var/www/html/.env` (Coolify file storage, `docker run -v .env.production:/var/www/html/.env:ro`, Caligrafy Cloud writes it). Hosts that only offer environment variables (Railway, Render, DigitalOcean App Platform) are not supported yet: do not tell a user they work as they are. In that file `APP_ROOT=` must be empty: the folder name that `initialize` writes (`APP_ROOT=my-project`) makes every link and redirect point to `/my-project/...` on a domain root.
 
-**G68. `php caligrafer.php deploy` runs a changed `create_db.sql` again, except one that drops or deletes.** It records each `application/models/*/create_db.sql` with its SHA-256 in `caligrafy_scripts`. A new or changed script runs on the next start, so it must be safe to run twice: `CREATE TABLE IF NOT EXISTS`, and changes as added statements (`ALTER TABLE ... ADD COLUMN`), never by dropping the table. A changed script whose text (comments removed) contains `DROP TABLE|DATABASE|SCHEMA|VIEW|COLUMN`, `DELETE FROM` or `TRUNCATE` is skipped with a WARN line: run it by hand (`php caligrafer.php sql <file>`). `seed.sql` is never run. Proof: `framework/core/Deployer.php`.
+**G68. `php caligrafer.php deploy` runs a changed `create_db.sql` again, except one that drops or deletes.** It records each `application/models/*/create_db.sql` with its SHA-256 in `caligrafy_scripts`. A new or changed script runs on the next start, so it must be safe to run twice: `CREATE TABLE IF NOT EXISTS`, and changes as added statements (`ALTER TABLE ... ADD COLUMN`, `ADD INDEX`, `ADD CONSTRAINT ... FOREIGN KEY`), never by dropping the table. Since 2.13.5 a statement that adds what is already there (MySQL/MariaDB errors 1060 duplicate column, 1061 duplicate key name, 1826 duplicate foreign key) is skipped, so the script keeps its `ALTER TABLE ... ADD` lines and runs again on every change; before 2.13.5 the second run stopped at such a line, the script was never recorded, and every later deploy failed on it (add the column by hand, then remove the line). A changed script whose text (comments removed) contains `DROP TABLE|DATABASE|SCHEMA|VIEW|COLUMN`, `DELETE FROM` or `TRUNCATE` is skipped with a WARN line: run it by hand (`php caligrafer.php sql <file>`). `seed.sql` is never run. Proof: `framework/core/Deployer.php` (`Deployer::alreadyApplied()`, `qa/unit/DeployerTest.php`).
 
 **G69. A production build needs `composer.lock` committed.** The `Dockerfile` runs `composer install --no-dev` from `composer.json` and `composer.lock`; without the lock file (or with one older than `composer.json`) the build fails or installs other versions. `vendor/`, `.env`, `.git`, `qa`, `tests` and `backups` never reach the image (`Dockerfile.dockerignore`).
 
@@ -477,3 +477,21 @@ without the script the post is refused by the CSRF check, never shown in an addr
 script, and send each form once in a browser: the address must not get a `?`. Since 2.13.3 `doctor` warns about a
 Pug form in `application/views` with an email or a password field and no method. Proof: `Doctor::formsWithoutMethod()`,
 `qa/unit/DoctorFormsTest.php`.
+
+**G105. In a Pug view, a dollar sign before digits vanishes.** Caligrafy renders Pug with PHP: `$40` in text, in an
+attribute or in a string is read as a variable and shows as nothing (`p From $40 a month` renders "From  a month";
+`'$' . $price` is fine). Write `&#36;40` in text (`p From &#36;40 a month`), or build the amount in an expression
+(`p= '$' . number_format($price)`). Since 2.13.5 `doctor` names each line (`Pug` WARN, `file:line $digits`); comments
+(`//-`) are ignored. Proof: `Doctor::pugPitfalls()`, `qa/unit/DoctorPugTest.php`.
+
+**G106. In a Pug view, a one-line `- if (...) ...` or `- foreach (...) { ... }` does not compile.** Code after the
+condition on the same line (`- if ($sold) echo 'Sold'`, `- foreach ($rows as $r) { $total += $r['price']; }`) breaks the
+whole template with a Phug error. Use Pug's own `if $sold` / `each $r in $rows` with the lines under it, put the code
+of `- if (...)` on the indented lines below, or write an expression (`- $total = array_sum(array_column($rows, 'price'))`).
+Since 2.13.5 `doctor` names each line (`file:line one-line - if`). Proof: `Doctor::pugPitfalls()`,
+`qa/unit/DoctorPugTest.php`.
+
+**G107. `redirect()` to another site (fixed).** Before 2.13.5 `redirect('https://deploy.caligrafy.com/...')` put the
+site's own address in front (`https://caligrafy.com/https://deploy...`). Since 2.13.5 an `http://` or `https://`
+address is used as it is, and a path stays a path of this site. On older versions, write
+`header('Location: ' . $url)`. Proof: `redirect()` in `framework/helpers/corehelpers.php`.

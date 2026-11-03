@@ -6,6 +6,24 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.13.5] - 2026-11-02
+
+### Fixed
+- `php caligrafer.php deploy` stopped at an `ALTER TABLE ... ADD COLUMN` (or `ADD INDEX`, `ADD CONSTRAINT`) of a
+  changed `create_db.sql` the second time the script ran ("Duplicate column"): the script was never recorded and every
+  later deploy failed on it, although gotcha G68 recommended those lines. A statement that only adds what is already
+  there (MySQL/MariaDB errors 1060, 1061, 1826) is now skipped (`Deployer::alreadyApplied()`), so a new column ships
+  with the code.
+- `redirect()` put the site's own address in front of a full address (`https://...`): it is now used as it is.
+- `doctor` warns about two Pug mistakes that only show when the page renders: a dollar sign before digits, which
+  vanishes (`$40` shows nothing; write `&#36;40`), and code on the line of a one-line `- if` / `- foreach`, which does
+  not compile (`Doctor::pugPitfalls()`; gotchas G105, G106).
+
+### Changed
+- Claude Code plugin 1.25.5: gotchas G105-G107 and G68, the UI guidelines (buttons of a page's own colored section),
+  and the pages of caligrafy.com it describes: Listings, Earnings, Tasks and Library, the three ways to get an app on
+  Explore (the prompt, the code, managed for you) and Submit your idea.
+
 ## [2.13.4] - 2026-11-02
 
 ### Changed

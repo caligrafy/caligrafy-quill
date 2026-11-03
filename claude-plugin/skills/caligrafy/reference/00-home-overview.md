@@ -32,9 +32,10 @@ You say OK once, at the plan; after that you only approve sign-ins on GitHub's a
 which Claude opens for you. It never asks for a password or a key, and asks before spending credits. See
 [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude).
 
-**Start from a proven prompt.** The [marketplace of caligrafy.com](https://caligrafy.com/marketplace) sells the
-prompts behind apps that already shipped: describe it with one of them instead. And once yours is online,
-`/caligrafy-quill:marketplace` offers it there: you earn 25% of every sale of its prompt.
+**Start from a proven prompt.** The [marketplace of caligrafy.com](https://caligrafy.com/marketplace) offers apps that
+already shipped, three ways: the prompt that recreates one with Caligrafy, its code, or the app managed for you. And
+once yours is online, `/caligrafy-quill:marketplace` offers it there: you earn 25% of every sale. No time to build it?
+[Submit your idea](https://caligrafy.com/ideas/new) and Caligrafy builds it for you.
 
 ## A complete app: build once, experience everywhere
 

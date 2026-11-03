@@ -33,7 +33,7 @@ The image runs `php caligrafer.php deploy` before Apache starts. It:
 
 A changed script that drops, deletes or truncates (`DROP TABLE`, `DELETE FROM`, `TRUNCATE`...) is never run again on its own: it says so in the log, and you run it by hand when you mean it (`php caligrafer.php sql <file>`). `seed.sql` and other scripts are never run. Without `DB_ACTIVATE=true` there is nothing to do.
 
-So write your tables with `CREATE TABLE IF NOT EXISTS`, and add a column with a new statement (`ALTER TABLE ... ADD COLUMN ...`) rather than by dropping the table.
+So write your tables with `CREATE TABLE IF NOT EXISTS`, and add a column with a new statement (`ALTER TABLE ... ADD COLUMN ...`) rather than by dropping the table. The statement can stay in the script: when the script runs again, a column, an index or a foreign key that is already there is skipped (2.13.5+).
 
 ```bash
 php caligrafer.php deploy                 # what the image runs at start
@@ -102,8 +102,21 @@ Caligrafy sells a prompt that recreates it with Caligrafy and Claude Code, and y
    ```
    Without Claude Code, write the file yourself and send it: `php caligrafer.php cloud submit myapp`.
 3. Caligrafy reviews the listing, sets the final price and publishes it, or turns it down with a reason (offer it
-   again after the changes). Published apps on caligrafy.com shows its sales and your earnings: get paid from 50 USD,
-   once a month, 14 days after each sale.
+   again after the changes). On caligrafy.com, **Listings** follows each listing (offered, to fix, published),
+   **Earnings** its sales and your payouts (from 50 USD, once a month, 14 days after each sale), and **Tasks** what
+   waits for you (a listing to fix, an idea to try).
+
+Each app on Explore comes three ways: its **prompt**, which recreates it with Caligrafy, using Claude; its **code**,
+reproduced from the prompt into a private GitHub repository for your GitHub account; or **managed for you**, online at
+`<name>.caligrafy.com` for a monthly or yearly price. You earn 25% of the prompt's price on each of them. What you buy
+is in **Library** (prompts and code), and managed apps are in **Apps** (the App console), under Managed for you.
+
+## Submitting an idea
+
+No code at all: on [caligrafy.com/ideas/new](https://caligrafy.com/ideas/new), describe the app in a few moves (what it
+does, who it is for, its powers) and get an estimate, free. Caligrafy reviews it, builds a proof of concept with
+Claude and gives it to you to try, privately, for 3 days; ask for fixes once, then take it in one of the three ways
+(prompt, code or managed) or drop it. Your ideas and their state are in **Ideas** on caligrafy.com.
 
 ## Your own server
 

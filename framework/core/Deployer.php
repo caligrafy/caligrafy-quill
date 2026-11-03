@@ -14,7 +14,9 @@ namespace Caligrafy;
  * 2. creates the framework tables (framework/settings/platform.sql, safe to run again)
  * 3. runs every application/models/<folder>/create_db.sql that is new or changed since its last run, and records it in
  *    caligrafy_scripts. A script that drops, deletes or truncates is never run again once it ran: run it by hand
- *    (php caligrafer.php sql <file>) when you mean it. seed.sql and other scripts are never run.
+ *    (php caligrafer.php sql <file>) when you mean it. seed.sql and other scripts are never run. A statement that adds
+ *    a column, an index or a foreign key already there (the script's earlier run added it) is skipped, so a script
+ *    keeps its ALTER TABLE ... ADD statements.
  * Without DB_ACTIVATE=true there is nothing to do.
  */
 class Deployer
@@ -120,8 +122,25 @@ class Deployer
     {
         $sql = preg_replace(array('#/\*.*?\*/#s', '/^\s*--.*$/m'), '', (string) file_get_contents($file));
         foreach (array_filter(array_map('trim', explode(';', $sql))) as $statement) {
-            Database::execute($statement);
+            try {
+                Database::execute($statement);
+            } catch (\Throwable $e) {
+                // ALTER TABLE ... ADD a column, an index or a foreign key that the last run added: already done
+                if (!self::alreadyApplied($e)) throw $e;
+            }
         }
+    }
+
+    /**
+     * Whether a statement failed only because what it adds is already there (MySQL and MariaDB: duplicate column 1060,
+     * duplicate key name 1061, duplicate foreign key 1826), so a changed create_db.sql can keep its ALTER TABLE ... ADD
+     * statements and run again
+     */
+    public static function alreadyApplied(\Throwable $e)
+    {
+        $code = ($e instanceof \PDOException && isset($e->errorInfo[1])) ? (int) $e->errorInfo[1] : 0;
+        return in_array($code, array(1060, 1061, 1826), true)
+            || (bool) preg_match('/\b(Duplicate column name|Duplicate key name|Duplicate foreign key constraint name)\b/i', $e->getMessage());
     }
 
     private function line($status, $name, $message)

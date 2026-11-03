@@ -235,7 +235,7 @@ design_stylesheet()                           // URL of public/css/designs/<DESI
 terminateSession($url); getGlobalInformation($superGlobal = 'session')   // 'post' | 'get' | 'files' | default session
 // views / requests / routing
 view($viewName, $viewData = array()); api($viewData = array()); request(); connect(); currentRoute(); currentBind()
-redirect($url)                                // header('Location: '.session('home').sanitizePath($url)); does NOT exit
+redirect($url)                                // header('Location: '.session('home').sanitizePath($url)); an http(s):// address as it is (2.13.5+); does NOT exit
 methodField($method); csrf()                  // echo hidden inputs _method / _token (use as `=methodField('PUT')`, `=csrf()` in pug)
 import($filename)                             // require_once LIB_PATH or HELPER_PATH file
 // files

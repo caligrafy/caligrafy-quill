@@ -29,4 +29,14 @@ final class DeployerTest extends TestCase
         $this->assertFalse(Deployer::destructive("CREATE TABLE IF NOT EXISTS books (id INT, dropped_at DATETIME, deleted TINYINT);"));
         $this->assertFalse(Deployer::destructive("/* DROP TABLE books; was the old way */\n-- DELETE FROM books\nCREATE TABLE IF NOT EXISTS books (id INT);"));
     }
+
+    public function testAColumnOrIndexAlreadyAddedIsSkipped(): void
+    {
+        $duplicate = new PDOException("SQLSTATE[42S21]: Column already exists: 1060 Duplicate column name 'maker_user_id'");
+        $duplicate->errorInfo = ['42S21', 1060, "Duplicate column name 'maker_user_id'"];
+        $this->assertTrue(Deployer::alreadyApplied($duplicate));
+        $this->assertTrue(Deployer::alreadyApplied(new PDOException("SQLSTATE[42000]: Syntax error or access violation: 1061 Duplicate key name 'ideas_status'")));
+        $this->assertFalse(Deployer::alreadyApplied(new PDOException("SQLSTATE[42S02]: Base table or view not found: 1146 Table 'cloud.ideas' doesn't exist")));
+        $this->assertFalse(Deployer::alreadyApplied(new Exception('Duplicate entry \'1\' for key \'PRIMARY\'')));
+    }
 }
