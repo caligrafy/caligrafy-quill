@@ -61,7 +61,7 @@ class CloudClient
                 case 'apps':
                     $apps = $this->call('list_apps');
                     if (!$apps) $this->out(" No app yet: php caligrafer.php cloud create <name>");
-                    foreach ($apps as $app) $this->out(sprintf(" %-24s %-10s %s", $app['name'], $app['status'], $app['url'] . $this->left($app)));
+                    foreach ($apps as $app) $this->out(sprintf(" %-24s %-10s %s", $app['name'], $app['status'], $app['url'] . $this->left($app) . $this->locked($app)));
                     return 0;
                 case 'create':
                     $repo = $this->option($args, '--repo') ?: $this->originRepo();
@@ -96,7 +96,7 @@ class CloudClient
                 case 'status':
                     if (!$name) return $this->usage('status <name>');
                     $app = $this->call('get_app', array('name' => $name));
-                    $this->out(" {$app['url']}: {$app['status']}{$this->left($app)}");
+                    $this->out(" {$app['url']}: {$app['status']}{$this->left($app)}{$this->locked($app)}");
                     return 0;
                 case 'logs':
                     if (!$name) return $this->usage('logs <name> [--jobs]');
@@ -364,7 +364,7 @@ class CloudClient
             call_user_func($this->sleep, 5);
             $app = $this->call('get_app', array('name' => $name));
             if ($app['status'] === 'running') {
-                $this->out(" Online: {$app['url']}" . $this->left($app));
+                $this->out(" Online: {$app['url']}" . $this->left($app) . $this->locked($app));
                 return 0;
             }
             if ($app['status'] === 'failed') {
@@ -375,6 +375,12 @@ class CloudClient
         } while (time() < $until);
         $this->out(" Still deploying after 15 minutes: php caligrafer.php cloud status $name");
         return 1;
+    }
+
+    // locked with a password on Caligrafy Cloud (never printed): its pages ask for it, its JSON routes answer 401
+    private function locked(array $app)
+    {
+        return empty($app['password']) ? '' : ' [password protected]';
     }
 
     private function left(array $app)

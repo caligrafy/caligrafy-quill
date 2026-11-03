@@ -114,6 +114,9 @@ commit, `github.sh push`, deploy again.
 curl -s -o /dev/null -w '%{http_code}\n' https://<name>.caligrafy.com/
 curl -s -H 'Accept: application/json' https://<name>.caligrafy.com/<a JSON route of the app>
 ```
+An app its owner locked with a password (`[password protected]` in `cloud status`, G114) answers the page with a `302`
+to `deploy.caligrafy.com/unlock/<name>` and the JSON route with a `401`: it is online, report it as such and never ask
+for its password.
 Online, the legacy API key is off (`LEGACY_API_KEY=false`): a page that still sends it gets `[ERROR 1004] Access Denied:
 the legacy API key is turned off` (G87). Pages call their routes with `apiHeaders()` (the session and its CSRF token)
 or the generated JS client; programs and agents with personal access tokens. Fix, push, deploy again.

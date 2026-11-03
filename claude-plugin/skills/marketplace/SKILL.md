@@ -9,7 +9,8 @@ argument-hint: "[app-name]"
 
 App: `$ARGUMENTS` (its name on Caligrafy Cloud; empty: the one `cloud apps` lists for this repository, or the project
 folder's name). The maker offered it on its page on Caligrafy Cloud (Marketplace section, which asks them to accept the
-terms); Caligrafy will sell the prompt that recreates it and the maker earns 25% of every sale.
+terms); Caligrafy will sell the prompt that recreates it and the maker earns 25% of every sale. Offering it removed its
+password if it had one (G114): a listed app is public.
 
 **Do it yourself, in one go.** Read, walk the app, write the file, show the user a short summary, submit. The user
 does nothing: everything the listing needs is rendered by this skill. Say first, in one line, that it takes a while

@@ -538,3 +538,13 @@ footer starts one screen down): an inline element placed directly in `body` (a b
 width, and vertical margins between sections no longer collapse. Put content in a block (`section.cq-band`,
 `.cq-inner`...); a page that writes its own footer keeps `footer.cq-footer` as a direct child of `body`. Proof:
 `body.cq-site` in `public/css/layout.css`, the footer script of `site.pug`.
+
+**G114. A password-protected app on Caligrafy Cloud answers a redirect, not its page.** Until it is offered to the
+marketplace, an app's owner may lock it with a password on its Cloud page (Password section, off by default; the
+`set_app_password` capability of Cloud). Every visitor, its owner included, then types it once per browser (30 days):
+a page request answers `302` to `https://deploy.caligrafy.com/unlock/<name>`, and a JSON or API call answers `401
+{"error":"This app is private..."}`. That is a healthy app, not a failed deploy: do not "fix" it. `cloud apps`, `cloud
+status` and the end of `cloud deploy` print `[password protected]` (2.16.3); check it with
+`curl -s -o /dev/null -w '%{http_code} %{redirect_url}' https://<name>.caligrafy.com/`. Never ask for the password and
+never remove it without the user's OK. Offering the app to the marketplace removes it for good. Proof: Cloud's
+`Passwords` model, `CloudClient::locked()`.

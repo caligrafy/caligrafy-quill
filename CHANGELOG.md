@@ -6,6 +6,16 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.16.3] - 2026-11-03
+
+### Changed
+- `php caligrafer.php cloud apps`, `cloud status` and the end of `cloud deploy` print `[password protected]` for an app
+  its owner locked with a password on Caligrafy Cloud (never the password itself). Until an app is offered to the
+  marketplace, its Cloud page can lock it: every visitor types the password once per browser, its owner included.
+- Claude Code plugin 1.28.3: the `ship` and `deploy` skills take a locked app (a `302` to its password page, a `401` to
+  an API call) for an app online, not a failed deploy; the `marketplace` skill says offering removes the password;
+  gotcha G114.
+
 ## [2.16.2] - 2026-11-03
 
 ### Fixed

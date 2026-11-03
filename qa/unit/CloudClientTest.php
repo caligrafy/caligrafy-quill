@@ -88,6 +88,24 @@ final class CloudClientTest extends TestCase
         $this->assertStringContainsString('A week costs 2 credits and you have 0', $out);
     }
 
+    public function testALockedAppSaysSoWithoutItsPassword(): void
+    {
+        putenv('CALIGRAFY_CLOUD_TOKEN=cq_1_ff');
+        $apps = json_encode(['data' => [
+            ['name' => 'shelf', 'status' => 'running', 'url' => 'https://shelf.caligrafy.com', 'no_end' => true, 'password' => 'k7mq-3xtp-9fhr'],
+            ['name' => 'open', 'status' => 'running', 'url' => 'https://open.caligrafy.com', 'no_end' => true, 'password' => null],
+        ]]);
+        [$code, $out] = $this->exec($this->client(['list_apps' => [200, $apps]]), ['apps']);
+        [, $status] = $this->exec($this->client(['get_app' => [200, json_encode(['data' => ['name' => 'shelf', 'status' => 'running',
+            'url' => 'https://shelf.caligrafy.com', 'no_end' => true, 'password' => 'k7mq-3xtp-9fhr']])]]), ['status', 'shelf']);
+        putenv('CALIGRAFY_CLOUD_TOKEN');
+        $this->assertSame(0, $code);
+        $this->assertMatchesRegularExpression('/shelf .*\[password protected\]/', $out);
+        $this->assertDoesNotMatchRegularExpression('/open .*password/', $out);
+        $this->assertStringContainsString('[password protected]', $status);
+        $this->assertStringNotContainsString('k7mq', $out . $status);
+    }
+
     public function testDeleteNeedsYes(): void
     {
         putenv('CALIGRAFY_CLOUD_TOKEN=cq_1_ff');

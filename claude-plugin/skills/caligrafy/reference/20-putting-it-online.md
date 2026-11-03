@@ -73,7 +73,7 @@ php caligrafer.php cloud deploy myapp                # builds and starts it, and
 **4. Keep it online, change it, watch it.**
 
 ```bash
-php caligrafer.php cloud status myapp                # running, paused..., and the time left
+php caligrafer.php cloud status myapp                # running, paused..., the time left, [password protected]
 php caligrafer.php cloud logs myapp                  # the build while it deploys, then what the app prints
 php caligrafer.php cloud jobs myapp                  # its scheduled jobs (2.14.1+): https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs
 php caligrafer.php cloud secret set myapp OPEN_AI_KEY=sk-...    # a setting of its .env, applied at the next deploy
@@ -84,6 +84,8 @@ php caligrafer.php cloud delete myapp --yes          # the app, its database and
 ```
 
 The database settings and the keys of the app are written for you, and your settings cannot replace them; `APP_ENV`, `APP_DEBUG` and the rest of `.env` are yours to set (`APP_ENV=production` and `APP_DEBUG=false` by default). Settings are stored encrypted and never shown again: `cloud secret list` gives their names. Every command is listed in [Caligrafer: cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#cloud).
+
+**A password until it is on the marketplace.** On the app's page on Caligrafy Cloud, the *Password* section locks the app with a password you generate and share (off by default). Everyone types it once per browser, you included, and it lasts 30 days; a new password asks everyone again. While it is locked, a page sends visitors to `https://deploy.caligrafy.com/unlock/<name>`, API and agent calls get `401`, and `cloud apps` and `cloud status` print `[password protected]` (2.16.3+). Locking or unlocking restarts the app (2 to 5 minutes). Offering the app to the [marketplace](#marketplace) removes the password for good: a listed app is public.
 
 **AI agents.** Caligrafy Cloud is itself a Caligrafy application: the dashboard, the `cloud` commands and AI agents call the same capabilities. An agent connects to `https://deploy.caligrafy.com/mcp` with the same token (see [MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#mcp)) and can list, deploy and extend your apps. With the [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin), `/caligrafy-quill:ship <name>` does all of this for you: it commits, creates the GitHub repository and pushes (with your SSH key, else over HTTPS with the GitHub CLI, else a code to approve in your browser), signs in to Caligrafy Cloud with the approval above, adds the deploy key, deploys and checks the app. You only approve in your browser, and say yes before credits are spent. `/caligrafy-quill:deploy` checks that a project is ready, or prepares it for your own server.
 

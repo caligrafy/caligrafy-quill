@@ -71,7 +71,9 @@ an account or type a password).
    php caligrafer.php cloud deploy <name>
    ```
    Run it whole, never through `| tail` (G89): it exits 1 on a refusal. The first deploy of every new app starts its own
-   free 30 minutes (G90). Then check it: `curl -s -o /dev/null -w '%{http_code}' https://<name>.caligrafy.com/`.
+   free 30 minutes (G90). Then check it: `curl -s -o /dev/null -w '%{http_code}' https://<name>.caligrafy.com/`. A `302`
+   to `deploy.caligrafy.com/unlock/<name>` means the owner locked it with a password (`[password protected]` in
+   `cloud status`): it is online (G114).
 5. **Keep it online.** Time left: `cloud status <name>`. Credits: `cloud credits 5|10|25|50` prints a Stripe page for the
    user to pay (never pay for them); `cloud extend <name> week|month|year` spends 2, 5 or 50 credits, and a paused app
    starts again. Spending credits and deleting (`cloud delete <name> --yes`, permanent) need the user's explicit OK.

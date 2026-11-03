@@ -279,7 +279,7 @@ php caligrafer.php cloud create myapp                   # from this project's Gi
 php caligrafer.php cloud create myapp --repo https://github.com/me/myapp --branch live
 php caligrafer.php cloud key myapp                      # the read-only deploy key of a private repository (also in .caligrafy/myapp-deploy-key.pub)
 php caligrafer.php cloud deploy myapp                   # build and start it, following the build (--no-wait: do not follow)
-php caligrafer.php cloud apps                           # your apps, their status and time left ("no end" on an unlimited account)
+php caligrafer.php cloud apps                           # your apps, their status and time left ("no end" on an unlimited account, [password protected] when locked)
 php caligrafer.php cloud status myapp
 php caligrafer.php cloud logs myapp                     # the build while it deploys, then what the app prints (--jobs: the runs of its scheduled jobs)
 php caligrafer.php cloud jobs myapp                     # its scheduled jobs: last and next runs (run <job>: now; history <job>: its runs) (2.14.1+)
