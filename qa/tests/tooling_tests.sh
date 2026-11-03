@@ -350,7 +350,7 @@ foreach ($m["icons"] ?? [] as $icon) {
     $sizes[] = $icon["sizes"];
 }
 foreach (["192x192", "512x512"] as $s) if (!in_array($s, $sizes)) echo "no $s icon\n";
-preg_match_all("#public/images/resources/[^\"]+\.png#", file_get_contents("framework/settings/application/views/default/modules/touchicons.pug"), $t);
+preg_match_all("#public/images/resources/[^\"\x27?]+\.png#", file_get_contents("framework/settings/application/views/default/modules/touchicons.pug"), $t);
 foreach ($t[0] as $f) if (!is_file($f)) echo "touch icon not found: $f\n";
 ' 2>&1)
 [ -z "$OUT" ] && ok "public/manifest.webmanifest is valid JSON, its icons exist with the declared sizes (192, 512) and the touch icons exist" || ko "web app manifest" "$OUT"

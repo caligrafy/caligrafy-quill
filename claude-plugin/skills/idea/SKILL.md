@@ -143,6 +143,10 @@ Bootstrap colors. **Field messages**: a refused input comes back with a message 
 `fields`): show each one in a `p.cq-field-error` right under its own field, never as one list under the button, and
 clear them on the next submit.
 
+**The social card** (what a shared link shows): in `application/config/config.php`, `metadata()` with the app's
+`site_name`, a `title`, a `description` under 125 characters and, when the app has one, an `image` of 1200x630 and its
+`image_alt` (wiki 9.3); `site_url` defaults to `APP_URL`, which Caligrafy Cloud sets.
+
 ## 4. Check every experience (before saying it works)
 
 - `docker compose exec dev-box php caligrafer.php capabilities`: every capability, with the right flags.

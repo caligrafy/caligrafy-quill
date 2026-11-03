@@ -68,7 +68,7 @@ and `$user` for the signed-in parts (G74); data comes from capabilities only, ne
 | Long text | `.cq-doc` | Terms, help |
 | Code | `.cq-code` (a code to compare), `pre.cq-pre` (a token, a command) | |
 | Buttons | `.btn.btn-primary` (black), `.btn.btn-secondary` (ash), `.cq-buttons` for a row | Never Bootstrap colors (`btn-success`, `btn-danger`, `text-primary`...) |
-| Footer | `footer.cq-footer` (in `site.pug`) | `include ../default/modules/share` for the share links |
+| Footer | `footer.cq-footer` (in `site.pug`), a direct child of `body`: it starts one screen down on a short page (2.16.2) | `include ../default/modules/share` for the share links |
 
 Colors and spacing come from the tokens (`var(--cq-color-ink)`, `var(--cq-color-primary)`, `var(--cq-color-surface)`,
 `var(--cq-color-text-muted)`, `var(--cq-gutter)`...), never hard-coded hex values in new code.

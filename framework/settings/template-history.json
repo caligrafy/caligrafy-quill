@@ -6,6 +6,7 @@
         "e3b0c44298fc1c149afbf4c8996fb92427ae41e4649b934ca495991b7852b855"
     ],
     "config/config.php": [
+        "71970f9b8c203a31ee97dbd62a8d320191c850dfd2673b2611f26a3c7b1ba31d",
         "ec1f676eb5c2c9ca35a7de63373c06b962fb67130806c15b6aa0895dbca9b41f"
     ],
     "config/routing/.gitignore": [
@@ -183,7 +184,8 @@
     ],
     "views/default/master/site.pug": [
         "3e32bbf9e02cd1cdd9b720f1a1379c83140c7a762fbed0dee0f04612758b279e",
-        "7363e6a39c94e4bed3560bc863c06f9504b70f6b02e0aa019041ed85e1e11c39"
+        "7363e6a39c94e4bed3560bc863c06f9504b70f6b02e0aa019041ed85e1e11c39",
+        "bcb5466ef3b8d9f2787ec50f914d74dabe558c3efccffe1f07c0c3ccccc8f0fc"
     ],
     "views/default/modules/ach.pug": [
         "abd68d07a18095c9185cdd103d7d333f2fad54cff793e2dd0a817cc970a50031",
@@ -208,7 +210,8 @@
         "eeee34eb657cb7b11c85519cdce47222755f1d4385ec0d7fa18d3577c07adb05"
     ],
     "views/default/modules/metadata.pug": [
-        "4dc37449485282f316919c1facb3f18aab483ec4cb8bf9559b0467e970a7928f"
+        "4dc37449485282f316919c1facb3f18aab483ec4cb8bf9559b0467e970a7928f",
+        "d08821cf08062ed9f945147f0ddf5512ef1c9b6d239b625b790bba253133d8ef"
     ],
     "views/default/modules/metadata_body.pug": [
         "311ef350d4e4c620106298bbbaae42ff622543d2d57858c9b279e4dd9b273565",
@@ -231,6 +234,7 @@
         "daa921c5e6af0eb7f6612a8dcebca240c55e4db42a7568d3ec3883e04360672d"
     ],
     "views/default/modules/touchicons.pug": [
+        "17231a248cb6f2838cd698399628611c7f2be667aa3e935b4ff2e6f7aa184701",
         "5452551660ac4d51b9b8fe1a6a5dd093280619740673ac2066b58163d09aa1d3"
     ],
     "views/default/pages/checkout.pug": [

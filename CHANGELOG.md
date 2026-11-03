@@ -6,6 +6,21 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.16.2] - 2026-11-03
+
+### Fixed
+- The social card (`modules/metadata.pug`): every page built on `site.pug` prints it, from `metadata()` in
+  `application/config/config.php` (new projects have a commented example) or the `'metadata'` of its view; `og:type`
+  is `website` (was `og:product`, refused by Facebook), the image is 1200x630 with its alt text, `og:url` is the page's
+  own address (`site_url`, else `APP_URL`), and nothing is printed before a `title` (no placeholder values).
+
+### Changed
+- The footer of `site.pug` always starts one screen down: just below the screen on a short page, right after the
+  content on a long one (`body.cq-site` is a flex column in `layout.css`, `--cq-footer-h` set by a script).
+- Caligrafy's black logo for `favicon.ico`, the Apple touch icons and the manifest's icons; `site.pug` and
+  `touchicons.pug` link them with their modification time, so browsers fetch a replaced icon again.
+- Claude Code plugin 1.28.2: `/caligrafy-quill:idea` writes the card of every new app; gotchas G112 and G113.
+
 ## [2.16.1] - 2026-11-03
 
 ### Changed

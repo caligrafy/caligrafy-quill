@@ -38,7 +38,9 @@ Every feature is written once, as a **capability** (its inputs, rules and permis
 over MCP. Same rules, same permissions, same audit log, whichever way it is called. A capability can also run on a
 timer, with no page open ([scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)), and
 reach your users with the app closed ([notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications):
-web push and email). Sign-in, tokens, payments, AI, design styles and a production `Dockerfile` come in the box. See
+web push and email). Sign-in, tokens, payments, AI, design styles, a
+[social card](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards) on every page and a
+production `Dockerfile` come in the box. See
 [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works).
 
 <br/>

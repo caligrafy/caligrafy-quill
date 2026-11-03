@@ -227,6 +227,10 @@ body.cq-site { margin: 0; background: var(--cq-color-canvas); color: var(--cq-co
 }
 details.cq-details summary { cursor: pointer; font-size: 14px; font-weight: 500; color: var(--cq-color-ink); }
 .cq-footer { padding: 40px var(--cq-gutter); text-align: center; font-size: 12px; color: var(--cq-color-text-muted); }
+/* The footer always starts one screen down: the page fills the screen and the footer waits just below it (a short
+   scroll), whatever the length of the content. site.pug sets --cq-footer-h to the footer's height. */
+body.cq-site { display: flex; flex-direction: column; min-height: 100vh; min-height: calc(100svh + var(--cq-footer-h, 0px)); }
+body.cq-site > .cq-footer { margin-top: auto; }
 .cq-footer a { color: var(--cq-color-text-muted); margin: 0 8px; text-decoration: none; }
 .cq-footer a:hover { color: var(--cq-color-ink); }
 .cq-share { margin: 0 0 8px; }

@@ -1,31 +1,32 @@
-meta(name="description", content=$metadata['description'])/
-meta(name="keywords", content=keywords())/
-meta(name="author", content=$metadata['creator'])/
-meta(name="google-site-verification", content=$metadata['google-site-verification'])/
-
-meta(itemprop="name", content=$metadata['site_name'])/
-meta(itemprop="description", content=$metadata['description'])/
-meta(itemprop="image", src=$metadata['image'])/
-
-meta(name="twitter:card", content="summary_large_image")
-meta(name="twitter:site", content=$metadata['site_name'])/
-meta(name="twitter:title", content=$metadata['title'])/
-meta(name="twitter:description", content=$metadata['description'])/
-meta(name="twitter:creator", content=$metadata['creator'])/
-meta(name="twitter:image", content =$metadata['image'])/
-meta(name="twitter:data1", content=$metadata['amount'] != '' ? $metadata['amount'] : '0.00')/
-meta(name="twitter:label1", content="Price")
-
-meta(property="og:title", content=$metadata['title'])/
-meta(property="og:type", content="og:product")/
-meta(property="og:url", content =$metadata['site_url'])/
-meta(property="og:image", content =$metadata['image'])/
-meta(property="og:image:width", content="600")/
-meta(property="og:image:height", content="317")/
-meta(property="og:description", content=$metadata['description'])/
-meta(property="og:site_name", content=$metadata['site_name'])/
-meta(property="product:availability", content=$metadata['availability'] != '' ? $metadata['availability'] : 'in stock')/
-meta(property="product:price:amount", content=$metadata['amount'] != '' ? $metadata['amount'] : '0.00')/
-meta(property="product:price:currency", content=$metadata['currency'] != '' ? $metadata['currency'] : trim(localeconv()['int_curr_symbol']))/
-meta(property="product:shipping_cost:amount", content=$metadata['shipping_cost'] != '' ? $metadata['shipping_cost'] : '0.00')/
-meta(property="product:shipping_cost:currency", content=$metadata['currency'] != '' ? $metadata['currency'] : trim(localeconv()['int_curr_symbol']))/
+//- The social card of every page: what Facebook, LinkedIn, X, Slack, iMessage... show when its address is shared.
+//- From metadata() in application/config/config.php (or the 'metadata' a controller passes to its view): title,
+//- description, image (1200x630), image_alt, site_name, site_url (APP_URL by default). Nothing is printed before a title.
+- $card = !empty($metadata) ? (array) $metadata : (array) metadata()
+if !empty($card['title'])
+  - $cardBase = rtrim((string) ($card['site_url'] ?? (getenv('APP_URL') ?: '')), '/')
+  - $cardUrl = $cardBase !== '' ? $cardBase . strtok($_SERVER['REQUEST_URI'] ?? '/', '?') : ''
+  - $cardImage = $card['image'] ?? ''
+  if !empty($card['description'])
+    meta(name="description", content=$card['description'])/
+  meta(property="og:type", content="website")/
+  if !empty($card['site_name'])
+    meta(property="og:site_name", content=$card['site_name'])/
+  meta(property="og:title", content=$card['title'])/
+  if !empty($card['description'])
+    meta(property="og:description", content=$card['description'])/
+  if $cardUrl
+    meta(property="og:url", content=$cardUrl)/
+  if $cardImage
+    meta(property="og:image", content=$cardImage)/
+    meta(property="og:image:width", content=$card['image_width'] ?? '1200')/
+    meta(property="og:image:height", content=$card['image_height'] ?? '630')/
+    if !empty($card['image_alt'])
+      meta(property="og:image:alt", content=$card['image_alt'])/
+  meta(name="twitter:card", content=$cardImage ? 'summary_large_image' : 'summary')/
+  meta(name="twitter:title", content=$card['title'])/
+  if !empty($card['description'])
+    meta(name="twitter:description", content=$card['description'])/
+  if $cardImage
+    meta(name="twitter:image", content=$cardImage)/
+    if !empty($card['image_alt'])
+      meta(name="twitter:image:alt", content=$card['image_alt'])/

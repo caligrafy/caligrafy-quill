@@ -523,3 +523,18 @@ files win, `var()` resolved): `--cq-color-paper`, `--cq-color-page`, `--cq-color
 `--design-font`, `--cq-radius-control`, `--design-radius-card`. A style that sets its colors only inside other rules, or
 in a second `:root`, leaves the emails in Caligrafy's look; web fonts do not load in most mail apps, so the stack's next
 fonts show. Proof: `Notify::theme()`, `qa/unit/NotifyTest.php`.
+
+**G112. The social card comes from `metadata()`, and needs a title.** Every page built on `site.pug` prints its card
+(`modules/metadata.pug`) from `metadata()` in `application/config/config.php`, or the `'metadata'` its view gets;
+nothing is printed before a `title`. Give `site_name`, `title`, a `description` under 125 characters (longer ones are
+cut), and an `image` of 1200x630 with `image_alt`; `og:url` is `site_url` (else `APP_URL`) plus the page's path. X and
+LinkedIn show only the image, the title and the domain: put the message in the title. Before 2.16.2 the card had
+`og:type` `og:product` (refused by Facebook), a 600x317 image and placeholder values, and only pages that passed
+`'metadata' => metadata()` showed it. Platforms keep a card for days: after a change, "Scrape again" in Facebook's
+Sharing Debugger. Proof: `framework/settings/application/views/default/modules/metadata.pug`.
+
+**G113. In `site.pug`, the children of `body` are flex items.** Since 2.16.2 `body.cq-site` is a flex column (the
+footer starts one screen down): an inline element placed directly in `body` (a bare `a` or `span`) takes the full
+width, and vertical margins between sections no longer collapse. Put content in a block (`section.cq-band`,
+`.cq-inner`...); a page that writes its own footer keeps `footer.cq-footer` as a direct child of `body`. Proof:
+`body.cq-site` in `public/css/layout.css`, the footer script of `site.pug`.

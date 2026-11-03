@@ -14,9 +14,9 @@ html(lang="en")
       block title
         | Caligrafy
     link(rel='manifest', href="{$home}public/manifest.webmanifest")
-    if $metadata
-      include ../modules/metadata
-    link(rel='shortcut icon', href=scripts('favicon'), type='image/x-icon')
+    //- the social card of every page (metadata() in application/config/config.php)
+    include ../modules/metadata
+    link(rel='shortcut icon', href=scripts('favicon') . '?v=' . @filemtime(PUBLIC_PATH . 'images/' . getenv('FAVICON')), type='image/x-icon')
     include ../modules/touchicons
     link(rel="stylesheet", href=scripts('bootstrap_css'))
     link(rel="stylesheet", href="{$home}public/css/theme.css")
@@ -62,6 +62,15 @@ html(lang="en")
       footer.cq-footer
         p Copyright &copy; #{copyright()}
 
+    script.
+      // the footer waits just below the screen: the page is one screen plus the footer's height (layout.css)
+      (function () {
+        var footer = document.querySelector('body.cq-site > .cq-footer');
+        if (!footer) return;
+        function size() { document.body.style.setProperty('--cq-footer-h', footer.offsetHeight + 'px'); }
+        size();
+        window.addEventListener('resize', size);
+      })();
     script.
       // phones: the links of the top bar open under it
       (function () {
