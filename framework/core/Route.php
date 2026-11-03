@@ -107,7 +107,8 @@ class Route extends \stdClass
      * Evaluates the route and binds it with variables from the request
     */
     public static function evaluate() {
-        $requestMethod = self::$_request->method;
+        // HEAD asks what GET would answer (monitors, curl -I)
+        $requestMethod = self::$_request->method === 'HEAD' ? 'GET' : self::$_request->method;
         $uriComponents = self::$_request->uriComponents;
 
         $route = self::$_routesComponents;
@@ -136,9 +137,40 @@ class Route extends \stdClass
                 unset($route[$k]);
             }            
         } 
-        self::$_currentRouteKey = $route? array_keys($route)[0]?? 0 : 0;
+        // the root: its routes have no components, so they are matched here (2.16.0; before, every unknown address ran the
+        // first route declared)
+        if (!$route && !$uriComponents) {
+            foreach (self::$_routesComponents as $key => $value) {
+                if (sizeof($value) == 0 && self::$_httpMethods[$key] == $requestMethod) { $route = array($key => $value); break; }
+            }
+        }
+        // nothing matches: 405 when the address exists with another method, else 404
+        if (!$route) {
+            $methods = array();
+            foreach (self::$_routesComponents as $key => $value) {
+                if (self::pathMatches($value, $uriComponents)) $methods[] = self::$_httpMethods[$key];
+            }
+            if ($methods) {
+                if (!headers_sent()) header('Allow: ' . implode(', ', array_unique($methods)));
+                throw Errors::raise(1000, 'this address answers ' . implode(', ', array_unique($methods)));
+            }
+            throw Errors::raise(1005);
+        }
+        self::$_currentRouteKey = array_keys($route)[0];
         self::$_currentRouteComponents = self::$_routesComponents[self::$_currentRouteKey];
         self::$currentRoute = urldecode(implode('/', self::$_routesComponents[self::$_currentRouteKey]));
+    }
+
+    /**
+     * Whether a declared route (its components) matches the request's components, whatever the method
+     */
+    private static function pathMatches(array $components, array $uriComponents)
+    {
+        if (sizeof($components) != sizeof($uriComponents)) return false;
+        foreach ($components as $i => $part) {
+            if (!preg_match(ROUTE_ARG_PATTERN, $part) && urldecode($part) !== urldecode($uriComponents[$i])) return false;
+        }
+        return true;
     }
 
     /**

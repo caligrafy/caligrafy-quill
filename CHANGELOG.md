@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.16.0] - 2026-11-03
+
+### Changed
+- An address no route declares answers 404 Page Not Found (`[ERROR 1005]`, or JSON to an API call) instead of running
+  the first route of `web.php` with status 200; an address declared only with other methods answers 405 with an `Allow`
+  header; `/` is matched by its own route, and `HEAD` is answered like `GET`. Projects whose links relied on landing on
+  the first route need a route for them.
+- Claude Code plugin 1.28.0: gotcha G4, the Routing and Helpers pages.
+
 ## [2.15.0] - 2026-11-03
 
 ### Added

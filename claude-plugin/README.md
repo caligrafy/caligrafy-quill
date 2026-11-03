@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.28.0** - Caligrafy Quill 2.16.0: an unknown address answers 404, a wrong method 405 (G4, Routing, Helpers).
 - **1.27.0** - Caligrafy Quill 2.15.0, notifications: `Notify::user()` to web push and confirmed email (in the design
   style), `notify.js`, the `notify_*` capabilities, `Route::notifications()`, `notify keys`; the Notifications page,
   the API reference, G109-G110; the `new-capability` skill writes alerts.

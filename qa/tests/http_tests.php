@@ -1240,4 +1240,27 @@ qa_test('another POST without a token is still refused (the exemption is only th
     qa_assert($r['status'] >= 400, 'refused: ' . $r['status']);
 });
 
+qa_section('Unknown addresses (2.16.0): 404, and 405 for a known address with another method');
+
+qa_test('an address no route declares answers 404, not the first route', function () {
+    $r = (new QaBrowser())->get('/no/such/page');
+    qa_equals(404, $r['status'], substr($r['body'], 0, 200));
+    qa_contains('Page Not Found', $r['body']);
+    $json = (new QaBrowser())->get('/no/such/page', ['headers' => ['Accept: application/json']]);
+    qa_equals(404, $json['status']);
+    qa_contains('"error"', $json['body']);
+});
+
+qa_test('a known address with another method answers 405 and says which methods it takes', function () {
+    $r = (new QaBrowser())->request('DELETE', '/helloworld', ['headers' => ['Accept: application/json']]);
+    qa_equals(405, $r['status'], substr($r['body'], 0, 200));
+    qa_assert(preg_match('/^Allow: GET/mi', $r['headers']) === 1, $r['headers']);
+});
+
+qa_test('the root and HEAD still answer', function () {
+    qa_equals(200, (new QaBrowser())->get('/')['status']);
+    qa_equals(200, (new QaBrowser())->request('HEAD', '/helloworld')['status']);
+    qa_contains('Hello World', (new QaBrowser())->get('/helloworld')['body']);
+});
+
 qa_summary();

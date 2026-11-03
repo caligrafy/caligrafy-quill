@@ -22,6 +22,7 @@ Path constants: `ROOT` (cwd), `APP_PATH` (application/), `TEST_PATH`, `FRAMEWORK
 URL building: `session('home')` = `APP_PROTOCOL://SERVER_NAME[:port]/` + `APP_ROOT/` (when `APP_ROOT` is non-empty). `session('public')` = home + `public/`.
 
 ## Route (`Caligrafy\Route`)
+- 2.16.0: `evaluate()` with no matching route raises 1005 (404), or 1000 (405, `Allow` header) when `pathMatches()` finds the address under other methods; `/` is matched by a route with no components and the same method; `HEAD` is matched as `GET`.
 
 ```php
 Route::get(string $route, string|callable $method = null)

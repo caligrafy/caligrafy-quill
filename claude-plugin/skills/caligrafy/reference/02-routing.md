@@ -21,7 +21,7 @@ Route::delete($uri, $callback);
 Keep the following rules in mind when you define routes:
 + A request matches a route when the HTTP method is the same and the path has the same number of segments, each fixed segment being identical. `{variables}` match any single segment.
 + The routes are evaluated in the order they are defined and the first match wins.
-+ When no route matches (an unknown URL or a wrong HTTP method), **the first route defined in the file is executed**. An unmatched URL does not return a 404: keep `Route::get('/', ...)` as the first route (the `/` route is only reached through this fallback).
++ When no route matches, the answer is **404 Page Not Found** (`[ERROR 1005]`, or `{"error": ...}` to an API call); when the address exists but not with that HTTP method, **405** with an `Allow` header listing the methods it takes. `HEAD` is answered like `GET`. Before 2.16.0 an unmatched URL ran the first route of the file instead.
 + `Route::run();` must always be the last statement inside the `try` block of the file.
 
 Your first reaction might be that HTML `forms` do not support `PUT` and `DELETE`. True that and the framework is capable of doing that work for you. You can check [here](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#htmlformmethods) how it is done.

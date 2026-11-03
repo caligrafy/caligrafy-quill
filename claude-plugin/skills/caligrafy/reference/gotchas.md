@@ -31,7 +31,7 @@ Proof: `framework/core/Model.php`, `framework/settings/application/models/Auth/U
 
 **G3. `DB_PORT`.** **Fixed:** `Database::dsn()` adds `;port=DB_PORT` unless `DB_HOST` already contains `port=` (the old workaround `DB_HOST="127.0.0.1;port=3307"` keeps working). Inside Docker use `DB_HOST=mysql`, `DB_PORT=3306`. With `DB_HOST=localhost`, PDO MySQL uses the Unix socket and ignores the port: use `127.0.0.1` to force TCP. Proof: `framework/database/Database.php`.
 
-**G4. Unknown URLs do not 404: they run the FIRST route declared.** `Route::evaluate()` falls back to route index 0 when nothing matches (also for a wrong HTTP method). Keep `Route::get('/', ...)` as the first route and do not rely on 404s. Proof: `Route.php` (`evaluate`).
+**G4. Unknown URLs (fixed in 2.16.0).** Before 2.16.0 `Route::evaluate()` fell back to the first route declared when nothing matched (an unknown URL or a wrong HTTP method answered 200 with that route, usually the home page). Since 2.16.0: no match answers `Errors::raise(1005)` (404, a page or `{"error"}` JSON); an address declared with other methods answers `Errors::raise(1000)` (405) with an `Allow` header; `/` is matched by its own route (its routes have no components), and `HEAD` is evaluated as `GET`. A POST, PUT or DELETE form without `_token` still fails the CSRF check (`[ERROR 3000]`) before routing. On older versions keep `Route::get('/', ...)` first. Proof: `Route::evaluate()`, `Route::pathMatches()`, `qa/tests/http_tests.php`.
 
 **G5. `redirect()` does not stop the script.** It only sends a `Location` header. Write `redirect('/x'); exit;` (or `return`) when code follows. `logout()` and `guard()` do exit. Proof: `corehelpers.php` (`redirect`), `Auth.php`.
 
