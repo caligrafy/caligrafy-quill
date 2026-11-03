@@ -40,7 +40,7 @@ Before the phases, it generates what a project needs and removes it at the end: 
 | Database scripts | `mysql` in the `mysql` container | `models/Auth/create_db.sql` can be re-run without deleting users |
 | Framework tests | `qa/tests/cli_tests.php` in the web container | Models (CRUD with falsy values, SQL injection, relationships and pivots), validation, the database connection, helpers, OpenAI request building, the Assistant on the Responses and Conversations APIs, Stripe against stripe-mock, Coinbase Business with real JWT signatures, the Groq Agent and the other Agent providers, Watson |
 | Unit tests | `vendor/bin/phpunit` in the web container | The PHPUnit tests of `qa/unit` (see [below](#unit)) |
-| HTTP tests | `qa/tests/http_tests.php` on the host, against `http://localhost:8090` | The front controller, the web app manifest and service worker, server files that must not be served, client apps (`?app=`), CSRF and API access, the REST API example of the wiki, uploads, the authentication module, the AI controller, face login with liveness and passkeys, HTTP status codes |
+| HTTP tests | `qa/tests/http_tests.php` on the host, against `http://localhost:8090` (or the next free port) | The front controller, the web app manifest and service worker, server files that must not be served, client apps (`?app=`), CSRF and API access, the REST API example of the wiki, uploads, the authentication module, the AI controller, face login with liveness and passkeys, HTTP status codes |
 | Doctor tests | `qa/tests/doctor_tests.sh` | `php caligrafer.php doctor` against the mocks: good and wrong keys, unknown models, leading spaces, DNS errors, Agent providers, masked secrets |
 | FileInfo hosts | `qa/run.sh` itself | The `.htaccess` rules on a host that only allows `AllowOverride FileInfo`: pages still load, server files and uploaded scripts answer `403`, `sw.js` keeps `Service-Worker-Allowed` and the manifest its type |
 | Tooling tests | `qa/tests/tooling_tests.sh` on the host | `php -l` on the framework, `caligrafer initialize` and `upgrade` on an older project, the client app scaffolds, the liveness logic (`node qa/tests/liveness_tests.js`), front-end libraries (pinned and reachable CDN URLs, no jQuery, no Bootstrap 3), the Bootstrap 5 compatibility layer of `theme.css`, `.env` templates, the web app manifest, the Vue SPA template (build, ESLint, `npm audit`), the Claude plugin |
@@ -63,7 +63,7 @@ The suite exits with `0` when every phase passes. Each check prints `PASS` or `F
 | `QA_WIKI=<wiki clone>` | The tooling phase also checks that the wiki mirrors of the Claude plugin are up to date with that clone (`sync-wiki.py --check`). Without it, the check is skipped |
 | `QA_NO_BUILD=1` | Reuses the existing `quillqa-web` image instead of rebuilding it. Use it on networks where the image build fails |
 | `QA_SKIP_SPA=1` | Skips the Vue SPA build of the tooling phase |
-| `QA_WEB_PORT`, `QA_DB_PORT` | Ports of the stack (`8090`, `3316`) |
+| `QA_WEB_PORT`, `QA_DB_PORT` | Ports of the stack (default: the first free ports from `8090` and `3316`) |
 
 For example, before a release:
 ```bash

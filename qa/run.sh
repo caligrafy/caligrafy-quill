@@ -6,7 +6,8 @@
 #
 # Phases: database scripts, framework (CLI), unit tests (PHPUnit), HTTP, doctor, FileInfo hosts, tooling.
 # Requires Docker, PHP >= 8.1 with curl on the host, Composer dependencies installed (vendor/) and Node.js.
-# The stack uses its own compose project (quillqa) and ports (QA_WEB_PORT=8090, QA_DB_PORT=3316).
+# The stack uses its own compose project (quillqa) and ports: QA_WEB_PORT and QA_DB_PORT, else the first free ones
+# from 8090 and 3316.
 # QA_NO_BUILD=1 skips the image build and reuses the existing quillqa-web image.
 # It refuses to run if application/ or .env exist and were not created by a previous QA run.
 
@@ -16,7 +17,20 @@ ROOT=$(pwd)
 COMPOSE="docker compose -f qa/docker-compose.yml"
 KEEP=0
 [ "${1:-}" = "--keep" ] && KEEP=1
-export QA_WEB_PORT=${QA_WEB_PORT:-8090}
+# the first free port from the default up (other projects' servers often hold 8090 or 3316): a port is taken when
+# something answers on it
+port_taken() {
+    if command -v nc >/dev/null 2>&1; then nc -z 127.0.0.1 "$1" >/dev/null 2>&1
+    elif command -v lsof >/dev/null 2>&1; then lsof -nP -iTCP:"$1" -sTCP:LISTEN >/dev/null 2>&1
+    else return 1; fi
+}
+free_port() {
+    p=$1
+    while port_taken "$p"; do p=$((p + 1)); done
+    echo "$p"
+}
+export QA_WEB_PORT=${QA_WEB_PORT:-$(free_port 8090)}
+export QA_DB_PORT=${QA_DB_PORT:-$(free_port 3316)}
 export QA_BASE="http://localhost:$QA_WEB_PORT"
 
 fail() { echo "qa: $*" >&2; exit 2; }
@@ -99,7 +113,7 @@ cp qa/fixtures/docs/components.js public/qaapp/scripts/components.js
 cp -r framework/plugins/bot public/qabot
 
 # --- stack --------------------------------------------------------------------------------
-echo "qa: starting the stack (web :$QA_WEB_PORT, mysql :${QA_DB_PORT:-3316})"
+echo "qa: starting the stack (web :$QA_WEB_PORT, mysql :$QA_DB_PORT)"
 # QA_NO_BUILD=1 reuses an existing quillqa-web image instead of rebuilding it (for networks where the image build fails)
 BUILD="--build"; [ "${QA_NO_BUILD:-0}" = "1" ] && BUILD="--no-build"
 $COMPOSE up -d $BUILD --wait >/dev/null 2>&1 || { $COMPOSE up -d $BUILD; fail "docker compose up failed"; }

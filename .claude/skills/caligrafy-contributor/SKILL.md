@@ -104,10 +104,13 @@ which run on Caligrafy themselves (do nothing without a yes). For each one, in i
 3. check it locally (the pages the change touches, sign-in, `doctor`: its line `Claude Code plugin` must show the new
    plugin version; if not, `php caligrafer.php plugin` there), then commit and push;
 4. deploy through Coolify with the maintainer's own access (its address, token and app ids live outside this
-   repository), wait for the deployment to finish, and check the live pages.
+   repository), wait for the deployment to finish, and check the live pages. Coolify is for these two sites only.
 
 Do the same update for the maintainer's other Caligrafy apps in `~/www` (every folder with
-`framework/core/Framework.php`), and deploy them on Caligrafy Cloud with the maintainer's OK. Before reporting, check
+`framework/core/Framework.php`), push each one, and deploy them on Caligrafy Cloud with the maintainer's OK: from each
+app's folder, `php caligrafer.php cloud deploy <name>` (its `.caligrafy/cloud.json` holds the owner's sign-in), never
+Coolify's API. Cloud follows only the deploys it starts: one sent to Coolify directly never shows Deploying on
+deploy.caligrafy.com and leaves the app's record on its previous deployment. Wait for `Online:`, then check the app. Before reporting, check
 every folder: its `Framework::VERSION` is the release, and Claude Code runs the release's plugin there:
 ```bash
 for d in ~/www/*/; do [ -f "$d/framework/core/Framework.php" ] && (cd "$d" && printf '%s ' "$(basename "$d")" && php caligrafer.php doctor --only project 2>&1 | grep -E 'Quill [0-9]|Claude Code plugin' | tr -s ' ' | tr '\n' ' '; echo); done
@@ -125,6 +128,8 @@ plainly what is not done:
 3. **Course updated?** Its pinned release, the lessons the change touches, `tools/check-pages.py` (0 problems), the
    course wiki identical, both pushed.
 4. **Inventory of the apps**: a table of every Caligrafy folder in `~/www` (the loop of step 6), with its Caligrafy
-   version, the Claude plugin version Claude Code runs there, and whether it is pushed and deployed.
+   version, the Claude plugin version Claude Code runs there, whether it is pushed, and what runs live (the commit of
+   its last deployment and the address answering).
 
-Also say what was left (a step skipped, a question unanswered, a check that could not be made).
+Also say what was left (a step skipped, a question unanswered, a check that could not be made). This report is the
+closing message of the update, after the deploys too, sent without being asked: never a short status instead of it.

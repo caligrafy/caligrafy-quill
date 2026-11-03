@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.13.6] - 2026-11-03
+
+### Changed
+- `qa/run.sh` takes the first free ports from 8090 and 3316 when `QA_WEB_PORT` / `QA_DB_PORT` are not set: other
+  projects' servers often hold those, and the suite failed to start. The wiki (Testing Caligrafy, Security and
+  upgrading) and gotcha G38 of the Claude Code plugin 1.25.6 say so.
+- The release steps of the contributor skill: the maintainer's apps on Caligrafy Cloud are deployed with
+  `php caligrafer.php cloud deploy <name>`, never through Coolify, and the four-part report closes every update.
+
 ## [2.13.5] - 2026-11-02
 
 ### Fixed

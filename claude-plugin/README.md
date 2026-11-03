@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.25.6** - Caligrafy Quill 2.13.6: the QA suite takes the first free ports from 8090 and 3316 (G38, Testing
+  Caligrafy, Security and upgrading).
 - **1.25.5** - Caligrafy Quill 2.13.5: a changed `create_db.sql` keeps its `ALTER TABLE ... ADD` lines (G68),
   `redirect()` to a full address (G107), Pug's vanishing `$40` and one-line `- if` (G105, G106, doctor warns), buttons
   of a page's own colored section (UI guidelines); caligrafy.com's Listings, Earnings, Tasks, Library, the three ways to
