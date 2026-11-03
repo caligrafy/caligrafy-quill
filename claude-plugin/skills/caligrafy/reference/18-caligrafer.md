@@ -272,7 +272,8 @@ php caligrafer.php cloud key myapp                      # the read-only deploy k
 php caligrafer.php cloud deploy myapp                   # build and start it, following the build (--no-wait: do not follow)
 php caligrafer.php cloud apps                           # your apps, their status and time left ("no end" on an unlimited account)
 php caligrafer.php cloud status myapp
-php caligrafer.php cloud logs myapp                     # the build while it deploys, then what the app prints
+php caligrafer.php cloud logs myapp                     # the build while it deploys, then what the app prints (--jobs: the runs of its scheduled jobs)
+php caligrafer.php cloud jobs myapp                     # its scheduled jobs: last and next runs (run <job>: now; history <job>: its runs) (2.14.1+)
 php caligrafer.php cloud extend myapp week              # week (2 credits), month (5) or year (50)
 php caligrafer.php cloud credits 10                     # buy 5, 10, 25 or 50 credits on Stripe (1 credit = 1 USD)
 php caligrafer.php cloud secret set myapp OPEN_AI_KEY=sk-...   # a setting of its .env, applied at the next deploy

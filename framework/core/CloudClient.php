@@ -99,10 +99,14 @@ class CloudClient
                     $this->out(" {$app['url']}: {$app['status']}{$this->left($app)}");
                     return 0;
                 case 'logs':
-                    if (!$name) return $this->usage('logs <name>');
+                    if (!$name) return $this->usage('logs <name> [--jobs]');
+                    if (in_array('--jobs', $args, true)) return $this->jobs($name, array('history-all'));
                     $logs = $this->call('app_logs', array('name' => $name));
                     $this->out($logs['logs'] !== '' ? $logs['logs'] : " No logs ({$logs['status']}).");
                     return 0;
+                case 'jobs':
+                    if (!$name) return $this->usage('jobs <name> [run <job> | history <job> [--limit 20]]');
+                    return $this->jobs($name, array_slice($args, 2));
                 case 'extend':
                     $period = strtolower($args[2] ?? '');
                     if (!$name || !in_array($period, self::PERIODS, true)) return $this->usage('extend <name> week|month|year   (2, 5 or 50 credits)');
@@ -169,6 +173,50 @@ class CloudClient
             throw new \RuntimeException(($error['message'] ?? 'Refused') . $fields);
         }
         throw new \RuntimeException($status === 0 ? 'Caligrafy Cloud could not be reached (' . $this->url() . ')' : "Caligrafy Cloud answered $status");
+    }
+
+    /**
+     * The scheduled jobs of an app (2.14.1+, Caligrafy Cloud runs application/config/schedule.php): each job, run one
+     * now, the runs of one, or every job's latest runs (logs --jobs)
+     */
+    private function jobs($name, array $args)
+    {
+        $action = strtolower($args[0] ?? '');
+        $job = $args[1] ?? null;
+        $time = function ($iso) { return $iso ? date('Y-m-d H:i T', strtotime($iso)) : '-'; };
+        if ($action === 'run') {
+            if (!$job) return $this->usage('jobs <name> run <job>');
+            $this->call('app_job_run', array('name' => $name, 'job' => $job));
+            $this->out(" $job of $name starts within a minute: php caligrafer.php cloud jobs $name history $job");
+            return 0;
+        }
+        $runs = function ($job, $limit) use ($name, $time) {
+            foreach ($this->call('app_job_history', array('name' => $name, 'job' => $job, 'limit' => $limit))['runs'] as $r) {
+                $this->out(sprintf(' %s  %-24s %-8s %s', $time($r['started_at']), $job, $r['outcome'], $r['duration'] !== null ? $r['duration'] . ' s' : ''));
+                if ($r['output'] !== '') $this->out('    ' . str_replace("\n", "\n    ", $r['output']));
+            }
+        };
+        if ($action === 'history') {
+            if (!$job) return $this->usage('jobs <name> history <job> [--limit 20]');
+            $runs($job, (int) ($this->option($args, '--limit') ?: 20));
+            return 0;
+        }
+        $overview = $this->call('app_jobs', array('name' => $name));
+        if (!empty($overview['error'])) $this->out(" The jobs of $name do not run: {$overview['error']}");
+        if (!$overview['jobs']) {
+            if (empty($overview['error'])) $this->out(" $name has no scheduled jobs (application/config/schedule.php, read at each deploy).");
+            return 0;
+        }
+        if ($action === 'history-all') {
+            foreach ($overview['jobs'] as $j) $runs($j['name'], 5);
+            return 0;
+        }
+        foreach ($overview['jobs'] as $j) {
+            $last = $j['last_run'] ? $time($j['last_run']['started_at']) . ' ' . $j['last_run']['outcome'] : 'not run yet';
+            $this->out(sprintf(' %-24s %-16s %-18s last %-28s next %s', $j['name'], $j['cron'], $j['timezone'], $last, $time($j['next_run'])));
+        }
+        if (!empty($overview['note'])) $this->out(" {$overview['note']}.");
+        return 0;
     }
 
     private function login($token, array $args = array())
@@ -401,7 +449,8 @@ class CloudClient
             . "  cloud create <name> [--repo <url>] [--branch <b>]   from this project's GitHub repository\n"
             . "  cloud key <name>                      the read-only deploy key of a private repository (gh repo deploy-key add)\n"
             . "  cloud deploy <name> [--no-wait]       build and start it (every new app: 30 free minutes from its first deploy)\n"
-            . "  cloud apps | status <name> | logs <name>\n"
+            . "  cloud apps | status <name> | logs <name> [--jobs]\n"
+            . "  cloud jobs <name> [run <job> | history <job>]   its scheduled jobs: last and next runs, run one now, its runs\n"
             . "  cloud extend <name> week|month|year   2, 5 or 50 credits\n"
             . "  cloud credits 5|10|25|50              buy credits (1 credit = 1 USD) on Stripe\n"
             . "  cloud submit <name> [--no-deploy]     send the marketplace listing (.caligrafy/marketplace.json), then deploy\n"

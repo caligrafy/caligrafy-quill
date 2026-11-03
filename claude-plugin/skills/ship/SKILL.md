@@ -120,3 +120,6 @@ or the generated JS client; programs and agents with personal access tokens. Fix
 
 Report, with the real addresses: the site, the repository, the time left (`cloud status <name>`), and what the user
 approved in the browser. After a change later: commit, `github.sh push`, `caligrafer cloud deploy <name>`.
+When the project has scheduled jobs (`php caligrafer.php schedule list` lists some), check them once it is online:
+`caligrafer cloud jobs <name>` lists them (an error says why they do not run), `cloud jobs <name> run <job>` then
+`cloud jobs <name> history <job>` must show `ok`.

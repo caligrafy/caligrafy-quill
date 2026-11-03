@@ -68,9 +68,21 @@ Projects made before 2.14.0 get the `scheduler` service in `docker-compose.yaml`
 
 ## Online
 
-+ **Caligrafy Cloud** runs the jobs while the app is online (from the release of Caligrafy Cloud that follows 2.14.0).
-  At each start, the deploy step prints the jobs on one line of the log, `caligrafy-schedule {...}` (the listing of
-  `schedule list --json`), or `caligrafy-schedule-invalid` with the problems: that is how Cloud learns them.
++ **Caligrafy Cloud** runs the jobs while the app is online: deploy, and they start. At each start the deploy step
+  prints the jobs on one line of the log (`caligrafy-schedule {...}`, the listing of `schedule list --json`), and Cloud
+  runs each one inside the app's container on its rhythm, with the app's code, settings and database.
+
+  | | |
+  |---|---|
+  | **See them** | `php caligrafer.php cloud jobs myapp` (each job, its last run and its next one), or **Jobs** on the app's page |
+  | **Run one now** | `php caligrafer.php cloud jobs myapp run check-prices` (within the minute), or **Run now** |
+  | **Their runs** | `php caligrafer.php cloud jobs myapp history check-prices` (7 days, with their output), `cloud logs myapp --jobs` |
+  | **Limits** | 20 jobs per app, once a minute at most, 300 seconds per run; included in the app's time, no extra credits |
+  | **Paused** | A paused app runs no jobs, and missed runs are not caught up |
+  | **Failing** | After 10 failed runs in a row of one job, Cloud emails you once; it never turns a job off |
+  | **Invalid file** | The app stays online but its jobs do not run: the app's page and an email say why. Fix the file and deploy again |
+
+  Apps made before 2.14.0 have no jobs until they are updated (`php caligrafer.php update`) and deployed again.
 + **Your own server** (Coolify, Docker): run a second container from the same image with
   `php caligrafer.php schedule work`, or `php caligrafer.php schedule due` from the system's cron every minute.
 

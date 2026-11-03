@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.14.1] - 2026-11-03
+
+### Added
+- `php caligrafer.php cloud jobs <name> [run <job> | history <job> [--limit 20]]` and `cloud logs <name> --jobs`:
+  Caligrafy Cloud now runs the scheduled jobs of its apps (read from the deploy step's `caligrafy-schedule` line at
+  each deploy, one run at a time, while the app is online; 20 jobs per app; an email after 10 failures in a row).
+- Claude Code plugin 1.26.1: the Scheduled jobs page and the release notes say how Cloud runs them; the `ship` skill
+  checks the jobs of a shipped app.
+
 ## [2.14.0] - 2026-11-03
 
 ### Added

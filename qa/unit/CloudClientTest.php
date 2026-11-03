@@ -194,4 +194,32 @@ final class CloudClientTest extends TestCase
         $this->assertStringContainsString('/caligrafy-quill:marketplace', $out);
         $this->assertSame([], $this->calls);
     }
+
+    public function testJobsListsEachJobWithItsLastAndNextRun(): void
+    {
+        putenv('CALIGRAFY_CLOUD_TOKEN=cq_7_abc123');
+        $jobs = '{"data":{"status":"running","error":null,"note":null,"jobs":[{"name":"check-prices","cron":"* * * * *","timezone":"UTC","timeout":55,'
+            . '"last_run":{"started_at":"2026-11-03T12:00:00+00:00","duration":1.2,"outcome":"ok","output":""},"next_run":"2026-11-03T12:01:00+00:00"}]}}';
+        [$code, $out] = $this->exec($this->client(['app_jobs' => [200, $jobs]]), ['jobs', 'pricepilot']);
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('check-prices', $out);
+        $this->assertStringContainsString(' ok', $out);
+        $this->assertSame(['name' => 'pricepilot'], $this->calls[0][1]);
+        putenv('CALIGRAFY_CLOUD_TOKEN');
+    }
+
+    public function testJobsRunAndHistoryCallTheirCapabilities(): void
+    {
+        putenv('CALIGRAFY_CLOUD_TOKEN=cq_7_abc123');
+        [$code, $out] = $this->exec($this->client(['app_job_run' => [200, '{"data":{"job":"check-prices","starts_before":"2026-11-03T12:02:00+00:00"}}']]), ['jobs', 'pricepilot', 'run', 'check-prices']);
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('starts within a minute', $out);
+        $this->assertSame(['name' => 'pricepilot', 'job' => 'check-prices'], $this->calls[0][1]);
+        $history = '{"data":{"job":"check-prices","runs":[{"started_at":"2026-11-03T12:00:00+00:00","duration":1.2,"outcome":"error","output":"check-prices: error (no price)"}]}}';
+        [$code, $out] = $this->exec($this->client(['app_job_history' => [200, $history]]), ['jobs', 'pricepilot', 'history', 'check-prices', '--limit', '5']);
+        $this->assertSame(0, $code);
+        $this->assertStringContainsString('check-prices: error (no price)', $out);
+        $this->assertSame(['name' => 'pricepilot', 'job' => 'check-prices', 'limit' => 5], $this->calls[1][1]);
+        putenv('CALIGRAFY_CLOUD_TOKEN');
+    }
 }

@@ -75,6 +75,7 @@ php caligrafer.php cloud deploy myapp                # builds and starts it, and
 ```bash
 php caligrafer.php cloud status myapp                # running, paused..., and the time left
 php caligrafer.php cloud logs myapp                  # the build while it deploys, then what the app prints
+php caligrafer.php cloud jobs myapp                  # its scheduled jobs (2.14.1+): https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs
 php caligrafer.php cloud secret set myapp OPEN_AI_KEY=sk-...    # a setting of its .env, applied at the next deploy
 php caligrafer.php cloud deploy myapp                # after a git push, or a new setting
 php caligrafer.php cloud credits 10                  # opens the Stripe payment page

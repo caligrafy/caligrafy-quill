@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.26.1** - Caligrafy Quill 2.14.1: Caligrafy Cloud runs the scheduled jobs; `cloud jobs` (list, run, history) and
+  `cloud logs --jobs`; the `ship` skill checks the jobs of a shipped app.
 - **1.26.0** - Caligrafy Quill 2.14.0, scheduled jobs: capabilities on a timer (`application/config/schedule.php`,
   `schedule` commands, `Context::system`, `caligrafy_job_runs`, the `scheduler` container); the `new-capability` skill
   writes jobs, the `deploy` skill runs them on an own server; Scheduled jobs page, API reference, G108; the 2.13.5 and
