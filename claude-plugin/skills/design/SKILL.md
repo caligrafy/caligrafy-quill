@@ -91,7 +91,8 @@ from your notes, never from the example's values:
 2. Fonts: `@import` the free substitutes from Google Fonts at the very top. Never link or embed proprietary fonts
    (Söhne, SF Pro, Copernicus, Styrene, Circular...): name them first in `font-family` only when the DESIGN.md does,
    followed by the substitute and a generic family.
-3. `:root`: the design's values as the `--design-*` custom properties of `look.css` (same names, so every Caligrafy
+3. `:root` (the first rule of the file: the app's emails read their colors, font and corners from it, G111): the
+   design's values as the `--design-*` custom properties of `look.css` (same names, so every Caligrafy
    rule follows), then the Caligrafy tokens they replace (`--cq-color-ink`, `--cq-color-paper`, `--cq-color-page`,
    `--cq-color-canvas`, `--cq-color-surface`, `--cq-color-primary`, `--cq-color-on-primary`, `--cq-color-text`,
    `--cq-color-text-muted`, `--cq-color-border`, `--cq-radius-control`, `--cq-radius-card`) and, for the camera pages,
@@ -130,6 +131,10 @@ signed in, and the phone Menu opened. For each one:
 - nothing unreadable (white on white, dark text on a dark card, placeholders, disabled buttons, autofill);
 - focus a field and a button with the keyboard; hover the buttons; no horizontal scroll on the phone;
 - the console has no errors and the stylesheet loads (`link[href*="css/designs/"]`).
+Then the emails (Caligrafy Quill 2.15.0+): `docker compose exec dev-box php -r 'require "vendor/autoload.php";
+foreach (["ServiceError","Notify"] as $c) require "framework/core/$c.php"; echo Caligrafy\Notify::html("Hello",
+["A notification in this style."], ["Open", "https://example.com"], "Footer");' > /tmp/email.html`, open it: its button,
+font and colors must be the style's.
 Fix the stylesheet and reload until all of them pass. Show the user desktop and phone screenshots of the sign-in page
 and of a component page, say which file you wrote, and how to switch back: `caligrafer design off` (or another style
 with `design use <name>`, then this skill again).

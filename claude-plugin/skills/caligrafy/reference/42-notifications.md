@@ -57,6 +57,66 @@ Route::notifications();                 // the pages the emails link to: confirm
 | `APP_URL` | empty | The app's address, for the links of emails sent by jobs (Caligrafy Cloud sets it) |
 | `MAIL_HOST`... `MAIL_FROM` | | The emails' server and sender; without them email reports `not-configured` and push still works |
 
+## Example: tell the administrators what is late, every morning
+
+A [scheduled job](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs) that notifies: every morning at 8,
+each administrator hears how many loans are due today or late. The whole lesson, with a page and Caligrafy Cloud:
+[course lesson 15](https://github.com/caligrafy/caligrafy-quill-course/wiki/15-Reminders).
+
+**1. The capability**, `application/services/Loans/RemindLoans.php`:
+
+```php
+<?php
+
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Database;
+use Caligrafy\Notify;
+use Caligrafy\Service;
+
+#[Capability(name: 'remind_loans', description: 'Notifies every administrator of the loans due today or late.', scope: 'loans:write', level: 1)]
+class RemindLoans extends Service
+{
+    public function handle(array $input, Context $context)
+    {
+        $loans = Database::toArray(Database::execute('SELECT due_on FROM loans WHERE returned_at IS NULL AND due_on <= ?', array(date('Y-m-d'))));
+        if (!$loans) {
+            return array('notified' => 0);
+        }
+        $notified = 0;
+        foreach (Database::toArray(Database::execute('SELECT id FROM users WHERE permissions >= 1')) as $admin) {
+            $sent = Notify::user($admin['id'], array(
+                'title' => count($loans) . ' book(s) to bring back',
+                'body' => 'Open the loans to see who has them.',
+                'url' => '/loans',
+                'tag' => 'loans-due',   // tomorrow's message replaces today's
+            ));
+            $notified += ($sent['push'] > 0 || $sent['email']) ? 1 : 0;
+        }
+        return array('notified' => $notified);
+    }
+}
+```
+
+A job has nobody signed in, so the capability finds the people it notifies itself (here, every administrator).
+
+**2. The schedule**, `application/config/schedule.php`:
+
+```php
+<?php
+return array(
+    array('name' => 'remind-loans', 'capability' => 'remind_loans', 'cron' => '0 8 * * *', 'timezone' => 'America/New_York'),
+);
+```
+
+**3. Notifications on**, once: `php caligrafer.php platform install`, `php caligrafer.php notify keys --subject
+https://your.app` (Caligrafy Cloud makes the keys), and `Route::notifications();` in `web.php`.
+
+**4. The button** on the page the administrators use (next section): `Notify.enable()` from a click.
+
+**5. Try it:** `php caligrafer.php schedule run remind-loans` sends it now; the result shows how many were notified.
+`php caligrafer.php notify test 1` sends user 1 a test, with no loan needed.
+
 ## In a page: "Turn on alerts"
 
 ```pug

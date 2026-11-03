@@ -515,3 +515,11 @@ the app's address for the email's links: without `APP_URL` the email channel say
 works). Set `APP_URL=https://<the app's address>` in `.env`; Caligrafy Cloud sets it for its apps. Email also needs
 `MAIL_*`; the sender is `MAIL_FROM`, else `MAIL_USERNAME` when it is an address. Proof: `Notify::base()`,
 `Notify::emailConfigured()`.
+
+**G111. Emails take their look from the design style's first `:root` rule.** `Notify::theme()` reads the custom
+properties of the first `:root` rule of `tokens.css`, `look.css` and `public/css/designs/<DESIGN_STYLE>.css` (later
+files win, `var()` resolved): `--cq-color-paper`, `--cq-color-page`, `--cq-color-ink`, `--cq-color-text`,
+`--cq-color-text-muted`, `--cq-color-border`, `--cq-color-primary`, `--design-on-primary`, `--design-font-body` or
+`--design-font`, `--cq-radius-control`, `--design-radius-card`. A style that sets its colors only inside other rules, or
+in a second `:root`, leaves the emails in Caligrafy's look; web fonts do not load in most mail apps, so the stack's next
+fonts show. Proof: `Notify::theme()`, `qa/unit/NotifyTest.php`.

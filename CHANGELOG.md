@@ -6,6 +6,14 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.16.1] - 2026-11-03
+
+### Changed
+- The wiki shows a worked example of a scheduled job (Scheduled jobs) and of a notification sent by a job
+  (Notifications); the course has lesson 15, Reminders.
+- Claude Code plugin 1.28.1: the `idea` skill plans and builds jobs and alerts when an idea asks for them, the `design`
+  skill checks the emails in the new style, the `deploy` skill sets up notifications on an own server; gotcha G111.
+
 ## [2.16.0] - 2026-11-03
 
 ### Changed

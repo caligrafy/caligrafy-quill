@@ -47,6 +47,7 @@ You'll only approve sign-ins in your browser; I'll ask before spending any credi
 | Who may do what | **Default: anyone can read, people who signed up change** (sign-in pages on; writes are not `public`). The other choice, everything `public` like the Tasks example, is for a demo only: say that online, anyone could change or delete the data |
 | Pages | one page per main table at `/<things>`: a form, the list with its actions, an empty state; `/` opens the main page |
 | Sample data | 3 to 6 rows so the app is not empty, online too |
+| On a timer, alerts | only when the idea asks for work with no page open ("every morning", "check every hour", "remind", "alert me when"): each **scheduled job** (its capability, `every` or `cron` and timezone) and each **notification** (who gets it, its title, push and/or email), plus a **Turn on alerts** button on the page that matters |
 
 ## 2. Start
 
@@ -124,6 +125,14 @@ calls it, then shows the token once and the line to paste:
   `Route::capability('GET', '/api/<things>/{id}', 'get_<thing>');`, `POST`, `PUT /{id}`, `DELETE /{id}`...;
 - `Route::capabilities('/capabilities');` and `Route::mcp('/mcp');` (quickstart adds them: keep one of each);
 - the JS client: `docker compose exec dev-box php caligrafer.php client` (run it again after any capability change).
+
+**Jobs and alerts** (only when the plan has them): each job is a capability that finds its own rows and people (nobody
+is signed in, G108), named in `application/config/schedule.php` (reference/39-scheduled-jobs.md); each alert is a
+`Caligrafy\Notify::user($userId, [...])` call from a capability (reference/42-notifications.md), never an email sender
+of your own. Then `Route::notifications();` next to `Route::capabilities(...)`, `php caligrafer.php platform install`,
+`php caligrafer.php notify keys --subject http://localhost:8080` locally (Caligrafy Cloud makes the keys online), and
+the **Turn on alerts** button (`script(src=$home . 'public/js/notify.js')`, `Notify.enable()` from its click, G109).
+Check: `schedule list`, `schedule run <job>` prints `ok`, `notify status <user>`.
 
 **The page** `application/views/<Folder>/index.pug` + `public/js/<things>.js`: `extends ../default/master/site` and the
 classes of Caligrafy's look only (a title band `section.cq-hero.cq-hero--page`, `section.cq-band > .cq-inner`, a

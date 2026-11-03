@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.28.1** - Caligrafy Quill 2.16.1: worked examples of a scheduled job and a notification; the `idea` skill plans
+  and builds jobs and alerts, `design` checks the emails, `deploy` sets up notifications on an own server; G111.
 - **1.28.0** - Caligrafy Quill 2.16.0: an unknown address answers 404, a wrong method 405 (G4, Routing, Helpers).
 - **1.27.0** - Caligrafy Quill 2.15.0, notifications: `Notify::user()` to web push and confirmed email (in the design
   style), `notify.js`, the `notify_*` capabilities, `Route::notifications()`, `notify keys`; the Notifications page,

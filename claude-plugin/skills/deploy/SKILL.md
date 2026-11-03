@@ -89,6 +89,9 @@ Prepare, do not deploy: the user's server, account and keys are theirs.
 + Scheduled jobs (`php caligrafer.php schedule list` lists some): a second container from the same image, with the same
   `.env`, running `php caligrafer.php schedule work` (on Coolify, a second application with that start command), or
   `php caligrafer.php schedule due` from the server's cron every minute. Only one of them, never both.
++ Notifications (the project calls `Caligrafy\Notify`): the web push keys made once with `php caligrafer.php notify keys
+  --subject https://<the address>` and kept across deploys (new keys cut off every subscribed browser), `APP_URL=https://<the
+  address>` for the links of emails sent by jobs (G110), `MAIL_*` and `MAIL_FROM` for email, and HTTPS (push needs it).
 + Environment-variable-only hosts (Railway, Render, DigitalOcean App Platform) are not supported yet (G67): say so.
 
 ## 3. When it fails
