@@ -63,6 +63,7 @@ $defaultMsg = "\n Available Functions:
 				\n - client [<file>] [--prefix /capabilities]: writes the JS client of the capabilities (default public/js/capabilities.js)
 				\n - capabilities [--json | --markdown]: the capabilities of application/services/ (what REST, MCP and the JS client can call)
 				\n - call <capability> ['{\"key\": \"value\"}' | key=value ...] [--token <token>] [--guest]: calls a capability and prints its JSON answer (full local access unless --token or --guest)
+				\n - schedule <list [--json] | run <job> [--if-due] | due | work | history [<job>] [--limit 50]>: scheduled jobs of application/config/schedule.php (capabilities on a timer); work runs them every minute while you develop
 				\n - deploy [--wait <seconds>]: prepares the database in production: framework tables and every new or changed application/models/<folder>/create_db.sql (never one that drops or deletes data twice)
 				\n - cloud <login | create | deploy | apps | status | logs | extend | credits | secret | delete>: puts the project online at https://<name>.caligrafy.com with Caligrafy Cloud (cloud help)
 				\n - mcp [--token <token>]: MCP server over stdio for local AI agents (Claude Code, Cursor...): php caligrafer.php mcp
@@ -258,7 +259,7 @@ switch(strtolower($argv[1])) {
 		try {
 			caligrafyConnect();
 			caligrafySqlFile('framework/settings/platform.sql');
-			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit\n\n");
+			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs\n\n");
 		} catch (Throwable $e) {
 			print("\n The framework tables could not be created: " . $e->getMessage() . "\n Check DB_ACTIVATE and the DB_* settings in .env (php caligrafer.php doctor --only database)\n\n");
 			exit(1);
@@ -438,6 +439,68 @@ switch(strtolower($argv[1])) {
 		$waitAt = array_search('--wait', $argv);
 		exit((new Caligrafy\Deployer('.', $waitAt !== false ? (int) ($argv[$waitAt + 1] ?? 60) : 60))->run());
 
+	case 'schedule':
+		// Scheduled jobs (framework/core/Scheduler.php): list validates the file (--json is what Caligrafy Cloud reads),
+		// run runs one job now, due runs the jobs of the current minute, work runs due every minute, history the runs.
+		// Exit codes: 0 ok, 1 a job failed or timed out, 2 the schedule file is invalid, 3 skipped (still running)
+		$scheduler = new Caligrafy\Scheduler('.');
+		$say = function ($line) { print(" $line\n"); };
+		$sub = strtolower($argv[2] ?? '');
+		try {
+			switch ($sub) {
+				case 'list':
+					$jobs = $scheduler->jobs();
+					if (in_array('--json', $argv, true)) {
+						print(json_encode(Caligrafy\Scheduler::listing($jobs), JSON_UNESCAPED_SLASHES) . "\n");
+						exit(0);
+					}
+					if (!$jobs) {
+						print("\n No scheduled jobs (" . Caligrafy\Scheduler::FILE . " declares them)\n\n");
+						exit(0);
+					}
+					print("\n");
+					foreach ($jobs as $j) {
+						printf(" %-24s %-14s %-24s %s, timeout %ds%s\n", $j['name'], $j['every'] ? "every {$j['every']}" : $j['cron'], $j['capability'],
+							$j['every'] ? 'UTC' : $j['timezone'], $j['timeout'], $j['enabled'] ? '' : ' (disabled)');
+					}
+					print("\n");
+					exit(0);
+				case 'run':
+					if (!isset($argv[3])) throw new InvalidArgumentException('Usage: php caligrafer.php schedule run <job> [--if-due]');
+					exit($scheduler->run($argv[3], $say, in_array('--if-due', $argv, true)));
+				case 'exec':
+					// the child process of a run (schedule run): calls the job's capability as the scheduler
+					exit($scheduler->execute($argv[3] ?? ''));
+				case 'due':
+					exit($scheduler->due($say));
+				case 'work':
+					$scheduler->jobs();
+					$scheduler->work($say);
+					exit(0);
+				case 'history':
+					caligrafyConnect();
+					$limitAt = array_search('--limit', $argv);
+					$job = (isset($argv[3]) && $argv[3][0] !== '-') ? $argv[3] : null;
+					$rows = Caligrafy\Scheduler::history($job, $limitAt !== false ? (int) ($argv[$limitAt + 1] ?? 50) : 50);
+					print($rows ? "\n" : "\n No runs yet\n\n");
+					foreach ($rows as $r) {
+						printf(" %s  %-24s %-8s %s\n", $r['started_at'], $r['job'], $r['outcome'], $r['detail'] ?? '');
+					}
+					if ($rows) print("\n");
+					exit(0);
+				default:
+					print("\n Usage: php caligrafer.php schedule <list [--json] | run <job> | due | work | history [<job>] [--limit 50]>\n"
+						. " Jobs are declared in " . Caligrafy\Scheduler::FILE . "\n\n");
+					exit(1);
+			}
+		} catch (InvalidArgumentException $e) {
+			fwrite(STDERR, "\n " . str_replace("\n", "\n ", $e->getMessage()) . "\n\n");
+			exit(Caligrafy\Scheduler::INVALID);
+		} catch (Throwable $e) {
+			fwrite(STDERR, "\n schedule: " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
+
 	case 'call':
 		// Calls one capability from the command line and prints the same JSON as REST: {"data": ...} or {"error": ...}
 		// Inputs: one JSON object ('{"id": 3}') or key=value pairs. Full local access by default, like any script;
@@ -584,7 +647,8 @@ switch(strtolower($argv[1])) {
 		if (isset($argv[3])) {
 			if (isset($argv[2]) && strtolower($argv[2]) == "start") {
 				// builds the image only the first time (or after 'server rebuild'): later starts take seconds
-				system(caligrafyCompose() . ' up -d dev-box', $retValue);
+				// with the scheduler, which runs the jobs of application/config/schedule.php every minute (schedule work)
+				system(caligrafyCompose() . ' up -d dev-box scheduler', $retValue);
 				if ($retValue) {
 					print(" You don't have a server running.\n Start your local apache server if you have one. \n If not, check the Caligrafy documentation to run docker. \n\n");
 				} else {

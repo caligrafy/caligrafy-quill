@@ -1,0 +1,77 @@
+# Scheduled jobs: capabilities on a timer
+
+> Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs
+> Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
+
+![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
+
+A **scheduled job** runs one of your capabilities on a timer, with no page open: check prices every minute, send a
+digest every morning, clean old rows every night. You declare the jobs in one file; Caligrafy runs them on your
+computer while you develop, and on Caligrafy Cloud in production. Since 2.14.0.
+
+## Declaring the jobs
+
+**`application/config/schedule.php`** returns a list of jobs. No file means no jobs.
+
+```php
+<?php
+return array(
+    array('name' => 'check-prices', 'capability' => 'check_prices', 'input' => array('due_only' => true), 'every' => '1m'),
+    array('name' => 'daily-digest', 'capability' => 'send_digest', 'cron' => '0 8 * * *', 'timezone' => 'America/New_York', 'timeout' => 120),
+);
+```
+
+| Field | Required | Rule |
+|---|---|---|
+| `name` | yes | A slug (`a-z`, `0-9`, `-`), at most 40 characters, unique in the file |
+| `capability` | yes | A capability of `application/services/` |
+| `input` | no | Its inputs: an array that encodes to JSON, checked by the capability's own rules when it runs |
+| `every` | `every` or `cron` | `1m`, `5m`, `10m`, `15m`, `30m`, `1h`, `6h`, `12h` or `1d` (in UTC) |
+| `cron` | `every` or `cron` | Five fields: minute, hour, day of the month, month, day of the week (`*/15 * * * *`, `0 9-17 * * mon-fri`) |
+| `timezone` | no | An IANA name such as `Europe/Paris`, for `cron` only; `UTC` by default |
+| `timeout` | no | Seconds, 55 by default, at most 300 |
+| `enabled` | no | `true` by default; `false` keeps the job declared but never run |
+
+A job is just a capability: write it as any other ([Build once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)),
+then name it in the file. Its inputs are validated, and the audit log records each call.
+
+## How a job runs
+
++ **With full access**, like the command line. The audit log records it with the actor type `schedule` and the job's
+  name. Nobody is signed in: `$context->userId()` is `null`, so a job that works for each user finds them itself.
++ **One run at a time.** A run that starts while the previous one is still going is skipped and recorded as `skipped`.
++ **Stopped at its timeout**, and recorded as `timeout`.
++ **Recorded** in the table `caligrafy_job_runs` (created by `php caligrafer.php platform install` and by the deploy
+  step): the job, its start and end, the outcome (`ok`, `error`, `timeout`, `skipped`) and a short detail. Runs older
+  than 30 days are deleted.
+
+## Commands
+
+| Command | What it does |
+|---|---|
+| `php caligrafer.php schedule list` | Checks the file and lists the jobs; `--json` prints what Caligrafy Cloud reads |
+| `php caligrafer.php schedule run <job>` | Runs one job now; with `--if-due`, only when it is due this minute in its timezone |
+| `php caligrafer.php schedule due` | Runs every job due this minute, then stops |
+| `php caligrafer.php schedule work` | Runs `schedule due` every minute until you stop it |
+| `php caligrafer.php schedule history [<job>] [--limit 50]` | The latest runs |
+
+Exit codes: `0` ok, `1` the capability failed or timed out, `2` the file is invalid, `3` skipped. `php caligrafer.php
+doctor` reports an invalid file too.
+
+## While you develop
+
+`php caligrafer.php server start` starts a **scheduler** container next to your server: it runs `schedule work`, so
+your jobs run every minute as they will online. Without Docker, run `php caligrafer.php schedule work` in a terminal.
+
+Projects made before 2.14.0 get the `scheduler` service in `docker-compose.yaml` with `php caligrafer.php update`
+(or `docker-compose.yaml.caligrafy-new` when you changed the file: copy its `scheduler` service into yours).
+
+## Online
+
++ **Caligrafy Cloud** runs the jobs while the app is online (from the release of Caligrafy Cloud that follows 2.14.0).
+  At each start, the deploy step prints the jobs on one line of the log, `caligrafy-schedule {...}` (the listing of
+  `schedule list --json`), or `caligrafy-schedule-invalid` with the problems: that is how Cloud learns them.
++ **Your own server** (Coolify, Docker): run a second container from the same image with
+  `php caligrafer.php schedule work`, or `php caligrafer.php schedule due` from the system's cron every minute.
+
+>[Back to the documentation](https://github.com/caligrafy/caligrafy-quill/wiki)

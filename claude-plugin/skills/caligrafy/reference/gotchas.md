@@ -495,3 +495,10 @@ Since 2.13.5 `doctor` names each line (`file:line one-line - if`). Proof: `Docto
 site's own address in front (`https://caligrafy.com/https://deploy...`). Since 2.13.5 an `http://` or `https://`
 address is used as it is, and a path stays a path of this site. On older versions, write
 `header('Location: ' . $url)`. Proof: `redirect()` in `framework/helpers/corehelpers.php`.
+
+**G108. A scheduled job has nobody signed in.** A job runs its capability with `Context::system('schedule', <job>)`:
+full access, the audit log records `schedule` and the job's name, and `$context->userId()` is `null`. A capability
+written for a signed-in user (`where user_id = $context->userId()`) does nothing, or everything, as a job: give the
+job its own capability that finds the users it works for (all those with a due watch, say), and keep per-user rules
+in it. Its inputs are the fixed `input` of `application/config/schedule.php`, validated by the capability's rules.
+Proof: `Context::system()`, `Scheduler::execute()`, `qa/unit/SchedulerTest.php`.

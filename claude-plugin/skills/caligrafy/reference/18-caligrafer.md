@@ -27,10 +27,11 @@
 | [`service`](#service) | Creates a capability in `application/services/` |
 | [`capabilities`](#capabilities) | Lists the capabilities and their inputs |
 | [`call`](#call) | Calls a capability and prints its JSON answer |
+| [`schedule`](#schedule) | Lists, runs and shows the history of the scheduled jobs (2.14.0+) |
 | [`client`](#client) | Writes the JavaScript client of the capabilities |
 | [`app`, `create`, `facedetect`, `ml`, `bot`](#apps) | Creates a client app in `public/` |
 | [`sql`](#sql) | Runs a SQL script on the database |
-| [`platform install`](#platform) | Creates the framework tables (tokens, audit log) |
+| [`platform install`](#platform) | Creates the framework tables (tokens, audit log, job runs) |
 | [`token`](#token) | Creates, lists and revokes personal access tokens |
 | [`mcp`](#mcp) | An MCP server over stdio for AI agents on your computer |
 | [`audit`](#audit) | Shows the latest capability calls and refusals |
@@ -142,6 +143,16 @@ php caligrafer.php bot helper             # a Watson chatbot:                htt
 ```
 Each one copies a template into `public/<name>`. The name must be new (the command does not replace an existing folder) and cannot be one of the folders Caligrafy uses in `public/` (`app`, `bot`, `css`, `facedetect`, `fonts`, `images`, `js`, `ml`, `resources`, `uploads`). `create` also runs `npm install` when Node.js is available; in the Docker `dev-box`, which has no Node.js, it says so and you run `npm install` in `public/<name>` on your computer. Start it with `npm run dev` in `public/<name>`. Learn more: [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library), [the single page application](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application), [face detection](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition), [machine learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning), [chatbots](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.1-Creating-Bots-with-Watson).
 
+### `schedule`
+```bash
+php caligrafer.php schedule list            # checks application/config/schedule.php and lists the jobs (--json: what Caligrafy Cloud reads)
+php caligrafer.php schedule run check-prices # runs one job now (--if-due: only when it is due this minute)
+php caligrafer.php schedule due             # runs the jobs due this minute
+php caligrafer.php schedule work            # runs them every minute until stopped
+php caligrafer.php schedule history         # the latest runs ([<job>] [--limit 50])
+```
+Runs the [scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs) of `application/config/schedule.php`: capabilities on a timer, with full access, one run at a time, stopped at their timeout and recorded in `caligrafy_job_runs`. `server start` also starts a `scheduler` container that runs `schedule work`. Exit codes: `0` ok, `1` failed or timed out, `2` invalid file, `3` skipped (2.14.0+).
+
 ## Data
 
 ### `sql`
@@ -154,7 +165,7 @@ Runs a SQL script (usually the `create_db.sql` of a model) on the database of `.
 ```bash
 php caligrafer.php platform install
 ```
-Creates the two framework tables: `caligrafy_tokens` (personal access tokens) and `caligrafy_audit` (the audit log). Safe to run again. `quickstart` runs it for you; `doctor` tells you when they are missing.
+Creates the framework tables: `caligrafy_tokens` (personal access tokens), `caligrafy_audit` (the audit log) and `caligrafy_job_runs` (the runs of [scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs), 2.14.0+). Safe to run again. `quickstart` runs it for you; `doctor` tells you when they are missing.
 
 ## Programs and AI agents
 

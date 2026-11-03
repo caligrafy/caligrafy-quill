@@ -928,4 +928,113 @@ qa_test('Audit::record writes who, which channel, which capability and the outco
     qa_equals(['token', '42', 'mcp', 'create_book', 'ok'], [$row['actor_type'], $row['actor_id'], $row['channel'], $row['capability'], $row['outcome']]);
 });
 
+// ---------------------------------------------------------------------------
+qa_section('Scheduled jobs (application/config/schedule.php, caligrafy_job_runs)');
+
+function qa_schedule($jobs)
+{
+    file_put_contents('application/config/schedule.php', "<?php\nreturn " . var_export($jobs, true) . ";\n");
+}
+function qa_caligrafer($args, &$output = null)
+{
+    $output = array();
+    exec('php caligrafer.php ' . $args . ' 2>&1', $output, $code);
+    $output = implode("\n", $output);
+    return $code;
+}
+qa_schedule(array(
+    array('name' => 'qa-tick', 'capability' => 'qa_job_tick', 'input' => array('label' => 'scheduled'), 'every' => '1m'),
+    array('name' => 'qa-slow', 'capability' => 'qa_job_slow', 'input' => array('seconds' => 8), 'every' => '1h', 'timeout' => 2),
+    array('name' => 'qa-fail', 'capability' => 'qa_job_fail', 'every' => '1d'),
+    array('name' => 'qa-off', 'capability' => 'qa_job_tick', 'every' => '1m', 'enabled' => false),
+));
+Database::execute('DROP TABLE IF EXISTS qa_job_ticks');
+Database::execute('DELETE FROM caligrafy_job_runs');
+
+qa_test('schedule list --json is the versioned listing Cloud reads, without the disabled job', function () {
+    qa_equals(0, qa_caligrafer('schedule list --json', $out));
+    $listing = json_decode($out, true);
+    qa_equals(1, $listing['version']);
+    qa_equals(array('qa-tick', 'qa-slow', 'qa-fail'), array_column($listing['jobs'], 'name'));
+    qa_equals(array('php', 'caligrafer.php', 'schedule', 'run', 'qa-tick'), $listing['jobs'][0]['command']);
+    qa_equals('0 * * * *', $listing['jobs'][1]['cron']);
+});
+
+qa_test('schedule run calls the capability as the scheduler, records the run and the audit row', function () {
+    qa_equals(0, qa_caligrafer('schedule run qa-tick', $out), $out);
+    $tick = Database::toArray(Database::execute('SELECT * FROM qa_job_ticks ORDER BY id DESC LIMIT 1'))[0];
+    qa_equals(array('scheduled', 'schedule', 'qa-tick'), array($tick['label'], $tick['actor'], $tick['actor_id']));
+    $run = Caligrafy\Scheduler::history('qa-tick', 1)[0];
+    qa_equals('ok', $run['outcome']);
+    qa_assert($run['finished_at'] !== null, 'the end of the run is recorded');
+    $audit = Caligrafy\Audit::latest(1, 'qa_job_tick')[0];
+    qa_equals(array('schedule', 'qa-tick', 'cli', 'ok'), array($audit['actor_type'], $audit['actor_id'], $audit['channel'], $audit['outcome']));
+});
+
+qa_test('a run is skipped while the previous run of the same job holds its lock', function () {
+    $lock = 'cq_job_' . substr(sha1((string) getenv('DB_DATABASE') . '/qa-tick'), 0, 40);
+    qa_equals(1, (int) array_values(Database::toArray(Database::execute('SELECT GET_LOCK(?, 0) AS v', array($lock)))[0])[0]);
+    qa_equals(3, qa_caligrafer('schedule run qa-tick', $out), $out);
+    Database::execute('SELECT RELEASE_LOCK(?)', array($lock));
+    qa_equals('skipped', Caligrafy\Scheduler::history('qa-tick', 1)[0]['outcome']);
+});
+
+qa_test('a run that passes its timeout is stopped and recorded as timeout', function () {
+    $start = microtime(true);
+    qa_equals(1, qa_caligrafer('schedule run qa-slow', $out), $out);
+    qa_assert(microtime(true) - $start < 6, 'stopped at its 2-second timeout, not after 8 seconds');
+    qa_equals('timeout', Caligrafy\Scheduler::history('qa-slow', 1)[0]['outcome']);
+});
+
+qa_test('a failing capability exits 1 and its message is recorded', function () {
+    qa_equals(1, qa_caligrafer('schedule run qa-fail', $out), $out);
+    $run = Caligrafy\Scheduler::history('qa-fail', 1)[0];
+    qa_equals(array('error', 'broken on purpose'), array($run['outcome'], $run['detail']));
+});
+
+qa_test('schedule due runs the jobs due this minute (every 1m) and not the disabled one', function () {
+    $before = count(Database::toArray(Database::execute('SELECT id FROM qa_job_ticks')));
+    qa_caligrafer('schedule due', $out);
+    $after = count(Database::toArray(Database::execute('SELECT id FROM qa_job_ticks')));
+    qa_equals($before + 1, $after, $out);
+});
+
+qa_test('the deploy step prints the listing on one line of the start-up log, for Caligrafy Cloud', function () {
+    qa_caligrafer('deploy --wait 5', $out);
+    qa_assert(preg_match('/^ caligrafy-schedule (\{.*\})$/m', $out, $m) === 1, $out);
+    qa_equals(array('qa-tick', 'qa-slow', 'qa-fail'), array_column(json_decode($m[1], true)['jobs'], 'name'));
+});
+
+qa_test('schedule run --if-due runs a job only in a minute it is due, in its timezone', function () {
+    $hour = (int) (new DateTimeImmutable('now', new DateTimeZone('Asia/Tokyo')))->format('G');
+    qa_schedule(array(
+        array('name' => 'qa-now', 'capability' => 'qa_job_tick', 'cron' => '* ' . $hour . ' * * *', 'timezone' => 'Asia/Tokyo'),
+        array('name' => 'qa-later', 'capability' => 'qa_job_tick', 'cron' => '* ' . (($hour + 12) % 24) . ' * * *', 'timezone' => 'Asia/Tokyo'),
+    ));
+    $count = function () { return count(Database::toArray(Database::execute('SELECT id FROM qa_job_ticks'))); };
+    $before = $count();
+    qa_equals(0, qa_caligrafer('schedule run qa-later --if-due', $out), $out);
+    qa_equals($before, $count(), 'not due: nothing ran');
+    qa_equals(0, Database::toArray(Database::execute("SELECT COUNT(*) AS n FROM caligrafy_job_runs WHERE job = 'qa-later'"))[0]['n'] + 0, 'and nothing recorded');
+    qa_equals(0, qa_caligrafer('schedule run qa-now --if-due', $out), $out);
+    qa_equals($before + 1, $count(), 'due: it ran');
+});
+
+qa_test('an invalid schedule file exits 2 with every problem, and doctor fails on it', function () {
+    qa_schedule(array(array('name' => 'Bad', 'capability' => 'nope', 'every' => '2m')));
+    qa_equals(2, qa_caligrafer('schedule list --json', $out));
+    qa_assert(strpos($out, "there is no capability 'nope'") !== false && strpos($out, "'every' must be one of") !== false, $out);
+    qa_caligrafer('doctor --only project', $out);
+    qa_assert(preg_match('/FAIL\s+Schedule/', $out) === 1, $out);
+    qa_caligrafer('deploy --wait 5', $out);
+    qa_assert(strpos($out, ' caligrafy-schedule-invalid ') !== false, $out);
+});
+
+qa_test('without a schedule file there are no jobs', function () {
+    unlink('application/config/schedule.php');
+    qa_equals(0, qa_caligrafer('schedule list --json', $out));
+    qa_equals(array('version' => 1, 'jobs' => array()), json_decode($out, true));
+});
+Database::execute('DROP TABLE IF EXISTS qa_job_ticks');
+
 qa_summary();

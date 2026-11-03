@@ -50,6 +50,10 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.26.0** - Caligrafy Quill 2.14.0, scheduled jobs: capabilities on a timer (`application/config/schedule.php`,
+  `schedule` commands, `Context::system`, `caligrafy_job_runs`, the `scheduler` container); the `new-capability` skill
+  writes jobs, the `deploy` skill runs them on an own server; Scheduled jobs page, API reference, G108; the 2.13.5 and
+  2.13.6 release notes mirrored.
 - **1.25.6** - Caligrafy Quill 2.13.6: the QA suite takes the first free ports from 8090 and 3316 (G38, Testing
   Caligrafy, Security and upgrading).
 - **1.25.5** - Caligrafy Quill 2.13.5: a changed `create_db.sql` keeps its `ALTER TABLE ... ADD` lines (G68),

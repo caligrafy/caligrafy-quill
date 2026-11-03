@@ -1,4 +1,4 @@
--- Framework tables of Caligrafy Quill: personal access tokens and the audit log.
+-- Framework tables of Caligrafy Quill: personal access tokens, the audit log and the runs of scheduled jobs.
 -- Created by `php caligrafer.php platform install` (safe to run again: IF NOT EXISTS).
 
 CREATE TABLE IF NOT EXISTS `caligrafy_tokens` (
@@ -26,4 +26,15 @@ CREATE TABLE IF NOT EXISTS `caligrafy_audit` (
     `detail` VARCHAR(500) NULL,
     PRIMARY KEY (`id`),
     KEY `caligrafy_audit_capability` (`capability`, `occurred_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `caligrafy_job_runs` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `job` VARCHAR(40) NOT NULL,
+    `started_at` DATETIME NOT NULL,
+    `finished_at` DATETIME NULL,
+    `outcome` VARCHAR(10) NOT NULL,
+    `detail` VARCHAR(500) NULL,
+    PRIMARY KEY (`id`),
+    KEY `caligrafy_job_runs_job` (`job`, `started_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

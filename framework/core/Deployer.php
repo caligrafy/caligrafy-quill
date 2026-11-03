@@ -44,6 +44,7 @@ class Deployer
     public function run()
     {
         print("\n Caligrafy deploy\n");
+        $this->schedule();
         if (strtolower((string) getenv('DB_ACTIVATE')) !== 'true') {
             $this->line('SKIP', 'Database', 'DB_ACTIVATE is not true: nothing to prepare');
             return $this->done(0);
@@ -56,7 +57,7 @@ class Deployer
             $this->sqlFile($this->root . '/framework/settings/platform.sql');
             Database::execute('CREATE TABLE IF NOT EXISTS `' . self::SCRIPTS_TABLE . '` (`path` VARCHAR(255) NOT NULL, `sha256` CHAR(64) NOT NULL, '
                 . '`ran_at` DATETIME NOT NULL, PRIMARY KEY (`path`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4');
-            $this->line('OK', 'Framework tables', 'tokens, audit log, scripts');
+            $this->line('OK', 'Framework tables', 'tokens, audit log, job runs, scripts');
             foreach ($this->scripts() as $path) {
                 $this->script($path);
             }
@@ -65,6 +66,23 @@ class Deployer
             return $this->done(1);
         }
         return $this->done(0);
+    }
+
+    /**
+     * Prints the scheduled jobs (application/config/schedule.php) on one line of the start-up log, where Caligrafy
+     * Cloud reads them: "caligrafy-schedule <the listing of schedule list --json>", or "caligrafy-schedule-invalid
+     * <the problems>" (the jobs then do not run). Without the file the listing is empty.
+     */
+    public function schedule()
+    {
+        try {
+            $jobs = (new Scheduler($this->root))->jobs();
+            print(' caligrafy-schedule ' . json_encode(Scheduler::listing($jobs), JSON_UNESCAPED_SLASHES) . "\n");
+            return true;
+        } catch (\Throwable $e) {
+            print(' caligrafy-schedule-invalid ' . str_replace("\n", ' ', $e->getMessage()) . "\n");
+            return false;
+        }
     }
 
     /**

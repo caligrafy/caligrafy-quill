@@ -24,6 +24,20 @@ services:
     depends_on:
       - mysql
       - phpmyadmin
+  # Runs the scheduled jobs of application/config/schedule.php every minute (php caligrafer.php schedule work)
+  scheduler:
+    build:
+      context: .
+      dockerfile: ./docker/Dockerfile
+      target: dev-php
+    volumes:
+      - ./:/var/www/html/
+    working_dir: /var/www/html
+    environment: *dev_environment
+    command: ["php", "caligrafer.php", "schedule", "work"]
+    restart: unless-stopped
+    depends_on:
+      - mysql
   prod-box:
     hostname: prod.caligrafy.com
     build:

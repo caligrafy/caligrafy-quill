@@ -17,7 +17,7 @@ namespace Caligrafy;
  * - user: a signed-in user (session), or the owner of a token
  * - token: a personal access token (Tokens), with its scopes
  * - key: the legacy API key (every generated key is the same key: full access, as before 2.1)
- * - cli: a script or the command line (full access)
+ * - cli: a script or the command line (full access); a scheduled job is a system context on this channel
  * - guest: nobody: only public capabilities
  */
 class Context
@@ -43,6 +43,9 @@ class Context
 
     /** @var string|null the actor written to the audit log for a full-access context (cli) */
     protected $actor = null;
+
+    /** @var string|null the actor id written to the audit log for a system context (the job's name) */
+    protected $actorName = null;
 
     public function __construct($channel = 'cli', $user = null, $token = null, $full = false)
     {
@@ -70,6 +73,20 @@ class Context
     {
         $context = new self($channel, null, null, true);
         $context->actor = 'cli';
+        return $context;
+    }
+
+    /**
+     * Full access for work the system does on its own, such as a scheduled job: the audit log records the actor type
+     * (schedule) and its name (the job's)
+     * @param string $type the actor type, e.g. schedule
+     * @param string $name the actor id, e.g. the job's name
+     */
+    public static function system($type, $name)
+    {
+        $context = new self('cli', null, null, true);
+        $context->actor = (string) $type;
+        $context->actorName = (string) $name;
         return $context;
     }
 
@@ -203,6 +220,6 @@ class Context
             return (string) $this->token['id'];
         }
         $id = $this->userId();
-        return $id === null ? null : (string) $id;
+        return $id === null ? $this->actorName : (string) $id;
     }
 }

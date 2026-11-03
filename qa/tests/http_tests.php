@@ -1083,7 +1083,7 @@ qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per messag
 
 qa_test('the generated JS client calls the same capabilities from Node with a token', function () use ($WRITER, $BASE, $ROOT) {
     @mkdir("$ROOT/qa/tmp", 0777, true);
-    qa_contains('10 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));
+    qa_contains('13 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));
     $script = "$ROOT/qa/tmp/client-check.mjs";
     file_put_contents($script, "import { configure, listBooks, createBook, getBook, CapabilityError } from './capabilities.mjs'\n"
         . "configure({ baseUrl: process.argv[2], token: process.argv[3] })\n"

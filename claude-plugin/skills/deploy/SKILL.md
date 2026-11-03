@@ -86,6 +86,9 @@ Prepare, do not deploy: the user's server, account and keys are theirs.
   `/var/www/html/public/uploads` and `/var/lib/php/sessions` (G70). A MySQL with a small memory limit needs the
   configuration of G71.
 + Docker: the `docker run` of 20-putting-it-online.md (`#ownserver`), behind HTTPS.
++ Scheduled jobs (`php caligrafer.php schedule list` lists some): a second container from the same image, with the same
+  `.env`, running `php caligrafer.php schedule work` (on Coolify, a second application with that start command), or
+  `php caligrafer.php schedule due` from the server's cron every minute. Only one of them, never both.
 + Environment-variable-only hosts (Railway, Render, DigitalOcean App Platform) are not supported yet (G67): say so.
 
 ## 3. When it fails

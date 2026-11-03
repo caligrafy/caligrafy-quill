@@ -168,6 +168,15 @@ class Doctor
             $this->add('project', 'Forms', 'WARN', 'no method on a form with an email or a password: ' . implode(', ', $forms) . ' (sent as a GET, in the address, when its script does not run)',
                 "add method='POST' to the form (its script still sends it; without the script it is never a GET)");
         }
+        // scheduled jobs: an invalid application/config/schedule.php fails schedule list and the deploy on Caligrafy Cloud
+        if (is_file($this->root . '/' . Scheduler::FILE)) {
+            try {
+                $jobs = (new Scheduler($this->root))->jobs(class_exists(Capabilities::class) && is_dir($this->root . '/application/services'));
+                $this->add('project', 'Schedule', 'OK', count($jobs) . ' job(s): ' . implode(', ', array_map(function ($j) { return $j['name']; }, $jobs)));
+            } catch (\Throwable $e) {
+                $this->add('project', 'Schedule', 'FAIL', str_replace("\n", ' ', $e->getMessage()), 'fix ' . Scheduler::FILE . ' (php caligrafer.php schedule list)');
+            }
+        }
         // two Pug mistakes that do not show until the page renders: a $ before digits is read as a variable and vanishes
         // ($40 shows as nothing), and code on the same line as a one-line - if / - foreach does not compile
         $pug = self::pugPitfalls($this->root);

@@ -66,3 +66,21 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
 6. **Tests**: a PHPUnit test that runs `(new <Name>())->run([...])` for the rule cases, and, when the project has
    HTTP tests, one check per channel that the result and the refusals are the same.
 7. Ask the `caligrafy-reviewer` agent to review the new files.
+
+## On a timer (2.14.0+)
+
+When the feature must run with no page open ("every minute", "every morning", "check the due ones"), it is a
+**scheduled job**: the capability above, named in `application/config/schedule.php`
+(reference/39-scheduled-jobs.md):
+```php
+<?php
+return array(
+    array('name' => 'check-prices', 'capability' => 'check_prices', 'input' => array('due_only' => true), 'every' => '1m'),
+);
+```
++ A job has nobody signed in (G108): write a capability that finds the users and rows it works for itself; never one
+  that reads `$context->userId()`. Fixed inputs only.
++ `every` (`1m` to `1d`, UTC) or `cron` with a `timezone`; `timeout` (default 55 s, at most 300) above its longest run.
++ Check: `php caligrafer.php schedule list` (and `doctor`), then `php caligrafer.php schedule run <job>` and
+  `schedule history <job>`: the outcome must be `ok`. The `scheduler` container of `server start` then runs it every
+  minute; on Caligrafy Cloud the deploy reads the schedule. Never add a hand-written loop container for it.

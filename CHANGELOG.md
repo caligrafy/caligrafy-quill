@@ -6,6 +6,25 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.14.0] - 2026-11-03
+
+### Added
+- Scheduled jobs: an app declares in `application/config/schedule.php` which capabilities run on a timer (`every`
+  1m to 1d, or a five-field `cron` in a timezone), with fixed inputs, a timeout (55 s by default, at most 300) and
+  `enabled`. `Caligrafy\Scheduler` validates the file and runs the jobs: one run at a time per job (a database lock),
+  in a child process stopped at its timeout, with full access as `Context::system('schedule', <job>)` (the audit log
+  records `schedule` and the job's name), each run recorded in the new framework table `caligrafy_job_runs` (kept
+  30 days).
+- `php caligrafer.php schedule list [--json] | run <job> | due | work | history [<job>]`: `--json` is the versioned
+  listing Caligrafy Cloud reads at deploy time. Exit codes 0 ok, 1 failed or timed out, 2 invalid file, 3 skipped.
+- `doctor` checks the schedule file; `platform install` and the deploy step create `caligrafy_job_runs`. The deploy
+  step prints the jobs on one line of the start-up log (`caligrafy-schedule {...}`, or `caligrafy-schedule-invalid`),
+  where Caligrafy Cloud reads them; `schedule run <job> --if-due` runs a job only when it is due this minute in its
+  timezone.
+- `docker-compose.yaml` has a `scheduler` service running `schedule work`, started by `php caligrafer.php server start`.
+- Claude Code plugin 1.26.0: the Scheduled jobs page, the API reference, gotcha G108 (a job has nobody signed in),
+  the `new-capability` skill writes jobs and the `deploy` skill runs them on an own server.
+
 ## [2.13.6] - 2026-11-03
 
 ### Changed
