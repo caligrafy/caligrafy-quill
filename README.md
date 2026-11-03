@@ -35,8 +35,11 @@ online (`/caligrafy-quill:marketplace`, 25% of every sale).
 
 Every feature is written once, as a **capability** (its inputs, rules and permissions), and served everywhere:
 **web pages**, **Vue apps** on desktop, tablet and phone, a **REST API**, and **AI agents** such as Claude or Cursor
-over MCP. Same rules, same permissions, same audit log, whichever way it is called. Sign-in, tokens, payments, AI,
-design styles and a production `Dockerfile` come in the box. See [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works).
+over MCP. Same rules, same permissions, same audit log, whichever way it is called. A capability can also run on a
+timer, with no page open ([scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)), and
+reach your users with the app closed ([notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications):
+web push and email). Sign-in, tokens, payments, AI, design styles and a production `Dockerfile` come in the box. See
+[How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works).
 
 <br/>
 
