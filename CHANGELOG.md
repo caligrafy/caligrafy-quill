@@ -6,6 +6,25 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.15.0] - 2026-11-03
+
+### Added
+- Notifications: `Caligrafy\Notify::user($userId, $message)` sends a message (title, body, url, tag, urgency) to every
+  channel the user turned on: web push to each browser they subscribed (`minishlink/web-push` 11, VAPID keys from
+  `php caligrafer.php notify keys`, kept 24 hours for a device that is off, an expired subscription deleted at its first
+  404 or 410) and email to a confirmed address (a link valid 24 hours, one-click unsubscribe with the
+  `List-Unsubscribe` headers, in the colors and font of the app's design style). At most `NOTIFY_RATE_PER_HOUR` (30)
+  per user and hour; every call logged without its body (`caligrafy_notifications`, 30 days); `Notify::forget()`.
+- Built-in capabilities in every project (`framework/services/Notify`): `notify_status`, `notify_subscribe`,
+  `notify_unsubscribe`, `notify_email_set`, `notify_email_confirm`, `notify_preferences`, `notify_test`, each on the
+  signed-in user's own data and kept out of MCP (`#[Capability(mcp: false)]`, new).
+- `public/js/notify.js` (`Notify.status()`, `enable()`, `disable()`, `test()`...), the `push` and `notificationclick`
+  handlers of `public/sw.js`, `Route::notifications()` (the confirm and unsubscribe pages; `quickstart` adds it), the
+  settings `NOTIFY_CHANNELS`, `NOTIFY_RATE_PER_HOUR`, `VAPID_*`, `APP_URL` and `MAIL_FROM`, `Mail::sendMail()` headers,
+  `php caligrafer.php notify keys | test | status`, and a doctor check of the keys.
+- Claude Code plugin 1.27.0: the Notifications page, the API reference, gotchas G109-G110, and the `new-capability`
+  skill writes alerts.
+
 ## [2.14.1] - 2026-11-03
 
 ### Added

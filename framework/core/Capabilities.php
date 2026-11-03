@@ -239,6 +239,10 @@ class Capabilities
      */
     private static function loadServices()
     {
+        // the framework's own capabilities (framework/services: notifications, 2.15.0), in every project
+        foreach (glob(dirname(__DIR__) . '/services/*/*.php') ?: array() as $path) {
+            require_once $path;
+        }
         if (!defined('APP_PATH') || !is_dir(APP_PATH . 'services')) {
             return;
         }

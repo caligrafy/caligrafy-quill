@@ -1,5 +1,5 @@
 /*
- * Caligrafy Quill service worker (optional, off by default)
+ * Caligrafy Quill service worker (optional, off by default; Notify.enable() of public/js/notify.js registers it for push)
  * Enabled by PWA_SERVICE_WORKER=true in .env: the default layout then registers it with the scope of the
  * application root ({$home}); .htaccess sends the Service-Worker-Allowed header that allows that scope.
  *
@@ -36,4 +36,28 @@ self.addEventListener('fetch', (event) => {
     event.respondWith(
         fetch(request).catch(() => caches.match(OFFLINE_URL).then((response) => response || Response.error()))
     );
+});
+
+// Notifications (2.15.0, Caligrafy\Notify): a push shows its message even with every page of the app closed; a tap
+// focuses an open tab of the same address, or opens one. Apps keep their own handlers next to these.
+self.addEventListener('push', (event) => {
+    let message = {};
+    try { message = event.data ? event.data.json() : {}; } catch (e) { message = { title: event.data ? event.data.text() : '' }; }
+    const title = message.title || 'New notification';
+    event.waitUntil(self.registration.showNotification(title, {
+        body: message.body || '',
+        icon: message.icon || undefined,
+        tag: message.tag || undefined,
+        renotify: Boolean(message.tag),
+        data: { url: message.url || self.registration.scope }
+    }));
+});
+
+self.addEventListener('notificationclick', (event) => {
+    event.notification.close();
+    const url = new URL((event.notification.data && event.notification.data.url) || self.registration.scope, self.registration.scope).href;
+    event.waitUntil(self.clients.matchAll({ type: 'window', includeUncontrolled: true }).then((tabs) => {
+        const open = tabs.find((tab) => tab.url === url);
+        return open ? open.focus() : self.clients.openWindow(url);
+    }));
 });

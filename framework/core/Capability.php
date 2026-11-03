@@ -24,6 +24,7 @@ class Capability
      * @param bool $readOnly true when it changes nothing (not audited when it succeeds; agents may call it freely)
      * @param bool $destructive true when it deletes or overwrites data (agents ask before calling it)
      * @param bool $public true when anyone may call it without signing in or a token
+     * @param bool $mcp false keeps it out of the MCP tools (one only a browser can use, such as a push subscription)
      */
     public function __construct(
         public string $name,
@@ -32,7 +33,8 @@ class Capability
         public int $level = 0,
         public bool $readOnly = false,
         public bool $destructive = false,
-        public bool $public = false
+        public bool $public = false,
+        public bool $mcp = true
     ) {
         if (!preg_match('/^[a-z][a-z0-9_]{0,63}$/', $name)) {
             throw new \InvalidArgumentException("Capability name '$name' must be snake_case: letters, digits and _, starting with a letter");

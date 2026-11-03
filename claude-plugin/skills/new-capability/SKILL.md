@@ -84,3 +84,15 @@ return array(
 + Check: `php caligrafer.php schedule list` (and `doctor`), then `php caligrafer.php schedule run <job>` and
   `schedule history <job>`: the outcome must be `ok`. The `scheduler` container of `server start` then runs it every
   minute; on Caligrafy Cloud the deploy reads the schedule. Never add a hand-written loop container for it.
+
+## Telling the user (2.15.0+)
+
+When the feature must reach someone with no page open ("alert me", "remind them", "notify when"), call
+`Caligrafy\Notify::user($userId, ['title' => ..., 'body' => ..., 'url' => '/...', 'tag' => ...])` from the capability
+(reference/42-notifications.md): never your own email or alert sender. A job notifies each user it works for. Then:
++ `Route::capabilities('/capabilities');` and `Route::notifications();` in `web.php`, `php caligrafer.php platform
+  install`, and `php caligrafer.php notify keys --subject mailto:<the owner>` locally (Caligrafy Cloud makes them);
+  `APP_URL` for emails sent by jobs (G110).
++ A **Turn on alerts** button on the page that matters: `script(src=$home . 'public/js/notify.js')`, then
+  `Notify.enable()` from its click (G109); keep the in-page banner for when a page is open.
++ Check: `php caligrafer.php notify status <user>`, then `notify test <user>`: the result shows each channel.

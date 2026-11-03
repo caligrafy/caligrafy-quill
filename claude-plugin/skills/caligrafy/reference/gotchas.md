@@ -502,3 +502,16 @@ written for a signed-in user (`where user_id = $context->userId()`) does nothing
 job its own capability that finds the users it works for (all those with a due watch, say), and keep per-user rules
 in it. Its inputs are the fixed `input` of `application/config/schedule.php`, validated by the capability's rules.
 Proof: `Context::system()`, `Scheduler::execute()`, `qa/unit/SchedulerTest.php`.
+
+**G109. Web push needs a click, HTTPS, and on iPhone the Home Screen.** `Notify.enable()` asks the browser's
+permission, which browsers only allow from a user's click (never on page load). Push works on HTTPS (or `localhost`);
+on iPhone and iPad only in the app added to the Home Screen (`Notify.status()` says `install-needed`). It also needs
+`Route::capabilities('/capabilities')` (what `notify.js` calls), the VAPID keys (`php caligrafer.php notify keys`, made
+by Caligrafy Cloud) and, after `platform install`, the tables. Never make new keys for a live app: every subscribed
+browser stops getting messages. Proof: `public/js/notify.js`, `Notify::subscribe()`.
+
+**G110. Emails sent by a job need `APP_URL`.** A job or the command line has no web request, so `Notify` cannot know
+the app's address for the email's links: without `APP_URL` the email channel says `not-configured` (push still
+works). Set `APP_URL=https://<the app's address>` in `.env`; Caligrafy Cloud sets it for its apps. Email also needs
+`MAIL_*`; the sender is `MAIL_FROM`, else `MAIL_USERNAME` when it is an address. Proof: `Notify::base()`,
+`Notify::emailConfigured()`.

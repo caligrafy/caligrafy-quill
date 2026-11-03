@@ -177,6 +177,14 @@ class Doctor
                 $this->add('project', 'Schedule', 'FAIL', str_replace("\n", ' ', $e->getMessage()), 'fix ' . Scheduler::FILE . ' (php caligrafer.php schedule list)');
             }
         }
+        // notifications: the web push keys come as a set (php caligrafer.php notify keys); half a set sends nothing
+        $vapid = array_filter(array('VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'VAPID_SUBJECT'), function ($k) { return trim((string) $this->env($k)) !== ''; });
+        if (count($vapid) === 3) {
+            $this->add('project', 'Notifications', 'OK', 'web push keys set');
+        } elseif ($vapid) {
+            $this->add('project', 'Notifications', 'WARN', 'only ' . implode(', ', $vapid) . ' of the web push keys is set: push sends nothing',
+                'set all three, or empty them and run php caligrafer.php notify keys');
+        }
         // two Pug mistakes that do not show until the page renders: a $ before digits is read as a variable and vanishes
         // ($40 shows as nothing), and code on the same line as a one-line - if / - foreach does not compile
         $pug = self::pugPitfalls($this->root);

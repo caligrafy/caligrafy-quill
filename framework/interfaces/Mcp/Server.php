@@ -103,6 +103,7 @@ class Server
         $tools = array();
         foreach (Capabilities::available($this->context) as $name => $entry) {
             $capability = $entry['capability'];
+            if (!$capability->mcp) continue;   // for browsers only (the notify_* capabilities)
             $tools[] = array(
                 'name' => $name,
                 'title' => ucfirst(str_replace('_', ' ', $name)),
@@ -137,7 +138,7 @@ class Server
             return self::error($id, self::INVALID_PARAMS, 'tools/call needs a name and an arguments object');
         }
         $available = Capabilities::available($this->context);
-        if (Capabilities::get($name) === null || (!isset($available[$name]) && $this->context->authenticated())) {
+        if (Capabilities::get($name) === null || !Capabilities::get($name)['capability']->mcp || (!isset($available[$name]) && $this->context->authenticated())) {
             // an unknown tool, or one this token may not see: the same answer, so tools/call reveals nothing more than tools/list
             return self::error($id, self::INVALID_PARAMS, "Unknown tool: $name");
         }

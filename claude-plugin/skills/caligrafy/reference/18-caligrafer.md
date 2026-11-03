@@ -28,6 +28,7 @@
 | [`capabilities`](#capabilities) | Lists the capabilities and their inputs |
 | [`call`](#call) | Calls a capability and prints its JSON answer |
 | [`schedule`](#schedule) | Lists, runs and shows the history of the scheduled jobs (2.14.0+) |
+| [`notify`](#notify) | The web push keys, and a test notification to a user (2.15.0+) |
 | [`client`](#client) | Writes the JavaScript client of the capabilities |
 | [`app`, `create`, `facedetect`, `ml`, `bot`](#apps) | Creates a client app in `public/` |
 | [`sql`](#sql) | Runs a SQL script on the database |
@@ -152,6 +153,14 @@ php caligrafer.php schedule work            # runs them every minute until stopp
 php caligrafer.php schedule history         # the latest runs ([<job>] [--limit 50])
 ```
 Runs the [scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs) of `application/config/schedule.php`: capabilities on a timer, with full access, one run at a time, stopped at their timeout and recorded in `caligrafy_job_runs`. `server start` also starts a `scheduler` container that runs `schedule work`. Exit codes: `0` ok, `1` failed or timed out, `2` invalid file, `3` skipped (2.14.0+).
+
+### `notify`
+```bash
+php caligrafer.php notify keys --subject mailto:you@example.com   # the web push keys, once (never replaced)
+php caligrafer.php notify test 7                                  # a test notification to user 7, on their channels
+php caligrafer.php notify status 7                                # user 7's channels and their state
+```
+[Notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications): `keys` writes `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` to `.env` and refuses to replace them (new keys cut off every subscribed browser). Without `--subject`, a `MAIL_FROM` or `MAIL_USERNAME` address, else `APP_URL` (2.15.0+).
 
 ## Data
 

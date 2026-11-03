@@ -35,6 +35,85 @@ return array(
 A job is just a capability: write it as any other ([Build once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)),
 then name it in the file. Its inputs are validated, and the audit log records each call.
 
+## Example: clear the finished tasks every night
+
+The [Tasks example](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) (`php caligrafer.php quickstart
+--example`) keeps every task forever. This job deletes the finished ones that nobody touched for a week, every night at
+3:00 in New York.
+
+**1. The capability.** Create it:
+
+```bash
+php caligrafer.php service Tasks/ClearDoneTasks --scope tasks:write
+```
+
+Then write it in **`application/services/Tasks/ClearDoneTasks.php`**:
+
+```php
+<?php
+
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Database;
+use Caligrafy\Service;
+
+#[Capability(
+    name: 'clear_done_tasks',
+    description: 'Deletes the finished tasks not changed for a number of days (7 by default). Returns how many were deleted.',
+    scope: 'tasks:write',
+    destructive: true
+)]
+class ClearDoneTasks extends Service
+{
+    public $rules = array('days' => 'integer|min_numeric,1|max_numeric,365');
+    public $descriptions = array('days' => 'Finished tasks older than this many days are deleted (7 by default)');
+
+    public function handle(array $input, Context $context)
+    {
+        $before = date('Y-m-d H:i:s', time() - (int) ($input['days'] ?? 7) * 86400);
+        $count = Database::toArray(Database::execute('SELECT COUNT(*) AS n FROM tasks WHERE done = 1 AND modified_at < ?', array($before)));
+        Database::execute('DELETE FROM tasks WHERE done = 1 AND modified_at < ?', array($before));
+        return array('deleted' => (int) $count[0]['n']);
+    }
+}
+```
+
+It works for everyone's tasks, not for a signed-in user: a job has nobody signed in. And it is still an ordinary
+capability: a page, the REST API or an AI agent can call it too, with the scope `tasks:write`.
+
+**2. The schedule.** Create **`application/config/schedule.php`**:
+
+```php
+<?php
+return array(
+    array('name' => 'clear-done-tasks', 'capability' => 'clear_done_tasks', 'input' => array('days' => 7),
+        'cron' => '0 3 * * *', 'timezone' => 'America/New_York'),
+);
+```
+
+Every 15 minutes instead: `'every' => '15m'` in place of `cron` and `timezone`.
+
+**3. Check it and run it once.**
+
+```bash
+php caligrafer.php schedule list                    # checks the file: clear-done-tasks  0 3 * * *  clear_done_tasks  America/New_York
+php caligrafer.php schedule run clear-done-tasks    # runs it now: clear-done-tasks: ok
+php caligrafer.php schedule history                 # the run: when, ok, and the error when it fails
+```
+
+With Docker, put `docker compose exec dev-box` before each command.
+
+**4. Let it run.** On your computer, `php caligrafer.php server start` starts the `scheduler` container: the job runs at
+3:00 every night while it is up. Online on Caligrafy Cloud, deploy, then check:
+
+```bash
+php caligrafer.php cloud deploy myapp
+php caligrafer.php cloud jobs myapp                 # clear-done-tasks, its last run and its next one
+```
+
+To tell users something from a job, call [`Caligrafy\Notify::user()`](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications)
+from its capability.
+
 ## How a job runs
 
 + **With full access**, like the command line. The audit log records it with the actor type `schedule` and the job's

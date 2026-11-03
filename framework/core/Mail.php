@@ -67,7 +67,10 @@ class Mail extends \stdClass {
     }
     
     
-    public function sendMail($recipients, $emailContent, $from)
+    /**
+     * @param array $headers extra headers, name => value (Notify: List-Unsubscribe, List-Unsubscribe-Post)
+     */
+    public function sendMail($recipients, $emailContent, $from, array $headers = array())
     {
         if (empty($recipients) || empty($emailContent) || empty($from)) {
             //throw new Exception(Errors::get('4001'), 4001);
@@ -94,6 +97,9 @@ class Mail extends \stdClass {
 		//$this->mailer->AddReplyTo("replytoemail", "replyto name");
 		//$this->mailer->AddCC("ccemail", "ccname");
 		$this->mailer->Subject = $this->subject;
+		foreach ($headers as $name => $value) {
+			$this->mailer->addCustomHeader($name, $value);
+		}
 		$content = $this->body;
 		
 		$this->mailer->MsgHTML($content);

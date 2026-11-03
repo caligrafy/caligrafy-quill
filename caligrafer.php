@@ -64,6 +64,7 @@ $defaultMsg = "\n Available Functions:
 				\n - capabilities [--json | --markdown]: the capabilities of application/services/ (what REST, MCP and the JS client can call)
 				\n - call <capability> ['{\"key\": \"value\"}' | key=value ...] [--token <token>] [--guest]: calls a capability and prints its JSON answer (full local access unless --token or --guest)
 				\n - schedule <list [--json] | run <job> [--if-due] | due | work | history [<job>] [--limit 50]>: scheduled jobs of application/config/schedule.php (capabilities on a timer); work runs them every minute while you develop
+				\n - notify <keys [--subject mailto:you@example.com] | test <user id> | status <user id>>: notifications (Caligrafy\Notify): keys writes the web push (VAPID) keys to .env once, test sends a test message to a user
 				\n - deploy [--wait <seconds>]: prepares the database in production: framework tables and every new or changed application/models/<folder>/create_db.sql (never one that drops or deletes data twice)
 				\n - cloud <login | create | deploy | apps | status | logs | extend | credits | secret | delete>: puts the project online at https://<name>.caligrafy.com with Caligrafy Cloud (cloud help)
 				\n - mcp [--token <token>]: MCP server over stdio for local AI agents (Claude Code, Cursor...): php caligrafer.php mcp
@@ -259,7 +260,7 @@ switch(strtolower($argv[1])) {
 		try {
 			caligrafyConnect();
 			caligrafySqlFile('framework/settings/platform.sql');
-			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs\n\n");
+			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, and the notifications tables\n\n");
 		} catch (Throwable $e) {
 			print("\n The framework tables could not be created: " . $e->getMessage() . "\n Check DB_ACTIVATE and the DB_* settings in .env (php caligrafer.php doctor --only database)\n\n");
 			exit(1);
@@ -498,6 +499,51 @@ switch(strtolower($argv[1])) {
 			exit(Caligrafy\Scheduler::INVALID);
 		} catch (Throwable $e) {
 			fwrite(STDERR, "\n schedule: " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
+
+	case 'notify':
+		// Notifications (framework/core/Notify.php): keys writes VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY and VAPID_SUBJECT to
+		// .env, never over existing keys (new keys cut off every subscribed browser); test and status for one user
+		$sub = strtolower($argv[2] ?? '');
+		try {
+			if ($sub === 'keys') {
+				$env = file_exists('.env') ? file_get_contents('.env') : '';
+				if (preg_match('/^VAPID_PRIVATE_KEY=\S+/m', $env)) {
+					print("\n The web push keys are already in .env: kept (new keys would cut off every browser that turned push on)\n\n");
+					exit(1);
+				}
+				$subjectAt = array_search('--subject', $argv);
+				$subject = $subjectAt !== false ? ($argv[$subjectAt + 1] ?? '') : '';
+				if ($subject === '') {
+					$from = getenv('MAIL_FROM') ?: getenv('MAIL_USERNAME');
+					$subject = filter_var($from, FILTER_VALIDATE_EMAIL) ? 'mailto:' . $from : (getenv('APP_URL') ?: '');
+				}
+				if (!preg_match('#^(mailto:\S+@\S+|https://\S+)$#', $subject)) {
+					print("\n Give the push services a contact: php caligrafer.php notify keys --subject mailto:you@example.com\n\n");
+					exit(1);
+				}
+				$keys = Caligrafy\Notify::keys();
+				$set = array('VAPID_PUBLIC_KEY' => $keys['public'], 'VAPID_PRIVATE_KEY' => $keys['private'], 'VAPID_SUBJECT' => $subject);
+				foreach ($set as $name => $value) {
+					$env = preg_match("/^$name=.*$/m", $env) ? preg_replace("/^$name=.*$/m", "$name=$value", $env) : rtrim($env, "\n") . "\n$name=$value\n";
+				}
+				file_put_contents('.env', $env);
+				print("\n Web push keys written to .env (VAPID_PUBLIC_KEY, VAPID_PRIVATE_KEY, VAPID_SUBJECT=$subject). Keep them: new keys cut off every subscribed browser\n\n");
+				exit(0);
+			}
+			if (($sub === 'test' || $sub === 'status') && isset($argv[3])) {
+				caligrafyConnect();
+				$result = $sub === 'test'
+					? Caligrafy\Notify::user($argv[3], array('title' => 'Notifications work', 'body' => 'A test from php caligrafer.php notify test.', 'url' => '/', 'tag' => 'notify-test'))
+					: Caligrafy\Notify::status($argv[3]);
+				print(json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES) . "\n");
+				exit(0);
+			}
+			print("\n Usage: php caligrafer.php notify <keys [--subject mailto:you@example.com] | test <user id> | status <user id>>\n\n");
+			exit(1);
+		} catch (Throwable $e) {
+			fwrite(STDERR, "\n notify: " . $e->getMessage() . "\n\n");
 			exit(1);
 		}
 

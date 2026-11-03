@@ -50,6 +50,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.27.0** - Caligrafy Quill 2.15.0, notifications: `Notify::user()` to web push and confirmed email (in the design
+  style), `notify.js`, the `notify_*` capabilities, `Route::notifications()`, `notify keys`; the Notifications page,
+  the API reference, G109-G110; the `new-capability` skill writes alerts.
 - **1.26.1** - Caligrafy Quill 2.14.1: Caligrafy Cloud runs the scheduled jobs; `cloud jobs` (list, run, history) and
   `cloud logs --jobs`; the `ship` skill checks the jobs of a shipped app.
 - **1.26.0** - Caligrafy Quill 2.14.0, scheduled jobs: capabilities on a timer (`application/config/schedule.php`,

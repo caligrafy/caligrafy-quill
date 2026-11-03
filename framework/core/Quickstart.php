@@ -16,7 +16,8 @@ namespace Caligrafy;
  *    (MAMP, XAMPP, LAMP), the address of the project in its web folder (APP_ROOT) and its MySQL settings (asked with the
  *    stack's defaults; without a terminal to confirm them, skipped unless --db-defaults)
  * 3. the database and the framework tables (tokens, audit log)
- * 4. web.php: Route::capabilities('/capabilities') for the JS client and Route::mcp('/mcp') for AI agents
+ * 4. web.php: Route::capabilities('/capabilities') for the JS client, Route::mcp('/mcp') for AI agents and
+ *    Route::notifications() for the links of notification emails
  * 5. with --example: the Tasks example (capabilities, page, REST routes, table, JS client)
  */
 class Quickstart
@@ -118,11 +119,12 @@ class Quickstart
         $updated = self::addRoutes($source, array(
             "Route::capabilities('/capabilities');   // the capabilities for the JS client of the Vue apps",
             "Route::mcp('/mcp');                     // the capabilities as tools for AI agents (personal access tokens)",
+            "Route::notifications();                 // the pages notification emails link to (confirm, unsubscribe)",
         ), 'BUILD ONCE: every capability, for the JS client and AI agents');
         if ($updated !== $source) {
             file_put_contents($routes, $updated);
         }
-        $this->say('  OK    Routes: /capabilities (JS client) and /mcp (AI agents)');
+        $this->say('  OK    Routes: /capabilities (JS client), /mcp (AI agents), /notify (notification emails)');
 
         if (!empty($options['example'])) {
             $this->example($dbReady);

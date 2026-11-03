@@ -81,6 +81,8 @@ PAGES = {
     '39-scheduled-jobs.md': ('Scheduled-Jobs.md', 'Scheduled jobs: capabilities on a timer'),
     '40-release-notes-2.14.0.md': ('Release-notes:-2.14.0.md', 'Release notes: 2.14.0'),
     '41-release-notes-2.14.1.md': ('Release-notes:-2.14.1.md', 'Release notes: 2.14.1'),
+    '42-notifications.md': ('Notifications.md', 'Notifications: web push and email'),
+    '43-release-notes-2.15.0.md': ('Release-notes:-2.15.0.md', 'Release notes: 2.15.0'),
     '22-quickstart-with-claude.md': ('Quickstart-with-Claude.md', 'Quickstart with Claude: describe it, approve it, ship it'),
     '13-build-once-services-capabilities-mcp.md': ('11.-Build-Once:-Services,-Capabilities-and-MCP.md', '11. Build Once: Services, Capabilities and MCP'),
     '26-design-styles.md': ('Design-Styles.md', 'Design styles: another look for every page'),

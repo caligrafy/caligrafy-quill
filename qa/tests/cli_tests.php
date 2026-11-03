@@ -10,6 +10,7 @@ use Caligrafy\Database;
 use Caligrafy\Model;
 use Caligrafy\OpenAI;
 use Caligrafy\Payment;
+use Caligrafy\Notify;
 
 Database::connect();
 
@@ -1036,5 +1037,99 @@ qa_test('without a schedule file there are no jobs', function () {
     qa_equals(array('version' => 1, 'jobs' => array()), json_decode($out, true));
 });
 Database::execute('DROP TABLE IF EXISTS qa_job_ticks');
+
+// ---------------------------------------------------------------------------
+qa_section('Notifications (Caligrafy\Notify: web push through a mock push service, email, choices, the log)');
+
+
+function qa_browser_keys()
+{
+    // a browser's subscription keys: an uncompressed P-256 public point (65 bytes) and a 16-byte auth secret, base64url
+    $key = openssl_pkey_new(array('curve_name' => 'prime256v1', 'private_key_type' => OPENSSL_KEYTYPE_EC));
+    $d = openssl_pkey_get_details($key)['ec'];
+    $b64 = function ($raw) { return rtrim(strtr(base64_encode($raw), '+/', '-_'), '='); };
+    return array('p256dh' => $b64("\x04" . str_pad($d['x'], 32, "\0", STR_PAD_LEFT) . str_pad($d['y'], 32, "\0", STR_PAD_LEFT)), 'auth' => $b64(random_bytes(16)));
+}
+foreach (array('caligrafy_push_subscriptions', 'caligrafy_notify_emails', 'caligrafy_notify_prefs', 'caligrafy_notifications') as $t) Database::execute("DELETE FROM $t");
+@unlink('/tmp/qa-pushes.log');
+$qaKeys = Notify::keys();
+putenv('VAPID_PUBLIC_KEY=' . $qaKeys['public']);
+putenv('VAPID_PRIVATE_KEY=' . $qaKeys['private']);
+putenv('VAPID_SUBJECT=mailto:qa@example.com');
+putenv('APP_URL=https://shop.example');
+putenv('MAIL_HOST=smtp.example');
+$qaMail = array();
+Notify::$mailSender = function ($to, $subject, $html, $headers) use (&$qaMail) { $qaMail[] = compact('to', 'subject', 'html', 'headers'); return true; };
+
+qa_test('a push reaches every browser of the user, encrypted and signed; an expired one (410) is deleted', function () {
+    Notify::subscribe(1, array('endpoint' => 'http://127.0.0.1:8770/ok/laptop', 'keys' => qa_browser_keys()), 'Firefox');
+    Notify::subscribe(1, array('endpoint' => 'http://127.0.0.1:8770/gone/old-phone', 'keys' => qa_browser_keys()), 'Safari');
+    Notify::subscribe(2, array('endpoint' => 'http://127.0.0.1:8770/ok/someone-else', 'keys' => qa_browser_keys()), 'Chrome');
+    $result = Notify::user(1, array('title' => 'Your price hit: $42', 'body' => 'Trail shoes at Shop A.', 'url' => '/watches/17', 'tag' => 'watch-17', 'urgency' => 'high'));
+    qa_equals(array('push' => 1, 'email' => false, 'skipped' => null), $result);
+    $push = json_decode(trim(file_get_contents('/tmp/qa-pushes.log')), true);
+    qa_equals('/ok/laptop', $push['path'], 'only the user\'s own browsers');
+    qa_assert(strpos($push['headers']['authorization'] ?? '', 'vapid t=') === 0, 'VAPID authorization: ' . json_encode($push['headers']));
+    qa_equals('aes128gcm', $push['headers']['content-encoding'] ?? null);
+    qa_equals(array('86400', 'high', 'watch-17'), array($push['headers']['ttl'] ?? null, $push['headers']['urgency'] ?? null, $push['headers']['topic'] ?? null));
+    qa_assert($push['bytes'] > 100, 'an encrypted payload');
+    $left = Database::toArray(Database::execute("SELECT endpoint FROM caligrafy_push_subscriptions WHERE user_id = '1'"));
+    qa_equals(array('http://127.0.0.1:8770/ok/laptop'), array_column($left, 'endpoint'), 'the 410 subscription is gone');
+});
+
+qa_test('email goes only to a confirmed address, in one click unsubscribed', function () use (&$qaMail) {
+    $set = Notify::setEmail(1, 'ann@example.com');
+    qa_equals(true, $set['sent']);
+    preg_match('#https://shop\.example/notify/confirm/([a-f0-9]{48})#', $qaMail[0]['html'], $m);
+    qa_assert(isset($m[1]), 'the confirmation link: ' . substr($qaMail[0]['html'], 0, 300));
+    qa_equals(false, Notify::user(1, array('title' => 'Before', 'body' => 'Not confirmed yet'))['email'], 'nothing to an unconfirmed address');
+    qa_equals('1', (string) Notify::confirm($m[1]));
+    qa_equals(null, Notify::confirm($m[1]), 'the link works once');
+    qa_equals(true, Notify::user(1, array('title' => 'After', 'body' => 'Confirmed'))['email']);
+    $mail = end($qaMail);
+    qa_equals('ann@example.com', $mail['to']);
+    qa_equals('List-Unsubscribe=One-Click', $mail['headers']['List-Unsubscribe-Post']);
+    preg_match('#<(https://shop\.example/notify/unsubscribe\?u=1&s=([a-f0-9]+))>#', $mail['headers']['List-Unsubscribe'], $u);
+    qa_assert(isset($u[2]), 'the unsubscribe header: ' . $mail['headers']['List-Unsubscribe']);
+    qa_assert(strpos($mail['html'], 'Unsubscribe') !== false && strpos($mail['html'], 'Confirmed') !== false, 'body and link in the email');
+    qa_equals(true, Notify::unsubscribeEmail(1, $u[2]));
+    qa_equals(false, Notify::user(1, array('title' => 'Later', 'body' => 'Unsubscribed'))['email'], 'no email once unsubscribed');
+    qa_equals(1, Notify::user(1, array('title' => 'Later', 'body' => 'Push still on'))['push']);
+});
+
+qa_test('the message after the hourly limit is skipped, and the log keeps no body', function () {
+    putenv('NOTIFY_RATE_PER_HOUR=2');
+    Database::execute("DELETE FROM caligrafy_notifications");
+    Notify::user(2, array('title' => 'One', 'body' => 'secret body'));
+    Notify::user(2, array('title' => 'Two', 'body' => 'b'));
+    qa_equals(array('push' => 0, 'email' => false, 'skipped' => 'rate'), Notify::user(2, array('title' => 'Three', 'body' => 'b')));
+    putenv('NOTIFY_RATE_PER_HOUR');
+    $rows = Database::toArray(Database::execute("SELECT * FROM caligrafy_notifications WHERE user_id = '2' ORDER BY id"));
+    qa_equals(array('One', 'Two', 'Three'), array_column($rows, 'title'));
+    qa_equals('rate', $rows[2]['skipped']);
+    qa_assert(strpos(json_encode($rows), 'secret body') === false, 'no body in the log');
+});
+
+qa_test('one user cannot remove another user\'s browser; forget deletes everything about a user', function () {
+    qa_equals(false, Notify::unsubscribe(2, 'http://127.0.0.1:8770/ok/laptop'), 'user 2 cannot unsubscribe user 1');
+    qa_equals(1, (int) Database::toArray(Database::execute("SELECT COUNT(*) AS n FROM caligrafy_push_subscriptions WHERE user_id = '1'"))[0]['n']);
+    Notify::forget(1);
+    foreach (array('caligrafy_push_subscriptions', 'caligrafy_notify_emails', 'caligrafy_notify_prefs', 'caligrafy_notifications') as $t) {
+        qa_equals(0, (int) Database::toArray(Database::execute("SELECT COUNT(*) AS n FROM $t WHERE user_id = '1'"))[0]['n'], "$t of user 1");
+    }
+});
+
+qa_test('notify_status and notify_preferences act on the signed-in user only', function () {
+    $user = (object) array('id' => 2, 'username' => 'bob', 'permissions' => 0);
+    $context = new Caligrafy\Context('rest', $user);
+    $status = Caligrafy\Capabilities::call('notify_status', array(), $context);
+    qa_equals(array('push', 'email'), $status['channels']);
+    qa_equals(1, $status['push']['browsers']);
+    $after = Caligrafy\Capabilities::call('notify_preferences', array('channel' => 'push', 'enabled' => 'false'), $context);
+    qa_equals(false, $after['push']['enabled']);
+    qa_equals(0, Notify::user(2, array('title' => 'Off', 'body' => 'push off'))['push'], 'push turned off');
+});
+Notify::$mailSender = null;
+foreach (array('VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'VAPID_SUBJECT', 'APP_URL', 'MAIL_HOST') as $k) putenv($k);
 
 qa_summary();

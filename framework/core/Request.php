@@ -347,6 +347,12 @@ class Request extends \stdClass {
             return;
         }
 
+        // the one-click unsubscribe of notification emails (Route::notifications): a mail provider posts it with no
+        // session; its link is signed with APP_KEY (Notify::unsubscribeEmail checks it) and it only turns emails off
+        if (trim((string) ($_REQUEST['uri'] ?? ''), '/') === 'notify/unsubscribe') {
+            return;
+        }
+
         // nor can it send a custom header: X-CSRF-Token with the session's token is a page of this application (2.7.0)
         if ($this->authorizeSessionRequest()) {
             return;

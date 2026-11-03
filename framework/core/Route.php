@@ -314,6 +314,25 @@ class Route extends \stdClass
     }
 
     /**
+     * The two pages notification emails link to (2.15.0, Notify): /notify/confirm/{token} confirms an address,
+     * /notify/unsubscribe turns the user's emails off from a signed link, also as the one-click POST of mail providers
+     * (List-Unsubscribe-Post: the signature replaces the CSRF token). Each answers a short page
+    */
+    public static function notifications()
+    {
+        self::get('/notify/confirm/{__token}', function () {
+            $ok = Notify::confirm((string) (currentBind()['__token'] ?? '')) !== null;
+            Notify::page($ok ? 'Your email is confirmed' : 'This link no longer works', $ok ? 'Notifications will come to this address.' : 'It was used already or it expired: ask for a new one from the app.', $ok ? 200 : 404);
+        });
+        $unsubscribe = function () {
+            $ok = Notify::unsubscribeEmail((string) ($_REQUEST['u'] ?? ''), (string) ($_REQUEST['s'] ?? ''));
+            Notify::page($ok ? 'You are unsubscribed' : 'This link is not valid', $ok ? 'No more notification emails. Turn them on again from the app.' : 'Use the link of the latest email.', $ok ? 200 : 400);
+        };
+        self::get('/notify/unsubscribe', $unsubscribe);
+        self::post('/notify/unsubscribe', $unsubscribe);
+    }
+
+    /**
      * Exposes the capabilities to AI agents over MCP (Streamable HTTP) at a uri: Route::mcp('/mcp')
      * Agents authenticate with a personal access token and see the capabilities its scopes allow.
      * @param string $route the uri of the MCP endpoint

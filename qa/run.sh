@@ -99,7 +99,7 @@ $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n    Route::g
     . "    Route::page(\"/qa/page/{id}\", \"Qa/page\", [\"data\" => [\"book\" => \"get_book\"]]);\n"
     . "    Route::page(\"/qa/friendly/{id}\", \"Qa/page\", [\"data\" => [\"book\" => \"get_book\"], \"notFound\" => \"Qa/missing\"]);\n"
     . "    Route::page(\"/qa/members\", \"Qa/page\", [\"signedIn\" => true]);\n    Route::page(\"/qa/admins\", \"Qa/page\", [\"level\" => 1]);\n"
-    . "    Route::capabilities(\"/capabilities\");\n    Route::mcp(\"/mcp\");\n"
+    . "    Route::capabilities(\"/capabilities\");\n    Route::mcp(\"/mcp\");\n    Route::notifications();\n"
     . "    Route::capability(\"GET\", \"/v2/books\", \"list_books\");\n    Route::capability(\"GET\", \"/v2/books/{id}\", \"get_book\");\n"
     . "    Route::capability(\"POST\", \"/v2/books\", \"create_book\");\n    Route::capability(\"PUT\", \"/v2/books/{id}\", \"update_book\");\n"
     . "    Route::capability(\"DELETE\", \"/v2/books/{id}\", \"delete_book\");\n    Route::post(\"/bookshelf/books\", \"BookPageController@store\");\n";
@@ -128,6 +128,8 @@ $COMPOSE exec -T mysql mysql -uroot -proot quillqa < qa/fixtures/facelogin/creat
 $COMPOSE exec -T web php caligrafer.php platform install >/dev/null 2>&1 || fail "php caligrafer.php platform install failed"
 # Watson mock inside the web container, used by WatsonController in the HTTP tests
 $COMPOSE exec -d web php -S 127.0.0.1:8769 qa/fixtures/watson_mock.php
+# push service mock inside the web container, used by the notifications tests
+$COMPOSE exec -d web php -S 127.0.0.1:8770 qa/fixtures/push_mock.php
 
 STATUS=0
 

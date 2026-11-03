@@ -38,11 +38,13 @@
         "stripe/stripe-php": "^22.0",
         "phpmailer/phpmailer": "^7.1",
         "lucianotonet/groq-php": "^1.4",
-        "lbuchs/webauthn": "^2.2"
+        "lbuchs/webauthn": "^2.2",
+        "minishlink/web-push": "^11.0"
     },
     "config": {
         "allow-plugins": {
-            "nodejs-php-fallback/nodejs-php-fallback": true
+            "nodejs-php-fallback/nodejs-php-fallback": true,
+            "php-http/discovery": false
         }
     },
     "prefer-stable": true,

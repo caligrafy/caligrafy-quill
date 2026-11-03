@@ -1083,7 +1083,7 @@ qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per messag
 
 qa_test('the generated JS client calls the same capabilities from Node with a token', function () use ($WRITER, $BASE, $ROOT) {
     @mkdir("$ROOT/qa/tmp", 0777, true);
-    qa_contains('13 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));
+    qa_contains('20 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));   // the app's 13 and the framework's 7 notify_*
     $script = "$ROOT/qa/tmp/client-check.mjs";
     file_put_contents($script, "import { configure, listBooks, createBook, getBook, CapabilityError } from './capabilities.mjs'\n"
         . "configure({ baseUrl: process.argv[2], token: process.argv[3] })\n"
@@ -1213,6 +1213,31 @@ qa_test('register_user is for the sign-up page: refused over REST', function () 
     $r = qa_json('POST', '/capabilities/register_user', ['username' => 'bulk1', 'passcode' => 'Passw0rdQa']);
     qa_equals(403, $r['status'], $r['body']);
     qa_equals('0', qa_sql("SELECT COUNT(*) FROM users WHERE username = 'bulk1'"));
+});
+
+qa_section('Notifications: the pages of the emails (Route::notifications)');
+
+qa_test('a confirmation link that is unknown answers 404 with a page', function () {
+    $r = (new QaBrowser())->get('/notify/confirm/' . str_repeat('ab', 24));
+    qa_equals(404, $r['status']);
+    qa_contains('This link no longer works', $r['body']);
+});
+
+qa_test('the one-click unsubscribe POST needs no session or CSRF token, only its signature', function () {
+    $key = qa_in_web('preg_match("/^APP_KEY=(.*)$/m", file_get_contents(".env"), $m); echo trim($m[1]);');
+    $sig = substr(hash_hmac('sha256', 'notify-unsubscribe|42', $key), 0, 32);
+    $r = (new QaBrowser())->post('/notify/unsubscribe?u=42&s=' . $sig, ['List-Unsubscribe' => 'One-Click'], ['headers' => ['Accept: */*']]);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_contains('You are unsubscribed', $r['body']);
+    qa_equals('0', qa_sql("SELECT enabled FROM caligrafy_notify_prefs WHERE user_id = '42' AND channel = 'email'"));
+    $bad = (new QaBrowser())->post('/notify/unsubscribe?u=42&s=forged', ['List-Unsubscribe' => 'One-Click'], ['headers' => ['Accept: */*']]);
+    qa_equals(400, $bad['status']);
+    qa_contains('This link is not valid', $bad['body']);
+});
+
+qa_test('another POST without a token is still refused (the exemption is only the unsubscribe link)', function () {
+    $r = (new QaBrowser())->post('/notify/confirm/' . str_repeat('ab', 24), ['x' => '1'], ['headers' => ['Accept: text/html']]);
+    qa_assert($r['status'] >= 400, 'refused: ' . $r['status']);
 });
 
 qa_summary();
