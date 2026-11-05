@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.28.4** - Caligrafy Quill 2.16.4: going live with Stripe. `deploy` checks the live payment keys and webhooks; a
+  test-mode webhook left on the production address fails (G115).
 - **1.28.3** - Caligrafy Quill 2.16.3: password-protected apps on Caligrafy Cloud. `ship` and `deploy` take a locked
   app for an app online, `marketplace` says offering removes the password, `cloud apps` and `cloud status` print
   `[password protected]` (G114).

@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.16.4] - 2026-11-05
+
+### Documentation
+- Stripe, going live (wiki 9.2): with `APP_ENV=production` payments use the live keys; an app that added a Stripe
+  webhook creates its endpoint again in live mode with the live signing secret, and disables the test-mode endpoint left
+  on the production address (its events fail with `400`, and Stripe emails about them). The framework's own checkout
+  methods use no webhook.
+- Claude Code plugin 1.28.4: gotcha G115, and the `deploy` skill checks the payment keys and webhooks before going live.
+
 ## [2.16.3] - 2026-11-03
 
 ### Changed

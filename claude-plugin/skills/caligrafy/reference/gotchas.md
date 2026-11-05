@@ -548,3 +548,12 @@ status` and the end of `cloud deploy` print `[password protected]` (2.16.3); che
 `curl -s -o /dev/null -w '%{http_code} %{redirect_url}' https://<name>.caligrafy.com/`. Never ask for the password and
 never remove it without the user's OK. Offering the app to the marketplace removes it for good. Proof: Cloud's
 `Passwords` model, `CloudClient::locked()`.
+
+**G115. A Stripe test-mode webhook left on the production address fails once the app goes live.** Stripe keeps one
+list of webhook endpoints per mode, each with its own signing secret (`whsec_...`). After `APP_ENV=production` and the
+live keys, the server checks every event with the live secret, so the events of a test-mode endpoint still pointing at
+it get `400` (invalid signature): Stripe retries them, emails "trouble sending requests in test mode",
+and disables the endpoint after about nine days. Real payments are not affected. Fix: create the endpoint in live mode
+with the live secret, and disable the test-mode one (or point it at a test server). The framework's own checkout
+methods use no webhook (`retrieveCheckout()` on the return page): only an app that added one is concerned. Proof: wiki
+9.2 "Going live", Caligrafy Cloud's `/stripe/webhook` in November 2026.

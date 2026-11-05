@@ -31,6 +31,8 @@ php caligrafer.php doctor --only project
   history. Never print a secret's value; name the file and the key only.
 + **Every `application/models/*/create_db.sql` is safe to run again** (G68): `CREATE TABLE IF NOT EXISTS`, no `DROP`
   or `DELETE`, columns added with `ALTER TABLE ... ADD COLUMN`. Report the scripts that are not.
++ **Payments, if the app takes them**: online (`APP_ENV=production`) it uses the `PAY_*_PRODUCTION` live keys. A Stripe
+  webhook needs its live-mode endpoint and live secret, and its test-mode endpoint disabled or pointed elsewhere (G115).
 + **Committed and pushed**: the host builds what is on GitHub, not the working folder. Commit and push only with the
   user's OK.
 
