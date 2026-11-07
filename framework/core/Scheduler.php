@@ -378,14 +378,35 @@ class Scheduler
      */
     private function child(array $job)
     {
-        $process = proc_open(array(PHP_BINARY, 'caligrafer.php', 'schedule', 'exec', $job['name']), array(1 => array('pipe', 'w'), 2 => array('pipe', 'w')), $pipes, $this->root);
-        if (!is_resource($process)) {
+        list($exit, $out) = self::spawn(array('schedule', 'exec', $job['name']), $this->root, $job['timeout']);
+        if ($exit === false) {
             return array('error', 'the job could not start');
+        }
+        if ($exit === null) {
+            return array('timeout', 'stopped after ' . $job['timeout'] . ' seconds');
+        }
+        $answer = json_decode(trim($out), true);
+        if ($exit === self::OK) {
+            return array('ok', '');
+        }
+        $message = $answer['error']['message'] ?? trim($out);
+        return array('error', mb_substr($message !== '' ? $message : "exit code $exit", 0, 500));
+    }
+
+    /**
+     * Runs php caligrafer.php <args> in $root, stopped after $timeout seconds (the scheduler's jobs, the queue's jobs)
+     * @return array [exit code, or null when it was stopped, or false when it could not start; its output]
+     */
+    public static function spawn(array $args, $root, $timeout)
+    {
+        $process = proc_open(array_merge(array(PHP_BINARY, 'caligrafer.php'), $args), array(1 => array('pipe', 'w'), 2 => array('pipe', 'w')), $pipes, $root);
+        if (!is_resource($process)) {
+            return array(false, '');
         }
         stream_set_blocking($pipes[1], false);
         stream_set_blocking($pipes[2], false);
         $out = '';
-        $deadline = microtime(true) + $job['timeout'];
+        $deadline = microtime(true) + $timeout;
         $exit = null;
         while (true) {
             $out .= stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]);
@@ -398,21 +419,13 @@ class Scheduler
                 proc_terminate($process, 9);
                 break;
             }
-            usleep(100000);
+            usleep(50000);
         }
         $out .= stream_get_contents($pipes[1]) . stream_get_contents($pipes[2]);
         fclose($pipes[1]);
         fclose($pipes[2]);
         proc_close($process);
-        if ($exit === null) {
-            return array('timeout', 'stopped after ' . $job['timeout'] . ' seconds');
-        }
-        $answer = json_decode(trim($out), true);
-        if ($exit === self::OK) {
-            return array('ok', '');
-        }
-        $message = $answer['error']['message'] ?? trim($out);
-        return array('error', mb_substr($message !== '' ? $message : "exit code $exit", 0, 500));
+        return array($exit, $out);
     }
 
     private function record($name, $started, $outcome, $detail)

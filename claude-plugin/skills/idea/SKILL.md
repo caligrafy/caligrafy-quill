@@ -134,6 +134,13 @@ of your own. Then `Route::notifications();` next to `Route::capabilities(...)`, 
 the **Turn on alerts** button (`script(src=$home . 'public/js/notify.js')`, `Notify.enable()` from its click, G109).
 Check: `schedule list`, `schedule run <job>` prints `ok`, `notify status <user>`.
 
+**Slow work** (2.18.0+, only when the plan has it: an AI call, an email to many, a report): the capability the page
+calls pushes a background job (`Caligrafy\Queue::push`, reference/47-background-jobs.md) and the scheduled job
+`queue` on `queue_work` runs it. **Tests** (2.18.0+): one `tests/<Folder>Test.php` per folder of capabilities
+(`php caligrafer.php test make <Folder>`): each capability called as the right user, and its refusals; run
+`php caligrafer.php test` before shipping. **A change to a table after the first deploy** goes in a migration
+(`php caligrafer.php migrate make <name>`, reference/46-migrations.md), never in an edit of a `create_db.sql` that ran.
+
 **The page** `application/views/<Folder>/index.pug` + `public/js/<things>.js`: `extends ../default/master/site` and the
 classes of Caligrafy's look only (a title band `section.cq-hero.cq-hero--page`, `section.cq-band > .cq-inner`, a
 `.cq-form-grid` of `.cq-field`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`, `.cq-field-error`), the JS client

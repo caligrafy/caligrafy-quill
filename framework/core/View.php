@@ -65,13 +65,7 @@ class View extends \stdClass {
      */
     public static function cacheFolder()
     {
-        $user = function_exists('posix_geteuid') ? posix_geteuid() : null;
-        $folder = rtrim(sys_get_temp_dir(), DIRECTORY_SEPARATOR) . DIRECTORY_SEPARATOR . 'caligrafy-views-'
-            . substr(md5(realpath(ROOT) ?: ROOT), 0, 12) . ($user === null ? '' : '-' . $user);
-        if (!is_dir($folder) && !@mkdir($folder, 0700, true) && !is_dir($folder)) return null;
-        if (is_link($folder) || !is_writable($folder)) return null;
-        if ($user !== null && @fileowner($folder) !== $user) return null;
-        return $folder;
+        return ClassMap::tempFolder('views');
     }
 
 }

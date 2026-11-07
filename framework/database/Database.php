@@ -162,6 +162,17 @@ class Database extends \stdClass {
     }
 
     /**
+     * The PDO connection, connecting on first use (null when DB_ACTIVATE is not true); tests run in its transactions
+     */
+    public static function connection()
+    {
+        if (!self::$connection) {
+            self::connect();
+        }
+        return self::$connection;
+    }
+
+    /**
      * Gets Last Inserted Id
      * @return int Last Inserted Id
      * @author Dory A.Azar 

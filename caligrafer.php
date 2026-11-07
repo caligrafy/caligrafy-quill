@@ -56,7 +56,11 @@ $defaultMsg = "\n Available Functions:
 				\n - design <list [--json] | show <name> | use <name> | off | status>: picks a design style (DESIGN_STYLE in .env) (framework/design, application/design); empty = Caligrafy's own look
 				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
 				\n - sql <file.sql>: runs a SQL script on the database of .env
-				\n - platform install: creates the framework tables (personal access tokens, audit log)
+				\n - migrate [status | make <name>]: runs the migrations of application/migrations (numbered SQL files, each run once, in order); make writes a new one
+				\n - queue <work [--for <seconds>] [--once] | status | list | failed | retry <id | all>>: background jobs pushed with Caligrafy\Queue::push (a capability run later, with retries)
+				\n - cache clear: empties the cache (Caligrafy\Cache, CACHE_STORE), the compiled views and the class map
+				\n - test [<filter>] | test make <Name>: runs the tests of tests/ (PHPUnit, Caligrafy\Testing\TestCase); make writes one
+				\n - platform install: creates the framework tables (personal access tokens, audit log, jobs, cache)
 				\n - token <create | list | revoke>: personal access tokens for REST and MCP clients (scoped, revocable)
 				\n - audit [--limit 50] [--capability <name>]: the latest capability calls
 				\n - service <Name> [--scope books:write] [--read-only]: creates a capability in application/services/
@@ -65,7 +69,7 @@ $defaultMsg = "\n Available Functions:
 				\n - call <capability> ['{\"key\": \"value\"}' | key=value ...] [--token <token>] [--guest]: calls a capability and prints its JSON answer (full local access unless --token or --guest)
 				\n - schedule <list [--json] | run <job> [--if-due] | due | work | history [<job>] [--limit 50]>: scheduled jobs of application/config/schedule.php (capabilities on a timer); work runs them every minute while you develop
 				\n - notify <keys [--subject mailto:you@example.com] | test <user id> | status <user id>>: notifications (Caligrafy\Notify): keys writes the web push (VAPID) keys to .env once, test sends a test message to a user
-				\n - deploy [--wait <seconds>]: prepares the database in production: framework tables and every new or changed application/models/<folder>/create_db.sql (never one that drops or deletes data twice)
+				\n - deploy [--wait <seconds>]: prepares the database in production: framework tables, every new or changed application/models/<folder>/create_db.sql (never one that drops or deletes data twice), then the pending migrations
 				\n - cloud <login | create | deploy | apps | status | logs | extend | credits | secret | delete>: puts the project online at https://<name>.caligrafy.com with Caligrafy Cloud (cloud help)
 				\n - mcp [--token <token>]: MCP server over stdio for local AI agents (Claude Code, Cursor...): php caligrafer.php mcp
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
@@ -260,7 +264,7 @@ switch(strtolower($argv[1])) {
 		try {
 			caligrafyConnect();
 			caligrafySqlFile('framework/settings/platform.sql');
-			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, and the notifications tables\n\n");
+			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, the notifications tables, caligrafy_jobs, caligrafy_cache and caligrafy_migrations\n\n");
 		} catch (Throwable $e) {
 			print("\n The framework tables could not be created: " . $e->getMessage() . "\n Check DB_ACTIVATE and the DB_* settings in .env (php caligrafer.php doctor --only database)\n\n");
 			exit(1);
@@ -434,6 +438,150 @@ switch(strtolower($argv[1])) {
 	case 'cloud':
 		// Caligrafy Cloud: put the project online at https://<name>.caligrafy.com (php caligrafer.php cloud help)
 		exit((new Caligrafy\CloudClient('.'))->run(array_slice($argv, 2)));
+
+	case 'migrate':
+		// Migrations (framework/core/Migrations.php): numbered SQL files of application/migrations, each run once, in order
+		$migrations = new Caligrafy\Migrations('.');
+		$sub = strtolower($argv[2] ?? '');
+		try {
+			if ($sub === 'make') {
+				$path = $migrations->make($argv[3] ?? '');
+				print("\n $path written: add its SQL, then php caligrafer.php migrate\n\n");
+				exit(0);
+			}
+			if ($sub !== '' && $sub !== 'status') {
+				print("\n Usage: php caligrafer.php migrate [status | make <name>]\n Runs the migrations of " . Caligrafy\Migrations::FOLDER . " that never ran on this database\n\n");
+				exit(1);
+			}
+			caligrafyConnect();
+			if ($sub === 'status') {
+				$list = $migrations->status();
+				print($list ? "\n" : "\n No migrations (" . Caligrafy\Migrations::FOLDER . "; php caligrafer.php migrate make <name>)\n\n");
+				foreach ($list as $m) {
+					printf(" %-8s %s%s\n", $m['state'], $m['name'], $m['ran_at'] ? "  ({$m['ran_at']})" : '');
+				}
+				if ($list) print("\n");
+				exit(0);
+			}
+			print("\n");
+			$ran = $migrations->run(function ($line) { print(" $line\n"); });
+			print($ran ? "\n " . count($ran) . " migration(s) run on " . DB_DATABASE . "\n\n" : " Nothing to migrate: " . DB_DATABASE . " is up to date\n\n");
+			exit(0);
+		} catch (Throwable $e) {
+			fwrite(STDERR, "\n migrate: " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
+
+	case 'queue':
+		// Background jobs (framework/core/Queue.php): work runs them, exec is the child process of one job
+		$sub = strtolower($argv[2] ?? '');
+		$option = function ($name, $default = null) use ($argv) {
+			$at = array_search("--$name", $argv);
+			return $at !== false && isset($argv[$at + 1]) ? $argv[$at + 1] : $default;
+		};
+		try {
+			caligrafyConnect();
+			switch ($sub) {
+				case 'work':
+					$for = $option('for');
+					print("\n Working the queue " . $option('queue', 'default') . ($for !== null ? " for $for s" : (in_array('--once', $argv, true) ? ' until it is empty' : ' (Ctrl+C stops)')) . "\n");
+					$counts = Caligrafy\Queue::work(array('queue' => $option('queue', 'default'), 'seconds' => $for !== null ? (float) $for : null,
+						'once' => in_array('--once', $argv, true), 'sleep' => (int) $option('sleep', 3), 'say' => function ($line) { print(" $line\n"); }));
+					print(" {$counts['done']} done, {$counts['retried']} to try again, {$counts['failed']} failed\n\n");
+					exit(0);
+				case 'exec':
+					exit(Caligrafy\Queue::execute($argv[3] ?? 0));
+				case 'list':
+				case 'failed':
+					$status = $sub === 'failed' ? 'failed' : $option('status');
+					$jobs = Caligrafy\Queue::jobs($status, (int) $option('limit', 50));
+					print($jobs ? "\n" : "\n No jobs\n\n");
+					foreach ($jobs as $j) {
+						printf(" #%-6s %-8s %-24s %-8s %d/%d  %s%s\n", $j['id'], $j['queue'], $j['capability'], $j['status'], $j['attempts'], $j['max_attempts'],
+							$j['status'] === 'pending' ? 'from ' . $j['available_at'] : ($j['finished_at'] ?? ''), $j['last_error'] ? '  ' . mb_substr($j['last_error'], 0, 80) : '');
+					}
+					if ($jobs) print("\n");
+					exit(0);
+				case 'status':
+					$c = Caligrafy\Queue::counts();
+					print("\n {$c['pending']} pending, {$c['running']} running, {$c['done']} done, {$c['failed']} failed\n\n");
+					exit(0);
+				case 'retry':
+					$id = $argv[3] ?? '';
+					if ($id === '') throw new InvalidArgumentException('Usage: php caligrafer.php queue retry <id | all>');
+					$n = Caligrafy\Queue::retry($id === 'all' ? null : $id);
+					print("\n $n failed job(s) back in the queue\n\n");
+					exit(0);
+				default:
+					print("\n Usage: php caligrafer.php queue <work [--queue default] [--for <seconds>] [--once] [--sleep 3] | status | list [--status failed] [--limit 50] | failed | retry <id | all>>\n"
+						. " Background jobs pushed with Caligrafy\\Queue::push('<capability>', [...])\n\n");
+					exit(1);
+			}
+		} catch (Throwable $e) {
+			fwrite(STDERR, "\n queue: " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
+
+	case 'test':
+		// The application's tests (tests/*Test.php, Caligrafy\Testing\TestCase) with PHPUnit
+		if (strtolower($argv[2] ?? '') === 'make') {
+			$name = preg_replace('/[^A-Za-z0-9]/', '', ucwords((string) ($argv[3] ?? ''), " _-"));
+			if ($name === '') {
+				print("\n Usage: php caligrafer.php test make <Name>   (writes tests/<Name>Test.php)\n\n");
+				exit(1);
+			}
+			$name = preg_replace('/Test$/', '', $name);
+			$path = "tests/{$name}Test.php";
+			if (file_exists($path)) {
+				print("\n $path already exists\n\n");
+				exit(1);
+			}
+			@mkdir('tests', 0775, true);
+			// tests/ of a project made before 2.18.0 ignored every file
+			if (!is_file('tests/.gitignore') || preg_match('/^\s*\*\s*$/m', (string) file_get_contents('tests/.gitignore'))) {
+				file_put_contents('tests/.gitignore', "# Your tests: php caligrafer.php test (make <Name> writes one). Never served: the production image leaves tests/ out.\n");
+			}
+			file_put_contents($path, "<?php\n\nuse Caligrafy\\Testing\\TestCase;\n\n/**\n * php caligrafer.php test $name\n */\nfinal class {$name}Test extends TestCase\n{\n"
+				. "    public function testTheCapabilitiesAreThere(): void\n    {\n        // \$answer = \$this->call('<capability>', ['<input>' => '...'], \$this->user(1));\n"
+				. "        // \$this->assertCapabilityFails('unauthenticated', '<capability>', [], 'guest');\n"
+				. "        \$this->assertIsArray(Caligrafy\\Capabilities::all());\n    }\n}\n");
+			print("\n $path written: php caligrafer.php test $name\n\n");
+			exit(0);
+		}
+		if (!is_file('vendor/bin/phpunit')) {
+			print("\n PHPUnit is not installed: composer install (with the development packages), then php caligrafer.php test\n\n");
+			exit(1);
+		}
+		if (!glob('tests/*Test.php') && !glob('tests/*/*Test.php')) {
+			print("\n No tests yet: php caligrafer.php test make <Name> writes tests/<Name>Test.php\n\n");
+			exit(0);
+		}
+		$command = array(PHP_BINARY, 'vendor/bin/phpunit', '--no-configuration', '--bootstrap', 'framework/testing/bootstrap.php', '--colors=auto', '--display-warnings', '--fail-on-warning');
+		if (isset($argv[2]) && $argv[2][0] !== '-') {
+			array_push($command, '--filter', $argv[2]);
+		}
+		$command[] = 'tests';
+		$process = proc_open($command, array(STDIN, STDOUT, STDERR), $pipes);
+		exit(is_resource($process) ? proc_close($process) : 1);
+
+	case 'cache':
+		if (strtolower($argv[2] ?? '') !== 'clear') {
+			print("\n Usage: php caligrafer.php cache clear\n Empties the cache (Caligrafy\\Cache, CACHE_STORE in .env), the compiled views and the class map\n\n");
+			exit(1);
+		}
+		try {
+			if (Caligrafy\Cache::store() === 'database') caligrafyConnect();
+			$n = Caligrafy\Cache::flush();
+			$removed = 0;
+			foreach (array('views', 'classes') as $kind) {
+				foreach (glob(Caligrafy\ClassMap::tempFolder($kind) . '/*') ?: array() as $file) $removed += @unlink($file) ? 1 : 0;
+			}
+			print("\n Cache (" . Caligrafy\Cache::store() . ") emptied" . ($n !== null ? ": $n value(s)" : '') . "; $removed compiled view and class map file(s) removed\n\n");
+			exit(0);
+		} catch (Throwable $e) {
+			fwrite(STDERR, "\n cache: " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
 
 	case 'deploy':
 		// What the production image runs at start: waits for the database, framework tables, new or changed create_db.sql

@@ -77,7 +77,13 @@ class Caligrafer extends \stdClass {
      */
     private static function autoload()
     {
-        // Load classes
+        // Load classes: each one when it is first used (ClassMap, 2.18.0), or every framework file (CLASS_MAP=false)
+        require_once CORE_PATH . 'ClassMap.php';
+        if (ClassMap::enabled()) {
+            require_once CORE_PATH . 'Framework.php';
+            ClassMap::register(Framework::mappedFolders(), Framework::unmappedFolders());
+            return;
+        }
         spl_autoload_register(array(__CLASS__,'load'));
     }
 

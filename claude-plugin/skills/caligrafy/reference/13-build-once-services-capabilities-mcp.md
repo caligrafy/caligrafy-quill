@@ -246,6 +246,8 @@ Build each screen from the [page components](https://github.com/caligrafy/caligr
 
 ## Testing a capability
 
+Your app's tests call capabilities with `Caligrafy\Testing\TestCase` and run with `php caligrafer.php test` (2.18.0): [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App). A capability can ask for what it uses in its constructor ([Dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection)), and run later as a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs).
+
 From the command line, with the checks and the audit, before any route (since 2.3.0):
 ```bash
 php caligrafer.php call create_book '{"title": "Dune", "author": "Frank Herbert", "publisher_id": 1}'

@@ -114,7 +114,7 @@ class Capabilities
                     throw ServiceError::forbidden($capability->scope !== '' ? "This needs the scope {$capability->scope}" . ($capability->level > 0 ? " and permission level {$capability->level}" : '') : 'You are not allowed to do this');
                 }
             }
-            $service = new $entry['class']();
+            $service = Container::make($entry['class']);   // its constructor gets what it needs (2.18.0)
             $result = self::plain($service->handle($service->validate($input), $context));
         } catch (ServiceError $e) {
             Audit::record($context, $name, $e->kind, $e->getMessage());
@@ -233,9 +233,9 @@ class Capabilities
     }
 
     /**
-     * Requires the PHP files of application/ before the registry is built: the services, and the classes they use
-     * (models, helpers next to the controllers). The web autoloader does the same on the first unknown class; the CLI
-     * (php caligrafer.php capabilities, mcp, client) does not. config/ (web.php would dispatch a route) and views/ are skipped.
+     * Requires the PHP files that declare capabilities before the registry is built. With the class map (2.18.0) only
+     * the files that mention #[Capability]: the classes they use load when used. Without it (CLASS_MAP=false) every PHP
+     * file of application/ but config/ (web.php would dispatch a route) and views/.
      */
     private static function loadServices()
     {
@@ -244,6 +244,13 @@ class Capabilities
             require_once $path;
         }
         if (!defined('APP_PATH') || !is_dir(APP_PATH . 'services')) {
+            return;
+        }
+        // with the class map (2.18.0): only the files that mention #[Capability]; the classes they use load when used
+        if (class_exists('Caligrafy\\ClassMap', false) && ClassMap::registered()) {
+            foreach (ClassMap::capabilityFiles(true) as $path) {
+                require_once $path;
+            }
             return;
         }
         $skip = array(APP_PATH . 'config' . DIRECTORY_SEPARATOR, APP_PATH . 'views' . DIRECTORY_SEPARATOR);

@@ -17,6 +17,7 @@ namespace Caligrafy;
  *    (php caligrafer.php sql <file>) when you mean it. seed.sql and other scripts are never run. A statement that adds
  *    a column, an index or a foreign key already there (the script's earlier run added it) is skipped, so a script
  *    keeps its ALTER TABLE ... ADD statements.
+ * 4. runs the migrations of application/migrations that never ran (Migrations, 2.18.0)
  * Without DB_ACTIVATE=true there is nothing to do.
  */
 class Deployer
@@ -57,10 +58,11 @@ class Deployer
             $this->sqlFile($this->root . '/framework/settings/platform.sql');
             Database::execute('CREATE TABLE IF NOT EXISTS `' . self::SCRIPTS_TABLE . '` (`path` VARCHAR(255) NOT NULL, `sha256` CHAR(64) NOT NULL, '
                 . '`ran_at` DATETIME NOT NULL, PRIMARY KEY (`path`)) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4');
-            $this->line('OK', 'Framework tables', 'tokens, audit log, job runs, scripts');
+            $this->line('OK', 'Framework tables', 'tokens, audit log, job runs, jobs, cache, migrations, scripts');
             foreach ($this->scripts() as $path) {
                 $this->script($path);
             }
+            $this->migrations();
         } catch (\Throwable $e) {
             $this->line('FAIL', 'Database', $e->getMessage());
             return $this->done(1);
@@ -120,6 +122,21 @@ class Deployer
         $this->sqlFile($this->root . '/' . $path);
         Database::execute('REPLACE INTO `' . self::SCRIPTS_TABLE . '` (`path`, `sha256`, `ran_at`) VALUES (?, ?, ?)', array($path, $hash, date('Y-m-d H:i:s')));
         $this->line('OK', $path, $last === null ? 'run' : 'changed: run again');
+    }
+
+    /**
+     * The migrations of application/migrations (2.18.0) that never ran on this database, after the create_db.sql scripts
+     */
+    private function migrations()
+    {
+        $migrations = new Migrations($this->root);
+        if (!$migrations->files()) {
+            return;
+        }
+        $ran = $migrations->run(function ($line) {
+            if (strpos($line, 'WARN') === 0) $this->line('WARN', 'Migrations', substr($line, 5));
+        });
+        $this->line('OK', 'Migrations', $ran ? count($ran) . ' run: ' . implode(', ', $ran) : 'up to date');
     }
 
     private function connect()

@@ -296,6 +296,7 @@ class Doctor
             }
             $missing ? $this->add('database', 'Framework tables', 'SKIP', implode(', ', $missing) . ' not installed (needed for tokens, the audit log and MCP)', 'php caligrafer.php platform install')
                 : $this->add('database', 'Framework tables', 'OK', 'caligrafy_tokens and caligrafy_audit installed');
+            $this->migrations($pdo);
         } catch (\PDOException $e) {
             $message = $this->scrub($e->getMessage());
             $fix = 'check the DB_* values in .env';
@@ -821,6 +822,43 @@ class Doctor
         $j = $r['json'];
         $message = is_array($j)? ($j['error']['message'] ?? $j['error'] ?? $j['errorMessage'] ?? $j['message'] ?? null) : null;
         return $this->scrub(is_string($message)? $message : trim(strip_tags($r['body'])));
+    }
+
+    /**
+     * The migrations of application/migrations (2.18.0): pending ones, and ones edited after they ran (read-only)
+     */
+    private function migrations(\PDO $pdo)
+    {
+        try {
+            $files = (new Migrations($this->root))->files();
+        } catch (\InvalidArgumentException $e) {
+            $this->add('database', 'Migrations', 'FAIL', $e->getMessage(), 'rename the file: <number>_<name>.sql');
+            return;
+        }
+        if (!$files) {
+            return;
+        }
+        $ran = array();
+        try {
+            foreach ($pdo->query('SELECT `name`, `sha256` FROM `' . Migrations::TABLE . '`')->fetchAll(\PDO::FETCH_ASSOC) as $row) {
+                $ran[$row['name']] = $row['sha256'];
+            }
+        } catch (\PDOException $e) {
+            // never migrated: every file is pending
+        }
+        $pending = $changed = array();
+        foreach ($files as $name => $path) {
+            if (!isset($ran[$name])) {
+                $pending[] = $name;
+            } elseif ($ran[$name] !== hash('sha256', (string) file_get_contents($this->root . '/' . $path))) {
+                $changed[] = $name;
+            }
+        }
+        if ($changed) {
+            $this->add('database', 'Migrations', 'WARN', implode(', ', $changed) . ' changed after it ran: it will not run again', 'put the change in a new migration (php caligrafer.php migrate make <name>) and restore the file');
+        }
+        $pending ? $this->add('database', 'Migrations', 'WARN', count($pending) . ' pending: ' . implode(', ', $pending), 'php caligrafer.php migrate')
+            : (!$changed ? $this->add('database', 'Migrations', 'OK', count($files) . ' ran, none pending') : null);
     }
 
     /**

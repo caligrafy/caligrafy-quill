@@ -85,3 +85,42 @@ CREATE TABLE IF NOT EXISTS `caligrafy_notifications` (
     PRIMARY KEY (`id`),
     KEY `caligrafy_notifications_user` (`user_id`, `created_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- Background jobs (Caligrafy\Queue, 2.18.0): a capability and its input, run later by a worker
+CREATE TABLE IF NOT EXISTS `caligrafy_jobs` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `queue` VARCHAR(40) NOT NULL DEFAULT 'default',
+    `capability` VARCHAR(100) NOT NULL,
+    `input` MEDIUMTEXT NOT NULL,
+    `status` VARCHAR(10) NOT NULL,
+    `attempts` INT UNSIGNED NOT NULL DEFAULT 0,
+    `max_attempts` INT UNSIGNED NOT NULL DEFAULT 3,
+    `timeout` INT UNSIGNED NOT NULL DEFAULT 60,
+    `available_at` DATETIME NOT NULL,
+    `reserved_at` DATETIME NULL,
+    `reserved_by` CHAR(32) NULL,
+    `finished_at` DATETIME NULL,
+    `last_error` VARCHAR(1000) NULL,
+    `created_at` DATETIME NOT NULL,
+    PRIMARY KEY (`id`),
+    KEY `caligrafy_jobs_due` (`queue`, `status`, `available_at`),
+    KEY `caligrafy_jobs_reserved` (`reserved_by`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- The cache when CACHE_STORE=database (Caligrafy\Cache, 2.18.0)
+CREATE TABLE IF NOT EXISTS `caligrafy_cache` (
+    `key_hash` CHAR(64) NOT NULL,
+    `cache_key` VARCHAR(255) NOT NULL,
+    `value` MEDIUMTEXT NOT NULL,
+    `expires_at` INT UNSIGNED NULL,
+    PRIMARY KEY (`key_hash`),
+    KEY `caligrafy_cache_expires` (`expires_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- The migrations of application/migrations that ran (Caligrafy\Migrations, 2.18.0)
+CREATE TABLE IF NOT EXISTS `caligrafy_migrations` (
+    `name` VARCHAR(190) NOT NULL,
+    `sha256` CHAR(64) NOT NULL,
+    `ran_at` DATETIME NOT NULL,
+    PRIMARY KEY (`name`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

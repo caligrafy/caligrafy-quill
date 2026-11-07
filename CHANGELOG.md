@@ -6,6 +6,42 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.18.0] - 2026-11-07
+
+### Added
+- Migrations (`Caligrafy\Migrations`): each database change in a numbered SQL file of `application/migrations`,
+  run once, in order, recorded in `caligrafy_migrations`; `php caligrafer.php migrate [status | make <name>]`. The
+  deploy step runs the pending ones after the `create_db.sql` scripts; `doctor` reports pending ones and ones edited
+  after they ran. Statements are split outside quotes and comments.
+- Background jobs (`Caligrafy\Queue`): `Queue::push('<capability>', $input, ['delay', 'attempts', 'timeout', 'queue'])`
+  runs a capability later, each run in its own process, stopped at its timeout, tried again after 30 s, 1 min, 2 min...
+  (an input the capability refuses fails at once). Workers: the framework's capability `queue_work` in
+  `application/config/schedule.php` (the scheduler, Caligrafy Cloud), or `php caligrafer.php queue work`;
+  `queue status | list | failed | retry`. Table `caligrafy_jobs`.
+- The cache (`Caligrafy\Cache`): `remember`, `get`, `put`, `forever`, `forget`, `flush`. `CACHE_STORE`: `database` by
+  default with a database (the `caligrafy_cache` table, shared by the web server, the queue, scheduled jobs and every
+  server), `file` without one, or `off`. `php caligrafer.php cache clear`.
+- Testing an app: `Caligrafy\Testing\TestCase` (`call()` as the command line, a guest or a user,
+  `assertCapabilityFails()`, `render()`, `fake()`, `assertQueued()`), each test in a rolled-back transaction;
+  `php caligrafer.php test [<filter>]` and `test make <Name>`; `DB_TEST_DATABASE` or `.env.testing`.
+- Dependency injection (`Caligrafy\Container`): capabilities are built by the container, so their constructors get what
+  they use; `bind`, `singleton`, `instance`, `make`, bindings in `application/config/container.php`.
+- `Database::connection()`; `Scheduler::spawn()` (the child process of a scheduled job and of a background job).
+- `.env.example`: `DB_TEST_DATABASE`, `CACHE_STORE`. `platform install` and the deploy step create `caligrafy_jobs`,
+  `caligrafy_cache` and `caligrafy_migrations`.
+
+### Changed
+- Classes load when they are used (`Caligrafy\ClassMap`): the first unknown class of a request no longer loads every
+  PHP file of the framework and of `application/`. A map of the classes, kept in a private folder of the temporary
+  directory, loads each one when it is first used; a file that does more than declare classes (functions, code) is
+  loaded at start, as before. Capabilities are found from the files that mention `#[Capability`. A class added while the
+  app runs is found at once in development, within a minute with `APP_ENV=production`. `CLASS_MAP=false` in `.env`
+  restores the old loader.
+- `tests/` is no longer loaded on every request (it holds the app's tests), and its `.gitignore` keeps them in git.
+- Claude Code plugin 1.30.0: the Migrations, Background jobs, Caching, Testing your app and Dependency injection pages,
+  the API reference, gotchas G118-G121; the `new-capability`, `new-resource`, `idea` and `deploy` skills use
+  migrations, jobs, the cache and tests.
+
 ## [2.17.0] - 2026-11-07
 
 ### Changed

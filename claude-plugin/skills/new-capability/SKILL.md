@@ -63,9 +63,26 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
    - MCP: `tools/list` shows it for a token with the scope only; `tools/call` returns `isError: false`, and invalid
      input returns `isError: true` with the same `fields` as REST.
    - `php caligrafer.php audit --capability <name>` shows the calls.
-6. **Tests**: a PHPUnit test that runs `(new <Name>())->run([...])` for the rule cases, and, when the project has
-   HTTP tests, one check per channel that the result and the refusals are the same.
+6. **Tests** (2.18.0+): `php caligrafer.php test make <Name>`, then in `tests/<Name>Test.php` (extends
+   `Caligrafy\Testing\TestCase`) `$this->call('<name>', [...], $this->user(1))` for the rule cases and
+   `$this->assertCapabilityFails('invalid' | 'unauthenticated' | 'forbidden', ...)` for the refusals; run
+   `php caligrafer.php test <Name>` (reference/49-testing-your-app.md). Each test is rolled back. Before 2.18.0: a
+   PHPUnit test that runs `(new <Name>())->run([...])`.
+   What the capability uses (a client of another service, a mailer) comes through its constructor
+   (`public function __construct(private Mailer $mailer) {}`), bound in `application/config/container.php` when it
+   is an interface or needs settings, so a test can `$this->fake()` it (reference/50-dependency-injection.md).
 7. Ask the `caligrafy-reviewer` agent to review the new files.
+
+## Later, outside the request (2.18.0+)
+
+When the work is slow or may fail (an email, an AI call, a report, an image) and the page should answer at once, the
+capability that takes the request pushes a **background job** on a second capability that does the work:
+`Caligrafy\Queue::push('<work_capability>', ['id' => $id])` (reference/47-background-jobs.md). The job runs with full
+access (G121): check who may ask in the first capability, pass ids. The project needs one scheduled job on
+`queue_work` (below: `array('name' => 'queue', 'capability' => 'queue_work', 'every' => '1m', 'timeout' => 55)`).
+Check: `php caligrafer.php queue work --once` prints `done`; in a test, `$this->assertQueued('<work_capability>')`.
+Slow reads that change rarely: `Caligrafy\Cache::remember('<key>', <seconds>, fn () => ...)`, forgotten in the
+capabilities that change the data (reference/48-caching.md).
 
 ## On a timer (2.14.0+)
 

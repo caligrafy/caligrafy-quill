@@ -146,6 +146,10 @@ with `Route::post('/books', 'BookFormController@store');` and `=csrf()` in the f
 
 ## Finish
 1. `php -l` every new PHP file (the plugin hook also does it on save).
-2. Offer to run the SQL with `/caligrafy-quill:db application/models/<Entity>/create_db.sql`.
+2. Offer to run the SQL with `/caligrafy-quill:db application/models/<Entity>/create_db.sql`. When the table already
+   exists with data (a project online), a change to it goes in a migration instead (2.18.0+:
+   `php caligrafer.php migrate make add_<entity>_<column>`, then `php caligrafer.php migrate`; G120).
 3. Check every capability: `php caligrafer.php capabilities`, then `php caligrafer.php call list_books` and `php caligrafer.php call create_book title=...` (an invalid input gives the field messages). Show REST calls with a token: `php caligrafer.php token create "test" --scopes books:read,books:write`, then `curl -H "Accept: application/json" -H "Authorization: Bearer <token>" <base>/api/books` (base: `http://localhost:8080` under Docker, else `http://localhost/<APP_ROOT>`); revoke it after (`token revoke <number>`, G77).
-4. Ask the `caligrafy-reviewer` agent to review the new files.
+4. Tests (2.18.0+): `php caligrafer.php test make <Entity>`, one call per capability as a user and the refusals as a
+   guest, then `php caligrafer.php test <Entity>`.
+5. Ask the `caligrafy-reviewer` agent to review the new files.

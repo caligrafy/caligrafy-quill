@@ -1,2 +1,1 @@
-*
-!.gitignore
+# Your tests: php caligrafer.php test (make <Name> writes one). Never served: the production image leaves tests/ out.

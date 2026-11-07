@@ -21,7 +21,7 @@ class Framework extends \stdClass {
   /**
    * Version of Caligrafy Quill (semantic versioning: the git tag is v<VERSION>, the changes are in CHANGELOG.md)
    */
-  const VERSION = '2.17.0';
+  const VERSION = '2.18.0';
     
   /**
    * Framework main 
@@ -62,8 +62,29 @@ class Framework extends \stdClass {
      */
     private static function autoload()
     {
-        // Load classes
+        // Load classes: each one when it is first used (ClassMap, 2.18.0), or every file (CLASS_MAP=false)
+        require_once CORE_PATH . 'ClassMap.php';
+        if (ClassMap::enabled()) {
+            ClassMap::register(self::mappedFolders(), self::unmappedFolders());
+            return;
+        }
         spl_autoload_register(array(__CLASS__,'load'));
+    }
+
+    /**
+     * The folders of the class map: the framework's classes and the application's
+     */
+    public static function mappedFolders()
+    {
+        return array(CORE_PATH, DB_PATH, INTERFACES_PATH, APP_PATH);
+    }
+
+    /**
+     * Left out of the class map: settings and routes (loaded by dispatch), views (Pug)
+     */
+    public static function unmappedFolders()
+    {
+        return array(CONFIG_PATH, VIEW_PATH);
     }
 
     private static function load()
@@ -72,7 +93,7 @@ class Framework extends \stdClass {
         self::_require_all(DB_PATH);
         self::_require_all(INTERFACES_PATH);
         self::_require_all(APP_PATH);
-        self::_require_all(TEST_PATH);
+        // tests/ is no longer loaded (2.18.0): it holds the PHPUnit tests of php caligrafer.php test
     }
 
     /**
@@ -82,7 +103,10 @@ class Framework extends \stdClass {
     {   
         // Load configuration files
         include CONFIG_PATH . "config.php";
-        
+
+        // The application's own bindings (application/config/container.php, 2.18.0)
+        Container::boot();
+
         // Load routes
         require_once CONFIG_PATH . "routing/web.php";
     }

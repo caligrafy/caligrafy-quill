@@ -29,10 +29,14 @@
 | [`call`](#call) | Calls a capability and prints its JSON answer |
 | [`schedule`](#schedule) | Lists, runs and shows the history of the scheduled jobs (2.14.0+) |
 | [`notify`](#notify) | The web push keys, and a test notification to a user (2.15.0+) |
+| [`queue`](#queue) | Runs the background jobs, lists them, tries failed ones again (2.18.0+) |
+| [`test`](#test) | Runs your app's tests, or writes a new one (2.18.0+) |
 | [`client`](#client) | Writes the JavaScript client of the capabilities |
 | [`app`, `create`, `facedetect`, `ml`, `bot`](#apps) | Creates a client app in `public/` |
 | [`sql`](#sql) | Runs a SQL script on the database |
-| [`platform install`](#platform) | Creates the framework tables (tokens, audit log, job runs) |
+| [`migrate`](#migrate) | Runs the migrations that never ran, shows their state, writes a new one (2.18.0+) |
+| [`cache clear`](#cache) | Empties the cache, the compiled views and the class map (2.18.0+) |
+| [`platform install`](#platform) | Creates the framework tables (tokens, audit log, job runs, jobs, cache, migrations) |
 | [`token`](#token) | Creates, lists and revokes personal access tokens |
 | [`mcp`](#mcp) | An MCP server over stdio for AI agents on your computer |
 | [`audit`](#audit) | Shows the latest capability calls and refusals |
@@ -162,6 +166,22 @@ php caligrafer.php notify status 7                                # user 7's cha
 ```
 [Notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications): `keys` writes `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY` and `VAPID_SUBJECT` to `.env` and refuses to replace them (new keys cut off every subscribed browser). Without `--subject`, a `MAIL_FROM` or `MAIL_USERNAME` address, else `APP_URL` (2.15.0+).
 
+### `queue`
+```bash
+php caligrafer.php queue work              # runs the jobs as they come (--once: what is due, then stops; --for 300: for 5 minutes)
+php caligrafer.php queue status            # pending, running, done, failed
+php caligrafer.php queue list              # the latest jobs (--status failed, --limit 50); queue failed: the failed ones
+php caligrafer.php queue retry 42          # a failed job again, with new attempts (retry all: every failed job)
+```
+[Background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs) pushed with `Queue::push('<capability>', $input)`: each runs in its own process, stopped at its timeout, and is tried again when it fails. On Caligrafy Cloud the scheduler runs them (a job on `queue_work` in `schedule.php`) (2.18.0+).
+
+### `test`
+```bash
+php caligrafer.php test make Books         # writes tests/BooksTest.php
+php caligrafer.php test                    # runs every test of tests/ (test Books: only the matching ones)
+```
+[Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App) with PHPUnit and `Caligrafy\Testing\TestCase`: each test runs in a transaction that is rolled back. `DB_TEST_DATABASE` or `.env.testing` gives the tests a database of their own (2.18.0+).
+
 ## Data
 
 ### `sql`
@@ -170,11 +190,25 @@ php caligrafer.php sql application/models/Books/create_db.sql
 ```
 Runs a SQL script (usually the `create_db.sql` of a model) on the database of `.env`. Comments are removed and the statements run one by one. It needs `DB_ACTIVATE=true` and the `DB_*` settings.
 
+### `migrate`
+```bash
+php caligrafer.php migrate make add_books_isbn   # writes application/migrations/<date>_add_books_isbn.sql
+php caligrafer.php migrate                       # runs the ones that never ran on this database
+php caligrafer.php migrate status                # ran, pending or changed
+```
+[Migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations): each database change in a numbered SQL file, run once, in order, recorded in `caligrafy_migrations`. [`deploy`](#deploy) runs them in production (2.18.0+).
+
+### `cache clear`
+```bash
+php caligrafer.php cache clear
+```
+Empties [the cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching) (`CACHE_STORE`), the compiled views and the class map of this system user (2.18.0+).
+
 ### `platform install`
 ```bash
 php caligrafer.php platform install
 ```
-Creates the framework tables: `caligrafy_tokens` (personal access tokens), `caligrafy_audit` (the audit log) and `caligrafy_job_runs` (the runs of [scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs), 2.14.0+). Safe to run again. `quickstart` runs it for you; `doctor` tells you when they are missing.
+Creates the framework tables: `caligrafy_tokens` (personal access tokens), `caligrafy_audit` (the audit log), `caligrafy_job_runs` (the runs of [scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs), 2.14.0+), the notifications tables, and `caligrafy_jobs`, `caligrafy_cache` and `caligrafy_migrations` (2.18.0+). Safe to run again. `quickstart` runs it for you; `doctor` tells you when they are missing.
 
 ## Programs and AI agents
 
@@ -264,10 +298,10 @@ php caligrafer.php upgrade --apply --keep application/views/default/index.pug   
 
 ### `deploy`
 ```bash
-php caligrafer.php deploy                 # framework tables, then every new or changed create_db.sql
+php caligrafer.php deploy                 # framework tables, every new or changed create_db.sql, then the pending migrations
 php caligrafer.php deploy --wait 120      # wait up to 2 minutes for the database (default 60)
 ```
-What the production `Dockerfile` runs before Apache starts. It waits for the database, creates the framework tables, then runs every `application/models/<folder>/create_db.sql` that is new or changed since its last run, and records it in the `caligrafy_scripts` table. A changed script that drops, deletes or truncates is never run again on its own (run it with [`sql`](#sql) when you mean it); `seed.sql` is never run. It exits with `1` when the database cannot be prepared. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#deploy).
+What the production `Dockerfile` runs before Apache starts. It waits for the database, creates the framework tables, then runs every `application/models/<folder>/create_db.sql` that is new or changed since its last run, and records it in the `caligrafy_scripts` table, then the [migrations](#migrate) that never ran (2.18.0+). A changed script that drops, deletes or truncates is never run again on its own (run it with [`sql`](#sql) when you mean it); `seed.sql` is never run. It exits with `1` when the database cannot be prepared. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#deploy).
 
 ### `cloud`
 ```bash

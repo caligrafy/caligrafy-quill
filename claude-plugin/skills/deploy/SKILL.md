@@ -30,7 +30,12 @@ php caligrafer.php doctor --only project
   stop: it must be removed from git *and* rotated (new `APP_KEY`/`API_KEY`, new service keys), because it stays in the
   history. Never print a secret's value; name the file and the key only.
 + **Every `application/models/*/create_db.sql` is safe to run again** (G68): `CREATE TABLE IF NOT EXISTS`, no `DROP`
-  or `DELETE`, columns added with `ALTER TABLE ... ADD COLUMN`. Report the scripts that are not.
+  or `DELETE`, columns added with `ALTER TABLE ... ADD COLUMN`. Report the scripts that are not. Changes to tables
+  that already have data belong in migrations (2.18.0+, `application/migrations`, run once by the deploy step): a
+  migration edited after it ran never runs again (G120), so `php caligrafer.php migrate status` must show no `changed`.
++ **Background jobs, if the app pushes any** (`Queue::push`, 2.18.0+): `application/config/schedule.php` has a job on
+  `queue_work`, or the own server runs `php caligrafer.php queue work` in a container of its own; never both.
++ **The app's tests pass** when it has some: `php caligrafer.php test` (2.18.0+).
 + **Payments, if the app takes them**: online (`APP_ENV=production`) it uses the `PAY_*_PRODUCTION` live keys. A Stripe
   webhook needs its live-mode endpoint and live secret, and its test-mode endpoint disabled or pointed elsewhere (G115).
 + **Committed and pushed**: the host builds what is on GitHub, not the working folder. Commit and push only with the

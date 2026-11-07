@@ -38,7 +38,12 @@ Every feature is written once, as a **capability** (its inputs, rules and permis
 over MCP. Same rules, same permissions, same audit log, whichever way it is called. A capability can also run on a
 timer, with no page open ([scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)), and
 reach your users with the app closed ([notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications):
-web push and email). Sign-in, tokens, payments, AI, design styles, a
+web push and email), or later, outside the request
+([background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs), with retries). The database
+changes go in [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), slow work in
+[the cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching), and
+[your tests](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App) call the capabilities the way every
+channel does. Sign-in, tokens, payments, AI, design styles, a
 [social card](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards) on every page and a
 production `Dockerfile` come in the box. See
 [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works).

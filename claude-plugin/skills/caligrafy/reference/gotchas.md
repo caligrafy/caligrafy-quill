@@ -571,3 +571,33 @@ time, so a changed view can look older than its cache and the old page keeps sho
 Cloud are not concerned (each container starts with an empty `/tmp`), and editing a view locally always shows. Fix:
 `rm -rf /tmp/caligrafy-views-*` after such a copy, or `VIEW_CACHE=false`. Do not "fix" a stale page by changing the
 view again. Proof: `View::cache()`, Phug's `FileAdapter::hasExpiredImport()`.
+
+**G118. A file in `application/` that only declares classes no longer runs on every request (2.18.0+).** The class
+map loads a class when it is first used. A file that does more (it declares functions, calls
+`Capabilities::register()`, sets something at the top level, declares a class inside `if`) is still loaded at start,
+in path order, as every file used to be. Do not rely on one class file having been loaded before another is used:
+reference the class and the map loads it. Capabilities are found by the files that mention `#[Capability`. A class
+added while the app runs works at once in development; with `APP_ENV=production` the map checks its files at most once
+a minute (a new container starts with none). `CLASS_MAP=false` restores the old loader. Proof: `ClassMap::declarations()`,
+`qa/unit/ClassMapTest.php`.
+
+**G119. The web server and the command line do not share the file cache (2.18.0+).** Apache runs as `www-data`, the
+CLI, the queue and scheduled jobs as another user (root in Docker): `CACHE_STORE=file` gives each its own private
+folder, so a job's `Cache::forget()` leaves the page's copy in place. That is why the store is `database` by default
+when `DB_ACTIVATE=true` (the `caligrafy_cache` table; without it the file store is used and `error_log` says so). Keep
+`file` only for an app without a database, and do not set `CACHE_STORE=file` on a project whose jobs change cached data.
+Proof: the 2.18.0 local test (a book added from the CLI stayed hidden from the page with the file store).
+
+**G120. A migration runs once: editing it after it ran does nothing (2.18.0+).** `migrate` records each file's name
+and sha256 in `caligrafy_migrations`; an edited file shows as `changed` in `migrate status`, `doctor` warns, and the
+deploy step never runs it again. Write the change in a new file (`php caligrafer.php migrate make <name>`), and restore
+the old one. A file stops at its first failing statement and is not recorded, but MySQL has already committed the
+`CREATE`/`ALTER` statements before it: keep one change per file, or make it safe to run twice (`IF NOT EXISTS`).
+Proof: `Migrations::run()`.
+
+**G121. A background job runs with full access, and a test's transaction ends at the first CREATE or ALTER (2.18.0+).**
+`Queue::execute()` calls the capability as `Context::system('queue', ...)`, like a scheduled job: no user, every scope
+(G108). Check who may ask for the work in the capability that pushes it, and pass ids. In
+`Caligrafy\Testing\TestCase` each test runs in a transaction that is rolled back; MySQL commits it at any DDL
+statement, so a test that creates or alters a table leaves its rows behind: create tables with migrations, run once on
+the test database (`DB_TEST_DATABASE`). Proof: `framework/core/Queue.php`, `framework/testing/TestCase.php`.
