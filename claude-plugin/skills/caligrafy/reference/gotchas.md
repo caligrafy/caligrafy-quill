@@ -563,3 +563,11 @@ methods use no webhook (`retrieveCheckout()` on the return page): only an app th
 Linux and Docker never show it. `github.sh` before 2.16.5 died this way on every Mac using SSH: `push` printed nothing
 (its error went to `/dev/null`) and pushed nothing, and `publish` took an existing repository for a missing one. Write
 `${list[@]+"${list[@]}"}`, and try a script with `/bin/bash` on a Mac. Proof: `qa/tests/tooling_tests.sh`.
+
+**G117. A view copied with its old modification time can be served from the cache (2.17.0+).** Compiled Pug views are
+kept in `<tmp>/caligrafy-views-<project>-<user>` and recompiled only when a view or a file it includes or extends is
+newer than the cached copy. `rsync -a`, `cp -p`, `tar`/`unzip` and some deploy tools keep a file's old modification
+time, so a changed view can look older than its cache and the old page keeps showing. Docker images and Caligrafy
+Cloud are not concerned (each container starts with an empty `/tmp`), and editing a view locally always shows. Fix:
+`rm -rf /tmp/caligrafy-views-*` after such a copy, or `VIEW_CACHE=false`. Do not "fix" a stale page by changing the
+view again. Proof: `View::cache()`, Phug's `FileAdapter::hasExpiredImport()`.

@@ -198,6 +198,8 @@ api($viewData = array())               // = new View(null, $viewData)
 ```
 If `$viewName` is null **or** the request `wantsJson()`, the View echoes `json_encode($viewData, JSON_UNESCAPED_SLASHES)` and calls `exit`. A route therefore serves HTML to browsers and JSON to API clients with the same `view()` call. Set the HTTP status with `http_response_code($code)` before `api()`.
 
+Compiled views are cached (2.17.0): before `Phug::displayFile()`, `View::cache()` (once per request) sets Phug's `cache_dir` to `View::cacheFolder()` = `sys_get_temp_dir()/caligrafy-views-<first 12 of md5(realpath(ROOT))>-<posix_geteuid()>`, created `0700`; `null` (no cache) when it cannot be created or written, is a symlink, or another user owns it. Phug's `up_to_date_check` stays on: a view is recompiled when it or any file it includes or extends has a modification time >= the cached copy's (the `.imports.serialize.txt` next to it). `VIEW_CACHE=false` (`getenv`, case-insensitive) turns it off; a `cache_dir` the project set itself (`Phug::setOption`) is kept. Proof: `qa/unit/ViewTest.php`.
+
 ## Server protection (`.htaccess`)
 Root `.htaccess` (mod_rewrite only, `AllowOverride FileInfo`): front controller (`index.php?uri=$1` for non-existing files) and 403 (case-insensitive) for existing dotfiles, `application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules`, `caligrafer.php`, `composer.(json|lock)`, `docker-compose.y(a)ml`, `package(-lock).json`, `*.sql|log|bak|ini|sh|env`; `Service-Worker-Allowed: /` on `public/sw.js`; `AddType application/manifest+json .webmanifest` (mod_mime). `public/uploads/.htaccess`: mod_rewrite `[NC,F]` for script extensions.
 

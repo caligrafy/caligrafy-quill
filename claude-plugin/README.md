@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.29.0** - Caligrafy Quill 2.17.0: compiled Pug views are cached between requests (`VIEW_CACHE=false` turns
+  it off); G117 (a view copied with an old modification time).
 - **1.28.5** - Caligrafy Quill 2.16.5: `ship` pushes and publishes over SSH on macOS's bash 3.2 (`github.sh` stopped
   with no message on an empty array); G116.
 - **1.28.4** - Caligrafy Quill 2.16.4: going live with Stripe. `deploy` checks the live payment keys and webhooks; a

@@ -6,6 +6,18 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.17.0] - 2026-11-07
+
+### Changed
+- Compiled Pug views are kept between requests (`View::cache()`): a view is compiled to PHP once, and again only when
+  it or a file it includes or extends is saved, so edits still show at once. Pages are the same, 3 to 8 times faster
+  (the HTML page of the benchmark went from about 124 to about 941 requests per second). The folder is private to the
+  project and the system user (`<tmp>/caligrafy-views-<project>-<user>`, `0700`); without one that can be written,
+  views are compiled as before. `VIEW_CACHE=false` turns it off; a project that sets Phug's `cache_dir` keeps its own.
+- After copying files that keep their old modification times to a server without Docker (`rsync -a`, `cp -p`), empty
+  `/tmp/caligrafy-views-*` (G117).
+- Claude Code plugin 1.29.0: gotcha G117, the API reference of `View`, the Views and Putting it online pages.
+
 ## [2.16.5] - 2026-11-06
 
 ### Fixed

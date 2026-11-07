@@ -139,6 +139,8 @@ docker run -d -p 80:80 \
 
 Put HTTPS in front of it (a load balancer, Coolify's proxy, Caddy...). Hosts that offer only environment variables and no file (Railway, Render, DigitalOcean App Platform) are not supported yet.
 
+**Without Docker** (files copied to a PHP server): compiled views are kept in the temporary directory ([2.17.0+](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#templates)); after copying files that keep their old modification times (`rsync -a`, `cp -p`), empty it with `rm -rf /tmp/caligrafy-views-*`.
+
 **Scheduled jobs** ([2.14.0+](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)): run a second container from the same image and `.env` with `php caligrafer.php schedule work` (on Coolify, a second application with that start command), or `php caligrafer.php schedule due` from the server's cron every minute. One of the two, not both.
 
 ## When something does not work
