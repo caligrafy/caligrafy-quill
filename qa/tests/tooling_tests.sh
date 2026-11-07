@@ -415,6 +415,22 @@ printf '<?php echo ;\n' > "$TMP/broken.php"
 echo '{"tool_input":{"file_path":"'"$TMP"'/broken.php"}}' | sh claude-plugin/scripts/php-lint.sh >/dev/null 2>&1
 [ $? = 2 ] && ok "php-lint hook blocks a broken file (exit 2)" || ko "php-lint hook does not block a broken file"
 
+# --- ship: github.sh over SSH, offline, with the computer's own bash (macOS's 3.2 stops on an empty array, G116) -------
+GH="$TMP/github"; mkdir -p "$GH/bin"
+printf '#!/bin/sh\necho "Hi tester! You have successfully authenticated"\n' > "$GH/bin/ssh"
+printf '#!/bin/sh\nexit 1\n' > "$GH/bin/gh"
+chmod +x "$GH/bin/ssh" "$GH/bin/gh"
+git init -q --bare "$GH/remote.git"
+git init -q "$GH/work"
+git -C "$GH/work" -c user.name=qa -c user.email=qa@example.test commit -q --allow-empty -m one
+printf '[url "%s"]\n\tinsteadOf = git@github.com:tester/app.git\n[protocol "file"]\n\tallow = always\n' "$GH/remote.git" > "$GH/gitconfig"
+SHELL_BIN=/bin/bash; [ -x "$SHELL_BIN" ] || SHELL_BIN=bash
+OUT=$(cd "$GH/work" && PATH="$GH/bin:$PATH" GIT_CONFIG_GLOBAL="$GH/gitconfig" CALIGRAFY_NO_BROWSER=1 "$SHELL_BIN" "$ROOT/claude-plugin/skills/ship/scripts/github.sh" publish app 2>&1)
+case "$OUT" in *"PROTOCOL ssh CREATED existing"*) ok "github.sh publish over SSH, with $SHELL_BIN" ;; *) ko "github.sh publish over SSH" "$OUT" ;; esac
+git -C "$GH/work" -c user.name=qa -c user.email=qa@example.test commit -q --allow-empty -m two
+OUT=$(cd "$GH/work" && PATH="$GH/bin:$PATH" GIT_CONFIG_GLOBAL="$GH/gitconfig" "$SHELL_BIN" "$ROOT/claude-plugin/skills/ship/scripts/github.sh" push 2>&1)
+if [ "$(git -C "$GH/remote.git" rev-list --all --count)" = 2 ]; then ok "github.sh push over SSH, with $SHELL_BIN"; else ko "github.sh push over SSH" "$OUT"; fi
+
 echo
 echo "$PASS passed, $FAIL failed"
 [ "$FAIL" = 0 ]

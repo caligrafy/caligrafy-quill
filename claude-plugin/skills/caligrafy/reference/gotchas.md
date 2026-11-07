@@ -557,3 +557,9 @@ and disables the endpoint after about nine days. Real payments are not affected.
 with the live secret, and disable the test-mode one (or point it at a test server). The framework's own checkout
 methods use no webhook (`retrieveCheckout()` on the return page): only an app that added one is concerned. Proof: wiki
 9.2 "Going live", Caligrafy Cloud's `/stripe/webhook` in November 2026.
+
+**G116. An empty bash array is an unbound variable on macOS under `set -u`.** macOS ships bash 3.2, where
+`"${list[@]}"` on an empty array stops the script with `list[@]: unbound variable`; bash 4.4 and later accept it, so
+Linux and Docker never show it. `github.sh` before 2.16.5 died this way on every Mac using SSH: `push` printed nothing
+(its error went to `/dev/null`) and pushed nothing, and `publish` took an existing repository for a missing one. Write
+`${list[@]+"${list[@]}"}`, and try a script with `/bin/bash` on a Mac. Proof: `qa/tests/tooling_tests.sh`.

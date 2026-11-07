@@ -30,7 +30,7 @@ ssh_login() {
 
 # git over HTTPS with the GitHub CLI's sign-in, for this command only (no change to the git settings)
 GIT_HTTPS=()
-git_() { git "${GIT_HTTPS[@]}" "$@"; }
+git_() { git ${GIT_HTTPS[@]+"${GIT_HTTPS[@]}"} "$@"; }   # the +: an empty array is an unbound variable for macOS's bash 3.2 under set -u
 
 # opens a page in the browser of this computer (CALIGRAFY_NO_BROWSER=1: print only)
 open_page() {

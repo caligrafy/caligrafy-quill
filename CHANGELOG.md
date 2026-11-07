@@ -6,6 +6,14 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.16.5] - 2026-11-06
+
+### Fixed
+- `/caligrafy-quill:ship` on a Mac with an SSH key on GitHub: `github.sh push` stopped with no message and pushed
+  nothing, and `github.sh publish` took an existing repository for a missing one and asked for the GitHub CLI. An empty
+  array is an unbound variable for macOS's bash 3.2 under `set -u` (G116). QA now runs both offline with the computer's
+  own `/bin/bash`.
+
 ## [2.16.4] - 2026-11-05
 
 ### Documentation
