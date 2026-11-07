@@ -6,6 +6,12 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.18.1] - 2026-11-07
+
+### Documentation
+- The banner image is only on the README and the wiki's Home: removed from the other wiki pages and from the Claude
+  Code plugin's copies of them (plugin 1.30.1).
+
 ## [2.18.0] - 2026-11-07
 
 ### Added
