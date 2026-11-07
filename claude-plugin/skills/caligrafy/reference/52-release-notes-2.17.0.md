@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.17.0
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 Caligrafy Quill **2.17.0** serves pages faster: compiled views are kept between requests.
 
 ## Faster pages, nothing to change

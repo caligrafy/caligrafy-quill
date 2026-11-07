@@ -53,7 +53,9 @@ what the change makes wrong or incomplete; no rewrite for its own sake.
 
 - Every page the change affects (`grep -l` for the class, command, method or file names you changed); fix examples too
   (Pug in Caligrafy is PHP: no `+` between strings).
-- A minor or major release: a page `Release-notes:-X.Y.0.md` (the banner first, what changed, how to update), linked in
+- The banner image is only on `README.md` and the wiki's `Home.md`: never on another wiki page (new pages, release
+  notes) or in the plugin's copies.
+- A minor or major release: a page `Release-notes:-X.Y.0.md` (what changed, how to update), linked in
   `_Sidebar.md` ("Release notes:" line). A patch release: a page `Release-notes:-X.Y.Z.md` too, short (it is a fix
   release of X.Y.0, then its CHANGELOG section): `php caligrafer.php update` prints a link to that exact page.
 - `10.-Claude-Code-Plugin.md`: the "Current version: **<plugin>**, for Caligrafy Quill v<version>." line.

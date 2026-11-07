@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Caching
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 The **cache** keeps a value for a while, so that slow work (a call to another service, a heavy query, a computed
 report) is done once and read many times. Since 2.18.0.
 

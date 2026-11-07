@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 A **background job** runs one of your capabilities later, outside the request: the page answers at once, and the slow
 part (an email, an AI call, a report, resizing images) happens a moment after, with retries when it fails. Since
 2.18.0.

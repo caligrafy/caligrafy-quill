@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 A **scheduled job** runs one of your capabilities on a timer, with no page open: check prices every minute, send a
 digest every morning, clean old rows every night. You declare the jobs in one file; Caligrafy runs them on your
 computer while you develop, and on Caligrafy Cloud in production. Since 2.14.0.

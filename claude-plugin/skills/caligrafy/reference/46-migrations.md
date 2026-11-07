@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Migrations
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 A **migration** is one change to your database, in a numbered SQL file that runs once. Your app's tables start in
 `create_db.sql`; every change after that (a new column, a new table, an index, data to fix) goes in a migration, so
 every computer and every server ends up with the same database, in the same order. Since 2.18.0.

@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 Your app's **tests** check what it does through its capabilities, the way its pages, REST API, Vue apps and AI agents
 reach them: with the permission checks, the validation and the audit. Since 2.18.0.
 

@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.13.0
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Build Once, Experience Everywhere](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/build-once-banner.png)
-
 Caligrafy Quill **2.13.0** lets you sell what you built: offer an app hosted on Caligrafy Cloud on the
 [marketplace of caligrafy.com](https://caligrafy.com/marketplace), where Caligrafy sells a prompt that recreates it,
 and earn 25% of every sale.

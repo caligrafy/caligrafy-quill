@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 **Dependency injection** means a class asks for what it uses in its constructor, instead of creating it. Caligrafy's
 container gives it. Your capabilities stay short, and a test can swap a real mailer or payment gateway for a fake.
 Since 2.18.0.

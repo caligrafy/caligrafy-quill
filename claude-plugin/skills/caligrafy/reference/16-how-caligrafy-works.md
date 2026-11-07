@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 With Caligrafy you **describe** your idea, **approve** the plan and **ship** a complete app: Claude does the work, you keep the final say. What makes the app complete is one idea: **build once, experience everywhere**. A feature is written once, as a capability, and every experience of your application (web pages, Vue apps, a REST API, AI agents) uses that same capability. From the first command to a public address, it is one project. This page explains the few ideas behind it. To try it first, follow the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
 
 ## A capability is a feature, written once

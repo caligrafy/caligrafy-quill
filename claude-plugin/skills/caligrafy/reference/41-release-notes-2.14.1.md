@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.14.1
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 Caligrafy Quill **2.14.1** is a release of [2.14.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.14.0).
 
 ## Scheduled jobs on Caligrafy Cloud

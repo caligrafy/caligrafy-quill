@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Notifications
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 **Notifications** reach your users when none of your pages are open: a price that hit its target, a booking
 tomorrow, an order shipped. One call sends the message on every channel the user turned on: **web push** (a
 notification on their phone or computer, browser closed) and **email** (a confirmed address). Since 2.15.0.

@@ -3,8 +3,6 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-![Caligrafy: Describe it. Approve it. Ship it.](https://github.com/caligrafy/caligrafy-quill/blob/master/public/images/resources/describe-approve-ship-banner.png)
-
 **Describe it. Approve it. Ship it.** Your idea turned into a complete app: describe it to [Claude Code](https://claude.com/claude-code) in a sentence, approve the plan, and Claude builds it the Caligrafy way, every feature written once, checks it from every side, and ships it to `https://<name>.caligrafy.com`. You then use the same application from a web page, your phone, other programs over REST and AI agents.
 
 The [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) does the same three steps by hand, with a ready-made example, in 5 minutes. This page goes from **your** idea to an application online, usually in 15 to 30 minutes, most of it Claude working.
