@@ -36,6 +36,8 @@ git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'   # must p
 caligrafer doctor --only project                       # a WARN "Pages and the API key" must be fixed first (G87)
 ```
 + Every `application/models/*/create_db.sql` runs again online: `CREATE TABLE IF NOT EXISTS`, no `DROP`/`DELETE` (G68).
++ 2.18.0+: `caligrafer migrate status` shows no `changed` migration (G120); `caligrafer test` passes when `tests/` has
+  tests; an app that calls `Queue::push` has a `queue_work` job in `application/config/schedule.php` (G121).
 + A tracked `.env` stops everything: say which file, never its values; it must leave git and its keys be replaced.
 + `git init -b main` when there is no repository; then commit the work (`git add -A`, a clear message).
 
@@ -105,7 +107,7 @@ Then deploy, in the background (several minutes; it waits and exits 1 on a refus
 ```bash
 caligrafer cloud deploy <name>
 ```
-A failed build prints the end of its log: fix the cause (G69: `composer.lock`; a SQL error in a `create_db.sql`),
+A failed build prints the end of its log: fix the cause (G69: `composer.lock`; a SQL error in a `create_db.sql` or a migration: `FAIL Database: <migration>, statement n`),
 commit, `github.sh push`, deploy again.
 
 ## 5. Check it online, then report
@@ -125,4 +127,5 @@ Report, with the real addresses: the site, the repository, the time left (`cloud
 approved in the browser. After a change later: commit, `github.sh push`, `caligrafer cloud deploy <name>`.
 When the project has scheduled jobs (`php caligrafer.php schedule list` lists some), check them once it is online:
 `caligrafer cloud jobs <name>` lists them (an error says why they do not run), `cloud jobs <name> run <job>` then
-`cloud jobs <name> history <job>` must show `ok`.
+`cloud jobs <name> history <job>` must show `ok`. With background jobs, the `queue` job (on `queue_work`) must show `ok`
+in `cloud jobs <name> history queue`.

@@ -43,16 +43,20 @@ framework/
 application/       (a project: copied from framework/settings/application by initialize, updated by upgrade)
 ├── services/      capabilities, one class per feature; Users/ holds the user capabilities (2.5.0)
 ├── models/        one model per table, and the table's create_db.sql
+├── migrations/    changes to tables that have data: numbered SQL files, each run once (2.18.0)
 ├── views/         Pug pages built with the page components of public/css/tokens.css
 ├── controllers/   pages with their own logic; core/ holds the framework's (Auth, Admin, AI, Client, Watson)
-└── config/        config.php, routing/web.php (every route of the project)
+└── config/        config.php, routing/web.php (every route of the project), schedule.php (jobs), container.php (bindings)
+tests/             the application's own tests (php caligrafer.php test, Caligrafy\Testing\TestCase); never loaded on a page
 public/            css/tokens.css (the look), js/capabilities.js (the generated client), <app>/ (client apps)
 Dockerfile         the production image; docker/Dockerfile is the development image of docker-compose.yaml
 claude-plugin/     the Claude Code plugin: the documentation, skills, a reviewer agent
 ```
 Agent tools are generated from the capabilities, so there is no separate tools folder: a feature is never written
-twice. Every PHP file of `framework/` and `application/` is loaded by one autoloader (no PSR-4): application classes are
-global or namespaced by hand, and their names must be unique (the user capabilities are named `Caligrafy...` for that).
+twice. Classes load when they are first used, from a class map of `framework/` and `application/` kept between requests
+(`ClassMap`, 2.18.0; no PSR-4 needed); a file that declares functions or runs top-level code is loaded at start, and
+`CLASS_MAP=false` restores loading every file. Application classes are global or namespaced by hand, and their names
+must be unique (the user capabilities are named `Caligrafy...` for that).
 
 ## How a request runs
 
@@ -61,32 +65,37 @@ global or namespaced by hand, and their names must be unique (the user capabilit
 2. `Framework::run()` buffers the output, registers the error handlers and `init()`: `initialize.php` starts the PHP
    session, creates the CSRF token (`$_SESSION['token']`) and writes the application URLs into the session;
    `corehelpers.php` defines the global helpers; every `.env` value becomes a constant; `coresettings.php`.
-3. `autoload()` registers the autoloader: on the first unknown class it requires every PHP file of `framework/core`,
-   `framework/database`, `framework/interfaces`, `application/` and `tests/`.
-4. `dispatch()` includes `application/config/config.php` and `application/config/routing/web.php`. The routes end with
+3. `autoload()` registers the class map (`ClassMap::register()`): each class of `framework/core`, `framework/database`,
+   `framework/interfaces` and `application/` (not `config/` or `views/`) is loaded when first used; files with
+   functions or top-level code are loaded now. `tests/` is never loaded.
+4. `dispatch()` includes `application/config/config.php`, loads the container's bindings (`application/config/container.php`
+   when it exists) and `application/config/routing/web.php`. The routes end with
    `Route::run()`.
 5. `Route::run()` builds the `Request` (headers, parameters; for POST, PUT and DELETE it checks the CSRF token unless the
    request asks for JSON or its user agent is in `APPROVED_AGENTS`), keeps the routes with the same method and segment
    count, matches the path, binds the route variables (`{id}`; for GET the query string is merged in), then:
-   - **no route matches: the first route runs** (an unknown address shows the first page with 200, not a 404);
+   - **no route matches**: 404 (`[ERROR 1005]`, or JSON to an API call), or 405 with `Allow` when the address exists
+     with another method (2.16.0);
    - `'Controller@action'`: a missing class or method raises 1001 (404); a JSON request needs the session's CSRF token
      in `X-CSRF-Token` (a page, 2.7.0+) or, with `Auth::activateAPI()`, a bearer: a token granting `*` or the legacy
      key (else 1004, 401, with the reason); then `new Controller()` and the action;
    - a closure: called as is. `Route::page`, `Route::capability`, `Route::capabilities` and `Route::mcp` register
      closures that hand the request to the page controller, `Rest` or `Mcp\Http`.
-6. The answer is a view (`view()` renders the Pug file), JSON (`api()`, the REST and MCP adapters), or a redirect.
+6. The answer is a view (`view()` renders the Pug file, compiled once and kept in a private folder of the temporary
+   directory until it or a file it includes changes, 2.17.0; `VIEW_CACHE=false`), JSON (`api()`, the REST and MCP adapters), or a redirect.
    Errors go through `Errors::handle()`: the HTTP status of the error code, HTML text or `{"error": {...}}`.
 
 ## Calling a capability
 
 `Capabilities::call($name, $input, $context)` is the single path for every experience:
 
-1. find it (`Capabilities::all()` reads the `#[Capability]` attribute of every `Service` of `application/services`;
-   two services with the same name stop the application);
+1. find it (`Capabilities::all()` reads the `#[Capability]` attribute of every `Service` of `application/services` and
+   of `framework/services` (notifications, `queue_work`); two services with the same name stop the application);
 2. unless it is `public`: refuse a guest (`unauthenticated`, 401), then ask the context whether it `allows` the
    capability's `scope` and `level` (`forbidden`, 403);
 3. `validate()` the input with the service's `$rules` and `$filters` (GUMP; `invalid`, 422, with field messages);
-4. `handle($input, $context)`; the result is turned into plain arrays (`Capabilities::plain()`);
+4. the service is built by the container (`Container::make()`: its constructor gets what it asks for, 2.18.0), then
+   `handle($input, $context)`; the result is turned into plain arrays (`Capabilities::plain()`);
 5. **audit** (`caligrafy_audit`): every refusal and error, and every success of a capability that is not `readOnly`.
 
 A service refuses with `ServiceError::invalid()`, `unauthenticated()`, `forbidden()`, `notFound()` or `conflict()`.
@@ -152,12 +161,19 @@ cannot be created in bulk over REST or MCP.
 
 - **Models** (`Caligrafy\Model`): an active-record layer over PDO (`create`, `update`, `delete`, `find`, `all`,
   `search`, relationships). They hold no rules: rules live in the capabilities that use them. `Database::execute()`
-  binds parameters; there are no transactions or migrations.
+  binds parameters (`Database::connection()` gives the PDO, whose transactions the app tests use).
 - **Tables** are written as `application/models/<Folder>/create_db.sql`, safe to run again (`CREATE TABLE IF NOT
   EXISTS`). Locally `php caligrafer.php sql <file>` runs one; the framework tables (`caligrafy_tokens`,
-  `caligrafy_audit`) come from `framework/settings/platform.sql` (`platform install`, `quickstart`).
+  `caligrafy_audit`, `caligrafy_job_runs`, the notifications tables, `caligrafy_jobs`, `caligrafy_cache`,
+  `caligrafy_migrations`) come from `framework/settings/platform.sql` (`platform install`, `quickstart`).
+- **Migrations** (2.18.0, `Migrations`): a change to a table that has data is a numbered SQL file of
+  `application/migrations`, run once, in order, recorded in `caligrafy_migrations` (`php caligrafer.php migrate`).
+- **Background jobs** (`Queue`, `caligrafy_jobs`): a capability and its input run later in a child process, with
+  retries; the scheduler runs them through the framework capability `queue_work`, or `php caligrafer.php queue work`.
+- **Cache** (`Cache`): the `caligrafy_cache` table by default with a database (shared by every process), else files.
 - **In production**, `php caligrafer.php deploy` (`Deployer`) runs at every start: it waits for the database, runs
-  `platform.sql`, then every `create_db.sql` that is new or changed (recorded with its hash in `caligrafy_scripts`).
+  `platform.sql`, then every `create_db.sql` that is new or changed (recorded with its hash in `caligrafy_scripts`), then the pending
+  migrations.
   A changed script that drops, deletes or truncates is never run again on its own; `seed.sql` is never run.
 - **Times**: the MySQL session follows `SERVER_TIMEZONE`, like PHP (`DB_TIMEZONE=server` keeps MySQL's own zone).
 
@@ -176,7 +192,8 @@ cannot be created in bulk over REST or MCP.
 ## Tools around the framework
 
 - `php caligrafer.php`: `quickstart` (a project in one command), `initialize`, `service` (a capability skeleton),
-  `capabilities`, `call`, `client`, `sql`, `platform install`, `token`, `mcp`, `audit`, `doctor` (a read-only health
+  `capabilities`, `call`, `client`, `sql`, `migrate`, `platform install`, `token`, `mcp`, `audit`, `schedule`, `queue`,
+  `cache clear`, `test`, `doctor` (a read-only health
   check), `upgrade` (`Upgrader`: compares `application/` with the templates and `template-history.json`; replaces
   untouched copies, keeps customized ones with a `.caligrafy-new` next to them, never replaces `web.php`, and holds
   the user capabilities when the project manages users its own way), `deploy`, `cloud`, `version`.

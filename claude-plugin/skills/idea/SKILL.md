@@ -47,6 +47,7 @@ You'll only approve sign-ins in your browser; I'll ask before spending any credi
 | Who may do what | **Default: anyone can read, people who signed up change** (sign-in pages on; writes are not `public`). The other choice, everything `public` like the Tasks example, is for a demo only: say that online, anyone could change or delete the data |
 | Pages | one page per main table at `/<things>`: a form, the list with its actions, an empty state; `/` opens the main page |
 | Sample data | 3 to 6 rows so the app is not empty, online too |
+| Slow work | only when the idea has work that is slow or may fail (an AI call, an email to many, a report): the capability the page calls pushes a **background job** (`Caligrafy\Queue::push`) on a second capability, and a `queue_work` job runs it |
 | On a timer, alerts | only when the idea asks for work with no page open ("every morning", "check every hour", "remind", "alert me when"): each **scheduled job** (its capability, `every` or `cron` and timezone) and each **notification** (who gets it, its title, push and/or email), plus a **Turn on alerts** button on the page that matters |
 
 ## 2. Start
@@ -165,6 +166,9 @@ clear them on the next submit.
   at phone width (375px).
 - MCP: with a local token (`php caligrafer.php token create "check" --scopes "*"`, revoke it afterwards with
   `token revoke <id>`, the number after `#` in `token list`, G77), `tools/list` shows the capabilities and `tools/call` works.
+- `docker compose exec dev-box php caligrafer.php test`: the tests of `tests/` pass (2.18.0+).
+- Background jobs, when the plan has them: `docker compose exec dev-box php caligrafer.php queue work --once` prints `done`.
+- A change to a table after the first deploy: `php caligrafer.php migrate status` shows it `ran`.
 - `docker compose exec dev-box php caligrafer.php doctor`, and ask the `caligrafy-reviewer` agent to review the new files.
 Fix what fails before going on.
 

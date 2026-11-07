@@ -129,6 +129,9 @@ Caligrafer is the command line tool of Caligrafy: `php caligrafer.php <command>`
 | `token create <name> --scopes ...` | a token for a program or an AI agent ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#token)) |
 | `app`, `create`, `facedetect`, `ml`, `bot` | creates a client app in `public/` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#apps)) |
 | `sql <file.sql>` | runs a SQL script on the database ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#sql)) |
+| `migrate [status \| make <name>]` | runs the database changes of `application/migrations` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#migrate)) |
+| `test [make <Name>]` | runs your app's tests, or writes one ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#test)) |
+| `queue work` | runs the background jobs ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#queue)) |
 | `doctor` | checks the project and its services ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#doctor)) |
 | `upgrade` | updates a project's templates after a framework update ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#upgrade)) |
 
@@ -266,14 +269,14 @@ This framework relies on several foundational concepts that are worth detailing.
 Understanding the framework file structure is key to understanding how to plan your development project.
 There are 5 main folders in the structure that you should be aware of:
 1. **`/application`**: 
-    This is where most of your application logic should go. This folder is where you should create the routes, models, views and controllers. You can create any classes and organize them freely in this folder without worrying about requiring them or including them: every PHP file of `application` (up to 5 folder levels deep) is loaded on each request, so two classes cannot have the same fully qualified name. 
+    This is where most of your application logic should go. This folder is where you should create the routes, models, views and controllers. You can create any classes and organize them freely in this folder without worrying about requiring them or including them: since 2.18.0 each class is loaded the first time it is used, from a map of the classes of `application` that Caligrafy keeps up to date (a file that declares functions or runs code is loaded at start). Two classes cannot have the same fully qualified name.
 
-    This folder has 5 subfolders: models, views, controllers, config (where the routes are defined) and services, where your capabilities live: features written once and served to every experience. 
+    This folder has 5 subfolders: models, views, controllers, config (where the routes are defined) and services, where your capabilities live: features written once and served to every experience. A sixth, `migrations`, holds your database changes once you write one (`php caligrafer.php migrate make <name>`). 
 
     > When your logic becomes too complex to hold in a `Controller`, you can always create new classes to organize them without having to require or include them in the classes where you intend to use them.
 2. **`/framework`**: This is the underlying code for the framework. For novice programmers, you will very rarely need to change anything in this folder. However, if you need to change the way the framework operates, then this is where it can be done. Inside it, `core/` holds the framework and what a capability is (`Service`, `Capability`, `Context`...), and `interfaces/` how the world reaches a capability: REST, MCP for AI agents and the JS client of the Vue apps.
 3. **`/public`**: This is where your application client-side code should go. All your scripts, stylesheets and any other resource that needs to be publicly accessible will reside in this folder. For example, any javascript or css that you need to reference from your Views (residing in application) will need to be in the public folder. Similarly, if your application supports uploading files, all uploaded files will live in the `/public/uploads` folder.
-4. **`/tests`**: every PHP file of this folder is loaded on each request, like `application`: use it for helpers that your application needs, not for PHPUnit tests (the framework's own unit tests live in `qa/unit`, see [Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy)).
+4. **`/tests`**: your app's tests, run with `php caligrafer.php test` (2.18.0+, see [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App)). The framework never loads this folder on a page, and the production image leaves it out. Before 2.18.0 every PHP file of it was loaded on each request.
 5. **`/vendor`**: The vendor folder contains all the third-party libraries that this framework depends on.
 
 > [Next Section: Learn about Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing)

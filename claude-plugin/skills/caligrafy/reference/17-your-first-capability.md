@@ -221,6 +221,7 @@ One feature, written once in two small classes, used from a web page, by other a
 + [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works): the ideas behind it.
 + [Build Once: Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): every option (levels, errors, the JS client in Vue apps, MCP over stdio, the audit log).
 + [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models) and [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships): richer data (authors with many books).
++ [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App): a test of `create_book` as a user and as a guest; and later, a new column in a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations).
 + With [Claude Code](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin): `/caligrafy-quill:new-capability` builds all of this for you, the Caligrafy way.
 
 >[Next: How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works)

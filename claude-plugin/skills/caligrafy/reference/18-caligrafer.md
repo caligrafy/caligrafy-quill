@@ -168,7 +168,8 @@ php caligrafer.php notify status 7                                # user 7's cha
 
 ### `queue`
 ```bash
-php caligrafer.php queue work              # runs the jobs as they come (--once: what is due, then stops; --for 300: for 5 minutes)
+php caligrafer.php queue work              # runs the jobs as they come (--once: what is due, then stops; --for 300: for 5 minutes;
+                                           # --queue <name>: another queue; --sleep 3: seconds between looks when empty)
 php caligrafer.php queue status            # pending, running, done, failed
 php caligrafer.php queue list              # the latest jobs (--status failed, --limit 50); queue failed: the failed ones
 php caligrafer.php queue retry 42          # a failed job again, with new attempts (retry all: every failed job)
@@ -188,7 +189,7 @@ php caligrafer.php test                    # runs every test of tests/ (test Boo
 ```bash
 php caligrafer.php sql application/models/Books/create_db.sql
 ```
-Runs a SQL script (usually the `create_db.sql` of a model) on the database of `.env`. Comments are removed and the statements run one by one. It needs `DB_ACTIVATE=true` and the `DB_*` settings.
+Runs a SQL script (usually the `create_db.sql` of a model) on the database of `.env`. Comments are removed and the statements run one by one. It needs `DB_ACTIVATE=true` and the `DB_*` settings. To change a table that already has rows, write a [migration](#migrate): `create_db.sql` creates tables, migrations change them.
 
 ### `migrate`
 ```bash

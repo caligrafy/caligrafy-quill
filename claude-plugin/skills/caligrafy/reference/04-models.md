@@ -9,7 +9,7 @@
 
 > **Where this fits.** A model is the data layer under your capabilities: one class per table. Capabilities use models in `handle()` (`(new Book('books'))->create($input)`), and every experience reaches the data through them. Create a table with its `create_db.sql` and `php caligrafer.php sql`, as in [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#table).
 
-This framework is agnostic and does not engage in creating databases and database tables. The database for your application should be created using the language of your choice. This framework uses a PDO adapter to interface with your database tables. We recommend using MySQL given its tight integration with PHP but other databases can be used at your own discretion.
+Tables are written in SQL: a `create_db.sql` creates them (the deploy step runs it in production), and later changes to a table that has data go in [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) (`php caligrafer.php migrate make <name>`). This framework uses a PDO adapter to interface with your database tables. We recommend using MySQL given its tight integration with PHP but other databases can be used at your own discretion.
 
 > #### (video) [CRUD operations on a database](https://www.youtube.com/watch?v=kNdoaSi6pcE&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)
 >
@@ -78,7 +78,7 @@ CREATE TABLE IF NOT EXISTS books (
 The `Model` is the entity that interfaces directly with the database tables.
 Every table from your database that represents an object or an entity in your application that a user could act on needs to have a `Model` in the framework. For example, the table `books` needs to be represented by a `Book` Model in the framework. This framework dictates some conventions around the naming of the primary and foreign keys.
 > Learn more about naming conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#fundamentals)
-+ All the models that you create should be in the `/application/models` folder. In this folder, you can organize the models to your convenience. If you prefer to have your models in a different folder, you can always do that for as long as it is within the `/application` folder.
++ All the models that you create should be in the `/application/models` folder. In this folder, you can organize the models to your convenience. If you prefer to have your models in a different folder, you can always do that for as long as it is within the `/application` folder (not `config/` or `views/`, which the class map leaves out).
 + There is no formal naming convention for the `Model`. We do recommend that you remain consistent. If you choose to name the models in singular or plural then make sure to do that for all your models.
 + All the models that you create should extend the `Model` class
 ```php

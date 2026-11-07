@@ -48,7 +48,7 @@ The tests use PHPUnit, which every project has with its development packages (`c
 | `$this->assertCapabilityFails($kind, $capability, $input, $as)` | the capability refuses: `invalid`, `unauthenticated`, `forbidden`, `not_found` or `conflict`; returns the error |
 | `$this->render($view, $data)` | the HTML of a Pug view, to check a page |
 | `$this->fake($class, $object)` | the [container](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection) gives `$object` instead of `$class` (a mailer, a payment gateway) |
-| `$this->assertQueued($capability)` | a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs) was pushed; returns its input |
+| `$this->assertQueued($capability, $where)` | a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs) was pushed (whose input passes `$where`, optional; needs `DB_ACTIVATE=true`); returns its input |
 
 ## The database
 
@@ -56,8 +56,8 @@ With `DB_ACTIVATE=true`, each test runs in a transaction that is rolled back at 
 they found it, and do not see each other's rows.
 
 + Give the tests a database of their own: `DB_TEST_DATABASE=caligrafy_test` in `.env` (create it, then run
-  `php caligrafer.php platform install` and your migrations on it), or a `.env.testing` file with the settings the
-  tests use instead of `.env`.
+  `php caligrafer.php platform install` and your migrations on it), or a `.env.testing` file whose settings replace those
+  of `.env` for the tests.
 + A `CREATE`, `ALTER` or `DROP` inside a test ends its transaction (MySQL commits it): create tables with migrations,
   not in tests. A test that must not run in a transaction sets `protected $transactions = false;`.
 

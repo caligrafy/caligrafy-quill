@@ -27,7 +27,7 @@ Caligrafy quickstart (Docker server)
   OK    Project: application/ and .env created, keys generated
   OK    .env: the database of the Docker server (caligrafy)
   OK    Database: caligrafy ready on mysql
-  OK    Framework tables: personal access tokens and the audit log
+  OK    Framework tables: tokens, audit log, job runs, jobs, cache, migrations
   OK    Routes: /capabilities (JS client) and /mcp (AI agents)
   OK    Example: 9 file(s) added (application/services/Tasks, models/Tasks, views/Tasks, public/js/tasks.js)
   OK    Example table: tasks

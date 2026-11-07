@@ -26,7 +26,7 @@ Every call goes through the same steps, in this order:
 
 ## Set up a project
 
-1. Create the framework tables (personal access tokens and the audit log). It is safe to run again:
+1. Create the framework tables (personal access tokens, the audit log, job runs, notifications, background jobs, the cache, migrations). It is safe to run again:
     ```bash
     php caligrafer.php platform install
     ```
@@ -36,7 +36,7 @@ Every call goes through the same steps, in this order:
     Route::capabilities('/capabilities');   // GET lists, POST /capabilities/{name} calls (the JS client uses it)
     Route::mcp('/mcp');                     // AI agents (MCP over HTTP)
     ```
-3. Check: `php caligrafer.php doctor` reports `Framework tables: caligrafy_tokens and caligrafy_audit installed`.
+3. Check: `php caligrafer.php doctor` reports `Framework tables: tokens, audit log, job runs, jobs, cache and migrations installed` (2.18.2+).
 
 ## Write a capability
 
@@ -100,7 +100,7 @@ class CreateBook extends Service
 
 + **A service never renders a view, redirects, prints or reads the request or the session.** The channel does that. The `Context` tells it who calls: `$context->user` (the signed-in user or the owner of the token), `$context->token`, `$context->channel` (`web`, `rest`, `mcp`, `cli`) and `$context->allows('books:write', 1)`.
 
-The commands used on this page (`service`, `capabilities`, `client`, `token`, `mcp`, `audit`, `platform install`) are all described on the [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) page.
+The commands used on this page (`service`, `capabilities`, `client`, `call`, `token`, `mcp`, `audit`, `platform install`, `test`) are all described on the [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) page.
 
 List what the application offers:
 ```bash
@@ -255,9 +255,9 @@ php caligrafer.php call create_book title=Dune --guest     # as a visitor: refus
 ```
 It prints `{"data": ...}` or the `{"error": ...}` of the REST API ([Caligrafer: call](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#call)).
 
-A service can also be run directly, without the channels, in a PHPUnit test or a script:
+In a test, `$this->call('create_book', $input, $this->user(7))` ([Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App)). In a script, the container builds the service with what its constructor asks for (2.18.0+):
 ```php
-$book = (new CreateBook())->run(array('title' => 'Dune', 'author' => 'Frank Herbert', 'publisher_id' => 1));
+$book = Caligrafy\Container::make(CreateBook::class)->run(array('title' => 'Dune', 'author' => 'Frank Herbert', 'publisher_id' => 1));   // no checks, no audit
 $book = Caligrafy\Capabilities::call('create_book', $input, Caligrafy\Context::cli());   // with the checks and the audit
 ```
 The Caligrafy QA suite proves the model end to end with the Bookshelf capabilities: a book created on a web page is the same through REST, MCP and the JS client, and invalid input, a missing scope or a too-low level are refused the same way everywhere ([Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy)).

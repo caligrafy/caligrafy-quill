@@ -110,11 +110,11 @@ docker-compose.yaml, docker/ # dev server (8080), phpmyadmin (8077), mysql (3306
 - Every table has primary key `id`. Foreign keys are `<lowercase model name>_id` (model name, not table name).
 - One model class per entity, `use Caligrafy\Model;`, one `public $column;` per column, table bound explicitly via `associate()` - there is no implicit table naming.
 - **Only capabilities touch models** (2.5.0): pages get their data with `Route::page(..., ['data' => [...]])`, controllers call `$this->call('<capability>')`. Controllers (`use Caligrafy\Controller;`, must have `index()`) are for form posts, several capabilities with conditions, and the session (sign-in); `associate()`/`save()`/`all()` in a controller is legacy MVC.
-- Schema is written by hand in SQL (`application/models/<Entity>/create_db.sql`); the framework never migrates (except auto-pivots).
+- Schema is written by hand in SQL: tables start in `application/models/<Entity>/create_db.sql`; a change to a table that has data goes in a migration (`application/migrations/<n>_<name>.sql`, `php caligrafer.php migrate make <name>`, then `migrate`; the deploy step runs them, G120). Many-to-many pivots are created by `belongsToMany()`.
 - Many-to-many pivots are created by `belongsToMany()` (typed like the referenced ids, unique constraint names - G10). Name your own FK constraints `fk_<table>_<column>`.
 - Model writes save `0`, `''` and `false`; only `null` is skipped (G7). `all()` clauses are raw SQL: use `'bindings'` for values (G8).
 - Pages: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book'], 'signedIn' => true])` gives the view `authorized`, `user`, the route variables and the data (G74, G83, G84); prefer it to closures returning `view()`.
-- One route file: `application/config/routing/web.php`. Keep the `/` route first (unmatched URLs fall back to route #1, G4) and `Route::run()` last.
+- One route file: `application/config/routing/web.php`. Keep `Route::run()` last; an address no route declares answers 404 (2.16.0, G4).
 - The same route serves HTML and JSON: `view('tpl', $data)` returns JSON automatically for API calls; `api($data)` always returns JSON.
 
 ## Canonical recipes
@@ -222,3 +222,4 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 11. Run SQL scripts with the `/caligrafy-quill:db` skill, start/stop Docker with `/caligrafy-quill:server`, scaffold client apps with `/caligrafy-quill:new-app`.
 12. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
 13. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.
+14. 2.18.0+: run `php caligrafer.php test` after changing capabilities (write tests with `test make <Name>`, `Caligrafy\Testing\TestCase`); a schema change after the first deploy is a migration (`migrate make <name>`), never an edit of a `create_db.sql` or of a migration that ran (G120); slow work (AI calls, emails to many, reports) goes through `Caligrafy\Queue::push()` with a `queue_work` job in `schedule.php` (G121); what a capability uses comes through its constructor (`Caligrafy\Container`); slow reads that change rarely use `Caligrafy\Cache::remember()` (database store by default, G119).

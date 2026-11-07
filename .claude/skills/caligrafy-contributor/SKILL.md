@@ -31,8 +31,10 @@ What projects' Claude knows comes from here, so it must describe the change:
   becomes the next `G<n>` gotcha, and the range in `skills/caligrafy/SKILL.md` ("G1-G<n>") follows.
 - `skills/caligrafy/reference/ui-guidelines.md` when a page, a class or the look changes (the QA suite checks that every
   class it names exists in `tokens.css`, `layout.css`, `look.css` or `camera.css`).
-- the other skills (`idea`, `new-app`, `new-capability`, `new-resource`, `design`, `ship`, `deploy`, `update`...) when the
-  change alters what they generate or tell the user.
+- every other skill (`idea`, `new-app`, `new-capability`, `new-resource`, `db`, `design`, `ship`, `deploy`, `update`,
+  `server`, `marketplace`) and the `caligrafy-reviewer` agent (`agents/caligrafy-reviewer.md`): read each one in full
+  against the change, not by keyword, and change what it now generates, checks or tells the user wrongly. Also
+  `skills/caligrafy/SKILL.md` (its rules and workflow), and the API reference's CLI table.
 - the wiki mirrors: after step 3, `python3 claude-plugin/scripts/sync-wiki.py ../caligrafy-quill.wiki`; a new wiki
   page gets a line in `PAGES` of `sync-wiki.py` and a row in the reference map of `skills/caligrafy/SKILL.md`.
 - the version: `claude-plugin/.claude-plugin/plugin.json` (minor with a framework minor, patch otherwise) and a line at
@@ -43,7 +45,10 @@ What projects' Claude knows comes from here, so it must describe the change:
   <plugin version>`, and the tooling tests fail while the copy is older. Never call a release done while any folder's
   copy is behind (step 6).
 
-## 2. The README (GitHub's front page)
+## 2. The README (GitHub's front page) and the root docs
+
+`ARCHITECTURE.md` (how a request runs, the folders, data, tools), `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md` and
+`phpunit.xml.dist`'s comments: read them in full against the change.
 
 Read `README.md` against the change: the feature list, commands, versions, anything that is no longer true. Keep the
 banner at the top (`public/images/resources/describe-approve-ship-banner.png`, black, no subline: "Describe it. Approve it. Ship it." leads every front page, build once is the proof of a complete app). Also `claude-plugin/README.md`. Change only
@@ -51,8 +56,10 @@ what the change makes wrong or incomplete; no rewrite for its own sake.
 
 ## 3. The wiki (`../caligrafy-quill.wiki`)
 
-- Every page the change affects (`grep -l` for the class, command, method or file names you changed); fix examples too
-  (Pug in Caligrafy is PHP: no `+` between strings).
+- Every page the change affects: read every page in full against the change (in parallel subagents for breadth, then
+  check each finding against the code), not only a `grep` for the names you changed: a page can say what the change
+  made false without naming it ("every file is loaded", "no migrations"). Fix examples too (Pug in Caligrafy is PHP:
+  no `+` between strings). Release notes of past versions stay as they were.
 - The banner image is only on `README.md` and the wiki's `Home.md`: never on another wiki page (new pages, release
   notes) or in the plugin's copies.
 - A minor or major release: a page `Release-notes:-X.Y.0.md` (what changed, how to update), linked in
@@ -84,7 +91,9 @@ With AskUserQuestion, ask whether to review the course (do nothing without a yes
 `../caligrafy-quill-course` (lessons in `wiki/`, projects in `checkpoints/lesson-NN/`) and its published wiki
 `../caligrafy-quill-course.wiki`, kept identical:
 - the pinned release (`--branch vX.Y.Z`, `caligrafy/caligrafy-quill:X.Y.Z`, the expected `doctor` and `update` lines);
-- every checkpoint file and lesson the change touches (markup, commands, outputs, build sizes);
+- every lesson and checkpoint read in full against the change, not only the pin: what it teaches (a way of doing
+  that the release replaced), its commands, its expected outputs (run them again: counts, table lists, messages) and
+  its quiz answers; the checkpoints' files must still run;
 - `python3 tools/check-pages.py` and `python3 tools/check-pages.py ../caligrafy-quill-course.wiki` report 0 problems,
   and `diff -r -x .git wiki ../caligrafy-quill-course.wiki` prints nothing; then commit and push both.
 
@@ -96,6 +105,9 @@ a change on a site alters what they say, it is a framework change too: `grep -rn
 them, and release (steps 1 to 4) before deploying the sites, so that every project's Claude says what the sites do.
 
 ## 6. Ask: update the sites?
+
+The projects are every folder of `~/www` with `framework/core/Framework.php` (scan them, never a list from memory) and
+every app of `php caligrafer.php cloud apps`: update, check, push and deploy each one; a locked app stays locked.
 
 With AskUserQuestion, ask whether to update and deploy caligrafy.com and Caligrafy Cloud (deploy.caligrafy.com),
 which run on Caligrafy themselves (do nothing without a yes). For each one, in its own clone (caligrafy.com:

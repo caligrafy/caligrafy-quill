@@ -111,6 +111,20 @@ The configuration is `phpunit.xml.dist`: test suite `unit` (the folder `qa/unit`
 | `AgentTest.php` | `Agent::settings()`: Groq is the default, the `GROQ_*` and `AGENT_*` settings, key precedence, the defaults of every provider, Ollama without a key, unknown providers |
 | `FaceLoginTest.php` | `FaceLogin`: random challenges kept in the session, a nonce accepted once (even when the check fails), expiry, wrong nonce or account, challenge order, identical prints, prints of different faces, print format and count, account matching, print hashes |
 | `PasskeyTest.php` | `Passkey` against a software authenticator: registration options, register and authenticate, excluded credentials, replayed assertions, single-use challenges, wrong origin, bad signature, sign counter going back, another user's passkey, user verification, relying party |
+| `CapabilitiesTest.php` | The registry of capabilities: attributes, checks of scope and level, validation, the audit, `Capabilities::call()` |
+| `ContextTest.php` | `Context`: the CLI, guests, users, tokens and system contexts, scopes and levels |
+| `TokensTest.php` | Personal access tokens: format, hashing, scopes, expiry, revocation |
+| `ClientTest.php`, `McpServerTest.php` | The generated JS client, and the MCP server (tools listed by scope, calls and errors) |
+| `DeployerTest.php` | `php caligrafer.php deploy`: which `create_db.sql` scripts run, the destructive ones never twice |
+| `SchedulerTest.php` | Scheduled jobs: the declaration of `schedule.php`, cron, the listing Caligrafy Cloud reads |
+| `NotifyTest.php` | Notifications without a database: message rules, channels, keys, the signed unsubscribe link |
+| `CloudClientTest.php`, `UpdaterTest.php`, `QuickstartTest.php`, `PluginSourceTest.php`, `VersionTest.php`, `DesignsTest.php` | The `cloud`, `update`, `quickstart`, `plugin`, `version` and `design` commands |
+| `DoctorFormsTest.php`, `DoctorPugTest.php` | Doctor's checks of forms without a method and of two Pug mistakes |
+| `ViewTest.php` | The compiled view cache (2.17.0): a private folder, an edited view compiled again |
+| `ClassMapTest.php` | The class map (2.18.0): declarations found, classes loaded when used, files that run at start, a new class found at once |
+| `MigrationsTest.php` | Migrations (2.18.0): how a script is split, the order and names of the files, `make` |
+| `ContainerTest.php` | The container (2.18.0): constructor injection, bindings, singletons, instances, clear errors |
+| `CacheTest.php` | The cache (2.18.0): the default store, JSON values, expiry, `remember`, `off` |
 
 ### How the bootstrap loads the framework
 
@@ -118,14 +132,14 @@ The unit tests run without a web server, a database or a `.env`. `qa/unit/bootst
 
 1. defines a test `APP_KEY` (constant and environment variable),
 2. requires `vendor/autoload.php` and `framework/helpers/corehelpers.php`,
-3. requires the core classes under test one by one (`Errors`, `Route`, `Request`, `Model`, `Validator`, `Controller`, `Upgrader`, `Agent`, `Doctor`, `FaceLogin`, `Passkey`),
-4. requires the fixtures of `qa/unit/fixtures`: test controllers in the global, `Shop` and `Caligrafy\Controllers` namespaces, and `QaSoftAuthenticator`, a software WebAuthn authenticator (EC P-256, "none" attestation) also used by the HTTP tests.
+3. requires the core classes and interfaces under test one by one (the list is in `qa/unit/bootstrap.php`: `Errors`, `Route`, `Request`, `Model`... `ClassMap`, `View`, `Migrations`, `Container`, `Cache`, and `Rest`, `Mcp/Server`, `Mcp/Http`, `Client`),
+4. requires the fixtures of `qa/unit/fixtures`: test controllers in the global, `Shop` and `Caligrafy\Controllers` namespaces, `QaSoftAuthenticator`, a software WebAuthn authenticator (EC P-256, "none" attestation) also used by the HTTP tests, and the test capabilities of `services.php`.
 
 It never calls `Framework::init()`: no route is dispatched. Classes whose constructor needs the live request or the database are built without their constructor (`ReflectionClass::newInstanceWithoutConstructor()`), and the tests set the properties they need. `Passkey` keeps its credentials in memory by overriding its 4 storage methods. Tests that need files (`UpgraderTest`, `DoctorWebAppTest`) create a temporary project and delete it in `tearDown()`.
 
 ### Why `qa/unit` and not `tests/`
 
-The framework requires every PHP file of the `tests/` folder on **every request** (`TEST_PATH`, see `Framework.php` and `Caligrafer.php`). PHPUnit test classes there would be loaded into every page of every application, and would fail without PHPUnit. The unit tests therefore live in `qa/unit`, which the framework never loads (and which `.htaccess` denies to browsers).
+`tests/` belongs to the applications: since 2.18.0 it holds an app's own tests (`php caligrafer.php test`, [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App)), and projects keep it when they update. The framework's unit tests therefore live in `qa/unit`, which the framework never loads (and which `.htaccess` denies to browsers). Before 2.18.0 the framework also loaded every PHP file of `tests/` on every request.
 
 ### Adding a unit test
 

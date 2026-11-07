@@ -291,11 +291,12 @@ class Doctor
                 $this->env('DB_USERNAME'), $this->env('DB_PASSWORD'), [\PDO::ATTR_TIMEOUT => 5, \PDO::ATTR_ERRMODE => \PDO::ERRMODE_EXCEPTION]);
             $this->add('database', 'Database', 'OK', "connected to $where (server " . $pdo->getAttribute(\PDO::ATTR_SERVER_VERSION) . ')');
             $missing = [];
-            foreach (['caligrafy_tokens', 'caligrafy_audit'] as $table) {
+            $tables = ['caligrafy_tokens', 'caligrafy_audit', 'caligrafy_job_runs', 'caligrafy_jobs', 'caligrafy_cache', 'caligrafy_migrations'];
+            foreach ($tables as $table) {
                 try { $pdo->query("SELECT 1 FROM $table LIMIT 1"); } catch (\PDOException $e) { $missing[] = $table; }
             }
-            $missing ? $this->add('database', 'Framework tables', 'SKIP', implode(', ', $missing) . ' not installed (needed for tokens, the audit log and MCP)', 'php caligrafer.php platform install')
-                : $this->add('database', 'Framework tables', 'OK', 'caligrafy_tokens and caligrafy_audit installed');
+            $missing ? $this->add('database', 'Framework tables', 'SKIP', implode(', ', $missing) . ' not installed (tokens, the audit log, MCP, scheduled and background jobs, the cache, migrations need them)', 'php caligrafer.php platform install')
+                : $this->add('database', 'Framework tables', 'OK', 'tokens, audit log, job runs, jobs, cache and migrations installed');
             $this->migrations($pdo);
         } catch (\PDOException $e) {
             $message = $this->scrub($e->getMessage());

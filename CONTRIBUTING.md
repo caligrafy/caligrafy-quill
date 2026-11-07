@@ -35,7 +35,7 @@ vendor/bin/phpunit     # unit tests: no web server, database or .env needed
 
 Run the QA suite before opening a pull request that touches `framework/`, `caligrafer.php`, `.htaccess` or the client scaffolds, and add a test for your change: a PHPUnit test in `qa/unit` for a core class, a check in `qa/tests` for behavior that needs the database, HTTP or the tooling. Run one QA stack at a time (`docker ps --filter name=quillqa` must be empty). `QA_NO_BUILD=1` reuses an existing image when the Docker image cannot be built on your network, and `QA_WIKI=<wiki clone>` also checks the wiki mirrors of the Claude plugin.
 
-[Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) explains every phase, the mocks of `qa/fixtures`, how to add a test and why the unit tests are not in `tests/` (every PHP file of `tests/` is loaded on each request).
+[Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy) explains every phase, the mocks of `qa/fixtures`, how to add a test and why the framework's unit tests are not in `tests/` (since 2.18.0 `tests/` holds an application's own tests, `php caligrafer.php test`).
 
 ## Release process
 1. After changing a template of `framework/settings/application`, run `php qa/build-template-history.php` and commit `framework/settings/template-history.json` (`php caligrafer.php upgrade` uses it to recognize untouched files).

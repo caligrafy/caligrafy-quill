@@ -6,7 +6,7 @@
          cacheDirectory=".phpunit.cache"
          failOnWarning="true"
          failOnRisky="true">
-    <!-- not in tests/: the framework requires every PHP file of tests/ on each request (TEST_PATH) -->
+    <!-- the framework's own tests: tests/ holds an application's tests (php caligrafer.php test) -->
     <testsuites>
         <testsuite name="unit">
             <directory>qa/unit</directory>

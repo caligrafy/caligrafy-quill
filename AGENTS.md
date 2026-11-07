@@ -11,7 +11,7 @@ Pug views) and `public/<app>/` (client apps). `framework/` is the framework itse
 ## Read before writing code
 - `claude-plugin/skills/caligrafy/SKILL.md`: the index of the framework knowledge and the workflow rules.
 - `claude-plugin/skills/caligrafy/reference/api-reference.md`: exact signatures, verified against the source.
-- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G60 (read the relevant ones).
+- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G121 (read the relevant ones).
 - `claude-plugin/skills/caligrafy/reference/13-build-once-services-capabilities-mcp.md`: capabilities, tokens, MCP.
 - `claude-plugin/skills/caligrafy/reference/ui-guidelines.md`: how every new page and client app looks (page components).
 - `ARCHITECTURE.md`: how a request runs and the build-once design.
@@ -44,12 +44,16 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
   capabilities), approve it (experiences, people and trust, checks; the user approves the plan once), ship it
   (online); Claude Code users run `/caligrafy-quill:idea`.
 - Putting it online (2.4.0+): the root `Dockerfile` is the production image and runs `php caligrafer.php deploy` at
-  start (new or changed `create_db.sql`: keep them safe to run again); `php caligrafer.php cloud` deploys to
+  start (new or changed `create_db.sql`: keep them safe to run again; then the pending migrations); `php caligrafer.php cloud` deploys to
   `https://<name>.caligrafy.com`. `cloud login` (2.7.0+) is approved by the user in the browser page it opens: never
   handle the token. Claude Code users run `/caligrafy-quill:ship`.
 - Pages call their own JSON routes with the session: `apiHeaders()` (`X-CSRF-Token`) or the JS client, never the
   legacy API key, which is off online (`LEGACY_API_KEY=false` on Caligrafy Cloud).
 - To move a project to a newer release: `php caligrafer.php update --check`, then `update` (2.9.0+: framework, untouched
   release files, merged settings, `upgrade --apply`); merge each `<file>.caligrafy-new` into the project's version.
-- After changing PHP, run `php -l <file>`; check the project with `php caligrafer.php doctor` (read-only).
+- A change to a table that already has data is a migration (2.18.0+): `php caligrafer.php migrate make <name>`, then
+  `migrate`; never edit a migration that ran. Slow work goes through `Caligrafy\Queue::push()` (a `queue_work` job in
+  `application/config/schedule.php` runs it); what a capability uses comes through its constructor (`Caligrafy\Container`).
+- After changing PHP, run `php -l <file>`; run the app's tests with `php caligrafer.php test` (`tests/`,
+  `Caligrafy\Testing\TestCase`); check the project with `php caligrafer.php doctor` (read-only).
 - Framework changes need the QA suite: `vendor/bin/phpunit` and `./qa/run.sh` (see `CONTRIBUTING.md`).

@@ -219,7 +219,7 @@ The pivot table is created the first time the relationship method is called:
 + it has the columns `id`, `user_id`, `account_id`, `created_at` and `modified_at`. The foreign key columns copy the type of the `id` columns they reference, so `INT` and `INT UNSIGNED` ids both work
 + its foreign key constraints are named `fk_<pivot>_<column>`, which keeps them unique in the database
 
-If you prefer to create the pivot table yourself (to add columns for example), create it with the same name and columns before calling the relationship: the framework will leave it untouched.
+If you prefer to create the pivot table yourself (to add columns for example), create it with the same name and columns before calling the relationship: the framework will leave it untouched. On a database that already has data, create it in a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) (2.18.0+), so every server gets it.
 
 ### Attaching and detaching
 `attach()` and `detach()` add and remove links in the pivot table. Call the relationship method first so that the model knows its pivot, then give the **joined table name** and the id to link. Both return the refreshed list of related models.

@@ -258,7 +258,7 @@ switch(strtolower($argv[1])) {
 
 	case 'platform':
 		if (strtolower($argv[2] ?? '') !== 'install') {
-			print("\n Usage: php caligrafer.php platform install\n Creates the framework tables (personal access tokens, audit log) from framework/settings/platform.sql\n\n");
+			print("\n Usage: php caligrafer.php platform install\n Creates the framework tables (tokens, audit log, job runs, notifications, jobs, cache, migrations) from framework/settings/platform.sql\n\n");
 			exit(1);
 		}
 		try {

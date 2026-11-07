@@ -70,7 +70,7 @@ So an invalid title gets the same message on the web page, over REST and for an 
 Build once does not end on your computer. The project you build is the project you put online, unchanged:
 
 + a production `Dockerfile` at its root builds it as it is (PHP, Apache, your libraries, no development tools);
-+ when it starts, `php caligrafer.php deploy` creates and updates the tables from your `create_db.sql` scripts;
++ when it starts, `php caligrafer.php deploy` creates and updates the tables from your `create_db.sql` scripts, then runs the [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) that never ran;
 + `php caligrafer.php cloud deploy <name>` puts it at `https://<name>.caligrafy.com` with [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud), or you run the same image on [your own server](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#ownserver).
 
 Online, every experience still calls the same capabilities: the pages, the apps, the REST API and the AI agents of the public address follow the same rules as on your computer. From the first command to that address, the steps are the same three, whether Claude does them or you do: **describe it** (start, your data, build once), **approve it** (experience everywhere, people and trust, the checks) and **ship it** (online).
@@ -81,9 +81,12 @@ Online, every experience still calls the same capabilities: the pages, the apps,
 application/
 ├── services/      capabilities: each feature, once (Users/: the people who sign in)
 ├── models/        the data: one class per table, and its create_db.sql
+├── migrations/    changes to tables that have data: numbered SQL files, each run once (php caligrafer.php migrate)
 ├── views/         the web pages (Pug), on the master default/master/site with Caligrafy's look
 ├── controllers/   only for pages with logic of their own (form posts, sign-in): they call capabilities
-└── config/routing/web.php   the routes: Route::page, Route::capability, Route::capabilities, Route::mcp
+└── config/        routing/web.php: the routes (Route::page, Route::capability, Route::capabilities, Route::mcp);
+                   schedule.php: scheduled jobs; container.php: what capabilities' constructors get (optional)
+tests/                       your tests (php caligrafer.php test)
 Dockerfile                   the production image (php caligrafer.php deploy runs when it starts)
 public/
 ├── js/capabilities.js       the generated JS client

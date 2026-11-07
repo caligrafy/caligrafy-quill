@@ -44,3 +44,6 @@ server's copy in place. The database is one store for all of them.
 ```bash
 php caligrafer.php cache clear     # empties the store, the compiled views and the class map
 ```
+
+The compiled views, the class map and the file store belong to the system user that runs the command: the web server
+keeps its own. Run it as that user, or restart the container.

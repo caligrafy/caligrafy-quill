@@ -34,7 +34,9 @@ An app that is not offered yet is refused at the submission: say so and open its
 
 Everything that makes it, not only the README: `application/config/routing/web.php` (pages, routes), every capability
 in `application/services/**` (name, inputs and rules, scope, public or signed in, what it does), every
-`application/models/**/create_db.sql` (tables, fields, relationships), the controllers, `application/views/**` and
+`application/models/**/create_db.sql` and `application/migrations/**` (tables, fields, relationships: the final schema
+is the scripts plus the migrations), `application/config/schedule.php` (jobs on a timer, the background jobs' worker),
+`application/config/container.php`, `tests/`, the controllers, `application/views/**` and
 `public/<app>/` (screens, client apps: Vue, camera, chat), `.env.example` (the services it needs: names only),
 `composer.json`, `README.md`. Note what is truly built, not what a comment promises.
 
@@ -108,7 +110,8 @@ screen, no empty states, no error, no sign-in form unless signing in is the feat
   `.caligrafy/`.
 - **prompt** (what is sold): one request that rebuilds the whole app with Caligrafy from an empty project, ready for
   `/caligrafy-quill:idea`. In this order: the idea in one sentence; every capability (name, inputs and rules, who may
-  use it, what it does); the data (tables, fields, relationships); every screen and client app (what it shows and
+  use it, what it does); the data (tables, fields, relationships, as they are after the migrations); the jobs on a timer and the work done
+in the background; every screen and client app (what it shows and
   does, its look); the services and settings it needs (names, never values); how it goes online (Caligrafy Cloud,
   `/caligrafy-quill:ship`). Complete enough to rebuild it, faithful to the code (no feature it does not have), no code
   pasted, no repository address, no secret, no personal data. As long as the app needs, usually 400 to 1,500 words.

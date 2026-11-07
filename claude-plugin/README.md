@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 53 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G104) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 76 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G121) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: describe it, approve it, ship it. Your idea turned into a complete app online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
@@ -14,7 +14,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
 | Skill | `/caligrafy-quill:design [style\|off]` | Restyles every page to match a design style: reads the selected `DESIGN.md` (`framework/design/`: 84 vendored styles from VoltAgent/awesome-design-md, local ones such as `interstellar`; or the project's own in `application/design/`), writes one override stylesheet `public/css/designs/<style>.css` loaded after the Caligrafy ones, sets `DESIGN_STYLE`, and checks the pages in a browser at desktop and phone width. `off` brings the Caligrafy look back. Worked light and dark examples in `examples/` |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
-| Skill | `/caligrafy-quill:db <script.sql\|tables\|query "...">` | Runs SQL scripts in the `mysql` container (or local MySQL), with safety checks for destructive scripts |
+| Skill | `/caligrafy-quill:db <script.sql\|tables\|query "...">` | Runs SQL scripts and migrations in the `mysql` container (or local MySQL), with safety checks for destructive scripts; a change to a table that has data becomes a migration |
 | Skill | `/caligrafy-quill:deploy [app-name] [--own-server]` | Puts the project online: checks it is ready (Dockerfile, `composer.lock`, no secrets in git, `create_db.sql` safe to run again, pushed), then deploys it to Caligrafy Cloud (`https://<name>.caligrafy.com`) or prepares it for Coolify or Docker |
 | Skill | `/caligrafy-quill:marketplace [app-name]` | Packages an app hosted on Caligrafy Cloud for the marketplace of caligrafy.com: reads the whole code and writes one private file (`.caligrafy/marketplace.json`: title, description, key pages to screenshot, the prompt that recreates the app, an estimated price window from a market study), then `php caligrafer.php cloud submit` sends it to Caligrafy and redeploys the app. The maker earns 25% of every sale |
 | Skill | `/caligrafy-quill:update [version]` | Updates the project to the latest release (or one): runs `php caligrafer.php update --check`, then `update` (framework, untouched release files, `composer.json`, `.gitignore`, new `.env` settings, `upgrade --apply`), merges every `.caligrafy-new` file into the project's own version, and checks the project with `doctor` and the release notes |
@@ -38,7 +38,7 @@ Local development: `claude --plugin-dir ./claude-plugin`, and `claude plugin val
 
 ## Updating the knowledge
 
-The files in `skills/caligrafy/reference/0*.md`, `1*.md` and `wiki-sidebar.md` mirror the wiki
+The numbered files of `skills/caligrafy/reference/` (`NN-*.md`) and `wiki-sidebar.md` mirror the wiki
 (https://github.com/caligrafy/caligrafy-quill/wiki) with a source link at the top of each. Refresh them from a wiki clone:
 ```
 git clone https://github.com/caligrafy/caligrafy-quill.wiki.git ../caligrafy-quill.wiki
@@ -50,6 +50,9 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.30.2** - Caligrafy Quill 2.18.2: every skill, the reviewer agent and the references read again against 2.17 and 2.18:
+  `db` writes migrations, `update` installs the new tables and fixes `tests/.gitignore`, `ship`, `idea`, `marketplace`
+  and the reviewer check tests, migrations and background jobs.
 - **1.30.1** - Caligrafy Quill 2.18.1: the reference pages without the banner image (only the wiki Home has it).
 - **1.30.0** - Caligrafy Quill 2.18.0: migrations, background jobs, the cache, tests for apps, dependency
   injection and the class map; G118-G121; `new-capability`, `new-resource`, `idea` and `deploy` use them.

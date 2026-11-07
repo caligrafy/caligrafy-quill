@@ -238,7 +238,7 @@ try {
 }
 ```
 
-**3.Create a Model:** Create a `books` table in your database and a `Book` model.
+**3.Create a Model:** Create a `books` table in your database (its `create_db.sql`; a later change to it goes in a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations)) and a `Book` model.
 
 > If you need to know more about creating a `Model`, you can read further about it in the respective section of this documentation
 

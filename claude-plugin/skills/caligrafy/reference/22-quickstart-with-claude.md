@@ -67,7 +67,7 @@ Every experience calls the same capabilities: the same rules, the same permissio
 
 ## Next
 
-+ **Change it:** ask Claude for a new feature (`/caligrafy-quill:new-capability`), or edit the code yourself; then `/caligrafy-quill:ship <name>` (or `git push` and `php caligrafer.php cloud deploy <name>`).
++ **Change it:** ask Claude for a new feature (`/caligrafy-quill:new-capability`), or edit the code yourself (a change to a table that already has data goes in a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), which the deploy runs); then `/caligrafy-quill:ship <name>` (or `git push` and `php caligrafer.php cloud deploy <name>`).
 + **Keep it online:** `php caligrafer.php cloud status <name>` shows the time left; `cloud extend <name> week` (2 credits) keeps it online a week. Claude asks you before spending credits. See [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud).
 + **Your own server instead:** `/caligrafy-quill:deploy <name> --own-server` prepares it for Coolify or Docker ([your own server](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#ownserver)).
 + **Learn what Claude did:** [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works) in 5 minutes, or [the course](https://github.com/caligrafy/caligrafy-quill-course/wiki), which builds an application step by step, by hand or with Claude.

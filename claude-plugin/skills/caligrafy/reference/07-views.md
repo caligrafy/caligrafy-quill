@@ -71,7 +71,7 @@ Phug turns each `.pug` view into PHP before running it. Since 2.17.0 Caligrafy k
 + The compiled views live in a private folder of the system's temporary directory (`caligrafy-views-<project>-<user>`, readable by the web server's user only). A new container starts with an empty one.
 + `VIEW_CACHE=false` in `.env` compiles every view on every request, as before 2.17.0.
 + A project that already sets Phug's `cache_dir` (`Phug::setOption('cache_dir', ...)`) keeps its own folder.
-+ Copying files to a server with tools that keep their old modification times (`rsync -a`, `cp -p`, an unzipped archive) can leave a cached view newer than the file you copied: empty the folder after such a copy (`rm -rf /tmp/caligrafy-views-*`), or restart the container. Deploys from the production image are not concerned.
++ Copying files to a server with tools that keep their old modification times (`rsync -a`, `cp -p`, an unzipped archive) can leave a cached view newer than the file you copied: run `php caligrafer.php cache clear` as the web server's user after such a copy (each system user has its own compiled views), or restart the container. Deploys from the production image are not concerned.
 
 ## Structure and Format
 + All the views that you create should be located in the `/application/views` folder. In that folder, you can create the structure that is the most convenient for you by creating subfolders at will. That folder should not contain any client-side scripts and sheets. Remember that this folder is not public and any client-side scripts that you link will not be read by the browser.

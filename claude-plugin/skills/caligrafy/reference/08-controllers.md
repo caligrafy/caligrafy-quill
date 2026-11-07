@@ -27,12 +27,12 @@ A `Controller` is a key entity in an MVC architecture. It is the layer that is r
 
 Most of the concepts that we covered thus far - `Routing`, `Request`, `Models`, `Relationships`, `Validation`, `Views` - come into play together in the context of a `Controller`.
 ### Creating a Controller
-+ All the controllers that you create should be in the `/application/controllers` folder. In this folder, you can organize the controllers to your convenience. If you prefer to have your controllers in a different folder, you can always do that for as long as it is within the `/application` folder.
++ All the controllers that you create should be in the `/application/controllers` folder. In this folder, you can organize the controllers to your convenience. If you prefer to have your controllers in a different folder, you can always do that for as long as it is within the `/application` folder (not `config/` or `views/`, which the class map leaves out).
 
 + There is no formal naming convention for a controller. We do recommend that you remain consistent.
 > Learn more about naming conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#fundamentals)
 
-+ Every PHP file of `/application` is loaded on each request, so two classes with the same fully qualified name are a fatal error. The example controllers that come with Caligrafy (`application/controllers/core/`: `AIController`, `AdminController`, `AuthController`, `ClientController`, `WatsonController`) live in the `Caligrafy\Controllers` namespace, so you can give one of your controllers the same short name without a collision.
++ Every class of `/application` is found by Caligrafy without a `require` (since 2.18.0 it is loaded the first time it is used), so two classes with the same fully qualified name are an error. The example controllers that come with Caligrafy (`application/controllers/core/`: `AIController`, `AdminController`, `AuthController`, `ClientController`, `WatsonController`) live in the `Caligrafy\Controllers` namespace, so you can give one of your controllers the same short name without a collision.
 
 + Controllers can be namespaced. Declare the namespace at the top of the file and use the fully qualified name in the routes (see [Namespaced controllers](#namespacedcontrollers)):
 ```php

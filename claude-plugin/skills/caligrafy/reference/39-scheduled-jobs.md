@@ -33,6 +33,10 @@ return array(
 A job is just a capability: write it as any other ([Build once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)),
 then name it in the file. Its inputs are validated, and the audit log records each call.
 
+Work that a request starts and that runs once, later, is a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs) instead
+(`Queue::push`, 2.18.0+). Its worker is a job of this file on the framework's capability `queue_work`:
+`array('name' => 'queue', 'capability' => 'queue_work', 'every' => '1m', 'timeout' => 55)`.
+
 ## Example: clear the finished tasks every night
 
 The [Tasks example](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) (`php caligrafer.php quickstart

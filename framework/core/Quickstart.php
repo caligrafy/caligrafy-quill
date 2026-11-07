@@ -103,7 +103,7 @@ class Quickstart
         if (($options['db'] ?? true) && strtolower(self::envValue($env, 'DB_ACTIVATE')) === 'true') {
             $dbReady = $this->createDatabase($env);
             if ($dbReady) {
-                $this->step('Framework tables', $this->php('platform install') === 0, 'personal access tokens and the audit log', 'php caligrafer.php platform install failed');
+                $this->step('Framework tables', $this->php('platform install') === 0, 'tokens, audit log, job runs, jobs, cache, migrations', 'php caligrafer.php platform install failed');
             }
         } else {
             $this->say('  SKIP  Database: set DB_ACTIVATE=true and the DB_* settings in .env, then run quickstart again');

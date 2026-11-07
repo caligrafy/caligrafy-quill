@@ -58,7 +58,15 @@ if it is a fix, and tell the user what you chose. Views and controllers under `a
 php caligrafer.php version
 php caligrafer.php doctor
 php caligrafer.php upgrade --local  # should report nothing outdated in application/
+php caligrafer.php platform install # the framework tables of the new release (2.18.0: jobs, cache, migrations); safe to run again
 ```
++ 2.18.0+: `doctor`'s Framework tables line must be OK (else `platform install`). If `tests/.gitignore` holds `*`
+  (projects made before 2.18.0; `update` never touches `tests/`), replace it with the line
+  `# Your tests: php caligrafer.php test (make <Name> writes one). Never served: the production image leaves tests/ out.`
+  so that git keeps the tests. When `tests/` has tests: `php caligrafer.php test`. When `application/migrations` has
+  files: `php caligrafer.php migrate status`. Classes now load when used (G118): open the pages; a page that breaks
+  because a file relied on another being loaded first gets a direct reference to the class (`CLASS_MAP=false` restores
+  the old loader meanwhile).
 + The release notes of every version passed (`https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-<version>`):
   do what they ask of projects (for example 2.7.0: client apps call their routes with `apiHeaders()`; `doctor` lists
   the scripts that still send the key).

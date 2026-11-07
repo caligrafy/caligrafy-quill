@@ -151,7 +151,7 @@ Put HTTPS in front of it (a load balancer, Coolify's proxy, Caddy...). Hosts tha
 | You see | Why, and what to do |
 | --- | --- |
 | The build fails | `cloud logs <name>` (or the app page) shows the build: usually `composer.lock` missing or out of date (`composer update`, commit the lock file) |
-| `caligrafer deploy: the database is not prepared` | the line above it says why: database not reachable (check the `DB_*` settings, or `--wait` longer), or a SQL error in a `create_db.sql` |
+| `caligrafer deploy: the database is not prepared` | the line above it says why: database not reachable (check the `DB_*` settings, or `--wait` longer), or a SQL error in a `create_db.sql` or a migration (it names the migration and the statement that failed) |
 | `Host ... is not allowed to connect` | the database was created but its user was not: on your own server, recreate the database (it has no data yet) |
 | Caligrafy Cloud cannot read a private repository | the deploy key is not added on GitHub, or *Allow write access* was expected: add the key of the app page |
 | The address shows a paused page | its time ended (`cloud extend <name> week`), or it is deploying, or there is no app with that name |

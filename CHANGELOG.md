@@ -6,6 +6,24 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.18.2] - 2026-11-07
+
+### Fixed
+- `php caligrafer.php doctor` checks every framework table (tokens, audit log, job runs, jobs, cache, migrations):
+  a project updated to 2.18 without `platform install` is told so. `quickstart` and the `platform install` help name
+  the tables 2.18.0 added.
+
+### Documentation
+- Every wiki page and the Claude Code plugin read again against 2.17.0 and 2.18.0: the class map replaces "every file
+  is loaded on each request" (Getting started, Controllers, Models, Testing Caligrafy, `ARCHITECTURE.md`), `tests/`
+  holds the app's tests (`CONTRIBUTING.md`, `phpunit.xml.dist`), migrations wherever a table changes (Models,
+  Relationships, Authentication, Security and upgrading, How Caligrafy works, Quickstart with Claude), the new commands
+  and tables in every list, the behavior changes of 2.17 and 2.18 in Security and upgrading, Home's features and links.
+- Claude Code plugin 1.30.2: the `db` skill writes and runs migrations; `update` installs the new tables, fixes
+  `tests/.gitignore` and checks tests and migrations; `ship` and `idea` check tests, migrations and background jobs;
+  `marketplace` reads migrations and jobs; the `caligrafy-reviewer` agent checks the 2.18 rules; the skill's workflow,
+  the API reference (autoloading, capability discovery, the CLI table) and gotchas G19 and G68 are current.
+
 ## [2.18.1] - 2026-11-07
 
 ### Documentation
