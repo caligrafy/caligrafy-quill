@@ -185,10 +185,16 @@ abstract class FaceLoginAction extends Service
         return [$locked, $failed];
     }
 
+    // a face alone does not prove a person (a photo can pass): only a stronger sign-in may change how the account signs in
+    protected function mayChangeSignIn() {
+        return in_array(\Caligrafy\AuthRoutes::signedInBy(), ['password', 'passkey', 'face+passkey'], true);
+    }
+
     // a new session id on every sign-in (fixation). The page stays open, so its CSRF token stays: not AuthRoutes::signIn()
     protected function signIn($user, $factors, $status = 200) {
         session_regenerate_id(true);
         Auth::authorize($user);
+        \Caligrafy\AuthRoutes::rememberSignIn(implode('+', $factors));   // what mayChangeSignIn() reads
         return Web::json(['user' => ['username' => $user->username], 'factors' => $factors, 'enrolled' => count($this->enrolled((int)$user->id)) > 0], $status);
     }
 
@@ -212,7 +218,7 @@ class FaceLoginStart extends FaceLoginAction
 
     public function handle(array $input, Context $context) {
         if (!empty($input['enroll'])) {                           // enrolment: the signed-in account
-            return authorized() ? Web::json(FaceLogin::challenge(user()->username)) : $this->fail(401, 'Log in with your password first');
+            return $this->mayChangeSignIn() ? Web::json(FaceLogin::challenge(user()->username)) : $this->fail(401, 'Log in with your password first');
         }
         $username = $this->username($input);
         if ($username === null) { return $this->fail(422, 'Invalid username'); }
@@ -227,7 +233,7 @@ class FaceLoginEnroll extends FaceLoginAction
     public $rules = ['nonce' => '', 'liveness' => '', 'prints' => ''];
 
     public function handle(array $input, Context $context) {
-        if (!authorized()) { return $this->fail(401, 'Log in with your password first'); }
+        if (!$this->mayChangeSignIn()) { return $this->fail(401, 'Log in with your password first'); }
         $user = user();
         try {
             $prints = FaceLogin::verify($input, $user->username);
@@ -381,7 +387,7 @@ abstract class FacePasskeyAction extends FaceLoginAction
 class FacePasskeyRegisterOptions extends FacePasskeyAction
 {
     public function handle(array $input, Context $context) {
-        if (!authorized()) { return $this->fail(401, 'Log in first'); }
+        if (!in_array(\Caligrafy\AuthRoutes::signedInBy(), ['password', 'passkey', 'face+passkey'], true)) { return $this->fail(401, 'Log in with your password first'); }
         $user = user();
         return Web::json((new Passkey())->registrationOptions($user->id, $user->username));
     }
@@ -394,7 +400,7 @@ class FacePasskeyRegister extends FacePasskeyAction
     public $rules = ['id' => '', 'clientDataJSON' => '', 'attestationObject' => '', 'transports' => '', 'name' => ''];
 
     public function handle(array $input, Context $context) {
-        if (!authorized()) { return $this->fail(401, 'Log in first'); }
+        if (!in_array(\Caligrafy\AuthRoutes::signedInBy(), ['password', 'passkey', 'face+passkey'], true)) { return $this->fail(401, 'Log in with your password first'); }
         try {
             $credential = (new Passkey())->register($input, user()->id, $input['name'] ?? null);
         } catch (PasskeyException $e) {
@@ -432,6 +438,7 @@ class FacePasskeyLogin extends FacePasskeyAction
         if (!$user) { return $this->fail(401, 'Unknown account'); }
         session_regenerate_id(true);
         Auth::authorize($user);
+        \Caligrafy\AuthRoutes::rememberSignIn($pending !== null ? 'face+passkey' : 'passkey');
         return Web::json(['user' => ['username' => $user->username], 'factors' => $pending !== null ? ['face', 'passkey'] : ['passkey']]);
     }
 }

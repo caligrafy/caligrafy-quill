@@ -392,4 +392,18 @@ final class AuthRoutesTest extends TestCase
             $_REQUEST = $request;
         }
     }
+
+    public function testASessionRemembersHowItSignedIn(): void
+    {
+        $authorize = function () { return true; };
+        AuthRoutes::signIn((object) array('id' => 1), $authorize, 'face');
+        $this->assertSame('face', $_SESSION[AuthRoutes::SIGNED_IN_BY]);
+        AuthRoutes::signIn((object) array('id' => 1), $authorize, 'password');
+        $this->assertSame('password', $_SESSION[AuthRoutes::SIGNED_IN_BY], 'a later sign-in replaces it');
+        AuthRoutes::signIn((object) array('id' => 1), $authorize);
+        $this->assertArrayNotHasKey(AuthRoutes::SIGNED_IN_BY, $_SESSION, 'unknown is never kept as an older answer');
+        AuthRoutes::rememberSignIn('passkey');
+        AuthRoutes::signOut(function () {});
+        $this->assertArrayNotHasKey(AuthRoutes::SIGNED_IN_BY, $_SESSION, 'gone at sign-out');
+    }
 }

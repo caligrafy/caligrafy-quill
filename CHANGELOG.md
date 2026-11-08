@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.3] - 2026-11-08
+
+### Added
+- `AuthRoutes::signedInBy()` says how this session signed in; `AuthRoutes::signIn($user, null, $how)` and
+  `AuthRoutes::rememberSignIn($how)` record it. `Route::auth` records `password` and `passkey`.
+
+### Security
+- The face login recipe: a session opened with a face alone can no longer change the enrolled face or register a passkey.
+
 ## [2.21.2] - 2026-11-08
 
 ### Security

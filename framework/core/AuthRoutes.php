@@ -42,6 +42,9 @@ class AuthRoutes
     /** the session key of the page to go back to after signing in (2.20.0) */
     const RETURN_TO = '__auth_return';
 
+    /** the session key of how this session signed in (2.21.3) */
+    const SIGNED_IN_BY = '__auth_signed_in_by';
+
     // what a check against a password that does not exist costs: response times do not tell which usernames exist
     const DUMMY_HASH = '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG';
 
@@ -184,11 +187,35 @@ class AuthRoutes
      * Signs a user in: a new session id (fixation), a new CSRF token, then Auth::authorize()
      * @param callable|null $authorize replaces Auth::authorize (tests)
      */
-    public static function signIn($user, ?callable $authorize = null)
+    public static function signIn($user, ?callable $authorize = null, $how = null)
     {
         self::regenerate();
         $ok = call_user_func($authorize ?? array(Auth::class, 'authorize'), $user);
+        self::rememberSignIn($how);
         return (bool) $ok;
+    }
+
+    /**
+     * Records how this session signed in (2.21.3), for what only some sign-ins may do: 'password', 'passkey', 'face'...
+     * signIn() does it with its third argument; a page that signs in with Auth::authorize() calls it itself.
+     */
+    public static function rememberSignIn($how)
+    {
+        if ($how === null) {
+            unset($_SESSION[self::SIGNED_IN_BY]);
+            return;
+        }
+        $_SESSION[self::SIGNED_IN_BY] = (string) $how;
+    }
+
+    /**
+     * How this session signed in (2.21.3): 'password' or 'passkey' through Route::auth, what the application recorded
+     * otherwise, null when nobody recorded it. A sign-in that does not prove a person (a face without a liveness check)
+     * must not be able to change how the account signs in: check this first.
+     */
+    public static function signedInBy()
+    {
+        return Auth::active() && Auth::authorized() ? ($_SESSION[self::SIGNED_IN_BY] ?? null) : null;
     }
 
     /**
@@ -197,6 +224,7 @@ class AuthRoutes
     public static function signOut(?callable $unauthorize = null)
     {
         call_user_func($unauthorize ?? array(Auth::class, 'unauthorize'));
+        self::rememberSignIn(null);
         self::regenerate();
     }
 
@@ -281,7 +309,7 @@ class AuthRoutes
             return array('view' => $o['views']['register'], 'data' => $page + array('message' => $message, 'errors' => $errors));
         }
         if ($o['signInAfterRegister'] && ($user = self::registered($o, $profile, $p)) !== null && self::mayEnter($user, $o['level'])) {
-            self::signIn($user);
+            self::signIn($user, null, 'password');
             return $json ? array('status' => 201, 'json' => array('data' => $profile)) : array('redirect' => $o['home']);
         }
         if ($json) {
@@ -355,7 +383,7 @@ class AuthRoutes
                 'user' => (object) array($o['identifier'] => $typed)));
         }
         $user = self::upgrade($model, $result['user'], $password);
-        self::signIn($user);
+        self::signIn($user, null, 'password');
         if ($json) {
             return self::json(200, array('data' => array('user' => self::profile($user))));
         }
@@ -439,7 +467,7 @@ class AuthRoutes
                     if (!$user || !self::mayEnter($user, $o['level'])) {
                         return self::json(401, array('error' => 'Unknown account'));
                     }
-                    self::signIn($user);
+                    self::signIn($user, null, 'passkey');
                     return self::json(200, array('user' => self::profile($user)));
             }
         } catch (PasskeyException $e) {
