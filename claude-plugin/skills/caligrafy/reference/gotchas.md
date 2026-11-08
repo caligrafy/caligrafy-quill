@@ -660,8 +660,10 @@ Proof: `framework/core/Flash.php`, `Form::oldInput()`.
 **G130. A JSON request skips the form's CSRF check: the declarative routes ask for X-CSRF-Token themselves (2.19.0+).**
 `Request::checkCSRF()` does not check `_token` when `wantsJson()` is true, and `Accept` is a header any cross-site
 `fetch()` may set. `Route::form` (like `Rest`), `Route::auth` and the passkey endpoints therefore refuse a JSON write
-that comes with the session cookie and no `X-CSRF-Token` (403). A controller route that answers JSON must check
-`$this->request->authorizeSessionRequest()` the same way. Proof: `Form::outcome()`, `AuthRoutes::login()`.
+that comes with the session cookie and no `X-CSRF-Token` (403). `'Controller@action'` routes are already protected:
+`Route::execute()` refuses a JSON call without the session's token or an API token (1004). Closure routes are not
+(G28): never write data in a closure route; use a capability route or `Route::form`. Proof: `Form::outcome()`,
+`AuthRoutes::login()`, `Route.php` (`execute`).
 
 **G131. A file input is a URL, and only web pages and REST can send the file (2.19.0+).** With
 `'cover' => 'required|file|extension,png;jpg|max_size,2mb'` the web and REST channels save `$_FILES['cover']` (after
