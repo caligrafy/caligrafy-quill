@@ -577,7 +577,7 @@ look and `passkey.js` after `detect.js`.
 
         <script src="<?php echo scripts('vue'); ?>"></script>
         <script src="<?php echo scripts('axios'); ?>"></script>
-        <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
+        <script src="<?php echo APP_SERVICE_ROOT.'app.js?v='.@filemtime(PUBLIC_PATH.'js/services/app.js'); ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'face-api.min.js'; ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'detect.js'; ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'passkey.js'; ?>"></script>

@@ -57,7 +57,7 @@
 
         <!-- Initialization scripts -->
         <script src="<?php echo scripts('vue'); ?>"></script>
-        <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
+        <script src="<?php echo APP_SERVICE_ROOT.'app.js?v='.@filemtime(PUBLIC_PATH.'js/services/app.js'); ?>"></script>
         <script>loadEnvironment(`<?php echo $env; ?>`);</script>
         <script> 
             /* Loading the app client framework

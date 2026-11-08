@@ -77,6 +77,10 @@ php caligrafer.php platform install # the framework tables of the new release (2
   after each `.env` change. Escape hatches, to name only when something breaks: `SESSION_LAZY=false`,
   `VIEW_OPTIMIZER=false`. Moving controllers to `Route::form` / `Route::auth` / `Route::webhook` / `Route::action` is optional: offer
   it, never do it unasked (08-controllers.md shows how).
++ 2.21.6: in a client app made earlier, load `app.js` with a version: `APP_SERVICE_ROOT.'app.js?v='.@filemtime(PUBLIC_PATH.'js/services/app.js')`.
++ 2.21.5: `loadVue()` versions a client app's scripts. Nothing to change.
++ 2.21.3: a face sign-in without a liveness check must not change the face or add a passkey: check `AuthRoutes::signedInBy()` (G146), and record the sign-in with `AuthRoutes::signIn($user, null, 'face')`.
++ 2.21.2: on a `GET`, a route variable now wins over the query string in `Route::action` and `Route::capability`.
 + 2.21.1: a JSON call to `Route::action` needs the page's `X-CSRF-Token` or a token granting `*`, signed in or not. Nothing to
   change when pages send `apiHeaders()`.
 + 2.20.0-2.21.0: nothing to change. New: `Route::page` `visitorsOnly`, `comeBack`, `query`; `Route::form` `visitorsOnly`, `same`,

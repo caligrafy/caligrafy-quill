@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.33.6** - Caligrafy Quill 2.21.6: new client apps load `app.js` with a version too.
 - **1.33.5** - Caligrafy Quill 2.21.5: `loadVue()` loads a client app's scripts with a version that changes at each deploy. G147.
 - **1.33.4** - Caligrafy Quill 2.21.4: UI guidelines for a top bar that never moves; how a session signed in, in the authentication reference.
 - **1.33.3** - Caligrafy Quill 2.21.3: `AuthRoutes::signedInBy()`; the face login recipe no longer lets a face-only session change the face or add a passkey. G146.

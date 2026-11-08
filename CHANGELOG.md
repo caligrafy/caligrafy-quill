@@ -6,6 +6,12 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.6] - 2026-11-08
+
+### Fixed
+- The starter pages of client apps (app, bot, face detection, machine learning) load `app.js` with a version: without it,
+  a browser holding the old `app.js` never received the script versions of 2.21.5.
+
 ## [2.21.5] - 2026-11-08
 
 ### Fixed

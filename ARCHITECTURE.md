@@ -152,6 +152,8 @@ capability that calls `Tokens::create()` for the signed-in person (how an applic
   (`Uploads`) saves an uploaded file after the access check and gives `handle()` its URL.
 - **`Route::action`** (`Action`, 2.21.0): HTTP none of these covers (a sign-in between two sites, a gate, a page that
   decides where to go): a capability declared `webOnly: true` answers with a `Caligrafy\Web`. Nothing else reaches it.
+- **How a session signed in** (`AuthRoutes::signedInBy()`, 2.21.3): `password` or `passkey` through `Route::auth`, what the
+  application recorded otherwise. A face alone must not change how the account signs in.
 - **Controllers** still work; no application needs one since 2.21.0.
   They call capabilities with `$this->call()` (the inputs default to the request parameters and the route variables)
   and catch `ServiceError` to show the form again. The framework's own controllers: `AuthController` (sign-in, sign-up

@@ -50,7 +50,7 @@
         </div>
 
 		<!-- Scripts -->
-		<script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
+		<script src="<?php echo APP_SERVICE_ROOT.'app.js?v='.@filemtime(PUBLIC_PATH.'js/services/app.js'); ?>"></script>
 		<script>loadEnvironment(`<?php echo $env; ?>`);</script>
 		<script src="<?php echo APP_SERVICE_ROOT.'mlcore.js'; ?>"></script>
 		<script> 
