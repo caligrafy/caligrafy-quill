@@ -295,22 +295,26 @@
             const canvas = facedetector.prepareCanva(app.options);
 
 
-            // Match the canva size with the video
-            const displaySize = {
-                width: facedetector.media.width,
-                height: facedetector.media.height
-            };
+            // The canva has the size of the picture the camera really sends (1280 x 720 on most cameras, whatever the
+            // width and height of the <video>): video and canva then have the same shape and are cropped the same way
+            // on the screen, so the drawings stay on the faces
+            let displaySize = facedetector.mediaSize();
             faceapi.matchDimensions(canvas, displaySize);
 
-            // Run the face detection algorithm every 100ms 
+            // Run the face detection algorithm every 100ms
             facedetector.runningEvent = setInterval(async () => {
-                
-                
+
+                // the camera can change its resolution while it streams: the canva follows
+                const size = facedetector.mediaSize();
+                if (size.width !== displaySize.width || size.height !== displaySize.height) {
+                    displaySize = size;
+                    faceapi.matchDimensions(canvas, displaySize);
+                }
 
                 // Detect all the faces present in the stream with Landmarks, Age and Gender, and Facial Expressions
                 const detections = await faceapi.detectAllFaces(facedetector.media, new algorithm()).withFaceLandmarks().withFaceDescriptors().withAgeAndGender().withFaceExpressions();
 
-                // resize the detections to fit in the canva
+                // the detections in the canva's pixels (the same as the picture's)
                 const resizedDetections = faceapi.resizeResults(detections, displaySize);
                 
                 // expose the detections to the app
@@ -361,10 +365,23 @@
         // Create the canva on top of the video and add it to the document
         const canvas = faceapi.createCanvasFromMedia(this.media);
         canvas.id = "detectfaces";
+        // fitted on the screen the way the media is (cover in the camera layout, contain for a plain <video>)
+        canvas.style.objectFit = getComputedStyle(this.media).objectFit || 'contain';
         document.getElementById('detector').append(canvas);
 
         return canvas;
 
+    };
+
+    /*
+     * The size of the picture the media really holds: a camera's resolution (videoWidth x videoHeight), an image's
+     * natural size, else the element's width and height attributes (before the first frame)
+     */
+     mediaSize() {
+        const media = this.media;
+        const width = media.videoWidth || media.naturalWidth || media.width;
+        const height = media.videoHeight || media.naturalHeight || media.height;
+        return { width: width, height: height };
     };
     
     /* 
@@ -625,7 +642,8 @@
      */
      fetchImage(canvas, media) {
         let context = canvas.getContext('2d');
-        context.drawImage(media, 0, 0, media.offsetWidth, media.offsetHeight)
+        // the whole picture, at the canvas's size (the canvas of the detections has the picture's shape)
+        context.drawImage(media, 0, 0, canvas.width, canvas.height)
         return canvas.toDataURL();
     }
     
@@ -646,14 +664,10 @@
             const canvas = facedetector.prepareCanva(app.options);
 
 
-            // Match the canva size with the video
-            const displaySize = {
-                width: facedetector.media.width,
-                height: facedetector.media.height
-            };
-            faceapi.matchDimensions(canvas, displaySize);
-            
-            
+            // The canva has the size of the picture the camera really sends (see detectFaces)
+            faceapi.matchDimensions(canvas, facedetector.mediaSize());
+
+
             // initialize the app in the object
             facedetector.app = app;
             facedetector.app.canvas = canvas;

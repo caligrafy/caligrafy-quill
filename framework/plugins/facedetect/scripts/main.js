@@ -66,8 +66,8 @@ const app = Vue.createApp({
        * 
        * faceapi.draw.DrawBox(box, {settings}).draw(canva): draws a box around the face 
        * 
-       * faceapi.matchDimensions(canva, {width: media width, height: media height}): changes the dimensions of the canva to match the media
-       * faceapi.resizeResults(detections, {width: media width, height: media height}): resizes the detections to fit within the video
+       * faceapi.matchDimensions(canva, this.detector.mediaSize()): gives the canva the size of the picture the camera sends (videoWidth x videoHeight)
+       * faceapi.resizeResults(detections, this.detector.mediaSize()): puts the detections in the canva's pixels
        * faceapi.detectAllFaces(media, algorithm) could be appended with:
        *                                         .withFaceLandmarks()
        *                                         .withFaceDescriptors()

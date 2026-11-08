@@ -29,7 +29,7 @@
                 <!-- media can be a video -->
                 <!--<video id="detection"  src="<path to local video>" type="video/mp4" width="640" height="480" class="show" autoplay="autoplay" muted playsinline controls></video>-->
 
-                <!-- media can be a webcam: 640 x 480, the canvas of the detections gets the same size and both cover the screen -->
+                <!-- media can be a webcam: the canvas of the detections gets the size of the picture the camera sends (videoWidth x videoHeight) and both cover the screen the same way -->
                 <video id="detection" width="640" height="480" class="show" autoplay="autoplay" muted playsinline></video>
 
             </section>
@@ -47,7 +47,8 @@
         <script src="<?php echo scripts('axios'); ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'app.js'; ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'face-api.min.js'; ?>"></script>
-        <script src="<?php echo APP_SERVICE_ROOT.'detect.js'; ?>"></script>
+        <!-- ?v= the file's time: a new release of detect.js reaches browsers that kept the old one -->
+        <script src="<?php echo APP_SERVICE_ROOT.'detect.js?v='.@filemtime(PUBLIC_PATH.'js'.DS.'services'.DS.'detect.js'); ?>"></script>
         <script>loadEnvironment(`<?php echo $env; ?>`);</script>
         <script> 
             /* Loading the app client framework

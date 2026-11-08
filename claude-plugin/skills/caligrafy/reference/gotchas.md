@@ -778,3 +778,13 @@ in the CLI (`ClassMap::register()`, `ClassMap::declarations()` marks it `eager`)
 `Capabilities::all()` requires every PHP file of `application/` except `config/` and `views/` before any capability
 runs. Register a rule once: GUMP throws when the same name is added twice, so never also add it in `config.php`.
 Proof: `framework/core/Caligrafer.php`, `framework/core/ClassMap.php`, `framework/core/Framework.php`.
+
+**G142. Face drawings narrower than the face and sliding off it (before 2.19.2).** `FaceDetector` sized its canvas
+from the `<video>`'s `width`/`height` attributes (640 x 480, 4:3) and resized the detections to that, while most
+cameras send 16:9 (1280 x 720). The points were squeezed into 4:3, then `camera.css` cropped the 16:9 video and the 4:3
+canvas differently (`object-fit: cover`): boxes and landmarks about 25% too narrow, further off away from the center.
+2.19.2: the canvas takes the picture's size (`detector.mediaSize()`: `videoWidth` x `videoHeight`), follows a change of
+resolution and copies the media's `object-fit`; `fetchImage` draws at the canvas size; the scaffold's page loads
+`detect.js?v=<file time>`. An app drawing its own overlay: size its canvas with `video.videoWidth`/`videoHeight`, never
+the element's attributes or `offsetWidth`, and give it the video's `object-fit`. Old client apps keep their own
+`public/<app>/index.php`: add the `?v=` to its `detect.js` script so browsers fetch the new file.

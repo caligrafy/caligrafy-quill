@@ -5,13 +5,13 @@
 
 Caligrafy Quill ships with its own **[Claude Code](https://code.claude.com) plugin**, `caligrafy-quill`, in the [`claude-plugin/`](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin) folder of every project. When you open a project in Claude Code, Claude knows the framework from its source: capabilities, the declarative routes, the query builder, models, Pug views, authentication, payments, Vue apps, bots, face detection, machine learning and the AI integrations. It builds the Caligrafy way, **build once, experience everywhere**: a feature becomes a capability, and every experience (pages, Vue apps, REST, AI agents) calls it. With `/caligrafy-quill:idea` it goes from your idea to an app online: **Describe it. Approve it. Ship it.**
 
-Current version: **1.31.1**, for Caligrafy Quill v2.19.1.
+Current version: **1.31.2**, for Caligrafy Quill v2.19.2.
 
 ## What the plugin gives Claude
 
 | Component | Name | What it does |
 | --- | --- | --- |
-| Skill (automatic) | `caligrafy` | The framework knowledge: every page of this wiki, an API reference and 141 verified gotchas (G1-G141) written from the framework source, UI guidelines for every new page, and recipes for AI chat apps and face login. Claude Code loads it whenever it works in a Caligrafy project |
+| Skill (automatic) | `caligrafy` | The framework knowledge: every page of this wiki, an API reference and 142 verified gotchas (G1-G142) written from the framework source, UI guidelines for every new page, and recipes for AI chat apps and face login. Claude Code loads it whenever it works in a Caligrafy project |
 | Command | `/caligrafy-quill:idea` | Your idea turned into a complete app online, with one confirmation: the plan, the project, every feature as a capability, the checks, then GitHub and Caligrafy Cloud |
 | Command | `/caligrafy-quill:new-capability` | One capability, served to the channels you need (REST, the JavaScript client, pages and forms, MCP), with a token and tests |
 | Command | `/caligrafy-quill:new-resource` | A table, its model, its five CRUD capabilities, their REST routes, pages and forms |

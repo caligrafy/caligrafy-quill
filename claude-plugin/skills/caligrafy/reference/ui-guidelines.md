@@ -186,7 +186,7 @@ imports `layout.css` and `look.css` in `src/main.js`, adds `cq-site` to the body
 ## Camera pages
 
 Face detection, machine learning and face sign-in fill the screen with the camera (`public/css/camera.css`):
-`body.cq-camera-body > .cq-camera > .cq-camera-media` (video and canvas, 640 x 480, `object-fit: cover`) +
+`body.cq-camera-body > .cq-camera > .cq-camera-media` (video and canvas, `object-fit: cover`; the canvas has the shape of the camera's picture, `videoWidth` x `videoHeight`, not of the `<video>` attributes: `FaceDetector` does it since 2.19.2) +
 `.cq-camera-top` (`h1.cq-camera-title`, `.cq-camera-status`) + `.cq-camera-bottom` (`.cq-camera-actions > button`,
 `.cq-camera-button.is-primary` for the main action, white over the camera). `.cq-camera-oval` guides a face
 (`.is-scanning`, `.is-success`, `.is-failed`); `.cq-camera-sheet` over a `.cq-camera-backdrop` holds a form (its main

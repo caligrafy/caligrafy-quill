@@ -6,6 +6,21 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.2] - 2026-11-08
+
+### Fixed
+- Face detection drawings sat off the faces with most cameras: `FaceDetector` sized its canvas from the `<video>`'s
+  `width`/`height` attributes (640 x 480, 4:3) while cameras usually send 16:9 (1280 x 720), so boxes, landmarks and
+  labels were squeezed (about 25% too narrow) and slid off the face away from the center. The canvas now takes the
+  picture's size (`detector.mediaSize()`: `videoWidth` x `videoHeight`), follows a change of resolution while the
+  camera streams and copies the media's `object-fit`; `fetchImage()` draws the whole picture at the canvas's size.
+- The FaceDetect scaffold loads `detect.js?v=<file time>`, so browsers that kept the old script get the new one.
+  Existing client apps keep their own `public/<app>/index.php`: add the same `?v=` there.
+
+### Documentation
+- Plugin 1.31.2: gotcha G142 (camera overlays: size them from the picture, not the element), `mediaSize()` in the
+  API reference and the wiki.
+
 ## [2.19.1] - 2026-11-08
 
 ### Security

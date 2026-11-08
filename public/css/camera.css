@@ -2,7 +2,8 @@
 /* camera.css: full-screen camera pages (face detect, machine learning, face sign-in).
  * The camera fills the screen; a flat scrim keeps the type readable; the title and the status float at the top, the
  * actions at the bottom. Media and drawings share one box (object-fit: cover on both), so face boxes and keypoints stay
- * on the person: give the <video> and its <canvas> the same width and height attributes (640 x 480, a webcam's 4:3).
+ * on the person: the <canvas> must have the shape of the picture the camera sends (videoWidth x videoHeight, often
+ * 1280 x 720), not of the <video> element (FaceDetector does it).
  *
  * Markup: body.cq-camera-body > .cq-camera > .cq-camera-media (video, canvas...) + .cq-camera-top (h1.cq-camera-title,
  * .cq-camera-status) + .cq-camera-bottom (.cq-camera-actions > button), optional .cq-camera-oval and .cq-camera-sheet.

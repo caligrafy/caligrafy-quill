@@ -82,5 +82,14 @@ test('passkey base64url helpers round-trip binary data', () => {
     assert.strictEqual(PasskeyClient.toBase64Url(PasskeyClient.toBuffer('AQID')), 'AQID');
 });
 
+test('mediaSize: the picture the camera sends, not the <video> attributes (2.19.2: drawings on the faces)', () => {
+    const size = (media) => FaceDetector.prototype.mediaSize.call({ media });
+    // a 16:9 camera in a <video width="640" height="480">: the canvas must be 1280 x 720, not 640 x 480
+    assert.deepStrictEqual(size({ videoWidth: 1280, videoHeight: 720, width: 640, height: 480 }), { width: 1280, height: 720 });
+    assert.deepStrictEqual(size({ naturalWidth: 800, naturalHeight: 600, width: 400, height: 300 }), { width: 800, height: 600 });
+    // before the first frame (videoWidth 0): the attributes
+    assert.deepStrictEqual(size({ videoWidth: 0, videoHeight: 0, width: 640, height: 480 }), { width: 640, height: 480 });
+});
+
 console.log(`  ${pass} passed, ${fail} failed`);
 process.exit(fail ? 1 : 0);

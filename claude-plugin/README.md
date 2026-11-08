@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.31.2** - Caligrafy Quill 2.19.2: face detection drawings on the faces with 16:9 cameras (`mediaSize()`),
+  gotcha G142.
 - **1.31.1** - Caligrafy Quill 2.19.1: gotchas G136-G141 (the client page's session cookie, the webhook
   capability guard, `select()` on models, GUMP's `;` parameters, tokens and `level`, custom validators outside
   `config.php`), the 2.19.1 fixes in the API reference, the AI recipes and the new-app AI chat as capabilities, the Vue
