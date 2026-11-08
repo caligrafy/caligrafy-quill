@@ -106,11 +106,13 @@ class ClassMap
         if ($production && self::$file !== null && is_file(self::$file) && time() - (int) @filemtime(self::$file) < self::PRODUCTION_CHECK) {
             return $map;
         }
-        if (self::stale($map)) {
-            return self::rebuild();
-        }
+        // the map's time moves first, so requests arriving meanwhile skip the check: only this one scans the files
+        // (stale() compares the files with the times stored in the map, not with the map's own time)
         if ($production && self::$file !== null) {
             @touch(self::$file);
+        }
+        if (self::stale($map)) {
+            return self::rebuild();
         }
         return $map;
     }

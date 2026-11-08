@@ -190,13 +190,47 @@ function metadata($pairs = array())
 function session($key, $value = null)
 {
     // the CSRF token handed to a page, or a value to keep: the session must exist (2.19.0, initialize.php)
-    if ($value !== null || $key === 'token') {
+    if (caligrafySessionNeeded($key, $value, caligrafySessionReady())) {
         caligrafySessionStart();
     }
     if ($value !== null) {
         $_SESSION[$key] = $value;
     }
     return $_SESSION[$key]?? null;
+}
+
+/**
+ * Whether session($key, $value) needs the session started (2.19.0): reading the CSRF token always does (it is handed
+ * to a page or a client), a write does once the request's settings ran ($ready, caligrafySessionSnapshot()). The
+ * settings (coresettings.php, config.php) write scripts, metadata, keywords... on every request: they stay in memory.
+ */
+function caligrafySessionNeeded($key, $value, $ready)
+{
+    if ($key === 'token') {
+        return true;
+    }
+    return $value !== null && $ready;
+}
+
+/**
+ * Whether the request's settings ran (caligrafySessionSnapshot() was called)
+ */
+function caligrafySessionReady()
+{
+    return !empty($GLOBALS['__caligrafy_session_ready']);
+}
+
+/**
+ * Whether a request that came without a session cookie must save its session when it ends (2.19.0): it changed
+ * $_SESSION after the snapshot, or its output carries the CSRF token (a form posts it back)
+ */
+function caligrafySessionMustSave($snapshot, array $session, $output)
+{
+    if (serialize($session) !== $snapshot) {
+        return true;
+    }
+    $token = (string) ($session['token'] ?? '');
+    return $token !== '' && $output !== null && strpos((string) $output, $token) !== false;
 }
 
 /**
@@ -226,6 +260,7 @@ function caligrafySessionStart()
  */
 function caligrafySessionSnapshot()
 {
+    $GLOBALS['__caligrafy_session_ready'] = true;    // from now on session($key, $value) starts the session
     if (session_status() === PHP_SESSION_ACTIVE || PHP_SAPI === 'cli') {
         return;
     }
@@ -238,10 +273,9 @@ function caligrafySessionShutdown()
     if (session_status() === PHP_SESSION_ACTIVE || !isset($GLOBALS['__caligrafy_session_snapshot'])) {
         return;
     }
-    $changed = serialize($_SESSION ?? array()) !== $GLOBALS['__caligrafy_session_snapshot'];
-    $token = $_SESSION['token'] ?? '';
-    $handedOut = $token !== '' && ob_get_level() > 0 && strpos((string) ob_get_contents(), $token) !== false;
-    if ($changed || $handedOut) {
+    $session = isset($_SESSION) && is_array($_SESSION) ? $_SESSION : array();
+    $output = ob_get_level() > 0 ? ob_get_contents() : null;
+    if (caligrafySessionMustSave($GLOBALS['__caligrafy_session_snapshot'], $session, $output)) {
         caligrafySessionStart();       // the session is written when the request ends
     }
 }

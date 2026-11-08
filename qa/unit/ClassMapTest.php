@@ -61,6 +61,44 @@ final class ClassMapTest extends TestCase
         rmdir("$dir/app/models"); rmdir("$dir/app/views"); rmdir("$dir/app"); rmdir($dir);
     }
 
+    public function testInProductionAnOldMapIsTouchedAndStillRebuiltWhenAFileWasAdded(): void
+    {
+        $dir = sys_get_temp_dir() . '/caligrafy-classmap-prod-' . getmypid() . '-' . mt_rand();
+        mkdir("$dir/app", 0777, true);
+        $suffix = 'P' . mt_rand();
+        file_put_contents("$dir/app/One.php", "<?php\nclass One$suffix {}\n");
+        $env = getenv('APP_ENV');
+        putenv('APP_ENV=production');
+        try {
+            ClassMap::register(array("$dir/app"));
+            $file = (new ReflectionProperty(ClassMap::class, 'file'))->getValue();
+            $this->assertNotNull($file);
+
+            // a map checked within the last minute: a new file is not looked for
+            file_put_contents("$dir/app/Two.php", "<?php\nclass Two$suffix {}\n");
+            ClassMap::register(array("$dir/app"));
+            $this->assertFalse(class_exists("Two$suffix"));
+
+            // an older map: it is touched first (other requests skip the scan) and still rebuilt
+            touch($file, time() - 120);
+            clearstatcache(true, $file);
+            ClassMap::register(array("$dir/app"));
+            $this->assertTrue(class_exists("Two$suffix"));
+
+            // an older map with nothing changed: touched, so the next minute of requests skips the check
+            touch($file, time() - 120);
+            clearstatcache(true, $file);
+            ClassMap::register(array("$dir/app"));
+            ClassMap::refresh();
+            clearstatcache(true, $file);
+            $this->assertGreaterThanOrEqual(time() - 5, filemtime($file));
+        } finally {
+            putenv($env === false ? 'APP_ENV' : "APP_ENV=$env");
+            foreach (array('One.php', 'Two.php') as $f) @unlink("$dir/app/$f");
+            @rmdir("$dir/app"); @rmdir($dir);
+        }
+    }
+
     public function testTheTemporaryFolderIsPrivate(): void
     {
         $folder = ClassMap::tempFolder('classes');
