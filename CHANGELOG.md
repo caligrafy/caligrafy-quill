@@ -6,6 +6,12 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.8] - 2026-11-08
+
+### Security
+- The session cookie is `HttpOnly` (the JavaScript of a page cannot read it) and, when the site is on HTTPS, directly or
+  behind a load balancer that sends `X-Forwarded-Proto: https`, `Secure`.
+
 ## [2.19.7] - 2026-11-08
 
 ### Fixed

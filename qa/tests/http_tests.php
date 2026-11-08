@@ -556,6 +556,11 @@ qa_test('the top bar asks the session: Sign out on a page whose controller passe
     qa_contains('>Sign in<', $guest->get('/qa/bare')['body']);
 });
 
+qa_test('the session cookie is HttpOnly (2.19.8): the JavaScript of a page cannot read it', function () {
+    $r = (new QaBrowser())->get('/login');
+    qa_assert(preg_match('/^Set-Cookie:[^\r\n]*(PHPSESSID|' . 'caligrafy)[^\r\n]*HttpOnly/mi', $r['headers']) === 1, $r['headers']);
+});
+
 qa_test('login with a wrong password fails', function () {
     $b = new QaBrowser();
     $r = $b->login('alice', 'nope12345');

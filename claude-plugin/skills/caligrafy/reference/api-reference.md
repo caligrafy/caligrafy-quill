@@ -7,6 +7,7 @@
 > application classes (which are in the global namespace).
 
 ## Bootstrap and request lifecycle
+- 2.19.8: `framework/helpers/initialize.php` sets `session.cookie_httponly=1` and, on HTTPS (`$_SERVER['HTTPS']` or `X-Forwarded-Proto: https`), `session.cookie_secure=1`, before any session starts.
 
 1. `index.php` sets `error_reporting(E_ALL & ~E_DEPRECATED & ~E_USER_DEPRECATED)`, loads `vendor/autoload.php`, then `Dotenv\Dotenv::createUnsafeMutable(__DIR__)->load()` (the `.env` file **overrides** variables already in the environment, e.g. docker-compose `environment:`).
 2. `Framework::run()`:

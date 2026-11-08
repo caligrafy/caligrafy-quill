@@ -141,7 +141,7 @@ The Docker server is `dev-box` (PHP 8.5 and Apache, your folder mounted in it), 
 php caligrafer.php version        # also --version and -v
 ```
 ```text
-Caligrafy Quill 2.19.7
+Caligrafy Quill 2.19.8
 ```
 It works before `composer install` and never creates `.env`. In code: `Caligrafy\Framework::VERSION`. The changes of every version are in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
 
@@ -417,7 +417,7 @@ php caligrafer.php doctor --env .env.production    # another environment file
 php caligrafer.php doctor --json                   # for scripts
 ```
 ```text
-Caligrafy doctor (read-only): Caligrafy Quill 2.19.7
+Caligrafy doctor (read-only): Caligrafy Quill 2.19.8
 
  Database
   OK    Database: connected to mysql://mysql:3306/caligrafy (server 8.4.13)

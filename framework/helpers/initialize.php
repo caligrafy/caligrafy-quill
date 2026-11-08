@@ -22,6 +22,12 @@ setlocale(LC_MONETARY, getenv('APP_LOCALE'));
 // SESSION_LAZY=false starts every session at once, as before 2.19.0.
 // A request that changes something (POST, PUT, DELETE: sign-in, forms) always starts its session, so code that calls
 // session_regenerate_id() or writes $_SESSION finds it active.
+// The session cookie is out of reach of the page's JavaScript, and only travels over HTTPS when the site is on HTTPS
+// (directly, or behind a load balancer that says so): a script injected in a page cannot read the session (2.19.8)
+ini_set('session.cookie_httponly', '1');
+if (strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https' || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')) {
+    ini_set('session.cookie_secure', '1');
+}
 $sessionReadOnly = in_array(strtoupper($_SERVER['REQUEST_METHOD'] ?? 'GET'), array('GET', 'HEAD', 'OPTIONS'), true);
 if (PHP_SAPI === 'cli' || !$sessionReadOnly || strtolower(trim((string) getenv('SESSION_LAZY'))) === 'false' || isset($_COOKIE[session_name()])) {
     session_start();
