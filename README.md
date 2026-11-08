@@ -39,14 +39,22 @@ over MCP. Same rules, same permissions, same audit log, whichever way it is call
 timer, with no page open ([scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)), and
 reach your users with the app closed ([notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications):
 web push and email), or later, outside the request
-([background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs), with retries). The database
-changes go in [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), slow work in
+([background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs), with retries). Lists, filters,
+paging and related rows are [queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) with every value
+bound; forms, sign-in, webhooks and downloads are one line each
+([declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)), with no controller to
+write. The database changes go in [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), slow work in
 [the cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching), and
 [your tests](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App) call the capabilities the way every
 channel does. Sign-in, tokens, payments, AI, design styles, a
 [social card](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards) on every page and a
 production `Dockerfile` come in the box. See
 [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works).
+
+It is fast: in the same benchmark, Caligrafy 2.19 beats Symfony and Laravel on all 16 measures (requests per second,
+median and slowest response, memory, for plain text, JSON, a database query and an HTML page). An HTML page: 3,142
+requests per second, against 1,921 for Symfony and 269 for Laravel
+([release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0)).
 
 <br/>
 

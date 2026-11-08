@@ -11,7 +11,7 @@ Pug views) and `public/<app>/` (client apps). `framework/` is the framework itse
 ## Read before writing code
 - `claude-plugin/skills/caligrafy/SKILL.md`: the index of the framework knowledge and the workflow rules.
 - `claude-plugin/skills/caligrafy/reference/api-reference.md`: exact signatures, verified against the source.
-- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G121 (read the relevant ones).
+- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G132 (read the relevant ones).
 - `claude-plugin/skills/caligrafy/reference/13-build-once-services-capabilities-mcp.md`: capabilities, tokens, MCP.
 - `claude-plugin/skills/caligrafy/reference/ui-guidelines.md`: how every new page and client app looks (page components).
 - `ARCHITECTURE.md`: how a request runs and the build-once design.
@@ -24,13 +24,16 @@ A project that was never set up: `.bin/caligrafer quickstart` (database, framewo
 A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI agents) is a **capability**:
 `php caligrafer.php service <Folder>/<Name> --scope <resource:action>` creates a `Caligrafy\Service` with
 `#[Capability]` in `application/services/`. Declare every input in `$rules`, return data from `handle()`, refuse with
-`ServiceError`; never render, redirect, print or read the session there. Expose it with `$this->call()` (pages),
+`ServiceError`; never render, redirect, print or read the session there. Read data with the query builder
+(`Book::where(...)->with('author')->paginate(20, $input['page'] ?? 1)`, `Database::table()`, 2.19.0+). Expose it with
+`Route::page` (pages), `Route::form` (form posts), `Route::download` (CSV/JSON exports), `Route::webhook` (a
+service's events), `$this->call()` in a controller only for custom HTTP,
 `Route::capability()` (REST), `Route::capabilities()` + `php caligrafer.php client` (Vue apps) and `Route::mcp()`
 (agents). `php caligrafer.php capabilities` lists them.
 
 ## Rules
-- Only capabilities touch models: pages use `Route::page` (with `data` from capabilities), controllers call `$this->call()`; never a model in a controller, a route or a view.
-- Bound queries only (`?` placeholders and `'bindings'`): never concatenate request data into SQL.
+- Only capabilities touch models: pages use `Route::page` (with `data` from capabilities), forms `Route::form`, sign-in `Route::auth` (2.19.0+), controllers call `$this->call()`; never a model in a controller, a route or a view, and never data work in a closure route.
+- The query builder or bound queries only (`?` placeholders and `'bindings'`): never concatenate request data into SQL; load related rows with `with()`, never a query per row.
 - Every new page or client app UI uses the page components of `public/css/tokens.css` (`main.cq-page > .cq-card`, `.cq-form`,
   `.cq-tabs`, `.cq-list`): see `ui-guidelines.md`, and check it at desktop and phone width.
 - Another look is a design style (`DESIGN_STYLE` in `.env`, `php caligrafer.php design`): restyle only in
@@ -54,6 +57,7 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
 - A change to a table that already has data is a migration (2.18.0+): `php caligrafer.php migrate make <name>`, then
   `migrate`; never edit a migration that ran. Slow work goes through `Caligrafy\Queue::push()` (a `queue_work` job in
   `application/config/schedule.php` runs it); what a capability uses comes through its constructor (`Caligrafy\Container`).
+- Sessions start only when used (2.19.0+): read the CSRF token with `session('token')`, and every form carries `=csrf()`. `.env.php` (compiled by `php caligrafer.php env cache` and the deploy step) is never committed.
 - After changing PHP, run `php -l <file>`; run the app's tests with `php caligrafer.php test` (`tests/`,
   `Caligrafy\Testing\TestCase`); check the project with `php caligrafer.php doctor` (read-only).
 - Framework changes need the QA suite: `vendor/bin/phpunit` and `./qa/run.sh` (see `CONTRIBUTING.md`).

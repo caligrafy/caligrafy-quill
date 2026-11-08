@@ -207,6 +207,15 @@ if ($result !== true) {
 > For more details, consult the GUMP library documentation [here](https://github.com/Wixel/GUMP/blob/master/README.md)
 
 ## File Validation
+
+### In a capability: the `file` rule (2.19.0+)
+Give the input the rule `file`, with the types and the size it accepts:
+```php
+public $rules = array('cover' => 'required|file|extension,png;jpg;webp|max_size,2mb');
+```
+Web pages (`Route::form`) and REST (`Route::capability`) check the uploaded file, save it under a random name once the caller is allowed, and give `handle()` its URL; when the capability fails, the file is deleted. AI agents and the command line send a URL or a path, whose extension is checked. `max_size` takes `kb`, `mb` or `gb`. See [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#files).
+
+### In a controller
 If your application requires uploading files, you might want to validate the files before accepting that. The `uploadFile()` helper also refuses any extension that is not in its allow-list (images, documents, audio, video, `zip` and `json` by default, never scripts). Learn more about [helpers](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#helpers).
 Using the same `check` method, you can use the built-in rules to perform this validation.
 ```php

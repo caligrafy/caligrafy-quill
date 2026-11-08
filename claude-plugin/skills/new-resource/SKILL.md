@@ -1,6 +1,6 @@
 ---
 name: new-resource
-description: Scaffold a Caligrafy Quill resource capabilities-first - MySQL create_db.sql script, Caligrafy\Model, the CRUD capabilities (list, get, create, update, delete) written once with php caligrafer.php service, their REST routes (Route::capability), and pages with Route::page - following the framework conventions (only capabilities touch models).
+description: Scaffold a Caligrafy Quill resource capabilities-first - MySQL create_db.sql script, Caligrafy\Model, the CRUD capabilities (list, get, create, update, delete) written once with php caligrafer.php service, their REST routes (Route::capability), pages with Route::page and forms with Route::form (2.19.0+), lists with the query builder - following the framework conventions (only capabilities touch models).
 when_to_use: The user asks to add an entity, table, model, CRUD, REST endpoint or resource to a Caligrafy Quill project, e.g. "/caligrafy-quill:new-resource Book title:string author:string publisher:fk".
 argument-hint: "<Entity> [field:type ...] [parent:fk]"
 ---
@@ -10,12 +10,12 @@ argument-hint: "<Entity> [field:type ...] [parent:fk]"
 Arguments: `$ARGUMENTS` (entity name, then optional `field:type` pairs; `name:fk` = foreign key to model `Name`).
 If fields are missing, infer sensible ones from the conversation or ask once.
 
-Read first: the `caligrafy` skill's [api-reference.md](../caligrafy/reference/api-reference.md) (Model, Route, Build once)
-and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G23, G52, G76, G83.
+Read first: the `caligrafy` skill's [api-reference.md](../caligrafy/reference/api-reference.md) (Model, Route, Build once, Queries, Declarative routes)
+and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G23, G52, G76, G83, G122-G130.
 
 **Only capabilities touch models**: the model is read and written by the capabilities of this resource, never by a
-controller or a page. Pages get their data with `Route::page`; a controller is written only for a classic form post,
-and it calls the capabilities.
+controller or a page. Pages get their data with `Route::page`, forms post with `Route::form` (2.19.0+), exports use `Route::download`:
+no controller (one only for HTTP none of them covers, and it calls the capabilities).
 
 ## Preconditions
 1. Confirm this is an initialized Quill project: `application/config/routing/web.php` exists. If only `framework/settings/application` exists, tell the user to run `php caligrafer.php initialize` (it deletes `.git` - ask first).
@@ -62,15 +62,16 @@ class Book extends Model {
         return $this->hasOne('Publisher', 'publishers');
     }
 
-    // Exact match with a bound query (search() is a LIKE search)
-    public function findByTitle($title)
-    {
-        $rows = Database::toArray(Database::execute('SELECT * FROM ' . $this->table . ' WHERE title = ?', [$title]));
-        return array_map(function($row) { return $this->arrayToModel($row); }, $rows);
-    }
 }
 ```
-Relationships: child->parent `hasOne('Parent','parents')`; parent->children `hasMany('Child','children')`; many-to-many `belongsToMany('Tag','tags')` (the auto-created pivot copies the id types and uses unique constraint names, G10) or create the pivot table yourself in the SQL script.
+No query methods are needed for filters (2.19.0+): `Book::where('title', $title)->get()` (Book models), `Book::with('publisher')->find($id)`.
+The table of `Book::query()` is the class name lower-cased + plural (`Book` -> `books`, `BookReview` -> `bookreviews`, G123):
+add `protected static $tableName = 'book_reviews';` when the table differs. Never declare a `find()` in the model
+(`Book::find()` then fails, G122). On a framework before 2.19.0, write an exact match as a method with
+`Database::execute('SELECT * FROM ' . $this->table . ' WHERE title = ?', [$title])`.
+Lists with related rows use `with()` in the capability (`Book::with('publisher')->paginate(20, $input['page'] ?? 1)`:
+one query per relation, never a query per row; many-to-many: `with(['tags' => ['pivot' => true]])`, G124).
+Model relationship methods, for one record: child->parent `hasOne('Parent','parents')`; parent->children `hasMany('Child','children')`; many-to-many `belongsToMany('Tag','tags')` (the auto-created pivot copies the id types and uses unique constraint names, G10) or create the pivot table yourself in the SQL script.
 
 ### 3. The capabilities: `application/services/<Entities>/`
 One command per capability (the scope is required, G76):
@@ -93,7 +94,7 @@ class GetBook extends Service
 
     public function handle(array $input, Context $context)
     {
-        $book = (new Book('books'))->find($input['id']);
+        $book = Book::find($input['id']);   // the query builder (2.19.0+); before: (new Book('books'))->find($input['id'])
         if (!$book) {
             throw ServiceError::notFound("No book #{$input['id']}");
         }
@@ -102,8 +103,10 @@ class GetBook extends Service
 }
 ```
 `create_book`: `(new Book('books'))->create($input)`; `update_book`: refuse a missing id with `notFound`, then
-`->update($changes, $input['id'])` with only the inputs given; `list_books`: `->all(['order' => 'ORDER BY created_at DESC'])`
-(values in `'bindings'`, G8); `delete_book`: `->delete($input['id'])`, return `['deleted' => (int) $input['id']]`.
+`(new Book('books'))->update($changes, $input['id'])` with only the inputs given; `list_books` (2.19.0+): `$rules = ['search' => '', 'page' => 'integer']`,
+`$q = Book::query()->latest(); if (!empty($input['search'])) $q->search(['title', 'author'], $input['search']); return $q->paginate(20, $input['page'] ?? 1);`
+(a page: `data`, `total`, `page`, `pages`; for a CSV export a second read-only capability returns `->get()`), before
+2.19.0 `->all(['order' => 'ORDER BY created_at DESC'])` (values in `'bindings'`, G8); `delete_book`: `(new Book('books'))->delete($input['id'])`, return `['deleted' => (int) $input['id']]`.
 
 ### 4. Routes in `application/config/routing/web.php`
 Insert inside the `try` block, after the existing `/` route and before `Route::run();`, with a comment header:
@@ -116,6 +119,10 @@ Insert inside the `try` block, after the existing `/` route and before `Route::r
     Route::capability('DELETE', '/api/books/{id}', 'delete_book');
     Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);
     Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
+    // forms of the pages (2.19.0+): no controller
+    Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);
+    Route::form('/books/{id}', 'update_book', ['method' => 'PUT', 'success' => '/books/{id}', 'flash' => 'Saved']);
+    Route::form('/books/{id}', 'delete_book', ['method' => 'DELETE', 'success' => '/books', 'flash' => 'Book deleted']);
 ```
 Keep one `Route::capabilities('/capabilities');` and one `Route::mcp('/mcp');` in the file (add them if missing), then
 `php caligrafer.php client` for the JS client. Every form of its pages has `method='POST'`, also when a script sends
@@ -124,7 +131,7 @@ answers 404/403 (G83); add `'notFound' => 'Books/missing'` to show your own 404 
 be page data, and the view never gets the query string.
 
 ### 5. Views (only if the user wants HTML pages)
-`application/views/Books/index.pug` and `show.pug`, built with Caligrafy's look of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (a title band `section.cq-hero.cq-hero--page`, then `section.cq-band > .cq-inner`: a `.cq-form-grid` of labeled `.cq-field`s and `btn btn-primary`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`; follow its checklist), `extends ../default/master/site`, `block title`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, a thin controller:
+`application/views/Books/index.pug` and `show.pug`, built with Caligrafy's look of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (a title band `section.cq-hero.cq-hero--page`, then `section.cq-band > .cq-inner`: a `.cq-form-grid` of labeled `.cq-field`s and `btn btn-primary`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`; follow its checklist), `extends ../default/master/site`, `block title`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, `Route::form` (2.19.0+, routes above): the form has `method='POST'`, `action="{$home}books"`, `=csrf()` (and `=methodField('PUT')` / `'DELETE'`), each input `value=old('title')` with `p.cq-field-error= errors('title')` under it, and the page shows `flash('success')` / `flash('error')` in a `.cq-alert` (G129). A `file` input: the `file` rule in `$rules` and `enctype='multipart/form-data'` (G131). Only on a framework before 2.19.0, a thin controller:
 ```php
 use Caligrafy\Controller;
 use Caligrafy\ServiceError;

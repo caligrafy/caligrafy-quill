@@ -7,7 +7,7 @@
 > - `create()/update()/save()` keep `0`, `''` and `false` and skip only `null`; `search()` binds the keywords; `all()` clauses are raw SQL (include the keywords) and accept `'bindings'` for `?` placeholders (gotchas G7, G2, G8). Projects on an older framework still have the old behavior.
 > - FK constraint names must be unique per database and FK columns must match the parent id type (G10).
 
-> **Where this fits.** A model is the data layer under your capabilities: one class per table. Capabilities use models in `handle()` (`(new Book('books'))->create($input)`), and every experience reaches the data through them. Create a table with its `create_db.sql` and `php caligrafer.php sql`, as in [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#table).
+> **Where this fits.** A model is the data layer under your capabilities: one class per table. Capabilities use models in `handle()` (`(new Book('books'))->create($input)`, or `Book::where('author_id', 3)->paginate(20)` with the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries), 2.19.0), and every experience reaches the data through them. Create a table with its `create_db.sql` and `php caligrafer.php sql`, as in [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#table).
 
 Tables are written in SQL: a `create_db.sql` creates them (the deploy step runs it in production), and later changes to a table that has data go in [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) (`php caligrafer.php migrate make <name>`). This framework uses a PDO adapter to interface with your database tables. We recommend using MySQL given its tight integration with PHP but other databases can be used at your own discretion.
 
@@ -103,7 +103,7 @@ class Book extends Model {
 ```
 
 ## Interfacing with the Model
-The `Model` class exists in the context of a `Controller`. In other words, you can interface with a model from within a `Controller`.
+A model is used in the `handle()` of a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) (or, in older code, in a `Controller`). The examples below use a controller; in a capability, create the model yourself: `$books = new Book('books');`.
 
 > Learn more about `Controllers` [here](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)
 
@@ -138,7 +138,7 @@ public function associate($table); // returns the Model with a database table as
 
 /* CRUD methods */
 public function all($args = array()); // Returns all the records. $args can complete the query with raw SQL clauses: 'condition', 'order', 'limit' and 'bindings' (see below)
-public function find($id); // returns a Model of the specific entry if available, otherwise null
+public function find($id); // returns a Model of the specific entry if available, otherwise null ($book->find(1); Book::find(1) also works since 2.19.0, through the query builder)
 public function search($scope, $keywords); // returns the records where one of the columns listed in $scope (comma separated) is LIKE $keywords. % and _ are wildcards
 public function create($input); // takes an array of values or an object and adds an entry to the respective table in the database. Returns the created Model
 public function update($inputs, $id); // updates an entry in the database with the new values from array or Model. Returns the updated Model
@@ -163,8 +163,17 @@ public function belongsToMany($modelName, $joinedTableName, $foreignKeyLocal = n
 #### Values that are saved
 `create()`, `update()` and `save()` send every property of the Model (or key of the array) that is **not `null`**. `0`, `''` and `false` are saved (`false` is saved as `0`). A property left to `null` is not sent, so the column keeps its current value or its default value.
 
+#### Filters, paging and related rows: the query builder (2.19.0)
+For lists with filters, sorting, paging, counts or related rows, use the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) on the model: no SQL to write, every value bound.
+```php
+$books = Book::where('author_id', 3)->orderBy('title')->paginate(20);   // Book models, 20 per page
+$book  = Book::with('author', 'tags')->find(12);                        // the book, its author and its tags
+$count = Book::where('price', '<', 20)->count();
+```
+`Book::query()` reads the table `books` (the class name in lower case, plural); declare `protected static $tableName = 'book_reviews';` when the table has another name. A model that declares its own `find()` keeps it for `$book->find()`, but `Book::find()` then fails: use `Book::query()->find($id)`.
+
 #### Queries with `all()`
-The clauses given to `all()` are added to the SQL query as they are, so they must contain their SQL keywords. Never concatenate user input in them: use `?` placeholders and give the values in `bindings`.
+`all()` still works and stays useful for a raw SQL clause. The clauses given to `all()` are added to the SQL query as they are, so they must contain their SQL keywords. Never concatenate user input in them: use `?` placeholders and give the values in `bindings`.
 ```php
 $this->all(array(
     'condition' => 'WHERE author = ? AND created_at > ?',
@@ -182,7 +191,7 @@ $this->search('title', '%' . $keyword . '%'); // title containing $keyword
 The keywords are sent as a bound parameter, so quotes in user input are harmless. The column names must be made of letters, digits and underscores, otherwise an exception is thrown.
 
 #### Custom queries
-For anything more specific, write a method in the Model that uses the `Database` class with bound parameters:
+Most queries are a few calls of the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) (`Book::where('isbn', $isbn)->first()`). For SQL it cannot write (a join with a GROUP BY, a subquery, a function of the database), write a method in the Model that uses the `Database` class with bound parameters:
 ```php
 use Caligrafy\Database;
 use Caligrafy\Model;

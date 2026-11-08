@@ -3,7 +3,7 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-> **Where this fits.** In Caligrafy, the rules of a feature live in a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service), and a controller is the web experience of it: it calls the capability (`$this->call('create_book')`, see [Calling a capability](#callcapability)) and chooses the view. Write logic in a controller only when it belongs to one page.
+> **Where this fits.** In Caligrafy, the rules of a feature live in a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service), and a controller is the web experience of it: it calls the capability (`$this->call('create_book')`, see [Calling a capability](#callcapability)) and chooses the view. Since 2.19.0 most web needs are one line of `web.php` ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)): write a controller only for HTTP that none of them covers.
 
 ## When to write a controller (since 2.5.0)
 
@@ -13,8 +13,11 @@
 | --- | --- |
 | A page, with or without data | `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);` ([Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes)) |
 | A page that only signed-in people or administrators may open (its data capabilities must be read-only) | `Route::page(..., ['signedIn' => true])` or `['level' => 1]` |
-| A form post, several capabilities with conditions, a choice between views | a thin controller whose actions call capabilities with `$this->call()` ([below](#callcapability)) |
-| Sign-in, sign-out, a session | a controller: the web session is the only thing capabilities never touch (`AuthController`) |
+| A form post (create, update, delete), back to the form with its errors | `Route::form('/books', 'create_book', ['success' => '/books/{id}']);` ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form), 2.19.0) |
+| Sign-in, sign-out, sign-up | `Route::auth(['home' => '/books']);` ([Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#routeauth), 2.19.0) |
+| Events another service posts (Stripe) | `Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe']);` (2.19.0) |
+| A CSV or JSON file to download | `Route::download('/books.csv', 'list_books');` (2.19.0) |
+| Several capabilities with conditions, a choice between views, custom headers or streaming, password reset, face sign-in | a thin controller whose actions call capabilities with `$this->call()` ([below](#callcapability)) |
 
 A controller that calls `new Book(...)`, `associate()`, `save()` or `all()` keeps its rules for the web only: REST and AI agents would follow other rules. The controller methods below remain for existing projects and for learning how Caligrafy works underneath.
 
@@ -183,6 +186,7 @@ Route::page('/books/new', 'Books/form', ['signedIn' => true]);
 Route::post('/books', 'BookController@store');
 Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
 ```
+Since 2.19.0 this controller is one line: `Route::form('/books', 'create_book', ['success' => '/books/{id}']);` does the same, and keeps the fields for `old()` and the messages for `errors()` ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form)). Keep the controller when the action does more than call one capability and redirect.
 The framework's own user administration works this way since 2.5.0: `AdminController` calls `list_users`, `get_user`, `update_user` and `delete_user` (see [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#usercapabilities)).
 
 ## Controller Methods & Properties

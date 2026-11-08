@@ -83,6 +83,9 @@ class ClearDoneTasks extends Service
 It works for everyone's tasks, not for a signed-in user: a job has nobody signed in. And it is still an ordinary
 capability: a page, the REST API or an AI agent can call it too, with the scope `tasks:write`.
 
+Since 2.19.0 the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) does the delete and the count in one line, with bound values:
+`$deleted = Database::table('tasks')->where('done', 1)->where('modified_at', '<', $before)->delete();` (the rows deleted).
+
 **2. The schedule.** Create **`application/config/schedule.php`**:
 
 ```php

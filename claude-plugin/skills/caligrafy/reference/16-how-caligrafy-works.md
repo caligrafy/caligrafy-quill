@@ -37,13 +37,15 @@ An **experience** is a way to reach your application. Each one is shaped for its
 
 | Experience | Who uses it | How it calls `create_task` |
 | --- | --- | --- |
-| Web pages (Pug) | people in a browser | a page script calls the JS client, or the page gets it from its route: `Route::page('/tasks/{id}', 'Tasks/show', ['data' => ['task' => 'get_task']])` |
+| Web pages (Pug) | people in a browser | a page script calls the JS client, the page gets its data from its route (`Route::page('/tasks/{id}', 'Tasks/show', ['data' => ['task' => 'get_task']])`), and its form posts to `Route::form('/tasks', 'create_task')` |
 | Vue apps and the single page application | people on desktop, tablet and phone | `await createTask({ title })` from the generated client (`php caligrafer.php client`) |
 | REST API | other applications | `POST /api/tasks` (`Route::capability('POST', '/api/tasks', 'create_task')`) |
 | AI agents (MCP) | Claude, Cursor and other agents | the `create_task` tool (`Route::mcp('/mcp')`) |
 | Scripts | you, from the command line | `Capabilities::call('create_task', $input, Context::cli())` |
 
 You decide how each experience looks (a dense page on a desktop, a touch-first app on a phone, a tool for an agent); you never re-write the rules.
+
+The web's other needs are one line of `web.php` each, all calling capabilities (2.19.0+, [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)): `Route::auth()` for sign-in, `Route::webhook()` for the events Stripe posts, `Route::download()` for a CSV export. Inside a capability, the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) reads the data: `Task::where('done', 0)->with('owner')->paginate(20)`.
 
 ## Who is calling
 
@@ -83,8 +85,9 @@ application/
 ├── models/        the data: one class per table, and its create_db.sql
 ├── migrations/    changes to tables that have data: numbered SQL files, each run once (php caligrafer.php migrate)
 ├── views/         the web pages (Pug), on the master default/master/site with Caligrafy's look
-├── controllers/   only for pages with logic of their own (form posts, sign-in): they call capabilities
-└── config/        routing/web.php: the routes (Route::page, Route::capability, Route::capabilities, Route::mcp);
+├── controllers/   only for HTTP that no route covers (custom headers, several capabilities with conditions): they call capabilities
+└── config/        routing/web.php: the routes (Route::page, Route::form, Route::auth, Route::webhook, Route::download,
+                   Route::capability, Route::capabilities, Route::mcp);
                    schedule.php: scheduled jobs; container.php: what capabilities' constructors get (optional)
 tests/                       your tests (php caligrafer.php test)
 Dockerfile                   the production image (php caligrafer.php deploy runs when it starts)
@@ -94,9 +97,9 @@ public/
 └── <app>/                   Vue apps and the single page application
 ```
 
-**One rule keeps every experience the same: only capabilities touch models.** Pages get their data from capabilities (`Route::page` with `data`, or the JS client in the browser), controllers call capabilities (`$this->call()`), REST and AI agents call capabilities. Every page goes through `Route::page`, which also gives it who is signed in; see [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
+**One rule keeps every experience the same: only capabilities touch models.** Pages get their data from capabilities (`Route::page` with `data`, or the JS client in the browser), forms post to capabilities (`Route::form`), controllers call capabilities (`$this->call()`), REST and AI agents call capabilities. Every page goes through `Route::page`, which also gives it who is signed in; see [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
 
-Caligrafy is also a classic MVC framework (routes, controllers, models, views), documented in the rest of this wiki. Start with capabilities; reach for a controller when a page needs logic of its own, and let it call capabilities.
+Caligrafy is also a classic MVC framework (routes, controllers, models, views), documented in the rest of this wiki. Start with capabilities and the declarative routes; reach for a controller only when the HTTP is truly custom, and let it call capabilities.
 
 ## Next
 

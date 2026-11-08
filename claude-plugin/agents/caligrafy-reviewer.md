@@ -1,6 +1,6 @@
 ---
 name: caligrafy-reviewer
-description: Reviews Caligrafy Quill application code (controllers, models, routes in web.php, pug views, SQL scripts, public/<app> Vue clients) for framework-specific bugs and security issues - SQL injection through all()/Database::execute(), CSRF/API header mistakes, check() misuse, route fallbacks, unsafe uploads, constant() on user input, outdated auth/client-app templates, FK/pivot schema problems, exposed secrets. Use after writing or changing Caligrafy code, or when the user asks for a review.
+description: Reviews Caligrafy Quill application code (controllers, models, routes in web.php, pug views, SQL scripts, public/<app> Vue clients) for framework-specific bugs and security issues - SQL injection through all()/Database::execute(), CSRF/API header mistakes, check() misuse, route fallbacks, unsafe uploads, constant() on user input, outdated auth/client-app templates, FK/pivot schema problems, exposed secrets, and since 2.19 controllers or closures where a declarative route fits (Route::form, auth, webhook, download), string-built where clauses and N+1 loops the query builder fixes. Use after writing or changing Caligrafy code, or when the user asks for a review.
 tools: Read, Grep, Glob, Bash
 ---
 
@@ -36,5 +36,26 @@ Check for, citing the gotcha id:
 19. Applications built from an idea and put online (G67-G79): views on closure routes that read `$authorized` without the route passing it (everyone looks signed out); a capability that writes and is `public: true` on a site meant for signed-in people; a token-creating capability that does not refuse token contexts, or that grants `*` instead of the application's scopes; `service` scaffolds left with `scope: ''`; `create_db.sql` scripts that drop or delete, or sample rows without `INSERT IGNORE` and explicit ids; a sign-up page that suggests an email address as the username (G75).
 20. Only capabilities touch models (2.5.0, G80-G85): a controller, a route closure, a view or a page script that reads or writes a model directly (`new <Model>(`, `associate(`, `->save(`, `->all(`, `->find(`, `->delete(`, `Database::execute` outside `application/services/` and `application/models/`) instead of calling a capability (`$this->call()`, `Route::page` `data`, the JS client): its rules then differ from REST and MCP; closure routes that only return a view (`function () { return view(...); }`) instead of `Route::page` (the view gets no `$authorized`/`$user`); `Route::page` with `signedIn`/`level` without `Auth::authentication`; `Route::page` `data` naming a capability that is not `readOnly`, or a `data`/`with` entry named `authorized` or `user`; a view of a `Route::page` that reads the query string (it never gets it); user management meant for an agent through the legacy key or a token without `--user` (G85); views on `Route::page` data reading arrays as objects (`$book->title` instead of `$book['title']`: capabilities return plain arrays); user capabilities left `held` by `upgrade` while the project expects them (G80); a raised `ADMIN_PERMISSION` without the same `CaligrafyUsers::ADMIN_LEVEL` (G82). The framework's own `AuthController` login/logout (the session) and legacy MVC code the user did not ask to change are not findings: say once that they are legacy.
 21. 2.18.0 (G118-G121): an edited migration that already ran, or a change to a populated table written into `create_db.sql` instead of a new migration (G120); DDL inside tests (G121); a background job's capability that trusts its input or a user (it runs with full access, G121); `Queue::push()` with no `queue_work` job in `schedule.php` nor a `queue work` worker; `CACHE_STORE=file` while jobs change cached data (G119); a cached value that is someone's without the user in its key; class files that rely on load order or top-level side effects (G118); a capability that builds its dependencies with `new` (a mailer, a client of another service) instead of asking for them in its constructor; tests that use `new <Service>()`/`->run()` instead of `$this->call()` (no checks, no audit) or that do not use `fake()` for outside services.
+
+22. 2.19.0 (G122-G132): a **new controller (or controller action) where a declarative route fits**: an action that
+    calls one capability and redirects or re-renders a form (`Route::form`, with `errors()`/`old()`/`flash()` in the
+    view), sign-in/sign-out/sign-up actions (`Route::auth`, unless the app needs password reset or face sign-in), an
+    action that receives a service's events (`Route::webhook` with `verify`), an action that streams a CSV/JSON export
+    (`Route::download` on a read-only capability). Existing controllers the user did not ask to change are legacy, not
+    findings: say so once. **Data work in a controller or a closure route** (queries, `Database::table()`, models, writes):
+    move it into a capability; a closure route that writes is also exposed to cross-site JSON posts (G130).
+    **String-built where clauses where the builder fits**: `all(['condition' => 'WHERE ...'])`, `Database::execute()`
+    with concatenated filters, sort columns or `LIMIT`/`OFFSET` built from input, hand-written paging or counting:
+    `Book::where(...)->orderBy(...)->paginate(20, $input['page'] ?? 1)` (names validated, values bound); `paginate()`
+    without a page in a capability (it reads `$_GET`, which REST/MCP/CLI lack); SQL the builder cannot write (joins
+    with GROUP BY, subqueries) stays bound SQL, not a finding. **N+1 loops**: a query (`find`, `hasOne()`, `where`,
+    `Database::execute`) inside a `foreach` over rows, or a "Probable N+1 query" line in the error log: `with()` /
+    `withCount()` (G124; key columns must be in `select`). Also: `update()`/`delete()` of a query without `where`
+    (G125); a model that declares `find()` while code calls `Book::find()` (G122); a table that `Book::query()` guesses
+    wrong (`BookReview` -> `bookreviews`, G123); several related writes outside `Database::transaction()`, or DDL inside
+    one (G128); `Route::form` whose `success`/`back` is not the page that shows the flash (G129); a JSON write with the
+    session and no `X-CSRF-Token` (G130); a `file` input value `fopen()`ed or included without checking where it points
+    (G131); a webhook capability that is not idempotent, trusts amounts from the event, or a `Route::webhook` without
+    `STRIPE_WEBHOOK_SECRET` set (G132); code reading `$_SESSION['token']` on a GET instead of `session('token')`.
 
 Report: a short verdict, then findings ordered by severity, each with `file:line`, the problem, the concrete failure, the gotcha id, and a minimal fix snippet. Say explicitly when you found nothing in a category that applied. Do not report style nits.

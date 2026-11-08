@@ -96,7 +96,9 @@ class RemindLoans extends Service
 }
 ```
 
-A job has nobody signed in, so the capability finds the people it notifies itself (here, every administrator).
+A job has nobody signed in, so the capability finds the people it notifies itself (here, every administrator). Since
+2.19.0 the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) writes the same lookups without SQL:
+`Database::table('users')->where('permissions', '>=', 1)->pluck('id')`.
 
 **2. The schedule**, `application/config/schedule.php`:
 

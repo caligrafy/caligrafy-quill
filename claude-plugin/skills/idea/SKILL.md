@@ -80,10 +80,18 @@ data in it.
 `docker compose exec dev-box php caligrafer.php service <Folder>/<PascalName> --scope <scope> [--read-only]` (the scope
 is required: without it the attribute gets `scope: ''`, G76), then fill it as `/caligrafy-quill:new-capability` says (a description written for an AI agent, `$rules` for every
 input, bound queries, `ServiceError` refusals, `readOnly`, `destructive`, `public: true` only for reads anyone may do).
+Reads use the query builder (2.19.0+, reference/53-queries.md): lists, filters, sorting and paging are
+`<Thing>::where(...)->orderBy(...)->paginate(20, $input['page'] ?? 1)`, related rows `->with('<parent>')` (one query per
+relation, never a query per row), several writes that belong together in `Database::transaction()`; never a `where`
+string built from input.
 
-**Sign-in** (unless everything is public): in `web.php` uncomment `Auth::authentication('User', 'users');` and the
-authentication routes (`/login`, `/logout`, `/notAuthorized`, `/register`, both `POST`s), and make `/home` (where
-sign-in lands) the main page: `Route::page('/home', '<Folder>/index');` instead of `AuthController@home`. Run `application/models/Auth/create_db.sql`. Add to
+**Sign-in** (unless everything is public): in `web.php` uncomment `Auth::authentication('User', 'users');` and, on
+2.19.0+, add `Route::auth(['home' => '/<things>']);` below it (`/login`, `/logout`, `/register`, `/notAuthorized`,
+failed sign-ins limited, a new session id at sign-in; no controller), leaving the `AuthController` routes commented.
+Before 2.19.0: uncomment the authentication routes (`/login`, `/logout`, `/notAuthorized`, `/register`, both `POST`s)
+and make `/home` (where sign-in lands) the main page: `Route::page('/home', '<Folder>/index');` instead of
+`AuthController@home`. Password reset and face sign-in are not in `Route::auth`: leave them out of the plan unless the
+user asks (they need a controller). Run `application/models/Auth/create_db.sql`. Add to
 the main page a line with *Sign in* / *Sign up* links for visitors and *Sign out* for signed-in people. Every page is a
 `Route::page` (`/`, `/<things>`, `/home`): it gives the view `$authorized` and `$user` (G74); a closure that returns
 `view()` does not. The sign-up page accepts usernames of letters and digits only (no email
@@ -122,6 +130,13 @@ calls it, then shows the token once and the line to paste:
   record server-side: `Route::page('/<things>/{id}', '<Folder>/show', ['data' => ['<thing>' => 'get_<thing>'], 'notFound' => '<Folder>/missing'])`, read-only
   capabilities only, G83);
   never a controller that reads the models: only capabilities touch them;
+- the forms of server-rendered pages (2.19.0+): `Route::form('/<things>', 'create_<thing>', ['success' => '/<things>', 'flash' => '...']);`
+  (`'method' => 'PUT'|'DELETE'` for the others), the view with `=csrf()`, `value=old('<field>')`,
+  `p.cq-field-error= errors('<field>')` and `flash('success')` (reference/54-declarative-routes.md); a page that sends
+  its form with the JS client needs none;
+- a CSV export when the plan has one: `Route::download('/<things>.csv', 'list_<things>_export')` (a read-only capability
+  returning `->get()`); payments or another service's events: `Route::webhook(..., ['verify' => 'stripe'])` (G132);
+  a file field: the `file` rule (G131). A controller only for HTTP none of these covers;
 - REST for every capability: `Route::capability('GET', '/api/<things>', 'list_<things>');`,
   `Route::capability('GET', '/api/<things>/{id}', 'get_<thing>');`, `POST`, `PUT /{id}`, `DELETE /{id}`...;
 - `Route::capabilities('/capabilities');` and `Route::mcp('/mcp');` (quickstart adds them: keep one of each);

@@ -474,7 +474,7 @@ switch(strtolower($argv[1])) {
 		}
 
 	case 'env':
-		// .env compiled to .env.php (2.19.0): index.php reads it without parsing .env, while it is newer than .env
+		// .env compiled to .env.php (2.19.0): index.php reads it without parsing .env, while .env keeps the content it was compiled from (its sha1)
 		$sub = strtolower($argv[2] ?? '');
 		if ($sub === 'cache') {
 			if (!Caligrafy\Deployer::cacheEnv('.')) {

@@ -69,10 +69,11 @@ class ListBooks extends Service
 {
     public function handle(array $input, Context $context)
     {
-        return (new Book('books'))->all(array('order' => 'ORDER BY id DESC'));
+        return Book::query()->orderBy('id', 'desc')->get();
     }
 }
 ```
+`Book::query()` is the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) on the `books` table: add `->where('author', $input['author'])`, `->paginate(20)` or `->with('publisher')` when the catalog grows.
 
 **`application/services/Books/CreateBook.php`**: `$rules` lists the inputs it accepts and their rules; only these reach `handle()`.
 ```php
@@ -206,6 +207,8 @@ docker compose exec dev-box php caligrafer.php client public/js/capabilities.js
 ```
 Open **http://localhost:8080/books**: add a book, then submit the form empty to see the field messages.
 
+> **A page without JavaScript.** The same form can post to the capability directly: `Route::form('/books', 'create_book', ['success' => '/books', 'flash' => 'Book added']);` calls `create_book` with the form's fields and comes back to the page, with `errors('title')`, `old('title')` and `flash('success')` for the view ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)).
+
 ## 6. Before you go online: close the capabilities
 
 `public: true` lets anyone add books. Remove it from `CreateBook` (and from the Tasks example), and only these can still add a book:
@@ -220,7 +223,8 @@ A visitor who is not signed in then gets "Sign in or send a personal access toke
 One feature, written once in two small classes, used from a web page, by other applications and by AI agents, with the same rules everywhere. Next:
 + [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works): the ideas behind it.
 + [Build Once: Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): every option (levels, errors, the JS client in Vue apps, MCP over stdio, the audit log).
-+ [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models) and [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships): richer data (authors with many books).
++ [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models), [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships) and [Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries): richer data (authors with many books, filters, pages).
++ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): forms, sign-in, webhooks and downloads in one line of `web.php` each.
 + [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App): a test of `create_book` as a user and as a guest; and later, a new column in a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations).
 + With [Claude Code](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin): `/caligrafy-quill:new-capability` builds all of this for you, the Caligrafy way.
 

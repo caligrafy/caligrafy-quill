@@ -19,7 +19,7 @@ php caligrafer.php version                        # 2.4.0 or later; older: upgra
 ls Dockerfile Dockerfile.dockerignore composer.lock
 git status --short && git log origin/HEAD..HEAD --oneline 2>/dev/null   # uncommitted or unpushed work
 git remote get-url origin                         # a GitHub repository
-git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'  # must print nothing
+git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'  # must print nothing (.env.php too, 2.19.0+)
 php caligrafer.php doctor --only project
 ```
 
@@ -37,7 +37,12 @@ php caligrafer.php doctor --only project
   `queue_work`, or the own server runs `php caligrafer.php queue work` in a container of its own; never both.
 + **The app's tests pass** when it has some: `php caligrafer.php test` (2.18.0+).
 + **Payments, if the app takes them**: online (`APP_ENV=production`) it uses the `PAY_*_PRODUCTION` live keys. A Stripe
-  webhook needs its live-mode endpoint and live secret, and its test-mode endpoint disabled or pointed elsewhere (G115).
+  webhook needs its live-mode endpoint and live secret, and its test-mode endpoint disabled or pointed elsewhere (G115);
+  a `Route::webhook(..., ['verify' => 'stripe'])` reads that secret from `STRIPE_WEBHOOK_SECRET` (G132).
++ **After an update to 2.19.0**, checked locally: sign-in, sign-out and sign-up, and each form sent from a fresh session
+  (no cookie): sessions start only when used, so a page must carry `=csrf()` (G130); `Book::find()` on models that
+  declare their own `find()` fails (G122). `APP_DEBUG=false` online (Phug's debug mode makes pages ~3x slower).
+  `.env.php` needs nothing: the deploy step compiles `.env` at every start (`env cache`), and `.gitignore` lists it.
 + **Committed and pushed**: the host builds what is on GitHub, not the working folder. Commit and push only with the
   user's OK.
 
@@ -94,7 +99,9 @@ Prepare, do not deploy: the user's server, account and keys are theirs.
 + Coolify: a *Dockerfile* application, a MySQL database, the `.env` as a file storage at `/var/www/html/.env`, volumes at
   `/var/www/html/public/uploads` and `/var/lib/php/sessions` (G70). A MySQL with a small memory limit needs the
   configuration of G71.
-+ Docker: the `docker run` of 20-putting-it-online.md (`#ownserver`), behind HTTPS.
++ Docker: the `docker run` of 20-putting-it-online.md (`#ownserver`), behind HTTPS. The image's deploy step compiles
+  `.env` to `.env.php` at every start (2.19.0+). A server without the image runs `php caligrafer.php env cache` after
+  each change to `.env` (until then pages parse `.env`, slower but correct) and never commits `.env.php`.
 + Scheduled jobs (`php caligrafer.php schedule list` lists some): a second container from the same image, with the same
   `.env`, running `php caligrafer.php schedule work` (on Coolify, a second application with that start command), or
   `php caligrafer.php schedule due` from the server's cron every minute. Only one of them, never both.

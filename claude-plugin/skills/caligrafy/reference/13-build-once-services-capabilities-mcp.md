@@ -9,7 +9,7 @@
 
 | Channel | How it calls a capability | Who is calling |
 | --- | --- | --- |
-| Pug pages | `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`, or `$this->call('create_book')` in a controller action (form posts) | the signed-in user |
+| Pug pages | `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`; form posts with `Route::form('/books', 'create_book')` (2.19.0), or `$this->call('create_book')` in a controller action | the signed-in user |
 | Vue apps and the Vite SPA | the generated JS client (`php caligrafer.php client`) | the signed-in user (session cookie + CSRF token) |
 | REST | `Route::capability('POST', '/books', 'create_book')` | a personal access token, or the signed-in user |
 | AI agents | MCP: `Route::mcp('/mcp')` over HTTP, or `php caligrafer.php mcp` over stdio | a personal access token |
@@ -86,7 +86,7 @@ class CreateBook extends Service
     | `destructive` | `true` when it deletes or overwrites data: agents ask the user before calling it |
     | `public` | `true` when anyone may call it, without signing in or a token |
 
-+ **`$rules`** are [GUMP validation rules](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation). Only the inputs listed there reach `handle()`; use `''` for an input that has no rule. They also give the JSON Schema that clients and agents see: `required`, `integer`, `numeric`, `boolean`, `valid_email`, `max_len`, `min_len`, `min_numeric`, `max_numeric`, `contains_list` and `date` are translated.
++ **`$rules`** are [GUMP validation rules](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation). Only the inputs listed there reach `handle()`; use `''` for an input that has no rule. They also give the JSON Schema that clients and agents see: `required`, `integer`, `numeric`, `boolean`, `valid_email`, `max_len`, `min_len`, `min_numeric`, `max_numeric`, `contains_list` and `date` are translated. A file input takes the rule `file` (2.19.0): `'cover' => 'required|file|extension,png;jpg|max_size,2mb'`. Web pages and REST save the uploaded file and give `handle()` its public URL; agents and the command line send a URL or a path ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)).
 + **`$filters`** are GUMP filters applied before validation, **`$descriptions`** describe each input in the schema.
 + **`handle()`** returns data: an array, a model, a list of models or a value (models are returned with their columns only). To refuse, throw a `ServiceError`:
 
@@ -118,7 +118,13 @@ Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);   
 ```
 The view gets `$books` or `$book` (plain arrays), plus `$authorized` and `$user`, never the query string. A refusal sends a visitor to sign in, or answers 403 or 404 (or shows the page's `notFound` view). See [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
 
-For a form post, a controller action calls the capability as the signed-in user and renders the result. The inputs default to the posted fields and the route variables:
+A form post needs no controller since 2.19.0: `Route::form` calls the capability as the signed-in user and redirects. On invalid input it goes back, and the view shows `errors('title')`, `old('title')` and `flash('error')`:
+```php
+Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Added {title}']);
+```
+`Route::download` serves a read-only capability as a CSV or JSON file, `Route::webhook` lets another service (Stripe) call one, and `Route::auth()` declares the sign-in pages: see [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes).
+
+A controller action can still call the capability as the signed-in user and render the result. The inputs default to the posted fields and the route variables:
 ```php
 use Caligrafy\Controller;
 use Caligrafy\ServiceError;

@@ -32,12 +32,19 @@ Two places run commands:
 ```bash
 caligrafer version                                     # 2.7.0+ for the browser sign-in (older: upgrade, or the deploy skill)
 ls Dockerfile Dockerfile.dockerignore composer.lock    # 2.4.0 projects have them
-git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'   # must print nothing
+git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'   # must print nothing (.env.php included, 2.19.0+)
 caligrafer doctor --only project                       # a WARN "Pages and the API key" must be fixed first (G87)
 ```
 + Every `application/models/*/create_db.sql` runs again online: `CREATE TABLE IF NOT EXISTS`, no `DROP`/`DELETE` (G68).
 + 2.18.0+: `caligrafer migrate status` shows no `changed` migration (G120); `caligrafer test` passes when `tests/` has
   tests; an app that calls `Queue::push` has a `queue_work` job in `application/config/schedule.php` (G121).
++ 2.19.0+, locally, once after the update to 2.19: sign in, sign out and sign up, then send each form from a fresh
+  session (`curl` with no cookie, or a private window): the page carries `=csrf()` and the post is not refused with
+  3000 (sessions now start only when used). `Route::form` pages show `errors()`/`old()` after a refused post.
+  `Book::find()` works on models that do not declare their own `find()` (G122). Nothing to do for `.env.php`: the
+  deploy step compiles `.env` at every start (its log line `OK Settings`); `.gitignore` lists `.env.php`.
++ A `Route::webhook` with `'verify' => 'stripe'` needs `STRIPE_WEBHOOK_SECRET` set online with `cloud secret set` (the
+  live endpoint's `whsec_...`, G132): ask the user for it, never invent one.
 + A tracked `.env` stops everything: say which file, never its values; it must leave git and its keys be replaced.
 + `git init -b main` when there is no repository; then commit the work (`git add -A`, a clear message).
 

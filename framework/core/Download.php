@@ -94,6 +94,10 @@ class Download
         if (!is_array($result)) {
             return array(array('value' => $result));
         }
+        // a page of the query builder (paginate(): data, total, page, per_page, pages): its rows (2.19.0)
+        if (isset($result['data'], $result['total'], $result['pages']) && is_array($result['data']) && array_is_list($result['data'])) {
+            $result = $result['data'];
+        }
         if (!array_is_list($result)) {
             return array($result);
         }

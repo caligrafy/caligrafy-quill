@@ -12,7 +12,8 @@ and programs reach the application is an adapter around the same capabilities:
 
 | Experience | Adapter | Who is acting |
 | --- | --- | --- |
-| Web pages (Pug) | `Route::page()`: the page controller calls read-only capabilities for the page's data; a controller calls `$this->call()` when a page has its own logic (a form post) | the signed-in person (session) |
+| Web pages (Pug) | `Route::page()`: the page controller calls read-only capabilities for the page's data; the declarative routes (2.19.0) call a capability for a form post (`Route::form`), an export (`Route::download`) and sign-in (`Route::auth`); a controller calls `$this->call()` only for custom HTTP | the signed-in person (session) |
+| Other services' events | `Route::webhook()`: the signature checked (`'stripe'` or a function), then the capability (2.19.0) | the system (`Context::system('webhook', $path)`) |
 | Vue apps, the Vite SPA, installable mobile pages | the generated JS client (`php caligrafer.php client`) calls `/capabilities` | the signed-in person (cookie + `X-CSRF-Token`) |
 | REST | `Route::capability()` routes and `POST /capabilities/{name}` | a personal access token, the legacy key, or the session |
 | AI agents | MCP: `Route::mcp('/mcp')` over HTTP, `php caligrafer.php mcp` over stdio | a personal access token |
@@ -23,8 +24,8 @@ it with cross-channel tests.
 
 **One rule keeps it true: only capabilities touch models.** Pages, controllers, scripts and the JS client get and change
 data by calling capabilities, never `new Model(...)`. The framework follows it too: since 2.5.0 the user administration
-pages and sign-up call the user capabilities. The one exception is signing in and out (`AuthController`), which is the
-web session, and capabilities never touch the session.
+pages and sign-up call the user capabilities. The one exception is signing in and out (`AuthController`, or
+`AuthRoutes` behind `Route::auth`, 2.19.0), which is the web session, and capabilities never touch the session.
 
 ## Where the code lives
 
@@ -60,10 +61,15 @@ must be unique (the user capabilities are named `Caligrafy...` for that).
 
 ## How a request runs
 
-1. `index.php` loads Composer's autoloader and `.env` (a file: plain environment variables are not read), then
-   `Framework::run()`.
-2. `Framework::run()` buffers the output, registers the error handlers and `init()`: `initialize.php` starts the PHP
-   session, creates the CSRF token (`$_SESSION['token']`) and writes the application URLs into the session;
+1. `index.php` loads Composer's autoloader and `.env` (a file: plain environment variables are not read): from
+   `.env.php` when `php caligrafer.php env cache` or the deploy step compiled it and `.env` still has the content it
+   was compiled from (its sha1), else by parsing `.env` (2.19.0); then `Framework::run()`.
+2. `Framework::run()` buffers the output (no fixed chunk size since 2.19.0), registers the error handlers and `init()`:
+   `initialize.php` starts the PHP session when the request has a session cookie, is a POST, PUT or DELETE, or
+   `SESSION_LAZY=false`; otherwise (a GET or HEAD without a cookie) `$_SESSION` is kept in memory and the session
+   starts only when the CSRF token is read (`session('token')`), when the session is written after `config.php`
+   (`caligrafySessionSnapshot()`), or at shutdown when the page carries the token (2.19.0). It creates the CSRF token
+   (`$_SESSION['token']`) and writes the application URLs into the session;
    `corehelpers.php` defines the global helpers; every `.env` value becomes a constant; `coresettings.php`.
 3. `autoload()` registers the class map (`ClassMap::register()`): each class of `framework/core`, `framework/database`,
    `framework/interfaces` and `application/` (not `config/` or `views/`) is loaded when first used; files with
@@ -71,18 +77,23 @@ must be unique (the user capabilities are named `Caligrafy...` for that).
 4. `dispatch()` includes `application/config/config.php`, loads the container's bindings (`application/config/container.php`
    when it exists) and `application/config/routing/web.php`. The routes end with
    `Route::run()`.
-5. `Route::run()` builds the `Request` (headers, parameters; for POST, PUT and DELETE it checks the CSRF token unless the
-   request asks for JSON or its user agent is in `APPROVED_AGENTS`), keeps the routes with the same method and segment
+5. `Route::run()` ages the flash data of the previous request (`Flash::age()`, 2.19.0), builds the `Request` (headers,
+   parameters; for POST, PUT and DELETE it checks the CSRF token unless the request asks for JSON, its user agent is
+   in `APPROVED_AGENTS`, or it posts to a `Route::webhook` address), keeps the routes with the same method and segment
    count, matches the path, binds the route variables (`{id}`; for GET the query string is merged in), then:
    - **no route matches**: 404 (`[ERROR 1005]`, or JSON to an API call), or 405 with `Allow` when the address exists
      with another method (2.16.0);
    - `'Controller@action'`: a missing class or method raises 1001 (404); a JSON request needs the session's CSRF token
      in `X-CSRF-Token` (a page, 2.7.0+) or, with `Auth::activateAPI()`, a bearer: a token granting `*` or the legacy
      key (else 1004, 401, with the reason); then `new Controller()` and the action;
-   - a closure: called as is. `Route::page`, `Route::capability`, `Route::capabilities` and `Route::mcp` register
-     closures that hand the request to the page controller, `Rest` or `Mcp\Http`.
+   - a closure: called as is. `Route::page`, `Route::capability`, `Route::capabilities`, `Route::mcp` and the
+     declarative routes (`Route::form` -> `Form`, `Route::auth` -> `AuthRoutes`, `Route::webhook` -> `Webhook`,
+     `Route::download` -> `Download`, 2.19.0) register closures that hand the request to the page controller, `Rest`,
+     `Mcp\Http` or those classes.
 6. The answer is a view (`view()` renders the Pug file, compiled once and kept in a private folder of the temporary
-   directory until it or a file it includes changes, 2.17.0; `VIEW_CACHE=false`), JSON (`api()`, the REST and MCP adapters), or a redirect.
+   directory until it or a file it includes changes, 2.17.0; `VIEW_CACHE=false`; since 2.19.0 a compiled, up-to-date
+   view runs through Phug's Optimizer without the compiler, `VIEW_OPTIMIZER=false`, and Phug's debug mode is on only
+   with `APP_DEBUG=true`, its views kept apart), JSON (`api()`, the REST and MCP adapters), or a redirect.
    Errors go through `Errors::handle()`: the HTTP status of the error code, HTML text or `{"error": {...}}`.
 
 ## Calling a capability
@@ -130,7 +141,15 @@ capability that calls `Tokens::create()` for the signed-in person (how an applic
   page with the query string and the route variables as inputs (route variables win); a refusal sends a visitor to sign
   in, or answers 403 (1006), 404 (1005) or the `notFound` view. The view never receives the query string; `authorized`
   and `user` are reserved. A page without data does not connect to the database.
-- **Controllers** remain for pages with their own logic: a classic form post, several capabilities with conditions.
+- **Declarative routes** (2.19.0, no controller): `Route::form` (`Form`: the form's fields, its files and the route
+  variables go to a capability as the person who sent it; success redirects with a flash message; `invalid` and
+  `conflict` go back with `errors()`, `old()` and `flash('error')` kept for one request by `Flash`; JSON requests get the
+  REST answer and need `X-CSRF-Token` with the session), `Route::auth` (`AuthRoutes`: `/login`, `/logout`, `/register`,
+  `/notAuthorized`, passkeys; failed sign-ins counted by `Throttle`; a new session id and CSRF token at sign-in and
+  sign-out), `Route::webhook` (`Webhook`: no CSRF token, the signature checked before the capability runs as the
+  system), `Route::download` (`Download`: a read-only capability as CSV or JSON). The `file` rule of a capability
+  (`Uploads`) saves an uploaded file after the access check and gives `handle()` its URL.
+- **Controllers** remain for HTTP none of these covers: several capabilities with conditions, custom answers.
   They call capabilities with `$this->call()` (the inputs default to the request parameters and the route variables)
   and catch `ServiceError` to show the form again. The framework's own controllers: `AuthController` (sign-in, sign-up
   through `register_user`), `AdminController` (the user capabilities), `ClientController` (client app pages),
@@ -161,7 +180,13 @@ cannot be created in bulk over REST or MCP.
 
 - **Models** (`Caligrafy\Model`): an active-record layer over PDO (`create`, `update`, `delete`, `find`, `all`,
   `search`, relationships). They hold no rules: rules live in the capabilities that use them. `Database::execute()`
-  binds parameters (`Database::connection()` gives the PDO, whose transactions the app tests use).
+  binds parameters and fetches rows as arrays (2.19.0; `Database::connection()` gives the PDO, whose transactions the
+  app tests use).
+- **Queries** (2.19.0, `Query`): `Database::table('books')` (arrays) and `Book::query()` / `Book::where()` /
+  `Book::find()` (models, forwarded by `Model::__callStatic`; `$book->find()` by `__call`) build one statement with
+  validated, quoted names and bound values: filters, `paginate`, `chunk`, `insert`/`update`/`delete` (a `where`
+  required), eager loading (`with()`, `withCount()`: one query per relation, `WHERE key IN (...)`), and
+  `Database::transaction()`. In development the same SELECT shape run 10 times in a request is logged as a probable N+1.
 - **Tables** are written as `application/models/<Folder>/create_db.sql`, safe to run again (`CREATE TABLE IF NOT
   EXISTS`). Locally `php caligrafer.php sql <file>` runs one; the framework tables (`caligrafy_tokens`,
   `caligrafy_audit`, `caligrafy_job_runs`, the notifications tables, `caligrafy_jobs`, `caligrafy_cache`,
@@ -182,7 +207,7 @@ cannot be created in bulk over REST or MCP.
 - `Dockerfile` (the production image): PHP 8.5 and Apache, the extensions Caligrafy uses, `composer.lock` without the
   development packages, the production `php.ini`, PHP sessions in `/var/lib/php/sessions`. `Dockerfile.dockerignore`
   keeps `.env`, `.git`, tests and backups out. The container gets its `.env` as a mounted file and runs
-  `php caligrafer.php deploy` before Apache. Volumes at `/var/www/html/public/uploads` and `/var/lib/php/sessions`
+  `php caligrafer.php deploy` before Apache (2.19.0: it first compiles `.env` to `.env.php`). Volumes at `/var/www/html/public/uploads` and `/var/lib/php/sessions`
   keep uploads and sign-ins across deploys.
 - **Caligrafy Cloud** (https://deploy.caligrafy.com, `php caligrafer.php cloud`, `CloudClient`) builds a project from its
   GitHub repository with that image, gives it a MySQL database and `https://<name>.caligrafy.com`. It is itself a
@@ -193,7 +218,7 @@ cannot be created in bulk over REST or MCP.
 
 - `php caligrafer.php`: `quickstart` (a project in one command), `initialize`, `service` (a capability skeleton),
   `capabilities`, `call`, `client`, `sql`, `migrate`, `platform install`, `token`, `mcp`, `audit`, `schedule`, `queue`,
-  `cache clear`, `test`, `doctor` (a read-only health
+  `cache clear`, `env cache | clear` (2.19.0), `test`, `doctor` (a read-only health
   check), `upgrade` (`Upgrader`: compares `application/` with the templates and `template-history.json`; replaces
   untouched copies, keeps customized ones with a `.caligrafy-new` next to them, never replaces `web.php`, and holds
   the user capabilities when the project manages users its own way), `deploy`, `cloud`, `version`.

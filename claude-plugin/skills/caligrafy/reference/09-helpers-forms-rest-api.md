@@ -42,6 +42,7 @@ function uploadFile($file, $allowedExtensions = null); // moves an uploaded file
 function isAllowedUpload($filename, $allowedExtensions = null); // tells whether uploadFile() would accept this file name
 
 function deleteFile($url); // deletes a file of public/uploads given its public URL
+// In a capability, the `file` rule does all of this for you (2.19.0+): 'cover' => 'required|file|extension,png;jpg|max_size,2mb' (see Declarative routes)
 
 function import($filename); // requires a library from framework/librairies or a helper from framework/helpers
 ```
@@ -53,6 +54,7 @@ function saveInSession($input, String $sessionVariableName); // saves any data t
 function clearFromSession(String $sessionVariableName); // clears a session variable
 
 function session($key, $value = null); // Gets or sets a session variable. When a value is specified (including 0, '' or false) it saves it. Otherwise, it retrieves it. Use clearFromSession() to remove it
+// Since 2.19.0 a GET without a session cookie starts its session only when needed: session('token') (the CSRF token) starts it, and so does a value saved after config.php. Read the token with session('token'), not $_SESSION['token']
 
 function scripts($key, $value = null); // Gets or sets a script stored in the session. When a value is specified it saves it. Otherwise, it retrieves it.
 
@@ -151,6 +153,8 @@ A SimpleImage object gets returned by this method and all the powerful features 
 `public/js/script.js` (menu, smooth scrolling) and `public/js/picture_uploader.js` (click an `img[data-type=editable]` to choose and preview a picture) are plain JavaScript.
 
 ## HTML Forms
+
+> **2.19.0+:** a form can post straight to a capability with [`Route::form`](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form), no controller. A refused form comes back with `errors('title')` (a field's message), `old('title')` (what it held) and `flash('error')` for the view; `flash('success')` after a success. See [Views: forms](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#formhelpers).
 
 This framework provides 2 major capabilities that allow your HTML forms to 1) Send `PUT` and `DELETE` requests
 and 2) Secure requests again Cross-Site Request Forgery (CSRF)

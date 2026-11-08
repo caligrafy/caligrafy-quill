@@ -1,6 +1,6 @@
 ---
 name: new-capability
-description: Build a Caligrafy Quill capability once and serve it to every channel - a Caligrafy\Service with #[Capability] in application/services/, its REST routes (Route::capability), the generic endpoint and the JS client for Vue apps (Route::capabilities, php caligrafer.php client), web pages (Controller::call) and AI agents over MCP (Route::mcp, personal access tokens) - with tests that prove every channel behaves the same.
+description: Build a Caligrafy Quill capability once and serve it to every channel - a Caligrafy\Service with #[Capability] in application/services/, its REST routes (Route::capability), the generic endpoint and the JS client for Vue apps (Route::capabilities, php caligrafer.php client), web pages (Route::page, Route::form, Route::download; Route::webhook for a service's events) and AI agents over MCP (Route::mcp, personal access tokens) - with tests that prove every channel behaves the same.
 when_to_use: The user wants a feature available to several channels (web pages, a Vue app or SPA, a REST API, AI agents), asks for MCP tools or to let Claude/agents use their app, asks for "build once" or capabilities, e.g. "/caligrafy-quill:new-capability create_book books:write" or "let agents add books".
 argument-hint: "<capability_name> [scope] [read-only|destructive]"
 ---
@@ -11,8 +11,9 @@ Arguments: `$ARGUMENTS` (snake_case capability name, optional scope `resource:ac
 `destructive`). If the inputs are not clear from the conversation, ask once.
 
 Read first: the `caligrafy` skill's [13-build-once-services-capabilities-mcp.md](../caligrafy/reference/13-build-once-services-capabilities-mcp.md),
-the Build once section of [api-reference.md](../caligrafy/reference/api-reference.md) and
-[gotchas.md](../caligrafy/reference/gotchas.md) G50-G57 (and G2, G8 for any SQL).
+the Build once, Queries and Declarative routes sections of [api-reference.md](../caligrafy/reference/api-reference.md) and
+[gotchas.md](../caligrafy/reference/gotchas.md) G50-G57 (and G2, G8 for any SQL; G122-G128 for queries, G129-G132 for
+the declarative routes; 2.19.0+).
 
 ## Preconditions
 1. An initialized Quill 2.1+ project: `application/config/routing/web.php` exists and `framework/core/Capabilities.php`
@@ -31,7 +32,12 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
 2. **Fill the service** (`application/services/<Folder>/<Name>.php`):
    - `description`: what it does and returns, written for an AI agent choosing a tool (one or two sentences).
    - `$rules` for EVERY input `handle()` reads (`''` when there is no rule, G52), `$filters` (trim), `$descriptions`.
-   - `handle()`: model calls with bound queries only, return data (selected columns: never password hashes or
+   - `handle()`: the query builder for reads (2.19.0+, [53-queries.md](../caligrafy/reference/53-queries.md)): lists,
+     filters, sorting, paging and related rows are `Book::where(...)->orderBy(...)->with('author')->paginate(20, $input['page'] ?? 1)`
+     (`'page' => 'integer'` in `$rules`; `paginate()` alone reads `$_GET`, which REST, MCP and the CLI do not have),
+     never a `where` string built from input and never a loop that queries per row (`with()` instead, G124);
+     several writes that belong together in `Database::transaction(fn () => ...)`; `update()`/`delete()` of a query
+     need a `where` (G125). Model calls (`create`, `update`, `find`) stay fine. Return data (selected columns: never password hashes or
      secrets), refuse with `ServiceError::invalid([...])`, `notFound()`, `forbidden()`, `conflict()`.
      No `view()`, `api()`, `redirect()`, `echo`, `$_SESSION` or request access (G52); use `$context->user`.
    - Flags: `readOnly: true` for reads; `destructive: true` for deletes and overwrites; `level: N` when only users
@@ -44,8 +50,20 @@ the Build once section of [api-reference.md](../caligrafy/reference/api-referenc
    - Pug page that shows the result: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);` (the
      view gets `$book` as a plain array, `$authorized`, `$user`, never the query string; only `readOnly` capabilities; a
      refusal sends a visitor to sign in or answers 404/403, or renders the page's `notFound` view, G83).
-   - A form post: a thin controller, `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`.
-     Never `new <Model>()`, `associate()` or `save()` outside `application/services/`: only capabilities touch models.
+   - A form post (2.19.0+): `Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);`
+     (`'method' => 'PUT'|'DELETE'` with `=methodField('PUT')` in the form), and in the view `=csrf()`,
+     `value=old('title')`, `p.cq-field-error= errors('title')`, `flash('success')` / `flash('error')`; `back` and
+     `success` point at the page that shows them (flash lasts one request, G129). Never a controller for it.
+   - A CSV or JSON export: `Route::download('/books.csv', '<read-only capability>', ['filename' => 'books.csv']);`
+     (the capability returns a list of rows).
+   - Events another service posts: `Route::webhook('/stripe/events', '<capability>', ['verify' => 'stripe']);` with
+     `$rules = ['event' => 'required']`, idempotent, and `STRIPE_WEBHOOK_SECRET` (G132).
+   - Sign-in pages: `Route::auth([...])` after `Auth::authentication('User', 'users')`, not a controller (no password
+     reset or face sign-in there: those keep their controllers).
+   - A file input: the `file` rule, `'cover' => 'required|file|extension,png;jpg|max_size,2mb'`; `handle()` gets its URL (G131).
+   - A controller only for HTTP none of these covers (several capabilities with conditions, custom headers, streaming),
+     and then thin: `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`.
+     Never data work in a closure route (G130). Never `new <Model>()`, `associate()` or `save()` outside `application/services/`: only capabilities touch models.
    - Any page you build for it (Pug, or a page calling the JS client) uses the page components and the worked example of
      [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md): `extends ../default/master/site`, a title band, labeled
      `.cq-field`s, field errors in `.cq-field-error` under their own field, `.cq-rows` with `.cq-row-actions`, an empty state;

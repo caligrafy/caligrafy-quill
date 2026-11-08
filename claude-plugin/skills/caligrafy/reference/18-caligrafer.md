@@ -36,6 +36,7 @@
 | [`sql`](#sql) | Runs a SQL script on the database |
 | [`migrate`](#migrate) | Runs the migrations that never ran, shows their state, writes a new one (2.18.0+) |
 | [`cache clear`](#cache) | Empties the cache, the compiled views and the class map (2.18.0+) |
+| [`env`](#env) | Compiles `.env` to `.env.php`, read without parsing on every request, or removes it (2.19.0+) |
 | [`platform install`](#platform) | Creates the framework tables (tokens, audit log, job runs, jobs, cache, migrations) |
 | [`token`](#token) | Creates, lists and revokes personal access tokens |
 | [`mcp`](#mcp) | An MCP server over stdio for AI agents on your computer |
@@ -44,7 +45,7 @@
 | [`update`](#update) | Moves the project to another release of Caligrafy Quill and applies everything (2.9.0+) |
 | [`plugin`](#plugin) | Gives the project's Claude Code plugin its own source name, registers it and installs it (2.10.1+) |
 | [`upgrade`](#upgrade) | Updates the `application/` templates of a project to the framework's |
-| [`deploy`](#deploy) | Prepares the database in production (what the production image runs at start) |
+| [`deploy`](#deploy) | Compiles `.env` and prepares the database in production (what the production image runs at start) |
 | [`cloud`](#cloud) | Puts the project online at `https://<name>.caligrafy.com` with Caligrafy Cloud |
 | [`generatekeys`, `generateapikey`](#keys) | Generates application keys and legacy API keys |
 
@@ -203,7 +204,14 @@ php caligrafer.php migrate status                # ran, pending or changed
 ```bash
 php caligrafer.php cache clear
 ```
-Empties [the cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching) (`CACHE_STORE`), the compiled views and the class map of this system user (2.18.0+).
+Empties [the cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching) (`CACHE_STORE`), the compiled views (also those compiled in debug mode, 2.19.0+) and the class map of this system user (2.18.0+).
+
+### `env`
+```bash
+php caligrafer.php env cache    # compiles .env to .env.php
+php caligrafer.php env clear    # removes .env.php: pages read .env again
+```
+Since 2.19.0 pages read the settings from `.env.php` instead of parsing `.env` on every request, while `.env` is exactly what it was compiled from (its content is checked, not its date): edit `.env` and pages read it again at once, until the next `env cache`. In production [`deploy`](#deploy) runs it at every start, so there is nothing to do; on your own server without the production image, run it after each change to `.env`. `.env.php` has the same permissions as `.env`, holds the same secrets and is in `.gitignore`: never commit it. `env cache` exits with `1` when there is no `.env`.
 
 ### `platform install`
 ```bash
@@ -302,7 +310,7 @@ php caligrafer.php upgrade --apply --keep application/views/default/index.pug   
 php caligrafer.php deploy                 # framework tables, every new or changed create_db.sql, then the pending migrations
 php caligrafer.php deploy --wait 120      # wait up to 2 minutes for the database (default 60)
 ```
-What the production `Dockerfile` runs before Apache starts. It waits for the database, creates the framework tables, then runs every `application/models/<folder>/create_db.sql` that is new or changed since its last run, and records it in the `caligrafy_scripts` table, then the [migrations](#migrate) that never ran (2.18.0+). A changed script that drops, deletes or truncates is never run again on its own (run it with [`sql`](#sql) when you mean it); `seed.sql` is never run. It exits with `1` when the database cannot be prepared. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#deploy).
+What the production `Dockerfile` runs before Apache starts. It compiles `.env` to `.env.php` ([`env cache`](#env), 2.19.0+), waits for the database, creates the framework tables, then runs every `application/models/<folder>/create_db.sql` that is new or changed since its last run, and records it in the `caligrafy_scripts` table, then the [migrations](#migrate) that never ran (2.18.0+). A changed script that drops, deletes or truncates is never run again on its own (run it with [`sql`](#sql) when you mean it); `seed.sql` is never run. It exits with `1` when the database cannot be prepared. Learn more in [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#deploy).
 
 ### `cloud`
 ```bash

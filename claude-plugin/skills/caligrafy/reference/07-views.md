@@ -3,7 +3,7 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-> **Where this fits.** Views are the web experience of your application. New pages extend the master `default/master/site` and are built with [Caligrafy's look](#pagecomponents) (a top bar, a title band, forms, rows, tiles: no CSS to write, responsive at every size) and get their data from your capabilities, through a route (`Route::page`), a controller (`$this->call()`) or the JS client.
+> **Where this fits.** Views are the web experience of your application. New pages extend the master `default/master/site` and are built with [Caligrafy's look](#pagecomponents) (a top bar, a title band, forms, rows, tiles: no CSS to write, responsive at every size) and get their data from your capabilities, through a route (`Route::page`; a form posts to `Route::form`), a controller (`$this->call()`) or the JS client.
 
 Views are the front-end layer of your application. This is what gets displayed on the screen for your users.
 In an MVC structure, the `View` interfaces with the `Controller` and the `Controller` determines what gets displayed to the `View`.
@@ -72,6 +72,11 @@ Phug turns each `.pug` view into PHP before running it. Since 2.17.0 Caligrafy k
 + `VIEW_CACHE=false` in `.env` compiles every view on every request, as before 2.17.0.
 + A project that already sets Phug's `cache_dir` (`Phug::setOption('cache_dir', ...)`) keeps its own folder.
 + Copying files to a server with tools that keep their old modification times (`rsync -a`, `cp -p`, an unzipped archive) can leave a cached view newer than the file you copied: run `php caligrafer.php cache clear` as the web server's user after such a copy (each system user has its own compiled views), or restart the container. Deploys from the production image are not concerned.
+
+### Debug mode and the Optimizer (2.19.0+)
++ **Phug's debug mode only with `APP_DEBUG=true`.** It gives the line of the `.pug` file in an error, and made every page about three times slower. With `APP_DEBUG=false` (production) pages are rendered without it; set `APP_DEBUG=true` while you develop to keep the Pug line numbers.
++ **Cached views skip the compiler.** A view already compiled and up to date runs through Phug's Optimizer, which includes the compiled PHP without loading Phug's compiler. A view to compile goes through Phug as before. `VIEW_OPTIMIZER=false` in `.env` turns the Optimizer off. A project that customizes Phug at run time (its renderer already built) is not concerned.
++ Views compiled in debug mode are kept apart (`caligrafy-views-debug-<project>-<user>`), so switching `APP_DEBUG` never serves a view compiled the other way. `php caligrafer.php cache clear` empties both folders.
 
 ## Structure and Format
 + All the views that you create should be located in the `/application/views` folder. In that folder, you can create the structure that is the most convenient for you by creating subfolders at will. That folder should not contain any client-side scripts and sheets. Remember that this folder is not public and any client-side scripts that you link will not be read by the browser.
@@ -173,6 +178,28 @@ class HelloController extends Controller {
    }
 }
 ```
+## Forms: `errors()`, `old()` and `flash()` (2.19.0+)
+A form that posts to [`Route::form`](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form) comes back to the page with what the next page needs:
+```pug
+if flash('success')
+  .cq-alert= flash('success')
+if flash('error')
+  .cq-alert.cq-alert--error(role='alert')= flash('error')
+form(method='POST', action="{$home}books")
+  =csrf()
+  .cq-field
+    label(for='title') Title
+    input#title.form-control(type='text', name='title', value=old('title'))
+    if errors('title')
+      p.cq-field-error= errors('title')
+  button.btn.btn-primary(type='submit') Add book
+```
++ `errors('title')`: the message of one field, or `null`; `errors()`: all of them.
++ `old('title', $default)`: what the field held when the form was refused (never a password, a card number or a token).
++ `flash('success')`, `flash('error')`: the messages of the previous request. `flash('saved', 'Your changes are saved')` keeps one for the next request.
+
+They last one request: the first page after the post reads them.
+
 ## Mobile: install to home screen
 Browsers can install a Caligrafy application on a phone, a tablet or a computer: it opens from its own icon, full screen, without the browser bar. The default layout (`default/master/layoutblocks.pug`) links the web app manifest `public/manifest.webmanifest`, which gives browsers the name, the black and white colors and the icons of the app (`public/images/resources/icon-192x192.png`, `icon-512x512.png` and the Apple touch icons). Its `start_url` and `scope` are `../`, relative to the manifest: they always point to the root of your application, whatever `APP_ROOT` is. Change `name`, `short_name` and the icons in that file to brand your app (keep a 192x192 and a 512x512 PNG: Chrome needs both). New apps start with Caligrafy's black logo (since 2.16.2) in `favicon.ico`, the Apple touch icons and these two; replace the files with your own, keeping their names: the pages link them with their modification time, so browsers fetch a replaced icon again. Installation needs HTTPS (or `localhost`).
 

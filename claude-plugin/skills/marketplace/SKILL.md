@@ -112,7 +112,8 @@ screen, no empty states, no error, no sign-in form unless signing in is the feat
   `/caligrafy-quill:idea`. In this order: the idea in one sentence; every capability (name, inputs and rules, who may
   use it, what it does); the data (tables, fields, relationships, as they are after the migrations); the jobs on a timer and the work done
 in the background; every screen and client app (what it shows and
-  does, its look); the services and settings it needs (names, never values); how it goes online (Caligrafy Cloud,
+  does, its look); how the web reaches it when the app uses them (2.19.0+: the forms that post with `Route::form`,
+  sign-in with `Route::auth`, a webhook, a CSV export, file fields), said as features, not code; the services and settings it needs (names, never values); how it goes online (Caligrafy Cloud,
   `/caligrafy-quill:ship`). Complete enough to rebuild it, faithful to the code (no feature it does not have), no code
   pasted, no repository address, no secret, no personal data. As long as the app needs, usually 400 to 1,500 words.
 - **price** (US dollars, for the prompt): a short market study. Search the web for what comparable things sell for:

@@ -6,7 +6,7 @@
 > **Verified against framework source (see gotchas.md):**
 > - Unmatched URLs do not 404: they run the FIRST route registered in web.php (gotchas G4).
 
-> **Where this fits.** Routes connect URLs to what answers them. For a feature written as a capability, one line is enough: `Route::capability('POST', '/books', 'create_book')` for REST, and `Route::capabilities()` and `Route::mcp()` (added by the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart)) for the Vue apps and AI agents: see [Capability Routes](#capabilityroutes). The rest of this page covers page routes and controller routes.
+> **Where this fits.** Routes connect URLs to what answers them. For a feature written as a capability, one line is enough: `Route::capability('POST', '/books', 'create_book')` for REST, and `Route::capabilities()` and `Route::mcp()` (added by the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart)) for the Vue apps and AI agents: see [Capability Routes](#capabilityroutes). Forms, sign-in, webhooks and downloads are one line too (2.19.0+): see [Declarative routes](#declarativeroutes). The rest of this page covers page routes and controller routes.
 
 The very first thing that you need to do when building your application is structuring your URIs in a flexible and scalable way that is agnostic of how your application files are structured. This framework does it all for you. What you need to focus your effort on is planning where the URIs should go.
 
@@ -82,7 +82,7 @@ Route::page('/admin/books', 'Books/admin', ['level' => 1, 'data' => ['books' => 
 
 `signedIn` and `level` need the authentication module (`Auth::authentication('User', 'users');` in `web.php`): without it, such a page fails with an error that says so.
 
-**Pages never read models**: their data comes from capabilities, so a page, the REST API and AI agents follow the same rules. Use a [controller](#controllerroute) only when a page has logic of its own (a form post, several capabilities with conditions), and make it call capabilities too ([Calling a capability](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)).
+**Pages never read models**: their data comes from capabilities, so a page, the REST API and AI agents follow the same rules. A form posts to [`Route::form`](#declarativeroutes) (2.19.0+). Use a [controller](#controllerroute) only when a page has logic of its own (several capabilities with conditions, custom HTTP), and make it call capabilities too ([Calling a capability](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)).
 
 ## Controller Routing
 
@@ -116,6 +116,17 @@ Route::capabilities('/capabilities');                  // GET lists, POST /capab
 Route::mcp('/mcp');                                    // AI agents: every capability their token allows becomes an MCP tool
 ```
 They check who calls (a personal access token or the signed-in user), validate the inputs and answer JSON with real status codes. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#rest).
+
+## Declarative Routes (2.19.0+)
+
+One line of `web.php` for each web need, calling a capability, with no controller:
+```php
+Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);   // a form's POST (also 'method' => 'PUT' or 'DELETE')
+Route::auth(['home' => '/books']);                                                          // /login, /logout, /register, /notAuthorized
+Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe']);                  // events Stripe posts, signature checked
+Route::download('/books.csv', 'list_books');                                                // a read-only capability as a CSV file
+```
+A refused form goes back with `errors()`, `old()` and `flash()` for the view. Every option and a full example of each: [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes).
 
 ## HTML Form Methods
 

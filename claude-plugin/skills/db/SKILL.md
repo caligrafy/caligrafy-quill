@@ -41,3 +41,8 @@ Read `.env`: `DB_ACTIVATE`, `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`; use `DB_PAS
 - `query "SQL"`: run read-only queries freely; ask before any statement that writes.
 - After a migration: `php caligrafer.php migrate status` shows it `ran`, and `doctor` has no Migrations WARN.
 - Remind the user that each table needs a matching Model class with one public property per column (`/caligrafy-quill:new-resource`).
+- From the app's code (2.19.0+), rows are read and written with the query builder, never with SQL strings built from
+  input: `Database::table('<table>')->where(...)->get()` / `->insert([...])` / `->where(...)->update([...])`, and
+  `<Model>::query()` on the model's table (the class name lower-cased + plural unless `protected static $tableName`,
+  G123). Several writes that belong together go in `Database::transaction(fn () => ...)` (MySQL ends it at any DDL, G128).
+  A table change itself stays a migration.

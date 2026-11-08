@@ -154,14 +154,21 @@ feature step by step, page included.
   web apps, REST, and an MCP server for AI agents.
 + **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
   (`Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
-  never follow different rules.
+  never follow different rules. Forms, sign-in, webhooks and downloads are one line each too
+  ([declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): `Route::form`,
+  `Route::auth`, `Route::webhook`, `Route::download`): no controller to write.
 + **One look, or yours:** Caligrafy's look on every page: a light top bar with the Caligrafy mark, title bands, forms,
   rows and tiles, Caligrafy black for the main action, full-screen camera apps, the same on every device. Or pick one of 85 [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
   (`DESIGN_STYLE` in `.env`, or your own `DESIGN.md`) and let `/caligrafy-quill:design` restyle every page.
 + **Secure by design:** sign-in, passkeys and face login for people; scoped, revocable tokens for programs and
   agents; CSRF protection; an audit log of every change; server files never served.
-+ **What large apps need:** [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), [background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs), [a cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching),
++ **What large apps need:** [queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) with filters, paging,
+  related rows in one query and transactions, [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), [background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs), [a cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching),
   [tests for your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App), [dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection), scheduled jobs and notifications.
++ **Fast:** in the same benchmark, Caligrafy 2.19 beats Symfony and Laravel on all 16 measures (requests per second,
+  median and slowest response, memory, for plain text, JSON, a database query and an HTML page): an HTML page at
+  3,142 requests per second, against 1,921 for Symfony and 269 for Laravel
+  ([release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0)).
 + **Batteries included:** card, ACH and crypto payments, OpenAI and open-model AI (Llama on Groq, OpenRouter,
   Ollama...), chatbots, face detection and machine learning in the browser, search and social metadata.
 + **Made for AI-assisted development:** a [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)
@@ -189,9 +196,12 @@ feature step by step, page included.
 | Build a Vue app or a single page application | [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library), [the single page application](https://github.com/caligrafy/caligrafy-quill/wiki/9.8.1---Setting-up-the-Vue-application) |
 | Let AI agents use your application | [MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#mcp) |
 | Store data | [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models) and [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships) |
+| Filter, page and load related rows | [Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) |
+| Take a form, sign people in, receive webhooks, export a CSV | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes) |
 | Change your tables, test your app | [Migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App) |
 | Work in the background, keep slow results | [Background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs), [The cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching), [Dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection) |
-| Let people sign in | [Sign-in, users and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) |
+| Let people sign in | [Sign-in, users and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) (`Route::auth`) |
+| See what changed in 2.19 | [Release notes: 2.19.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0) |
 | Take payments, add AI, face login... | the **Built-in features** of the sidebar |
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Sell your app | [Selling your app on the marketplace](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#marketplace): a prompt that recreates it, 25% of every sale |

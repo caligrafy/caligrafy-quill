@@ -76,6 +76,8 @@ final class DownloadTest extends TestCase
         $this->assertSame(array(array('value' => 'a'), array('value' => 'b')), Download::rows(array('a', 'b')));
         $this->assertSame(array(array('value' => 5)), Download::rows(5));
         $this->assertSame(array(), Download::rows(null));
+        $page = array('data' => array(array('id' => 1), array('id' => 2)), 'total' => 2, 'page' => 1, 'per_page' => 20, 'pages' => 1);
+        $this->assertSame(array(array('id' => 1), array('id' => 2)), Download::rows($page), 'a page of paginate(): its rows');
         $this->assertSame(array(array('title' => 'one'), array('title' => 'two')), Download::rows(array((object) array('title' => 'one'), (object) array('title' => 'two'))), 'objects become arrays');
     }
 

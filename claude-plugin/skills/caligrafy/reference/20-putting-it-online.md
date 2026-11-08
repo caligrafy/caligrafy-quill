@@ -27,12 +27,13 @@ Every project has a `Dockerfile` at its root. Hosts that build from a Dockerfile
 
 The image runs `php caligrafer.php deploy` before Apache starts. It:
 
-1. waits for the database (60 seconds by default: a new server starts its database at the same time as the app; `CALIGRAFY_DEPLOY_WAIT` changes it);
-2. creates the framework tables (personal access tokens, the audit log, background jobs, the cache, migrations), safe to run again;
-3. runs every `application/models/<folder>/create_db.sql` that is **new or changed** since its last run, in folder order, and records it in the `caligrafy_scripts` table;
-4. runs the [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) of `application/migrations` that never ran on this database, in order (2.18.0+).
+1. compiles `.env` to `.env.php` (2.19.0+): pages then read the settings without parsing `.env` on every request ([`env cache`](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#env)); a `.env` changed later is read as it is until the next start;
+2. waits for the database (60 seconds by default: a new server starts its database at the same time as the app; `CALIGRAFY_DEPLOY_WAIT` changes it);
+3. creates the framework tables (personal access tokens, the audit log, background jobs, the cache, migrations), safe to run again;
+4. runs every `application/models/<folder>/create_db.sql` that is **new or changed** since its last run, in folder order, and records it in the `caligrafy_scripts` table;
+5. runs the [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) of `application/migrations` that never ran on this database, in order (2.18.0+).
 
-A changed script that drops, deletes or truncates (`DROP TABLE`, `DELETE FROM`, `TRUNCATE`...) is never run again on its own: it says so in the log, and you run it by hand when you mean it (`php caligrafer.php sql <file>`). `seed.sql` and other scripts are never run. Without `DB_ACTIVATE=true` there is nothing to do.
+A changed script that drops, deletes or truncates (`DROP TABLE`, `DELETE FROM`, `TRUNCATE`...) is never run again on its own: it says so in the log, and you run it by hand when you mean it (`php caligrafer.php sql <file>`). `seed.sql` and other scripts are never run. Without `DB_ACTIVATE=true` there is nothing to do for the database.
 
 So write your tables with `CREATE TABLE IF NOT EXISTS`. Since 2.18.0, put a change to a table that has data in a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations): it runs once, in order, on every database. In `create_db.sql`, add a column with a new statement (`ALTER TABLE ... ADD COLUMN ...`) rather than by dropping the table. The statement can stay in the script: when the script runs again, a column, an index or a foreign key that is already there is skipped (2.13.5+).
 
@@ -140,7 +141,7 @@ docker run -d -p 80:80 \
 
 Put HTTPS in front of it (a load balancer, Coolify's proxy, Caddy...). Hosts that offer only environment variables and no file (Railway, Render, DigitalOcean App Platform) are not supported yet.
 
-**Without Docker** (files copied to a PHP server): compiled views are kept in the temporary directory ([2.17.0+](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#templates)); after copying files that keep their old modification times (`rsync -a`, `cp -p`), empty it with `rm -rf /tmp/caligrafy-views-*`. The class map (2.18.0+) finds new and changed classes by itself, within a minute with `APP_ENV=production`; `rm -rf /tmp/caligrafy-classes-*` makes it immediate.
+**Without Docker** (files copied to a PHP server): run `php caligrafer.php env cache` after each change to `.env` (2.19.0+; never commit `.env.php`), and `php caligrafer.php deploy` for the database. Compiled views are kept in the temporary directory ([2.17.0+](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#templates)); after copying files that keep their old modification times (`rsync -a`, `cp -p`), empty it with `rm -rf /tmp/caligrafy-views-*`. The class map (2.18.0+) finds new and changed classes by itself, within a minute with `APP_ENV=production`; `rm -rf /tmp/caligrafy-classes-*` makes it immediate.
 
 **Scheduled jobs** ([2.14.0+](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)): run a second container from the same image and `.env` with `php caligrafer.php schedule work` (on Coolify, a second application with that start command), or `php caligrafer.php schedule due` from the server's cron every minute. One of the two, not both.
 

@@ -67,6 +67,16 @@ php caligrafer.php platform install # the framework tables of the new release (2
   files: `php caligrafer.php migrate status`. Classes now load when used (G118): open the pages; a page that breaks
   because a file relied on another being loaded first gets a direct reference to the class (`CLASS_MAP=false` restores
   the old loader meanwhile).
++ 2.19.0+ (no new tables: `platform install` changes nothing): sessions start only when used, so check the sign-in
+  flows (sign in, sign out, sign up, a page that needs someone) and each page with a form from a fresh session (`curl`
+  without a cookie, or a private window): the post must not be refused with 3000. Code that reads `$_SESSION['token']`
+  on a GET reads `session('token')` instead. `grep -rn "function find(" application/models`: a model with its own
+  `find()` keeps it for `$book->find()`, but `Book::find()` fails (G122); `method_exists($m, 'find')` is now false.
+  Pug errors show their line only with `APP_DEBUG=true` (set it locally). `.env.php` is in `.gitignore`; production
+  needs nothing (the deploy step runs `env cache`); an own server without the image runs `php caligrafer.php env cache`
+  after each `.env` change. Escape hatches, to name only when something breaks: `SESSION_LAZY=false`,
+  `VIEW_OPTIMIZER=false`. Moving controllers to `Route::form` / `Route::auth` / `Route::webhook` is optional: offer
+  it, never do it unasked.
 + The release notes of every version passed (`https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-<version>`):
   do what they ask of projects (for example 2.7.0: client apps call their routes with `apiHeaders()`; `doctor` lists
   the scripts that still send the key).
