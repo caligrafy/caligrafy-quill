@@ -21,7 +21,7 @@ final class DatabaseQueryTest extends TestCase
         $this->pdo->exec('CREATE TABLE authors (id INTEGER PRIMARY KEY, name TEXT)');
         $this->pdo->exec('CREATE TABLE books (id INTEGER PRIMARY KEY AUTOINCREMENT, title TEXT, author_id INTEGER, views INTEGER DEFAULT 0)');
         $this->pdo->exec('CREATE TABLE tags (id INTEGER PRIMARY KEY, label TEXT)');
-        $this->pdo->exec('CREATE TABLE book_tag (book_id INTEGER, tag_id INTEGER)');
+        $this->pdo->exec('CREATE TABLE books_tags (book_id INTEGER, tag_id INTEGER)');
         $this->pdo->exec("INSERT INTO authors VALUES (1, 'Ada'), (2, 'Bo')");
         $this->pdo->exec("INSERT INTO tags VALUES (1, 'php'), (2, 'sql')");
         Database::useConnection($this->pdo);
@@ -99,7 +99,7 @@ final class DatabaseQueryTest extends TestCase
     {
         $books = Database::table('books');
         $books->insert(array(array('title' => 'Alpha', 'author_id' => 1), array('title' => 'Beta', 'author_id' => 2), array('title' => 'Gamma', 'author_id' => 2), array('title' => '100%', 'author_id' => null)));
-        $this->pdo->exec('INSERT INTO book_tag VALUES (1, 1), (1, 2), (3, 2)');
+        $this->pdo->exec('INSERT INTO books_tags VALUES (1, 1), (1, 2), (3, 2)');
 
         $this->assertSame(4, Database::table('books')->count());
         $this->assertTrue(Database::table('books')->where('title', 'Beta')->exists());
@@ -124,6 +124,10 @@ final class DatabaseQueryTest extends TestCase
         $this->assertNull($all[3]['author']);
         $this->assertSame(array('php', 'sql'), array_column($all[0]['tags'], 'label'));
         $this->assertSame(array(2, 0, 1, 0), array_map('intval', array_column($all, 'tags_count')));
+        // from the other side the pivot is tags_books by convention: SQLite refuses it, books_tags is used
+        $tags = Database::table('tags')->orderBy('id')->with(array('books' => array('pivot' => true)))->withCount(array('books' => array('pivot' => true)))->get();
+        $this->assertSame(array(array(1), array(1, 3)), array(array_column($tags[0]['books'], 'id'), array_column($tags[1]['books'], 'id')));
+        $this->assertSame(array(1, 2), array_map('intval', array_column($tags, 'books_count')));
         $authors = Database::table('authors')->orderBy('id')->with('books')->withCount('books')->get();
         $this->assertSame(array(1, 2), array_column($authors, 'books_count'));
         $this->assertSame(array('Two', 'Two'), array_column($authors[1]['books'], 'title'));

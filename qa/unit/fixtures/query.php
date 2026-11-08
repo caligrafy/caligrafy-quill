@@ -15,6 +15,7 @@ final class QaFakeExecutor
     public $queries = array();
     public $insertId = 41;
     public $affected = 3;
+    public $strict = false;     // a table missing from $tables fails like the database would
     private $tables;
     private $responder;
 
@@ -33,8 +34,14 @@ final class QaFakeExecutor
         if (stripos($sql, 'SELECT') !== 0 || !preg_match('/ FROM `([a-z_]+)`/', $sql, $from)) {
             return array();
         }
+        if ($this->strict && !isset($this->tables[$from[1]])) {
+            throw new PDOException("Table '{$from[1]}' doesn't exist");
+        }
         $rows = $this->tables[$from[1]] ?? array();
-        // a pivot join: `tags`.*, `book_tag`.`book_id` AS `__pivot_key` ... INNER JOIN `book_tag` ON `book_tag`.`tag_id` = `tags`.`id`
+        // a pivot join: `tags`.*, `books_tags`.`book_id` AS `__pivot_key` ... INNER JOIN `books_tags` ON `books_tags`.`tag_id` = `tags`.`id`
+        if (preg_match('/`([a-z_]+)`\.`([a-z_]+)` AS `__pivot_key` FROM/', $sql, $p) && $this->strict && !isset($this->tables[$p[1]])) {
+            throw new PDOException("Table '{$p[1]}' doesn't exist");
+        }
         if (preg_match('/`([a-z_]+)`\.`([a-z_]+)` AS `__pivot_key` FROM `[a-z_]+` INNER JOIN `[a-z_]+` ON `[a-z_]+`\.`([a-z_]+)` = `[a-z_]+`\.`([a-z_]+)`/', $sql, $m)) {
             $joined = array();
             foreach ($this->tables[$m[1]] ?? array() as $link) {

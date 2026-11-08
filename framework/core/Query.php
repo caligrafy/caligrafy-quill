@@ -53,6 +53,7 @@ class Query
     private static $executor = null;
     private static $shapes = array();
     private static $warned = array();
+    private static $pivots = array();     // conventional pivot name => the reversed name that exists
 
     private $name;              // the table as given
     private $table;             // the table quoted
@@ -513,7 +514,7 @@ class Query
 
     /**
      * with('author', 'tags', 'author.country'), with(['author' => ['table' => 'people', 'foreign_key' => 'writer_id']]),
-     * with(['tags' => ['pivot' => 'book_tag']]), with(['books' => function (Query $q) { $q->where('published', 1); }])
+     * with(['tags' => ['pivot' => 'tag_links']]), with(['books' => function (Query $q) { $q->where('published', 1); }])
      */
     public function with(...$relations)
     {
@@ -615,8 +616,9 @@ class Query
      * How a relation of $parent is read, by convention unless $config says otherwise:
      * - singular name (author) on books: belongsTo, books.author_id -> authors.id
      * - plural name (books) on authors: hasMany, books.author_id = authors.id
-     * - ['pivot' => true|'name'] or type belongsToMany (tags on books): pivot book_tag (singular names, alphabetical),
-     *   book_tag.book_id = books.id, book_tag.tag_id = tags.id
+     * - ['pivot' => true|'name'] or type belongsToMany (tags on books): the pivot Model::belongsToMany() creates,
+     *   books_tags (<this table>_<related table>), or tags_books when only that one exists (tried when books_tags
+     *   fails, then remembered); books_tags.book_id = books.id, books_tags.tag_id = tags.id
      * @return array type, table, foreign_key, local_key, owner_key, pivot, related_key, query
      */
     public static function relation($parent, $name, $config = null)
@@ -626,7 +628,7 @@ class Query
         $singular = self::singular($name);
         $type = $config['type'] ?? (isset($config['pivot']) ? 'belongsToMany' : ($singular === $name ? 'belongsTo' : 'hasMany'));
         $owner = self::singular($parentName);
-        $r = array('type' => $type, 'query' => $config['query'] ?? null, 'pivot' => null, 'related_key' => null);
+        $r = array('type' => $type, 'query' => $config['query'] ?? null, 'pivot' => null, 'related_key' => null, 'pivot_reverse' => null);
         if ($type === 'belongsTo') {
             $r['table'] = $config['table'] ?? self::plural($name);
             $r['foreign_key'] = $config['foreign_key'] ?? $name . '_id';
@@ -640,15 +642,21 @@ class Query
             if ($type === 'belongsToMany') {
                 $pivot = $config['pivot'] ?? true;
                 if ($pivot === true) {
-                    $names = array($owner, self::singular($name));
-                    sort($names, SORT_STRING);
-                    $pivot = implode('_', $names);
+                    // the name Model::belongsToMany() gives the pivot it creates: <table1>_<table2>, or
+                    // <table2>_<table1> when that one exists
+                    $pivot = $parent . '_' . $r['table'];
+                    $reverse = $r['table'] . '_' . $parent;
+                    if (isset(self::$pivots[$pivot])) {
+                        $pivot = self::$pivots[$pivot];
+                    } elseif ($reverse !== $pivot) {
+                        $r['pivot_reverse'] = $reverse;
+                    }
                 }
                 $r['pivot'] = $pivot;
                 $r['related_key'] = $config['related_key'] ?? self::singular($name) . '_id';
             }
         }
-        foreach (array('table', 'pivot') as $key) {
+        foreach (array('table', 'pivot', 'pivot_reverse') as $key) {
             if ($r[$key] !== null) {
                 self::quote($r[$key]);
             }
@@ -1052,13 +1060,15 @@ class Query
 
         $keys = self::keys($rows, $r['local_key']);
         if ($r['type'] === 'belongsToMany') {
-            $pivot = self::quote($r['pivot']);
-            $table = self::quote($r['table']);
-            $prepare = function (Query $q) use ($r, $pivot, $table) {
-                $q->columns = $table . '.*, ' . $pivot . '.`' . $r['foreign_key'] . '` AS `__pivot_key`';
-                $q->joins = ' INNER JOIN ' . $pivot . ' ON ' . $pivot . '.`' . $r['related_key'] . '` = ' . $table . '.`' . $r['owner_key'] . '`';
-            };
-            $related = $keys ? $this->fetchIn($r['table'], $r['pivot'] . '.' . $r['foreign_key'], $keys, $r['query'], $prepare) : array();
+            $related = $keys ? $this->throughPivot($r, function (array $r) use ($keys) {
+                $pivot = self::quote($r['pivot']);
+                $table = self::quote($r['table']);
+                $prepare = function (Query $q) use ($r, $pivot, $table) {
+                    $q->columns = $table . '.*, ' . $pivot . '.`' . $r['foreign_key'] . '` AS `__pivot_key`';
+                    $q->joins = ' INNER JOIN ' . $pivot . ' ON ' . $pivot . '.`' . $r['related_key'] . '` = ' . $table . '.`' . $r['owner_key'] . '`';
+                };
+                return $this->fetchIn($r['table'], $r['pivot'] . '.' . $r['foreign_key'], $keys, $r['query'], $prepare);
+            }) : array();
             $groupKey = '__pivot_key';
         } else {
             $related = $keys ? $this->fetchIn($r['table'], $r['foreign_key'], $keys, $r['query']) : array();
@@ -1094,26 +1104,29 @@ class Query
             $keys = self::keys($rows, $r['local_key']);
             $map = array();
             if ($keys) {
-                if ($r['type'] === 'belongsToMany') {
-                    $from = $r['pivot'];
-                    $column = $r['pivot'] . '.' . $r['foreign_key'];
-                    $prepare = $r['query'] ? function (Query $q) use ($r) {
-                        $q->joins = ' INNER JOIN ' . self::quote($r['table']) . ' ON ' . self::quote($r['pivot']) . '.`' . $r['related_key'] . '` = ' . self::quote($r['table']) . '.`' . $r['owner_key'] . '`';
-                    } : null;
-                } else {
-                    $from = $r['table'];
-                    $column = $r['foreign_key'];
-                    $prepare = null;
-                }
-                $quoted = self::quote($column);
-                $count = function (Query $q) use ($quoted, $prepare) {
-                    if ($prepare) {
-                        $prepare($q);
+                $run = function (array $r) use ($keys) {
+                    if ($r['type'] === 'belongsToMany') {
+                        $from = $r['pivot'];
+                        $column = $r['pivot'] . '.' . $r['foreign_key'];
+                        $prepare = $r['query'] ? function (Query $q) use ($r) {
+                            $q->joins = ' INNER JOIN ' . self::quote($r['table']) . ' ON ' . self::quote($r['pivot']) . '.`' . $r['related_key'] . '` = ' . self::quote($r['table']) . '.`' . $r['owner_key'] . '`';
+                        } : null;
+                    } else {
+                        $from = $r['table'];
+                        $column = $r['foreign_key'];
+                        $prepare = null;
                     }
-                    $q->columns = $quoted . ' AS `__key`, COUNT(*) AS `aggregate`';
-                    $q->groups = ' GROUP BY ' . $quoted;
+                    $quoted = self::quote($column);
+                    $count = function (Query $q) use ($quoted, $prepare) {
+                        if ($prepare) {
+                            $prepare($q);
+                        }
+                        $q->columns = $quoted . ' AS `__key`, COUNT(*) AS `aggregate`';
+                        $q->groups = ' GROUP BY ' . $quoted;
+                    };
+                    return $this->fetchIn($from, $column, $keys, $r['query'], $count);
                 };
-                foreach ($this->fetchIn($from, $column, $keys, $r['query'], $count) as $row) {
+                foreach ($r['type'] === 'belongsToMany' ? $this->throughPivot($r, $run) : $run($r) as $row) {
                     $map[(string) $row['__key']] = (int) $row['aggregate'];
                 }
             }
@@ -1123,6 +1136,31 @@ class Query
             }
         }
         return $rows;
+    }
+
+    /**
+     * Runs $run($r) on the conventional pivot (<table>_<related>); when that query fails and the reversed name
+     * (<related>_<table>) was not ruled out, runs it on the reversed one and remembers it for the process, as
+     * Model::belongsToMany() uses the reversed pivot when it exists. The first error is thrown when both fail.
+     */
+    private function throughPivot(array $r, callable $run)
+    {
+        if ($r['pivot_reverse'] === null) {
+            return $run($r);
+        }
+        try {
+            return $run($r);
+        } catch (\Throwable $first) {
+            $conventional = $r['pivot'];
+            $r['pivot'] = $r['pivot_reverse'];
+            try {
+                $rows = $run($r);
+            } catch (\Throwable $second) {
+                throw $first;
+            }
+            self::$pivots[$conventional] = $r['pivot'];
+            return $rows;
+        }
     }
 
     /**

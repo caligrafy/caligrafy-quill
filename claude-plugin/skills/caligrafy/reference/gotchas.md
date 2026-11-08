@@ -619,9 +619,12 @@ instance (`(new Book('books'))->where(...)`) uses its own `$table`. Proof: `Mode
 
 **G124. Relations of `with()` follow names, not the database.** A singular name is belongsTo (`author` -> `author_id`
 on this table, `authors.id`), a plural one hasMany (`books` -> `books.<singular this table>_id`). Many-to-many needs
-`['tags' => ['pivot' => true]]` (pivot `book_tag`: singular names, alphabetical) or a pivot name: the pivots that
-`Model::belongsToMany()` creates are `<table1>_<table2>` (`books_tags`, G10), so pass `['pivot' => 'books_tags']`
-for those. Irregular names (`person`/`people`, `status`) need `table` / `type`. The key columns must be in the rows:
+`['tags' => ['pivot' => true]]`, or `['pivot' => 'name']` for a pivot of another name. The default is the pivot
+`Model::belongsToMany()` creates (G10): `<this table>_<related table>` (`books_tags`), and when the query on it fails
+the reversed `tags_books` (the name Model uses when that one exists), remembered for the process; when both fail the
+first error is thrown. Columns: `<singular this table>_id` and `<singular related>_id` (Model uses the lower-cased
+class names: `Book` -> `book_id`; pass `foreign_key` / `related_key` when they differ). On PostgreSQL a failed
+query aborts the transaction it runs in: inside `Database::transaction()` name the pivot. Irregular names (`person`/`people`, `status`) need `table` / `type`. The key columns must be in the rows:
 `select('title')->with('author')` has no `author_id` and attaches `null`. A `query` constraint on a belongsToMany
 relation runs on the join: qualify columns (`tags.label`). A `limit()` in a constraint limits the whole relation
 query, not each parent. Related rows stay arrays when the main rows are models. Proof: `Query::relation()`,

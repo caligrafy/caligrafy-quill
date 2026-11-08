@@ -28,7 +28,8 @@ final class QueryEagerTest extends TestCase
             'countries' => array(array('id' => 1, 'name' => 'France'), array('id' => 2, 'name' => 'Japan')),
             'people' => array(array('id' => 7, 'name' => 'Ghost')),
             'tags' => array(array('id' => 1, 'label' => 'php'), array('id' => 2, 'label' => 'sql'), array('id' => 3, 'label' => 'none')),
-            'book_tag' => array(array('book_id' => 1, 'tag_id' => 1), array('book_id' => 1, 'tag_id' => 2), array('book_id' => 2, 'tag_id' => 2)),
+            'books_tags' => array(array('book_id' => 1, 'tag_id' => 1), array('book_id' => 1, 'tag_id' => 2), array('book_id' => 2, 'tag_id' => 2)),
+            'tag_links' => array(array('book_id' => 1, 'tag_id' => 3)),
         ));
         Query::useExecutor($this->db);
     }
@@ -85,15 +86,15 @@ final class QueryEagerTest extends TestCase
         $this->assertSame(0, $authors[5]['books_count']);
     }
 
-    public function testBelongsToManyThroughThePivotConvention(): void
+    public function testBelongsToManyThroughThePivotModelBelongsToManyCreates(): void
     {
         $books = Database::table('books')->whereIn('id', array(1, 2, 3))->with(array('tags' => array('pivot' => true)))->withCount(array('tags' => array('pivot' => true)))->get();
         $this->assertSame(
-            'SELECT `tags`.*, `book_tag`.`book_id` AS `__pivot_key` FROM `tags` INNER JOIN `book_tag` ON `book_tag`.`tag_id` = `tags`.`id` WHERE `book_tag`.`book_id` IN (?, ?, ?)',
+            'SELECT `tags`.*, `books_tags`.`book_id` AS `__pivot_key` FROM `tags` INNER JOIN `books_tags` ON `books_tags`.`tag_id` = `tags`.`id` WHERE `books_tags`.`book_id` IN (?, ?, ?)',
             $this->db->queries[1][0]
         );
         $this->assertSame(
-            'SELECT `book_tag`.`book_id` AS `__key`, COUNT(*) AS `aggregate` FROM `book_tag` WHERE `book_tag`.`book_id` IN (?, ?, ?) GROUP BY `book_tag`.`book_id`',
+            'SELECT `books_tags`.`book_id` AS `__key`, COUNT(*) AS `aggregate` FROM `books_tags` WHERE `books_tags`.`book_id` IN (?, ?, ?) GROUP BY `books_tags`.`book_id`',
             $this->db->queries[2][0]
         );
         $this->assertCount(3, $this->db->queries);
@@ -103,28 +104,64 @@ final class QueryEagerTest extends TestCase
         $this->assertSame(array(2, 1, 0), array_column($books, 'tags_count'));
     }
 
+    /**
+     * Model::belongsToMany() uses <related>_<this> when that one exists: tried when <this>_<related> fails, then remembered
+     */
+    public function testTheReversedPivotIsFoundAndRemembered(): void
+    {
+        $db = new QaFakeExecutor(array(
+            'readers' => array(array('id' => 1), array('id' => 2)),
+            'clubs' => array(array('id' => 5, 'name' => 'Noir')),
+            'clubs_readers' => array(array('reader_id' => 2, 'club_id' => 5)),
+            'members' => array(),
+        ));
+        $db->strict = true;
+        Query::useExecutor($db);
+        $readers = Database::table('readers')->with(array('clubs' => array('pivot' => true)))->get();
+        $this->assertStringContainsString('INNER JOIN `readers_clubs`', $db->queries[1][0], 'the name Model::belongsToMany() tries first');
+        $this->assertStringContainsString('INNER JOIN `clubs_readers` ON `clubs_readers`.`club_id` = `clubs`.`id` WHERE `clubs_readers`.`reader_id` IN (?, ?)', $db->queries[2][0]);
+        $this->assertSame(array(), $readers[0]['clubs']);
+        $this->assertSame(array(array('id' => 5, 'name' => 'Noir')), $readers[1]['clubs']);
+
+        $db->queries = array();
+        $counted = Database::table('readers')->withCount(array('clubs' => array('pivot' => true)))->get();
+        $this->assertCount(2, $db->queries, 'remembered: no failed attempt the second time');
+        $this->assertStringContainsString('FROM `clubs_readers`', $db->queries[1][0]);
+        $this->assertSame(array(0, 1), array_column($counted, 'clubs_count'));
+
+        $db->queries = array();
+        try {
+            Database::table('readers')->with(array('members' => array('pivot' => true)))->get();
+            $this->fail('a missing pivot was ignored');
+        } catch (PDOException $e) {
+            $this->assertStringContainsString('readers_members', $e->getMessage(), 'the first error is thrown when both names fail');
+        }
+        $this->assertCount(3, $db->queries);
+    }
+
     public function testExplicitSettings(): void
     {
         $books = Database::table('books')->where('id', 1)
             ->with(array('author' => array('table' => 'people', 'foreign_key' => 'writer_id')))
-            ->with(array('labels' => array('table' => 'tags', 'pivot' => 'book_tag', 'related_key' => 'tag_id')))
+            ->with(array('labels' => array('table' => 'tags', 'pivot' => 'tag_links', 'related_key' => 'tag_id')))
             ->get();
         $this->assertSame(array('SELECT * FROM `people` WHERE `id` IN (?)', array(7)), $this->db->queries[1]);
         $this->assertSame('Ghost', $books[0]['author']['name']);
-        $this->assertStringContainsString('FROM `tags` INNER JOIN `book_tag` ON `book_tag`.`tag_id` = `tags`.`id` WHERE `book_tag`.`book_id` IN (?)', $this->db->queries[2][0]);
-        $this->assertSame(array('php', 'sql'), array_column($books[0]['labels'], 'label'));
+        $this->assertStringContainsString('FROM `tags` INNER JOIN `tag_links` ON `tag_links`.`tag_id` = `tags`.`id` WHERE `tag_links`.`book_id` IN (?)', $this->db->queries[2][0]);
+        $this->assertSame(array('none'), array_column($books[0]['labels'], 'label'), 'an explicit pivot name is used as is');
     }
 
     public function testConventions(): void
     {
         $this->assertSame(
-            array('type' => 'belongsTo', 'query' => null, 'pivot' => null, 'related_key' => null, 'table' => 'categories', 'foreign_key' => 'category_id', 'owner_key' => 'id', 'local_key' => null),
+            array('type' => 'belongsTo', 'query' => null, 'pivot' => null, 'related_key' => null, 'pivot_reverse' => null, 'table' => 'categories', 'foreign_key' => 'category_id', 'owner_key' => 'id', 'local_key' => null),
             Query::relation('books', 'category')
         );
         $hasMany = Query::relation('categories', 'books');
         $this->assertSame(array('hasMany', 'books', 'category_id', 'id'), array($hasMany['type'], $hasMany['table'], $hasMany['foreign_key'], $hasMany['local_key']));
-        $many = Query::relation('tags', 'books', array('type' => 'belongsToMany'));
-        $this->assertSame(array('book_tag', 'tag_id', 'book_id'), array($many['pivot'], $many['foreign_key'], $many['related_key']));
+        $many = Query::relation('labels', 'posts', array('type' => 'belongsToMany'));
+        $this->assertSame(array('labels_posts', 'posts_labels', 'label_id', 'post_id'), array($many['pivot'], $many['pivot_reverse'], $many['foreign_key'], $many['related_key']));
+        $this->assertSame(array('tag_map', null), array_values(array_intersect_key(Query::relation('books', 'tags', array('pivot' => 'tag_map')), array('pivot' => 1, 'pivot_reverse' => 1))));
         $one = Query::relation('users', 'profile', array('type' => 'hasOne'));
         $this->assertSame(array('profiles', 'user_id'), array($one['table'], $one['foreign_key']));
     }
