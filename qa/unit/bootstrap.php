@@ -10,7 +10,8 @@ putenv('APP_KEY=' . APP_KEY);
 $root = dirname(__DIR__, 2);
 require $root . '/vendor/autoload.php';
 require $root . '/framework/helpers/corehelpers.php';
-foreach (['Framework', 'Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor', 'FaceLogin', 'Passkey', 'Auth', 'Tokens', 'Context', 'Audit', 'ServiceError', 'Capability', 'Service', 'Capabilities', 'Quickstart', 'Deployer', 'CloudClient', 'Designs', 'Updater', 'PluginSource', 'Scheduler', 'Notify', 'Mail', 'ClassMap', 'View', 'Migrations', 'Container', 'Cache'] as $class) {
+defined('ROUTE_ARG_PATTERN') || define('ROUTE_ARG_PATTERN', '#\{+(.*?)\}+#');
+foreach (['Framework', 'Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor', 'FaceLogin', 'Passkey', 'Auth', 'Tokens', 'Context', 'Audit', 'ServiceError', 'Capability', 'Service', 'Capabilities', 'Quickstart', 'Deployer', 'CloudClient', 'Designs', 'Updater', 'PluginSource', 'Scheduler', 'Notify', 'Mail', 'ClassMap', 'View', 'Migrations', 'Container', 'Cache', 'PageController', 'Flash', 'Uploads', 'Form', 'Webhook', 'Download', 'Throttle', 'AuthRoutes'] as $class) {
     require_once $root . "/framework/core/$class.php";
 }
 foreach (['Rest', 'Mcp/Server', 'Mcp/Http', 'Client'] as $class) {

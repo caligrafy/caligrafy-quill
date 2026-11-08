@@ -48,7 +48,12 @@ class Route extends \stdClass
      * @property array $_methods defines all the methods that are set at runtime
     */
     private static $_methods = array();
-    
+
+    /**
+     * @var array the components of the Route::webhook addresses (their POSTs carry no CSRF token)
+     */
+    private static $_webhooks = array();
+
     /**
      * @var int $_currentRouteKey defines the currently run route key
      * @property int $_currentRouteKey defines the currently run route key
@@ -88,6 +93,11 @@ class Route extends \stdClass
     */
     public static function run()
     {
+        // what the previous request flashed (Route::form: errors, old input, messages) is this request's (2.19.0)
+        if (isset($_SESSION['__flash'])) {
+            Flash::age();
+        }
+
         //fetch the request
         self::$_request = request();
 
@@ -374,6 +384,117 @@ class Route extends \stdClass
         self::post($route, function () { Mcp\Http::respond(); });
         self::get($route, function () { Mcp\Http::methodNotAllowed(); });
         self::delete($route, function () { Mcp\Http::methodNotAllowed(); });
+    }
+
+    /**
+     * A form without a controller (2.19.0, Caligrafy\Form): the form's POST calls a capability, then redirects
+     *   Route::page('/books/new', 'Books/new');
+     *   Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);
+     *   Route::form('/books/{id}', 'update_book', ['method' => 'PUT', 'success' => '/books/{id}']);
+     * GET stays a Route::page. Options: 'method' (POST, PUT or DELETE, or a list; default POST), 'success' (a path with
+     * {placeholders} from the result and the route, or a callable($result) returning one; default back), 'flash' (a
+     * message for flash('success'), or [key => message]), 'back' (where invalid input goes; default the Referer of this
+     * site), 'error' (the message for flash('error') instead of the capability's), 'signIn' (default /login).
+     * Invalid input goes back with errors($field), old($field) and flash('error') for the next page. JSON requests get
+     * the REST answer.
+     */
+    public static function form($route, $capability, array $options = array())
+    {
+        foreach ((array) ($options['method'] ?? 'POST') as $method) {
+            $method = strtolower((string) $method);
+            if (!in_array($method, array('post', 'put', 'delete'), true)) {
+                throw new \InvalidArgumentException("Route::form: the method is POST, PUT or DELETE, not '$method' (pages are Route::page)");
+            }
+            self::$method($route, function () use ($capability, $options) { Form::handle($capability, $options); });
+        }
+    }
+
+    /**
+     * The sign-in pages without a controller (2.19.0, Caligrafy\AuthRoutes): /login, /logout, /register,
+     * /notAuthorized and, with 'passkeys' => true, the passkey endpoints. Needs Auth::authentication(...) before it.
+     *   Route::auth(['home' => '/books']);
+     * Options: prefix, home ('/'), logout ('/'), register (true, false or the capability), attempts (5), lock (900
+     * seconds), views, passkeys (false). See AuthRoutes.
+     */
+    public static function auth(array $options = array())
+    {
+        return AuthRoutes::register($options);
+    }
+
+    /**
+     * Events another service posts (2.19.0, Caligrafy\Webhook): POST only, no CSRF token, the signature checked
+     *   Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe', 'secret_env' => 'STRIPE_WEBHOOK_SECRET']);
+     *   Route::webhook('/hooks/github', 'record_push', ['verify' => fn ($raw, $headers) => hash_equals(...)]);
+     * The capability gets ['event' => the decoded JSON body] as the system (Context::system('webhook', $path)).
+     */
+    public static function webhook($route, $capability, array $options = array())
+    {
+        $verify = $options['verify'] ?? null;
+        if ($verify !== 'stripe' && !(is_callable($verify) && !is_string($verify))) {
+            throw new \InvalidArgumentException("Route::webhook('$route'): 'verify' is required: 'stripe' or a function (\$rawBody, \$headers): bool");
+        }
+        self::$_webhooks[] = parsePath(sanitizePath($route));
+        self::post($route, function () use ($route, $capability, $options) { Webhook::handle($route, $capability, $options); });
+    }
+
+    /**
+     * A read-only capability's result as a file (2.19.0, Caligrafy\Download): GET
+     *   Route::download('/books.csv', 'list_books', ['as' => 'csv', 'filename' => 'books.csv']);
+     * Options: 'as' (csv or json), 'filename' (a name or a callable($result, $input)), 'bom' (bool), 'formulas' (keep
+     * cells that start with = + - @ as they are), 'signIn'. Refusals as Route::page.
+     */
+    public static function download($route, $capability, array $options = array())
+    {
+        Download::format($options);   // an unknown format is refused when web.php runs
+        self::get($route, function () use ($capability, $options) { Download::handle($capability, $options); });
+    }
+
+    /**
+     * Whether a uri is the address of a Route::webhook (no CSRF token: its signature is checked)
+     */
+    public static function isWebhook($uri)
+    {
+        $components = parsePath(sanitizePath((string) $uri));
+        foreach (self::$_webhooks as $webhook) {
+            if (self::pathMatches($webhook, $components)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
+     * The routes declared so far: [['method' => 'GET', 'route' => 'books/{id}'], ...]
+     */
+    public static function routes()
+    {
+        $routes = array();
+        foreach (self::$_routes as $key => $route) {
+            $routes[] = array('method' => self::$_httpMethods[$key], 'route' => $route);
+        }
+        return $routes;
+    }
+
+    /**
+     * Forgets every route (tests)
+     */
+    public static function reset()
+    {
+        self::$_httpMethods = self::$_routes = self::$_routesComponents = self::$_methods = self::$_webhooks = array();
+    }
+
+    /**
+     * The closure (or Controller@action) of a declared route, without a request (tests): Route::handler('POST', '/books')
+     */
+    public static function handler($method, $route)
+    {
+        $route = sanitizePath($route);
+        foreach (self::$_routes as $key => $declared) {
+            if ($declared === $route && self::$_httpMethods[$key] === strtoupper($method)) {
+                return self::$_methods[$key];
+            }
+        }
+        return null;
     }
 
     /**

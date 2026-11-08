@@ -24,6 +24,9 @@ namespace Caligrafy;
  *
  * - $rules: GUMP validation rules per input. Only the inputs listed here reach handle(); use '' for an input without
  *   a rule. They also give the JSON Schema that agents and clients see (Capabilities::schema()).
+ *   A file input takes the rule 'file' (2.19.0): 'cover' => 'required|file|extension,png;jpg|max_size,2mb'. Web pages
+ *   and REST save the uploaded file and give handle() its public URL; MCP and the command line send a URL or a path
+ *   (Caligrafy\Uploads).
  * - $filters: GUMP filters applied before validation.
  * - handle() returns data (an array, a model, a list of models, a scalar) and throws ServiceError to refuse.
  *   It never renders a view, redirects, prints or reads the request or the session: the context says who calls.
@@ -56,13 +59,22 @@ abstract class Service
     {
         $data = array_intersect_key($input, $this->rules);
         $validator = new Validator();
-        $rules = array_filter($this->rules, function ($rule) { return is_string($rule) && trim($rule) !== ''; });
+        // file inputs (2.19.0, Caligrafy\Uploads): GUMP never sees the file rules; the channel saved the file and sends
+        // its URL, MCP and the command line a URL or a path, whose extension is checked here
+        $files = Uploads::fields($this->rules);
+        $fileErrors = array();
+        foreach ($files as $field => $spec) {
+            if (isset($data[$field]) && $data[$field] !== '' && ($problem = Uploads::checkString($data[$field], $spec)) !== null) {
+                $fileErrors[$field] = $problem;
+            }
+        }
+        $rules = array_filter($files ? Uploads::strip($this->rules) : $this->rules, function ($rule) { return is_string($rule) && trim($rule) !== ''; });
         $filters = array_filter(array_intersect_key($this->filters, $this->rules), function ($filter) { return is_string($filter) && trim($filter) !== ''; });
         $validator->validation_rules($rules);
         $validator->filter_rules($filters);
         $clean = $validator->run($data);
-        if ($clean === false) {
-            throw ServiceError::invalid($validator->get_errors_array());
+        if ($clean === false || $fileErrors) {
+            throw ServiceError::invalid(array_merge($clean === false ? $validator->get_errors_array() : array(), $fileErrors));
         }
         return $clean;
     }

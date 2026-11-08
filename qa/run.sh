@@ -63,6 +63,7 @@ API_KEY=$(echo "$KEYS" | sed -n 's/^ *API_KEY=//p')
     echo "API_KEY=$API_KEY"
     echo "APP_ROOT="
     echo "WATSON_URL=http://127.0.0.1:8769/instances/qa-instance"
+    echo "QA_STRIPE_WEBHOOK_SECRET=whsec_qa_http_secret"
     sed -e 's/^DB_ACTIVATE=.*/DB_ACTIVATE=true/' -e 's/^DB_HOST=.*/DB_HOST=mysql/' \
         -e 's/^DB_DATABASE=.*/DB_DATABASE=quillqa/' -e '/^WATSON_URL=/d' framework/settings/.env.example
 } > .env
@@ -102,7 +103,16 @@ $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n    Route::g
     . "    Route::capabilities(\"/capabilities\");\n    Route::mcp(\"/mcp\");\n    Route::notifications();\n"
     . "    Route::capability(\"GET\", \"/v2/books\", \"list_books\");\n    Route::capability(\"GET\", \"/v2/books/{id}\", \"get_book\");\n"
     . "    Route::capability(\"POST\", \"/v2/books\", \"create_book\");\n    Route::capability(\"PUT\", \"/v2/books/{id}\", \"update_book\");\n"
-    . "    Route::capability(\"DELETE\", \"/v2/books/{id}\", \"delete_book\");\n    Route::post(\"/bookshelf/books\", \"BookPageController@store\");\n";
+    . "    Route::capability(\"DELETE\", \"/v2/books/{id}\", \"delete_book\");\n    Route::post(\"/bookshelf/books\", \"BookPageController@store\");\n"
+    . "    Route::page(\"/qa/forms/new\", \"Qa/form\");\n"
+    . "    Route::form(\"/qa/forms/books\", \"create_book\", [\"success\" => \"/v2/books/{id}\", \"flash\" => \"Added {title}\", \"back\" => \"/qa/forms/new\"]);\n"
+    . "    Route::form(\"/qa/forms/books/{id}\", \"update_book\", [\"method\" => \"PUT\", \"success\" => \"/v2/books/{id}\"]);\n"
+    . "    Route::form(\"/qa/forms/cover\", \"qa_set_cover\", [\"success\" => \"/qa/forms/new\", \"flash\" => \"Cover {cover}\", \"back\" => \"/qa/forms/new\"]);\n"
+    . "    Route::capability(\"POST\", \"/v2/covers\", \"qa_set_cover\");\n"
+    . "    Route::auth([\"prefix\" => \"/qa/auth\", \"home\" => \"/qa/bare\", \"logout\" => \"/qa/bare\", \"attempts\" => 3, \"lock\" => 60, \"passkeys\" => true]);\n"
+    . "    Route::webhook(\"/qa/hooks/stripe\", \"qa_record_stripe\", [\"verify\" => \"stripe\", \"secret_env\" => \"QA_STRIPE_WEBHOOK_SECRET\"]);\n"
+    . "    Route::download(\"/qa/books.csv\", \"list_books\", [\"filename\" => \"books.csv\", \"bom\" => true]);\n"
+    . "    Route::download(\"/qa/books.json\", \"list_books\", [\"as\" => \"json\", \"filename\" => \"books.json\"]);\n";
 $s = str_replace("    Route::run();", $qa . "    Route::run();", $s);
 file_put_contents($f, $s);
 '

@@ -1,0 +1,11 @@
+//- QA: what Route::form sends back to the next page (errors(), old(), flash())
+p#who= $authorized ? 'signed in as ' . ($user['username'] ?? '?') : 'visitor'
+p#success= flash('success') ?? 'no success'
+p#error= flash('error') ?? 'no error'
+p#title-error= errors('title') ?? 'no title error'
+p#author-error= errors('author') ?? 'no author error'
+p#cover-error= errors('cover') ?? 'no cover error'
+p#old-title= 'old title ' . old('title', 'none')
+p#old-passcode= 'old passcode ' . old('passcode', 'none')
+form(method='POST')
+  =csrf()

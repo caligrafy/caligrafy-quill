@@ -50,3 +50,73 @@ class QaHelperService extends Service
         return null;
     }
 }
+
+// Declarative routes (2.19.0): Route::form, Route::webhook, Route::download and the file rule
+
+#[Capability(name: 'qa_save_book', description: 'Saves a book with an optional cover', scope: 'books:write')]
+class QaSaveBook extends Service
+{
+    public $rules = array('id' => 'integer', 'title' => 'required|max_len,20', 'cover' => 'file|extension,png;jpg|max_size,1kb', 'password' => '');
+
+    public function handle(array $input, Context $context)
+    {
+        if ($input['title'] === 'taken') {
+            throw ServiceError::conflict('That title is taken');
+        }
+        if ($input['title'] === 'secret') {
+            throw ServiceError::forbidden();
+        }
+        if ($input['title'] === 'missing') {
+            throw ServiceError::notFound('No such shelf');
+        }
+        if ($input['title'] === 'crash') {
+            throw new RuntimeException('crash');
+        }
+        return array('id' => (int) ($input['id'] ?? 7), 'title' => $input['title'], 'cover' => $input['cover'] ?? null);
+    }
+}
+
+#[Capability(name: 'qa_record_event', description: 'Records a webhook event', scope: 'hooks:write')]
+class QaRecordEvent extends Service
+{
+    public static $seen = array();
+    public $rules = array('event' => 'required');
+
+    public function handle(array $input, Context $context)
+    {
+        $type = $input['event']['type'] ?? '';
+        if ($type === 'boom') {
+            throw new RuntimeException('the database is down');
+        }
+        if ($type === 'duplicate') {
+            throw ServiceError::conflict('Already recorded');
+        }
+        self::$seen[] = array('event' => $input['event'], 'actor' => $context->actorType(), 'id' => $context->actorId());
+        return array('recorded' => true);
+    }
+}
+
+#[Capability(name: 'qa_export_rows', description: 'Rows to export', readOnly: true, public: true)]
+class QaExportRows extends Service
+{
+    public $rules = array('shelf' => '');
+
+    public function handle(array $input, Context $context)
+    {
+        return array(array('id' => 1, 'title' => 'Dune', 'shelf' => $input['shelf'] ?? null));
+    }
+}
+
+// an authentication model that needs no database (Route::auth tests)
+class QaAuthUser extends Caligrafy\Model
+{
+    public $id;
+    public $username;
+    public $passcode;
+    public $permissions;
+
+    public function verifyPassword($password)
+    {
+        return password_verify((string) $password, (string) $this->passcode);
+    }
+}

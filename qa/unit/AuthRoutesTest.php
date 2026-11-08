@@ -1,0 +1,184 @@
+<?php
+
+use Caligrafy\Auth;
+use Caligrafy\AuthRoutes;
+use Caligrafy\Route;
+use Caligrafy\Throttle;
+use PHPUnit\Framework\TestCase;
+
+/**
+ * Route::auth (2.19.0): the routes, the sign-in check with its throttle, a new session id at sign-in and sign-out
+ */
+final class AuthRoutesTest extends TestCase
+{
+    private $saved;
+    private $store = array();
+    private $regenerated = 0;
+
+    protected function setUp(): void
+    {
+        $this->saved = $_SESSION ?? null;
+        $_SESSION = array('token' => str_repeat('a', 64));
+        Route::reset();
+        $this->store = array();
+        $this->regenerated = 0;
+        AuthRoutes::$regenerate = function () { $this->regenerated++; };
+    }
+
+    protected function tearDown(): void
+    {
+        Route::reset();
+        Auth::reset();
+        AuthRoutes::$regenerate = null;
+        if ($this->saved === null) {
+            unset($_SESSION);
+        } else {
+            $_SESSION = $this->saved;
+        }
+    }
+
+    // a store in memory instead of the Cache
+    private function throttle($max = 3, $seconds = 60): Throttle
+    {
+        return new Throttle($max, $seconds, array(
+            'get' => function ($key) { return $this->store[$key] ?? null; },
+            'put' => function ($key, $value) { $this->store[$key] = $value; },
+            'forget' => function ($key) { unset($this->store[$key]); },
+        ));
+    }
+
+    private function finder(): callable
+    {
+        $ann = new QaAuthUser('users');
+        $ann->id = 4;
+        $ann->username = 'ann';
+        $ann->passcode = password_hash('Passw0rd!', PASSWORD_BCRYPT, array('cost' => 4));
+        return function ($username) use ($ann) { return strtolower($username) === 'ann' ? $ann : null; };
+    }
+
+    private function paths(): array
+    {
+        return array_map(function ($r) { return $r['method'] . ' ' . $r['route']; }, Route::routes());
+    }
+
+    public function testRegistersTheSignInPages(): void
+    {
+        $options = Route::auth();
+        $this->assertSame(array('GET login', 'POST login', 'GET logout', 'POST logout', 'GET notAuthorized', 'GET register', 'POST register'), $this->paths());
+        $this->assertSame('register_user', $options['register']);
+        $this->assertSame(array('login' => 'Auth/login', 'register' => 'Auth/register'), $options['views']);
+        $this->assertInstanceOf(Closure::class, Route::handler('POST', '/login'));
+    }
+
+    public function testPrefixNoRegisterAndPasskeys(): void
+    {
+        Route::auth(array('prefix' => '/account/', 'register' => false, 'passkeys' => true, 'views' => array('login' => 'Account/signin')));
+        $this->assertSame(array('GET account/login', 'POST account/login', 'GET account/logout', 'POST account/logout', 'GET account/notAuthorized',
+            'POST account/passkey/register/options', 'POST account/passkey/register', 'POST account/passkey/login/options', 'POST account/passkey/login'), $this->paths());
+        $this->assertSame('Account/signin', AuthRoutes::options(array('views' => array('login' => 'Account/signin')))['views']['login']);
+        $this->assertSame('Auth/register', AuthRoutes::options(array('views' => array('login' => 'Account/signin')))['views']['register']);
+    }
+
+    public function testFaceSignInAndPasswordResetAreNotProvided(): void
+    {
+        foreach (array('face', 'reset') as $option) {
+            try {
+                Route::auth(array($option => true));
+                $this->fail("$option is refused");
+            } catch (LogicException $e) {
+                $this->assertNotSame('', $e->getMessage());
+            }
+        }
+        $this->assertSame(array(), Route::routes(), 'nothing registered');
+    }
+
+    public function testTheRightPasswordSignsIn(): void
+    {
+        $result = AuthRoutes::attempt(' ann ', 'Passw0rd!', '10.0.0.1', $this->throttle(), $this->finder());
+        $this->assertSame('ok', $result['status']);
+        $this->assertSame(4, $result['user']->id);
+    }
+
+    public function testWrongPasswordsAndUnknownUsersAreInvalidThenLocked(): void
+    {
+        $throttle = $this->throttle(3);
+        $this->assertSame('invalid', AuthRoutes::attempt('ann', 'nope', '10.0.0.1', $throttle, $this->finder())['status']);
+        $this->assertSame('invalid', AuthRoutes::attempt('ANN', 'nope', '10.0.0.1', $throttle, $this->finder())['status'], 'the username is counted in lower case');
+        $this->assertSame('locked', AuthRoutes::attempt('ann', 'nope', '10.0.0.1', $throttle, $this->finder())['status'], 'the third failure locks');
+        $this->assertSame('locked', AuthRoutes::attempt('ann', 'Passw0rd!', '10.0.0.1', $throttle, $this->finder())['status'], 'even the right password while locked');
+        // another address, or another username, is counted apart
+        $this->assertSame('ok', AuthRoutes::attempt('ann', 'Passw0rd!', '10.0.0.2', $throttle, $this->finder())['status']);
+        $this->assertSame('invalid', AuthRoutes::attempt('bob', 'x', '10.0.0.1', $throttle, $this->finder())['status'], 'an unknown user');
+        $this->assertSame('invalid', AuthRoutes::attempt('', 'x', '10.0.0.1', $throttle, $this->finder())['status']);
+    }
+
+    public function testASuccessForgetsTheFailures(): void
+    {
+        $throttle = $this->throttle(3);
+        AuthRoutes::attempt('ann', 'nope', '10.0.0.1', $throttle, $this->finder());
+        AuthRoutes::attempt('ann', 'nope', '10.0.0.1', $throttle, $this->finder());
+        $this->assertSame('ok', AuthRoutes::attempt('ann', 'Passw0rd!', '10.0.0.1', $throttle, $this->finder())['status']);
+        $this->assertSame(0, $throttle->failures(Throttle::key('signin', '10.0.0.1', 'ann')));
+        $this->assertSame('invalid', AuthRoutes::attempt('ann', 'nope', '10.0.0.1', $throttle, $this->finder())['status']);
+    }
+
+    public function testTheLockEndsWithTheWindow(): void
+    {
+        $throttle = $this->throttle(1, 60);
+        $key = Throttle::key('signin', '10.0.0.1', 'ann');
+        $throttle->fail($key);
+        $this->assertTrue($throttle->locked($key));
+        $this->store[$key]['until'] = time() - 1;
+        $this->assertFalse($throttle->locked($key));
+        $this->assertSame(1, $throttle->fail($key), 'a new window starts');
+    }
+
+    public function testTheThrottleUsesTheSessionWhenTheCacheIsOff(): void
+    {
+        putenv('CACHE_STORE=off');
+        try {
+            $throttle = new Throttle(2, 60);
+            $key = Throttle::key('signin', '1.2.3.4', 'ann');
+            $throttle->fail($key);
+            $this->assertSame(1, $_SESSION['__throttle'][$key]['failures']);
+            $throttle->fail($key);
+            $this->assertTrue($throttle->locked($key));
+            $throttle->clear($key);
+            $this->assertFalse($throttle->locked($key));
+        } finally {
+            putenv('CACHE_STORE');
+        }
+    }
+
+    public function testSignInAndSignOutRegenerateTheSessionAndTheCsrfToken(): void
+    {
+        $authorized = array();
+        $user = (object) array('id' => 4);
+        $this->assertTrue(AuthRoutes::signIn($user, function ($u) use (&$authorized) { $authorized[] = $u; return true; }));
+        $this->assertSame(1, $this->regenerated, 'session_regenerate_id(true) at sign-in');
+        $this->assertSame(array($user), $authorized);
+        $this->assertNotSame(str_repeat('a', 64), $_SESSION['token']);
+        $this->assertSame(64, strlen($_SESSION['token']));
+
+        $token = $_SESSION['token'];
+        $calls = 0;
+        AuthRoutes::signOut(function () use (&$calls) { $calls++; });
+        $this->assertSame(1, $calls);
+        $this->assertSame(2, $this->regenerated, 'and at sign-out');
+        $this->assertNotSame($token, $_SESSION['token']);
+    }
+
+    public function testAuthorizeWithTheAuthenticationModel(): void
+    {
+        Auth::authentication('QaAuthUser', 'users');
+        $this->assertInstanceOf(QaAuthUser::class, Auth::model());
+        $this->assertNotSame(Auth::model(), Auth::model(), 'a copy each time');
+        $user = $this->finder()('ann');
+        $this->assertTrue(AuthRoutes::signIn($user));
+        $this->assertArrayHasKey('__authorization', $_SESSION);
+        AuthRoutes::signOut();
+        $this->assertArrayNotHasKey('__authorization', $_SESSION);
+        Auth::reset();
+        $this->assertNull(Auth::model());
+    }
+}
