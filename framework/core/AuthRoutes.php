@@ -29,7 +29,8 @@ namespace Caligrafy;
  * Options: prefix (''), home ('/'), logout ('/'), register (true, or the name of the capability), attempts, lock,
  * views (['login' => 'Auth/login', 'register' => 'Auth/register']), passkeys (false), identifier ('username': the
  * users column people sign in with and the name of its field, 'email' for instance), signInAfterRegister (false),
- * messages (2.19.3: what a failed sign-in says, ['invalid' => ..., 'locked' => ...]; {minutes} in 'locked' is the wait).
+ * messages (what sign-in and sign-up say: 'invalid', 'locked' ({minutes} is the wait), 2.19.3; 'mismatch',
+ * 'register_invalid', 'register_taken', 'registered', 2.19.4; see AuthRoutes::MESSAGES).
  * A failed sign-in shows the page again with what the person typed in the identifier field (never the password).
  * A JSON request (Accept: application/json) gets JSON answers and needs the X-CSRF-Token header.
  * Not provided by the framework, so refused with a LogicException: 'face' (the face login recipe has its own
@@ -40,10 +41,16 @@ class AuthRoutes
     // what a check against a password that does not exist costs: response times do not tell which usernames exist
     const DUMMY_HASH = '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG';
 
-    // what a failed sign-in says (2.19.3: human words; the 'messages' option replaces them)
+    // what sign-in and sign-up say (human words; the 'messages' option replaces any of them): a failed sign-in
+    // (2.19.3), a locked one ({minutes} is the wait), and the sign-up page (2.19.4): passwords that differ, inputs to fix,
+    // an account that already exists, and the note on the sign-in page once the account is created
     const MESSAGES = array(
         'invalid' => "We couldn't sign you in with those details. Check them and try again.",
         'locked' => 'Too many tries in a row. For your security, wait {minutes} minutes, then try again.',
+        'mismatch' => "The two passwords don't match. Type the same password in both fields.",
+        'register_invalid' => 'A few details need a fix: see the notes under the fields.',
+        'register_taken' => 'An account already exists with these details. Sign in instead, or use other details.',
+        'registered' => 'Your account is ready. Sign in to start.',
     );
 
     /** @var callable|null replaces session_regenerate_id(true) (tests) */
@@ -212,7 +219,7 @@ class AuthRoutes
         $old['username'] = is_scalar($old['username'] ?? '') ? (string) ($old['username'] ?? '') : '';
         $page = array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'user' => (object) $old);
         if (array_key_exists('confirmpasscode', $p) && (string) ($p['passcode'] ?? '') !== (string) $p['confirmpasscode']) {
-            $error = ServiceError::invalid(array('passcode' => 'passwords don\'t match'), 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.');
+            $error = ServiceError::invalid(array('passcode' => 'passwords don\'t match'), $o['messages']['mismatch']);
             return $json ? array('status' => 422, 'json' => $error->toArray())
                 : array('view' => $o['views']['register'], 'data' => $page + array('message' => $error->getMessage(), 'errors' => $error->fields));
         }
@@ -222,7 +229,7 @@ class AuthRoutes
             if ($json) {
                 return array('status' => $e->status(), 'json' => $e->toArray());
             }
-            $message = $e->kind === 'conflict' ? 'You are already registered' : ($e->kind === 'invalid' ? 'Some of the inputs are invalid. Make sure all the required inputs are entered properly' : $e->getMessage());
+            $message = $e->kind === 'conflict' ? $o['messages']['register_taken'] : ($e->kind === 'invalid' ? $o['messages']['register_invalid'] : $e->getMessage());
             $errors = $e->kind === 'conflict' ? array($o['identifier'] => $e->getMessage()) : $e->fields;
             return array('view' => $o['views']['register'], 'data' => $page + array('message' => $message, 'errors' => $errors));
         }
@@ -233,7 +240,7 @@ class AuthRoutes
         if ($json) {
             return array('status' => 201, 'json' => array('data' => $profile));
         }
-        Flash::message('success', 'Your account is ready: sign in');
+        Flash::message('success', $o['messages']['registered']);
         return array('redirect' => $o['prefix'] . '/login');
     }
 

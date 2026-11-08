@@ -51,17 +51,17 @@ class AuthController extends Controller {
         
         //confirm password (a form check: the capability takes one password)
         if (($parameters['passcode']?? '') !== ($parameters['confirmpasscode']?? '')) {
-            return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'The passwords you entered don\'t match. Make sure that the password and the confirm password fields match.', 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput));
+            return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => \Caligrafy\AuthRoutes::MESSAGES['mismatch'], 'errors' => ['passcode' => 'passwords don\'t match'], 'user' => $userInput));
         }
         
         try {
             $this->call('register_user', array('username' => $parameters['username']?? '', 'passcode' => $parameters['passcode']?? ''));
         } catch (ServiceError $e) {
             if ($e->kind === 'conflict') {
-                return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'You are already registered', 'errors' => ['username' => 'The username already exists in the system'], 'user' => $userInput));
+                return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => \Caligrafy\AuthRoutes::MESSAGES['register_taken'], 'errors' => ['username' => 'The username already exists in the system'], 'user' => $userInput));
             }
             // invalid inputs
-            return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'Some of the inputs are invalid. Make sure all the required inputs are entered properly', 'errors' => $e->fields, 'user' => $userInput ));
+            return view('/Auth/register', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => \Caligrafy\AuthRoutes::MESSAGES['register_invalid'], 'errors' => $e->fields, 'user' => $userInput ));
         }
         redirect('/login');
         exit;

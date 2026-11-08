@@ -571,7 +571,7 @@ views of the authentication module (`application/views/Auth/login.pug`, `registe
 | `register` | `true` | `true`: `/register` with the `register_user` capability; `false`: no sign-up; a capability name: yours |
 | `identifier` | `'username'` | the `users` column people sign in with, and the name of the sign-in field (`'email'`) |
 | `signInAfterRegister` | `false` | `true`: a new account is signed in and goes to `home` instead of the sign-in page |
-| `messages` | human words | what a failed sign-in says (2.19.3): `['invalid' => "We couldn't sign you in...", 'locked' => 'Too many tries... {minutes} minutes...']` |
+| `messages` | human words | what sign-in and sign-up say: `invalid`, `locked` (2.19.3, `{minutes}` is the wait), `mismatch`, `register_invalid`, `register_taken`, `registered` (2.19.4); the defaults are `AuthRoutes::MESSAGES` |
 | `attempts`, `lock` | `5`, `900` | failed sign-ins per username and address before a `429`, and the window in seconds |
 | `views` | `['login' => 'Auth/login', 'register' => 'Auth/register']` | your own views |
 | `prefix` | `''` | `'/account'` gives `/account/login`... (the shipped views post to `/login`: write your own) |

@@ -6,6 +6,18 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.4] - 2026-11-08
+
+### Changed
+- The sign-up page of `Route::auth` speaks plainly too: "The two passwords don't match. Type the same password in both
+  fields.", "A few details need a fix: see the notes under the fields.", "An account already exists with these details.
+  Sign in instead, or use other details." and, on the sign-in page after signing up, "Your account is ready. Sign in to
+  start." The `messages` option sets each of them (`mismatch`, `register_invalid`, `register_taken`, `registered`),
+  like the sign-in ones (`AuthRoutes::MESSAGES`). The template `AuthController` uses the same words.
+
+### Documentation
+- Plugin 1.31.4; the wiki (Authentication, Declarative routes) lists the new keys.
+
 ## [2.19.3] - 2026-11-08
 
 ### Changed

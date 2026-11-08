@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.31.4** - Caligrafy Quill 2.19.4: the sign-up page's human words and their `messages` keys (`mismatch`,
+  `register_invalid`, `register_taken`, `registered`).
 - **1.31.3** - Caligrafy Quill 2.19.3: `Route::auth`'s human sign-in messages and its `messages` option, the
   typed username kept, the user capabilities on the query builder, `upgrade` holding `AuthController` with Route::auth.
 - **1.31.2** - Caligrafy Quill 2.19.2: face detection drawings on the faces with 16:9 cameras (`mediaSize()`),

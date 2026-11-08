@@ -129,6 +129,12 @@ final class AuthRoutesTest extends TestCase
         $this->assertSame('That email and password do not match an account.', $o['messages']['invalid']);
         $this->assertSame(AuthRoutes::MESSAGES['locked'], $o['messages']['locked']);
         $this->assertArrayNotHasKey('other', $o['messages']);
+        // the sign-up page's words too (2.19.4)
+        foreach (array('mismatch', 'register_invalid', 'register_taken', 'registered') as $key) {
+            $this->assertNotSame('', AuthRoutes::MESSAGES[$key]);
+        }
+        $o = AuthRoutes::options(array('messages' => array('register_taken' => 'This email already has an account: sign in instead.')));
+        $this->assertSame('This email already has an account: sign in instead.', $o['messages']['register_taken']);
     }
 
     public function testASuccessForgetsTheFailures(): void
@@ -281,6 +287,10 @@ final class AuthRoutesTest extends TestCase
         $this->assertSame('Auth/register', $outcome['view']);
         $this->assertSame('This email is already used', $outcome['data']['errors']['email']);
         $this->assertSame('There is no such team', $outcome['data']['errors']['team_id']);
+        $this->assertSame(AuthRoutes::MESSAGES['register_invalid'], $outcome['data']['message'], 'the banner above the fields (2.19.4)');
+        $mine = AuthRoutes::options(array('register' => 'qa_register_member', 'identifier' => 'email', 'messages' => array('register_invalid' => 'Fix the fields below.', 'mismatch' => 'Not the same password.')));
+        $this->assertSame('Fix the fields below.', AuthRoutes::registration($mine, $form, Context::guest('web'))['data']['message']);
+        $this->assertSame('Not the same password.', AuthRoutes::registration($mine, array('confirmpasscode' => 'other') + $form, Context::guest('web'))['data']['message']);
         $this->assertEquals((object) array('username' => 'bob', 'email' => 'ann@example.com', 'team_id' => '99'), $outcome['data']['user'], 'no password in the old input');
 
         $outcome = AuthRoutes::registration($o, array('email' => 'bob@example.com', 'passcode' => 'a', 'confirmpasscode' => 'b'), Context::guest('web'), true);
@@ -289,7 +299,7 @@ final class AuthRoutesTest extends TestCase
         $outcome = AuthRoutes::registration($o, array('team_id' => '7', 'email' => 'bob@example.com') + $form, Context::guest('web'));
         $this->assertSame(array('redirect' => '/login'), $outcome, 'then the sign-in page, as before');
         Flash::age();
-        $this->assertSame('Your account is ready: sign in', Flash::get('messages', array())['success'] ?? null);
+        $this->assertSame(AuthRoutes::MESSAGES['registered'], Flash::get('messages', array())['success'] ?? null);
         $this->assertSame(0, $this->regenerated, 'not signed in');
         $this->assertArrayNotHasKey('__authorization', $_SESSION);
         $this->assertSame('0', (string) Database::table('users')->where('email', 'bob@example.com')->value('permissions'), 'permissions was not passed');
