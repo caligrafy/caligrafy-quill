@@ -134,7 +134,9 @@ class Auth extends \stdClass {
     public static function logout($redirectUrl = '/')
     {
         self::unauthorize();
-        session_destroy();
+        if (session_status() === PHP_SESSION_ACTIVE) {
+            session_destroy();
+        }
         redirect($redirectUrl);
         exit;
     }

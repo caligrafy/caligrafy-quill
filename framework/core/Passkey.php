@@ -207,6 +207,7 @@ class Passkey extends \stdClass {
     */
     protected function remember($type, $userId, ByteBuffer $challenge)
     {
+        if (function_exists('caligrafySessionStart')) caligrafySessionStart();   // a challenge to keep (2.19.0)
         $_SESSION[self::SESSION_KEY] = [
             'type' => $type,
             'challenge' => base64_encode($challenge->getBinaryString()),

@@ -58,6 +58,7 @@ $defaultMsg = "\n Available Functions:
 				\n - sql <file.sql>: runs a SQL script on the database of .env
 				\n - migrate [status | make <name>]: runs the migrations of application/migrations (numbered SQL files, each run once, in order); make writes a new one
 				\n - queue <work [--for <seconds>] [--once] | status | list | failed | retry <id | all>>: background jobs pushed with Caligrafy\Queue::push (a capability run later, with retries)
+				\n - env <cache | clear>: compiles .env to .env.php, which pages read without parsing .env (the deploy step does it in production)
 				\n - cache clear: empties the cache (Caligrafy\Cache, CACHE_STORE), the compiled views and the class map
 				\n - test [<filter>] | test make <Name>: runs the tests of tests/ (PHPUnit, Caligrafy\Testing\TestCase); make writes one
 				\n - platform install: creates the framework tables (personal access tokens, audit log, jobs, cache)
@@ -472,6 +473,25 @@ switch(strtolower($argv[1])) {
 			exit(1);
 		}
 
+	case 'env':
+		// .env compiled to .env.php (2.19.0): index.php reads it without parsing .env, while it is newer than .env
+		$sub = strtolower($argv[2] ?? '');
+		if ($sub === 'cache') {
+			if (!Caligrafy\Deployer::cacheEnv('.')) {
+				fwrite(STDERR, "\n env cache: no .env to compile, or .env.php could not be written\n\n");
+				exit(1);
+			}
+			print("\n .env compiled to .env.php: pages read it without parsing .env (php caligrafer.php env clear removes it)\n\n");
+			exit(0);
+		}
+		if ($sub === 'clear') {
+			@unlink('.env.php');
+			print("\n .env.php removed: pages read .env again\n\n");
+			exit(0);
+		}
+		print("\n Usage: php caligrafer.php env <cache | clear>\n\n");
+		exit(1);
+
 	case 'queue':
 		// Background jobs (framework/core/Queue.php): work runs them, exec is the child process of one job
 		$sub = strtolower($argv[2] ?? '');
@@ -573,7 +593,7 @@ switch(strtolower($argv[1])) {
 			if (Caligrafy\Cache::store() === 'database') caligrafyConnect();
 			$n = Caligrafy\Cache::flush();
 			$removed = 0;
-			foreach (array('views', 'classes') as $kind) {
+			foreach (array('views', 'views-debug', 'classes') as $kind) {
 				foreach (glob(Caligrafy\ClassMap::tempFolder($kind) . '/*') ?: array() as $file) $removed += @unlink($file) ? 1 : 0;
 			}
 			print("\n Cache (" . Caligrafy\Cache::store() . ") emptied" . ($n !== null ? ": $n value(s)" : '') . "; $removed compiled view and class map file(s) removed\n\n");

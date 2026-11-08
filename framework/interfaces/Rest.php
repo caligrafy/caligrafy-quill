@@ -54,7 +54,7 @@ class Rest
         $request = $request ?? request();
         $context = Context::fromRequest($request, 'rest');
         // csrf: the token browser clients send back in X-CSRF-Token (readable only by pages of this origin)
-        self::send(200, array('data' => Capabilities::describe($context), 'csrf' => $_SESSION['token'] ?? null));
+        self::send(200, array('data' => Capabilities::describe($context), 'csrf' => session('token')));   // starts the session (2.19.0)
     }
 
     /**

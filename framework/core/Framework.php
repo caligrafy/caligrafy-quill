@@ -28,9 +28,10 @@ class Framework extends \stdClass {
    */
   public static function run() 
   {
-       // Errors get real HTTP status codes: the page is buffered (up to 1 MB) so that a PHP fatal error can still
-       // be turned into a 500 response, and uncaught exceptions return 500 (message only when APP_DEBUG is true)
-       ob_start(null, 1048576);
+       // Errors get real HTTP status codes: the page is buffered so that a PHP fatal error can still be turned into a
+       // 500 response, and uncaught exceptions return 500 (message only when APP_DEBUG is true). No chunk size: one of
+       // 1 MB (before 2.19.0) made PHP allocate 1 MB for the buffer of every request, even a page of 1 KB
+       ob_start();
        require_once 'framework/core/Errors.php';
        register_shutdown_function(array('Caligrafy\\Errors', 'shutdown'));
        set_exception_handler(function ($e) { Errors::handle($e, true); });
@@ -103,6 +104,9 @@ class Framework extends \stdClass {
     {   
         // Load configuration files
         include CONFIG_PATH . "config.php";
+
+        // what the session holds once the settings ran: a request without a session cookie gets one only if it needs it
+        caligrafySessionSnapshot();
 
         // The application's own bindings (application/config/container.php, 2.18.0)
         Container::boot();

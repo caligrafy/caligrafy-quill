@@ -46,6 +46,8 @@ class Deployer
     {
         print("\n Caligrafy deploy\n");
         $this->schedule();
+        $cached = self::cacheEnv($this->root);
+        $this->line($cached ? 'OK' : 'SKIP', 'Settings', $cached ? '.env compiled to .env.php (read without parsing on every request)' : 'no .env to compile');
         if (strtolower((string) getenv('DB_ACTIVATE')) !== 'true') {
             $this->line('SKIP', 'Database', 'DB_ACTIVATE is not true: nothing to prepare');
             return $this->done(0);
@@ -68,6 +70,41 @@ class Deployer
             return $this->done(1);
         }
         return $this->done(0);
+    }
+
+    /**
+     * Compiles .env to .env.php (2.19.0): the values Dotenv reads from it, as a PHP array that index.php includes
+     * (OPcache keeps it) instead of parsing .env on every request. Same owner, group and permissions as .env; written
+     * to a temporary file, then renamed. index.php uses it only while .env still has the content it was compiled from (its sha1).
+     * @return bool false without a .env
+     */
+    public static function cacheEnv($root = '.')
+    {
+        $root = rtrim($root, '/');
+        $env = $root . '/.env';
+        if (!is_file($env)) {
+            return false;
+        }
+        $source = (string) file_get_contents($env);
+        $values = array('sha1' => sha1($source), 'values' => \Dotenv\Dotenv::parse($source));   // used while .env is unchanged
+        $target = $root . '/.env.php';
+        $tmp = $target . '.' . getmypid() . '.tmp';
+        if (file_put_contents($tmp, "<?php\n// Compiled from .env by php caligrafer.php env cache (or the deploy step): never edit it, never commit it\nreturn " . var_export($values, true) . ";\n") === false) {
+            return false;
+        }
+        @chmod($tmp, fileperms($env) & 0777);
+        if (function_exists('posix_geteuid') && posix_geteuid() === 0) {
+            @chown($tmp, fileowner($env));
+            @chgrp($tmp, filegroup($env));
+        }
+        if (!@rename($tmp, $target)) {
+            @unlink($tmp);
+            return false;
+        }
+        if (function_exists('opcache_invalidate')) {
+            @opcache_invalidate($target, true);
+        }
+        return true;
     }
 
     /**

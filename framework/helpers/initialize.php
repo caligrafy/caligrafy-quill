@@ -14,7 +14,17 @@
 
 date_default_timezone_set(getenv('SERVER_TIMEZONE') != null? getenv('SERVER_TIMEZONE'): 'America/New_York');
 setlocale(LC_MONETARY, getenv('APP_LOCALE'));
-session_start();
+// Sessions (2.19.0): a request that brings a session cookie starts its session, as always. A request without one (an
+// API client, an agent, a first visit) gets the same values in memory, and its session is started only when it needs
+// one: when the CSRF token is read (session('token'): a form, a page of a Vue app) or, at the end of the request, when
+// the request changed the session or its page carries the token (caligrafySessionShutdown() in corehelpers.php). This
+// spares a session file per request, and the clean-up of all of them that PHP runs every 1,000 requests.
+// SESSION_LAZY=false starts every session at once, as before 2.19.0.
+if (PHP_SAPI === 'cli' || strtolower(trim((string) getenv('SESSION_LAZY'))) === 'false' || isset($_COOKIE[session_name()])) {
+    session_start();
+} else {
+    $_SESSION = array();
+}
 if (empty($_SESSION['token'])) {
     $_SESSION['token'] = bin2hex(random_bytes(32));
 }

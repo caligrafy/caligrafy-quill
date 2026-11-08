@@ -189,10 +189,61 @@ function metadata($pairs = array())
  */	
 function session($key, $value = null)
 {
+    // the CSRF token handed to a page, or a value to keep: the session must exist (2.19.0, initialize.php)
+    if ($value !== null || $key === 'token') {
+        caligrafySessionStart();
+    }
     if ($value !== null) {
         $_SESSION[$key] = $value;
     }
     return $_SESSION[$key]?? null;
+}
+
+/**
+ * Starts the session of a request that came without a session cookie (2.19.0): the values this request already put in
+ * $_SESSION are kept. True when the session is active.
+ */
+function caligrafySessionStart()
+{
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        return true;
+    }
+    if (PHP_SAPI === 'cli' || headers_sent()) {
+        return false;
+    }
+    $pending = isset($_SESSION) && is_array($_SESSION) ? $_SESSION : array();
+    if (!@session_start()) {
+        $_SESSION = $pending;
+        return false;
+    }
+    $_SESSION = array_merge($_SESSION, $pending);
+    return true;
+}
+
+/**
+ * What the session holds once the settings ran (config.php sets metadata, keywords...): a request that changes it
+ * afterwards, or whose page carries the CSRF token, gets its session saved (caligrafySessionShutdown)
+ */
+function caligrafySessionSnapshot()
+{
+    if (session_status() === PHP_SESSION_ACTIVE || PHP_SAPI === 'cli') {
+        return;
+    }
+    $GLOBALS['__caligrafy_session_snapshot'] = serialize($_SESSION ?? array());
+    register_shutdown_function('caligrafySessionShutdown');
+}
+
+function caligrafySessionShutdown()
+{
+    if (session_status() === PHP_SESSION_ACTIVE || !isset($GLOBALS['__caligrafy_session_snapshot'])) {
+        return;
+    }
+    $changed = serialize($_SESSION ?? array()) !== $GLOBALS['__caligrafy_session_snapshot'];
+    $token = $_SESSION['token'] ?? '';
+    $handedOut = $token !== '' && ob_get_level() > 0 && strpos((string) ob_get_contents(), $token) !== false;
+    if ($changed || $handedOut) {
+        caligrafySessionStart();       // the session is written when the request ends
+    }
 }
 
 /**
@@ -292,7 +343,11 @@ function loadConstantFromArray($array) {
 
 function terminateSession($url)
 {
-    session_unset();
+    if (session_status() === PHP_SESSION_ACTIVE) {
+        session_unset();
+    } else {
+        $_SESSION = array();
+    }
     header('Location: '.$url);
 }
 

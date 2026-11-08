@@ -113,8 +113,13 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
      */
     protected function render($view, array $data = array())
     {
-        View::cache();
-        return \Phug::renderFile(VIEW_PATH . $view . '.pug', $data);
+        ob_start();
+        try {
+            View::display(VIEW_PATH . $view . '.pug', $data);
+        } finally {
+            $html = ob_get_clean();
+        }
+        return $html;
     }
 
     /**

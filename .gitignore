@@ -1,4 +1,5 @@
 .env
+.env.php
 .env.BKP
 .DS_Store
 .DS_Store?

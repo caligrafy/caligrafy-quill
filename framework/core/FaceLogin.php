@@ -68,6 +68,7 @@ class FaceLogin extends \stdClass {
             'username' => $username !== null && $username !== '' ? strtolower((string)$username) : null,
             'expires' => self::now() + $ttl,
         ];
+        if (function_exists('caligrafySessionStart')) caligrafySessionStart();   // a challenge to keep (2.19.0)
         $_SESSION[self::SESSION_KEY] = $challenge;
         return ['nonce' => $challenge['nonce'], 'challenges' => $challenge['challenges'], 'expires_in' => $ttl];
     }

@@ -114,20 +114,13 @@ class Database extends \stdClass {
      */  
     public static function render($result)
     {      
-        // create the JSON array
-        $jsonarray = array();
-        while ($row = $result->fetch())
-        {
-            $jsonarray[] = $row;
-
-        }
+        // rows as associative arrays, fetched as such (2.19.0): before, every row was encoded to JSON and decoded back,
+        // the same arrays with a cost on every query (and null for a row whose text was not valid UTF-8)
+        $rows = $result->columnCount() > 0 ? $result->fetchAll(PDO::FETCH_ASSOC) : array();   // INSERT, UPDATE...: none
         if (self::$renderJson) {
-            return json_encode($jsonarray, JSON_UNESCAPED_SLASHES);
+            return json_encode($rows, JSON_UNESCAPED_SLASHES);
         }
-        else
-        {
-            return json_decode(json_encode($jsonarray), true);
-        } 
+        return $rows;
     }
 
     /**
