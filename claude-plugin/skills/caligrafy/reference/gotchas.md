@@ -678,3 +678,26 @@ API key) or every event answers 500. The capability runs as `Context::system('we
 `event` as data from outside (look the object up again with the Stripe API before trusting amounts), and make it
 idempotent, Stripe retries until it gets a 2xx. Proof: `framework/core/Webhook.php`.
 
+**G133. `Route::auth(['identifier' => 'email'])` changes the field the sign-in form posts (2.19.0+).** The POST
+field is named after the identifier, so the shipped `login.pug` (a `username` field) must be changed to an `email`
+field; the view gets `$identifier`. The lookup is the model's `findByUsername()` only for `username`; for another
+column it is `findBy($column, $value)` when the model has one (the shipped `User` since 2.19.0), else a bound query on
+the model's table. An older `findByUsername()` rewritten to search by email keeps working with the default identifier.
+Sign-up now sends the register capability every input its `$rules` declare (not only `username`/`passcode`): a form
+field the rules do not list never reaches it. Proof: `AuthRoutes::finder()`, `AuthRoutes::registerInput()`.
+
+**G134. `exists` and `unique` are checks, not constraints (2.19.0+).** They run one bound query at validation time:
+two requests at the same instant can both pass `unique`, so keep the column's `UNIQUE` index (and catch the duplicate
+as `register_user` does). An empty optional input is not checked: add `required`. GUMP reads one `,` per rule, so the
+framework joins `unique`'s extra arguments with `;` (`unique,users.email,id,id` = `unique,users.email;id;id`). A rule
+named `exists` or `unique` that the app added with `GUMP::add_validator()` before the first `new Validator()` is kept
+and replaces the framework's; one added after throws (GUMP refuses a second definition). The message uses the table in
+the singular (`authors` -> "There is no such author"): set your own with `GUMP::set_error_message()`. Proof:
+`framework/core/Validator.php`, `qa/unit/ValidatorRulesTest.php`.
+
+**G135. `current_year` is read when the input is checked; the schema ignores a rule without its argument (2.19.0+).**
+`max_numeric,current_year` (and `min_numeric`) compare with `date('Y')` of the server at validation time; no need to
+append `date('Y')` to the rules in `validate()` (the rules are class defaults, read by the schema). In the JSON Schema
+agents see, `current_year` is this year's number and a missing or non-numeric argument (`max_numeric,`, `max_len,x`)
+is left out instead of crashing `Capabilities::schemaFromRules()` with a TypeError; GUMP still fails such a rule at
+validation. Proof: `Capabilities::bound()`, `Validator::normalize()`.

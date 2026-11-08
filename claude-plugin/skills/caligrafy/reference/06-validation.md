@@ -68,6 +68,35 @@ Below is a curated list of the available `Validators`.
 
 > See the full list of GUMP Validators [here](https://github.com/Wixel/GUMP/blob/master/README.md)
 
+### Rules of the framework: `exists`, `unique` and the current year (2.19.0+)
+Caligrafy adds three rules to GUMP's, for the `$rules` of a capability (and `$this->check()` in a controller):
+
+```php
+public $rules = array(
+    'author_id'      => 'required|integer|exists,authors.id',            // "There is no such author"
+    'email'          => 'required|valid_email|unique,users.email',       // "This email is already used"
+    'published_year' => 'required|integer|min_numeric,1450|max_numeric,current_year',
+);
+
+// an update: the row of the user being changed does not count (unique,<table>.<column>,<ignoreColumn>,<ignoreField>)
+public $rules = array('id' => 'required|integer', 'email' => 'required|valid_email|unique,users.email,id,id');
+```
+
+* exists,table.column `The value is in that column of the table: a foreign key that points at a real row`
+* unique,table.column[,ignoreColumn,ignoreField] `No row has the value yet; the row whose ignoreColumn equals the input ignoreField is left out (ignoreField defaults to ignoreColumn)`
+* min_numeric,current_year / max_numeric,current_year `The year of today, read when the input is checked (not when the class is loaded)`
+
++ `exists` and `unique` run one bound query through the query builder, on the app's database (in tests, the database
+  of the tests). The table and the column are checked as the builder checks names (letters, digits and `_`, one
+  optional `db.` prefix): a wrong name stops with an error, it is never sent to the database.
++ Their messages name what is missing or taken: the table in the singular for `exists` (`authors` -> "There is no such
+  author"), the column for `unique`. `GUMP::set_error_message('exists', '...')` or the per-field messages of
+  `set_fields_error_messages()` replace them.
++ An empty optional input is not checked, as with every rule: add `required` when the value must be there.
++ They only see the database at that moment: two sign-ups at the same instant can both pass `unique`, so keep the
+  `UNIQUE` index of the column too.
++ The JSON Schema that agents see takes `current_year` as this year's number; `exists` and `unique` add nothing to it.
+
 ### Usage 
 `Validation` can be used within the context of a `Controller` or any class in the `/application` folder.
 This framework integrated the main methods of GUMP into one common method. 

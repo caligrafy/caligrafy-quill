@@ -12,8 +12,8 @@ Arguments: `$ARGUMENTS` (snake_case capability name, optional scope `resource:ac
 
 Read first: the `caligrafy` skill's [13-build-once-services-capabilities-mcp.md](../caligrafy/reference/13-build-once-services-capabilities-mcp.md),
 the Build once, Queries and Declarative routes sections of [api-reference.md](../caligrafy/reference/api-reference.md) and
-[gotchas.md](../caligrafy/reference/gotchas.md) G50-G57 (and G2, G8 for any SQL; G122-G128 for queries, G129-G132 for
-the declarative routes; 2.19.0+).
+[gotchas.md](../caligrafy/reference/gotchas.md) G50-G57 (and G2, G8 for any SQL; G122-G128 for queries, G129-G133 for
+the declarative routes, G134-G135 for the rules `exists`, `unique` and `current_year`; 2.19.0+).
 
 ## Preconditions
 1. An initialized Quill 2.1+ project: `application/config/routing/web.php` exists and `framework/core/Capabilities.php`

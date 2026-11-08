@@ -14,6 +14,7 @@ where to go next. Since 2.19.0.
 | Sign-in, sign-out, sign-up | `Route::auth(['home' => '/books']);` |
 | Events Stripe (or another service) posts | `Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe']);` |
 | A CSV or JSON export | `Route::download('/books.csv', 'list_books');` |
+| An address that moved | `Route::redirect('/', '/books');` |
 | A file in a form | the `file` rule of the capability: `'cover' => 'required\|file\|extension,png;jpg\|max_size,2mb'` |
 
 ## Forms: `Route::form`
@@ -119,6 +120,8 @@ form(method='POST', action="{$home}books/{$book['id']}/cover", enctype='multipar
 ```php
 Auth::authentication('User', 'users');
 Route::auth(['home' => '/books']);
+// people sign in with their email address and are signed in right after signing up
+Route::auth(['home' => '/books', 'identifier' => 'email', 'signInAfterRegister' => true]);
 ```
 
 This declares `GET`/`POST /login`, `GET`/`POST /logout`, `GET`/`POST /register` and `GET /notAuthorized`, with the
@@ -127,9 +130,19 @@ views of the [authentication module](https://github.com/caligrafy/caligrafy-quil
 + Signing in gives the person a **new session id and a new CSRF token**; signing out does too.
 + **Failed sign-ins are limited**: 5 per username and address within 15 minutes, then `429` until the 15 minutes end
   (`attempts`, `lock` in seconds). A username that does not exist takes as long to refuse as one that does.
-+ Options: `home` (`/`), `logout` (`/`), `register` (`true`, `false`, or your own capability), `views`, `prefix`
++ Options: `home` (`/`), `logout` (`/`), `register` (`true`, `false`, or your own capability), `identifier`
+  (`username`), `signInAfterRegister` (`false`), `views`, `prefix`
   (`/account/login`...: the shipped views post to `/login`, so write your own), `passkeys` (`true` adds
   `/passkey/register/options`, `/passkey/register`, `/passkey/login/options`, `/passkey/login`).
++ **`identifier`**: the `users` column people sign in with, `username` by default. `'identifier' => 'email'` signs in
+  with the email address: the sign-in form sends a field named `email` (change its name in your `login.pug`; the view
+  gets `$identifier`), looked up with your User model's `findBy('email', $value)` (the shipped model has it) or, without
+  one, a bound query on the model's table. `findByUsername()` keeps working for `username`.
++ **Sign-up sends every input the register capability declares**: add `email`, `display_name`... to the `$rules` of
+  your `register_user` and to the form; nothing else of the form reaches the capability. The page shown again after a
+  mistake keeps them in `$user`, never the passwords.
++ **`'signInAfterRegister' => true`**: a new account is signed in at once (a new session id and a new CSRF token, as at
+  sign-in) and goes to `home`, instead of the sign-in page.
 + A JSON request (with `X-CSRF-Token`) gets `200`, `401` or `429` in JSON: a Vue app signs in with the same routes.
 + **Not in `Route::auth`:** password reset (the `users` table has no email address) and face sign-in (the face login
   recipe has its own controller). `'reset' => true` or `'face' => true` stops with an error.
@@ -196,9 +209,21 @@ Route::download('/books.json', 'list_books', ['as' => 'json']);
   return `get()` to export every row); a single record gives one line.
 + `filename`: a name, or `function ($result, $input) { return 'books-' . date('Y-m-d') . '.csv'; }`.
 
+## Redirects: `Route::redirect`
+
+```php
+Route::redirect('/', '/books');                          // 302
+Route::redirect('/old/books/{id}', '/books/{id}', 301);  // moved for good
+```
+
++ A `GET` that sends the visitor elsewhere, without a closure. `{name}` in the target takes the route variable of
+  the same name (url-encoded); the query string never fills it.
++ The target is a path of the site or a full `https://` address; the status is `301`, `302` (default), `303`, `307`
+  or `308`, anything else stops with an error when `web.php` runs.
+
 ## Do you still need a controller?
 
-Rarely. With `Route::page`, `Route::form`, `Route::auth`, `Route::webhook`, `Route::download` and capability routes,
+Rarely. With `Route::page`, `Route::form`, `Route::auth`, `Route::webhook`, `Route::download`, `Route::redirect` and capability routes,
 a controller is for HTTP that is truly custom:
 
 + an action that calls several capabilities with conditions, or chooses between views;
