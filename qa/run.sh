@@ -100,6 +100,7 @@ $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n    Route::g
     . "    Route::page(\"/qa/page/{id}\", \"Qa/page\", [\"data\" => [\"book\" => \"get_book\"]]);\n"
     . "    Route::page(\"/qa/friendly/{id}\", \"Qa/page\", [\"data\" => [\"book\" => \"get_book\"], \"notFound\" => \"Qa/missing\"]);\n"
     . "    Route::page(\"/qa/members\", \"Qa/page\", [\"signedIn\" => true]);\n    Route::page(\"/qa/admins\", \"Qa/page\", [\"level\" => 1]);\n"
+    . "    Route::page(\"/qa/visitors\", \"Qa/page\", [\"visitorsOnly\" => \"/qa/members\", \"query\" => [\"show\"]]);\n    Route::page(\"/qa/back\", \"Qa/page\", [\"signedIn\" => true, \"comeBack\" => true]);\n    Route::redirect(\"/qa/old\", \"/qa/visitors\", 302, [\"keepQuery\" => true]);\n"
     . "    Route::capabilities(\"/capabilities\");\n    Route::mcp(\"/mcp\");\n    Route::notifications();\n"
     . "    Route::capability(\"GET\", \"/v2/books\", \"list_books\");\n    Route::capability(\"GET\", \"/v2/books/{id}\", \"get_book\");\n"
     . "    Route::capability(\"POST\", \"/v2/books\", \"create_book\");\n    Route::capability(\"PUT\", \"/v2/books/{id}\", \"update_book\");\n"

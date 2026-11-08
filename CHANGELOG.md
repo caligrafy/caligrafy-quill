@@ -6,6 +6,17 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.20.0] - 2026-11-08
+
+### Added
+- `Route::page`: `visitorsOnly` (a path: signed-in people are sent there), `comeBack` (a visitor goes to
+  `/login?return=<this page>`) and `query` (the names of the query string the view gets, as strings).
+- `Route::form`: `visitorsOnly`, `same` (two fields that must match), `accepted` (a box that must be ticked), `inputs`
+  (values only the server sets: an array or a callable) and `signsIn` (the field of the capability's answer that holds
+  the id of the person to sign in). `success` can already be a full address: a payment page.
+- `Route::redirect`: a fourth argument, `['keepQuery' => true]`, takes the query string along.
+- `Route::auth` goes back to `/login?return=<a page of this site>` after signing in. Any other address is ignored.
+
 ## [2.19.8] - 2026-11-08
 
 ### Security

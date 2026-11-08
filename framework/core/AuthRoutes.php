@@ -39,6 +39,9 @@ namespace Caligrafy;
  */
 class AuthRoutes
 {
+    /** the session key of the page to go back to after signing in (2.20.0) */
+    const RETURN_TO = '__auth_return';
+
     // what a check against a password that does not exist costs: response times do not tell which usernames exist
     const DUMMY_HASH = '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG';
 
@@ -298,11 +301,24 @@ class AuthRoutes
 
     // ---- the routes --------------------------------------------------------------------------------------------
 
+    /**
+     * Whether ?return= of the sign-in page is a page of this site (2.20.0): a path, never another site
+     */
+    public static function safeReturn($return)
+    {
+        return is_string($return) && preg_match('#^/(?![/\\\\])[^\\\\\s]*$#', $return) === 1;
+    }
+
     private static function loginPage(array $o)
     {
+        $return = $_GET['return'] ?? null;
         if (self::signedIn()) {
-            redirect($o['home']);
+            redirect(self::safeReturn($return) ? $return : $o['home']);
             return;
+        }
+        unset($_SESSION[self::RETURN_TO]);
+        if (self::safeReturn($return)) {
+            $_SESSION[self::RETURN_TO] = $return;   // where a successful sign-in goes (Route::page 'comeBack')
         }
         $data = array('identifier' => $o['identifier'], 'signUp' => $o['register'] !== false);
         if (($text = Flash::get('messages', array())['success'] ?? null) !== null) {
@@ -343,7 +359,9 @@ class AuthRoutes
         if ($json) {
             return self::json(200, array('data' => array('user' => self::profile($user))));
         }
-        redirect($o['home']);
+        $back = $_SESSION[self::RETURN_TO] ?? null;
+        unset($_SESSION[self::RETURN_TO]);
+        redirect(self::safeReturn($back) ? $back : $o['home']);
     }
 
     private static function logout(array $o)

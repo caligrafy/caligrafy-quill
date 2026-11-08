@@ -1184,6 +1184,21 @@ qa_test('Route::page access: signedIn sends visitors to sign in, level sends peo
     qa_equals(200, $a->get('/qa/admins')['status']);
 });
 
+qa_test('Route::page 2.20.0: visitorsOnly, comeBack, query; Route::redirect keepQuery', function () {
+    $guest = new QaBrowser();
+    $r = $guest->get('/qa/visitors?show=<b>mine&other=x');
+    qa_equals(200, $r['status']);
+    qa_contains('show &lt;b&gt;mine', $r['body']);
+    $r = $guest->get('/qa/old?show=kept');
+    qa_contains('/qa/visitors?show=kept', $r['location']);
+    $r = $guest->get('/qa/back?page=2');
+    qa_contains('/login?return=%2Fqa%2Fback%3Fpage%3D2', $r['location']);
+    $bob = new QaBrowser();
+    $bob->login('bob', 'NewPassw0rd');
+    qa_contains('/qa/members', $bob->get('/qa/visitors')['location']);
+    qa_equals(200, $bob->get('/qa/back')['status']);
+});
+
 // ---- the user capabilities: the administration pages, REST and AI agents follow the same rules (2.5.0) ----
 qa_test('list_users over MCP: administrators only, never a password', function () {
     $aliceId = qa_sql("SELECT id FROM users WHERE username = 'alice'");

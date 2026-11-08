@@ -513,6 +513,22 @@ person who sent it. The page that shows the form stays a `Route::page`.
 | `back` | the `Referer` of this site, else `/` | where invalid input goes, with the route's `{placeholders}`: `'back' => '/books/{id}'` |
 | `error` | the capability's message | your message for `flash('error')`, or `['key' => 'message']` |
 | `signIn` | `'/login'` | where a visitor goes when the capability needs someone |
+| `visitorsOnly` | none | a path: people already signed in are sent there instead (2.20.0) |
+| `same` | none | fields that must match: `['password_again' => ['password', 'The two passwords are not the same']]` (2.20.0) |
+| `accepted` | none | boxes that must be ticked: `['terms' => 'Accept the terms of use']` (2.20.0) |
+| `inputs` | none | values only the server sets: an array, or `function ($input) { return [...]; }`; they replace what the form sent (2.20.0) |
+| `signsIn` | none | the field of the capability's answer that holds the id of the person to sign in: `'signsIn' => 'id'` (2.20.0) |
+
+`same` and `accepted` are checked before the capability runs, and their messages arrive in `errors('password_again')`,
+like the capability's. `success` can be a full address, which is how a form leaves for a payment page:
+
+```php
+Route::form('/orders/{order}/pay', 'start_checkout', [
+    'inputs' => fn () => ['return_url' => session('base') . 'orders'],
+    'success' => fn ($result) => $result['url'],
+    'back' => '/orders',
+]);
+```
 
 + **The CSRF token** of the form (`=csrf()`) is checked as for every form (`403` `[ERROR 3000]` without it).
 + **One request only.** The errors, the old values and the messages are read by the next page, then gone: point
@@ -589,6 +605,9 @@ views of the authentication module (`application/views/Auth/login.pug`, `registe
 
 Everything about users, levels and the sign-in views:
 [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#routeauth).
+
+After signing in, `Route::auth` goes to `home`, or to the page named by `/login?return=/books/3` (2.20.0): only a page of
+this site, anything else is ignored. `Route::page` with `'comeBack' => true` builds that address for you.
 
 ## Webhooks: `Route::webhook`
 
@@ -752,6 +771,7 @@ Route::redirect('/old/books/{id}', '/books/{id}', 301);  // moved for good
   the same name (url-encoded); the query string never fills it (`/old/books/2?x=1` goes to `/books/2`).
 + The target is a path of the site or a full `https://` address. The status is `301`, `302` (default), `303`, `307`
   or `308`; anything else, or an empty target, stops with an error when `web.php` runs.
++ To take the query string along (2.20.0): `Route::redirect('/old', '/new', 302, ['keepQuery' => true]);`
 
 ## Do you still need a controller?
 

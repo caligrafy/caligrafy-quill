@@ -36,14 +36,26 @@ class PageController extends Controller
     /**
      * @param string $view the view, as for view(): 'Books/show'
      * @param array $options 'signedIn' (bool), 'level' (int), 'data' (array name => read-only capability or
-     *                       [capability, inputs]), 'with' (array of fixed view data), 'notFound' (a view for 404s)
+     *                       [capability, inputs]), 'with' (array of fixed view data), 'notFound' (a view for 404s);
+     *                       2.20.0: 'visitorsOnly' (a path: signed-in people go there), 'comeBack' (bool: visitors
+     *                       come back here after signing in), 'query' (names of the query string the view gets, as
+     *                       strings, '' when absent)
      */
     public function render($view, array $options = array())
     {
         $level = (int) ($options['level'] ?? 0);
         $mustSignIn = !empty($options['signedIn']) || $level > 0;
-        if ($mustSignIn && !Auth::active()) {
-            throw new \LogicException("Route::page('$view'): 'signedIn' and 'level' need Auth::authentication(...) in web.php");
+        $visitorsOnly = $options['visitorsOnly'] ?? null;
+        if (($mustSignIn || $visitorsOnly) && !Auth::active()) {
+            throw new \LogicException("Route::page('$view'): 'signedIn', 'level' and 'visitorsOnly' need Auth::authentication(...) in web.php");
+        }
+        if ($visitorsOnly && Auth::authorized()) {
+            redirect((string) $visitorsOnly);
+            return null;
+        }
+        if ($mustSignIn && !empty($options['comeBack']) && !Auth::authorized()) {
+            redirect(self::signInAddress());
+            return null;
         }
         if ($mustSignIn) {
             Auth::guard(Context::$levelAttribute, $level);
@@ -51,6 +63,11 @@ class PageController extends Controller
 
         $route = self::routeVariables();
         $data = $route;
+        foreach ((array) ($options['query'] ?? array()) as $name) {
+            if (!array_key_exists($name, $route)) {   // the route variables win
+                $data[self::name($view, $name)] = is_string($_GET[$name] ?? null) ? $_GET[$name] : '';
+            }
+        }
         foreach ((array) ($options['with'] ?? array()) as $name => $value) {
             $data[self::name($view, $name)] = $value;
         }
@@ -91,6 +108,18 @@ class PageController extends Controller
     }
 
     /**
+     * The sign-in page, with this page and its query string to come back to (2.20.0, 'comeBack'):
+     * /login?return=/books/3%3Fpage%3D2. Route::auth goes back there after signing in.
+     */
+    public static function signInAddress()
+    {
+        $query = $_GET;
+        unset($query['uri']);   // the server's rewrite adds it
+        $page = '/' . ltrim((string) (request()->uri ?? ''), '/') . ($query ? '?' . http_build_query($query) : '');
+        return '/login?return=' . rawurlencode($page);
+    }
+
+    /**
      * The variables of the route pattern only (/books/{id} -> id), not the query string
      */
     public static function routeVariables()
@@ -114,7 +143,7 @@ class PageController extends Controller
     private function refused(ServiceError $e, array $options)
     {
         if ($e->kind === 'unauthenticated' && Auth::active()) {
-            redirect('/login');
+            redirect(!empty($options['comeBack']) ? self::signInAddress() : '/login');
             exit;
         }
         if ($e->kind === 'forbidden' || $e->kind === 'unauthenticated') {

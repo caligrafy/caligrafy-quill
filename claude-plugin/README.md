@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 76 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G121) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 77 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G121) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: describe it, approve it, ship it. Your idea turned into a complete app online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.32.0** - Caligrafy Quill 2.20.0: `Route::page` has `visitorsOnly`, `comeBack` and `query`; `Route::form` has `visitorsOnly`, `same`, `accepted`, `inputs` and `signsIn`; `Route::redirect` has `keepQuery`; `Route::auth` honors `?return=`.
 - **1.31.8** - Caligrafy Quill 2.19.8: the session cookie is HttpOnly, and Secure on HTTPS.
 - **1.31.7** - Caligrafy Quill 2.19.7: `upgrade` matches the whole controller name when it holds unused sign-in controllers.
 - **1.31.6** - Caligrafy Quill 2.19.6: `Route::auth`'s `attemptsPerUser`, no sign-up link when there is no sign-up,

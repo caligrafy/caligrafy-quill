@@ -65,15 +65,28 @@ class Form
         }
         $readOnly = $entry['capability']->readOnly;
         try {
+            if (!empty($options['visitorsOnly']) && $context->authenticated()) {
+                if (!$json) {
+                    return array('redirect' => (string) $options['visitorsOnly']);
+                }
+                throw new ServiceError('forbidden', 'This form is for people who are not signed in');
+            }
             // JSON with the session cookie: the X-CSRF-Token header (a form post was checked by the request already)
             if ($json && !$readOnly && empty($env['bearer']) && $context->authenticated() && empty($env['csrf'])) {
                 throw new ServiceError('forbidden', 'Missing or invalid CSRF token: send the X-CSRF-Token header');
             }
-            $result = Capabilities::call($capability, $input, $context, $env['uploads'] ?? null);
+            $problems = self::problems($options, $input);
+            if ($problems) {
+                throw ServiceError::invalid($problems);
+            }
+            $result = Capabilities::call($capability, self::withServerInputs($options, $input, $route), $context, $env['uploads'] ?? null);
         } catch (ServiceError $e) {
             return self::refused($e, $options, $input, $json, $env);
         }
 
+        if (!empty($options['signsIn'])) {
+            self::signInFrom($capability, (string) $options['signsIn'], $result, $env);
+        }
         if ($json) {
             return array('status' => strtoupper((string) ($env['method'] ?? 'POST')) === 'POST' && !$readOnly ? 201 : 200, 'json' => array('data' => $result));
         }
@@ -90,6 +103,61 @@ class Form
             Flash::message($key, self::fill($text, $values, false));
         }
         return array('redirect' => $to);
+    }
+
+    /**
+     * What the 'same' and 'accepted' options refuse (2.20.0): [field => message]
+     *   'same' => ['password_again' => ['password', 'The two passwords are not the same']]
+     *   'accepted' => ['terms' => 'Accept the terms of use to create an account']
+     */
+    public static function problems(array $options, array $input)
+    {
+        $problems = array();
+        foreach ((array) ($options['same'] ?? array()) as $field => $rule) {
+            list($other, $message) = array_values((array) $rule) + array(1 => 'The two values are not the same');
+            $value = $input[$field] ?? '';
+            $expected = $input[$other] ?? '';
+            if (!is_string($value) || !is_string($expected) || !hash_equals($expected, $value)) {
+                $problems[$field] = $message;
+            }
+        }
+        foreach ((array) ($options['accepted'] ?? array()) as $field => $message) {
+            if (empty($input[$field])) {
+                $problems[$field] = $message;
+            }
+        }
+        return $problems;
+    }
+
+    /**
+     * The inputs the server sets itself (2.20.0, 'inputs': an array, or a callable($input) returning one): they replace
+     * what the form sent. The route variables still win. They are not kept for old().
+     */
+    public static function withServerInputs(array $options, array $input, array $route = array())
+    {
+        $server = $options['inputs'] ?? array();
+        if (is_callable($server) && !is_string($server) && !is_array($server)) {
+            $server = call_user_func($server, $input);
+        }
+        return array_merge($input, (array) $server, $route);
+    }
+
+    // 'signsIn' => 'id' (2.20.0): the person whose id is that field of the capability's answer is signed in
+    private static function signInFrom($capability, $field, $result, array $env)
+    {
+        $id = is_array($result) ? ($result[$field] ?? null) : null;
+        if (!is_scalar($id) || (string) $id === '') {
+            throw new \LogicException("Route::form: 'signsIn' needs the field '$field' in the answer of '$capability'");
+        }
+        if (isset($env['signIn'])) {
+            call_user_func($env['signIn'], $id);
+            return;
+        }
+        $user = Auth::find($id);
+        if (!$user) {
+            throw new \LogicException("Route::form: 'signsIn': no user with the id that '$capability' answered");
+        }
+        AuthRoutes::signIn($user);
     }
 
     /**

@@ -336,7 +336,9 @@ class Route extends \stdClass
      *   Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
      *   Route::page('/admin/books', 'Books/admin', ['level' => 1, 'data' => ['books' => 'list_books']]);
      * Options: 'signedIn' (bool), 'level' (int), 'data' (name => read-only capability, or [capability, inputs]),
-     * 'with' (fixed values), 'notFound' (a view shown with a 404 when a data capability finds nothing)
+     * 'with' (fixed values), 'notFound' (a view shown with a 404 when a data capability finds nothing);
+     * 2.20.0: 'visitorsOnly' (a path: signed-in people are sent there), 'comeBack' (true: a visitor goes to
+     * /login?return=<this page>), 'query' (the names of the query string the view gets)
      * @param string $route the uri
      * @param string $view the view, as for view()
      * @param array $options see PageController::render()
@@ -398,7 +400,11 @@ class Route extends \stdClass
      * GET stays a Route::page. Options: 'method' (POST, PUT or DELETE, or a list; default POST), 'success' (a path with
      * {placeholders} from the result and the route, or a callable($result) returning one; default back), 'flash' (a
      * message for flash('success'), or [key => message]), 'back' (where invalid input goes; default the Referer of this
-     * site), 'error' (the message for flash('error') instead of the capability's), 'signIn' (default /login).
+     * site), 'error' (the message for flash('error') instead of the capability's), 'signIn' (default /login);
+     * 2.20.0: 'visitorsOnly' (a path: signed-in people are sent there), 'same' ([field => [other field, message]]),
+     * 'accepted' ([field => message]: a box that must be ticked), 'inputs' (values only the server sets: an array or a
+     * callable($input)), 'signsIn' (the field of the answer that holds the id of the person to sign in).
+     * 'success' may be a full address, or a callable returning one (a payment page).
      * Invalid input goes back with errors($field), old($field) and flash('error') for the next page. JSON requests get
      * the REST answer.
      */
@@ -462,8 +468,9 @@ class Route extends \stdClass
      *   Route::redirect('/old/books/{id}', '/books/{id}', 301);
      * {name} in $to takes the route variable of $from (url-encoded). $to is a path of this site or a full http(s) address.
      * @param int $status 301, 302 (default), 303, 307 or 308
+     * @param array $options 'keepQuery' (2.20.0, true: the query string of the request goes along)
      */
-    public static function redirect($from, $to, $status = 302)
+    public static function redirect($from, $to, $status = 302, array $options = array())
     {
         $status = (int) $status;
         if (!in_array($status, array(301, 302, 303, 307, 308), true)) {
@@ -472,14 +479,32 @@ class Route extends \stdClass
         if (!is_string($to) || trim($to) === '') {
             throw new \InvalidArgumentException("Route::redirect('$from'): where to send the visitor is a path or an address");
         }
-        self::get($from, function () use ($from, $to, $status) {
+        self::get($from, function () use ($from, $to, $status, $options) {
             // the route variables only: the query string never fills a placeholder
             $variables = self::$_request !== null ? bindRouteToVar(sanitizePath($from), self::$_request->uri) : array();
             if (!headers_sent()) {
                 http_response_code($status);
             }
-            redirect(self::redirectTarget($to, $variables));
+            $target = self::redirectTarget($to, $variables);
+            redirect(empty($options['keepQuery']) ? $target : self::withQuery($target, $_GET));
         });
+    }
+
+    /**
+     * An address with a query string added (2.20.0, 'keepQuery'); the server's rewrite adds 'uri', which never goes along
+     */
+    public static function withQuery($target, array $query)
+    {
+        unset($query['uri']);
+        if (!$query) {
+            return $target;
+        }
+        $fragment = '';
+        if (($hash = strpos($target, '#')) !== false) {
+            $fragment = substr($target, $hash);
+            $target = substr($target, 0, $hash);
+        }
+        return $target . (strpos($target, '?') === false ? '?' : '&') . http_build_query($query) . $fragment;
     }
 
     /**

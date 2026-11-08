@@ -219,4 +219,66 @@ final class FormRouteTest extends TestCase
         $this->assertSame(array(array('png', 'jpg')), $saved);
         unlink($tmp);
     }
+
+    public function testSameAndAcceptedRefuseBeforeTheCapability(): void
+    {
+        $options = array('same' => array('password_again' => array('password', 'Not the same')), 'accepted' => array('terms' => 'Accept the terms'), 'back' => '/new');
+        $outcome = Form::outcome('qa_save_book', $options, array('title' => 'crash', 'password' => 'aaa', 'password_again' => 'bbb'), $this->user(), false, $this->env());
+        $this->assertSame(array('redirect' => '/new'), $outcome, 'the capability, which would have crashed, is not called');
+        Flash::age();
+        $this->assertSame(array('password_again' => 'Not the same', 'terms' => 'Accept the terms'), Flash::get('errors'));
+        $this->assertArrayNotHasKey('password', Flash::get('old'), 'a password is never kept');
+        $good = Form::outcome('qa_save_book', $options + array('success' => '/done'), array('title' => 'Dune', 'password' => 'aaa', 'password_again' => 'aaa', 'terms' => '1'), $this->user(), false, $this->env());
+        $this->assertSame(array('redirect' => '/done'), $good);
+    }
+
+    public function testServerInputsReplaceWhatTheFormSentButNotTheRoute(): void
+    {
+        $merged = Form::withServerInputs(array('inputs' => array('return_url' => 'https://here/back', 'id' => 9)), array('return_url' => 'https://evil/', 'title' => 'x'), array('id' => 3));
+        $this->assertSame(array('return_url' => 'https://here/back', 'title' => 'x', 'id' => 3), $merged);
+        $called = Form::withServerInputs(array('inputs' => function ($input) { return array('title' => strtoupper($input['title'])); }), array('title' => 'x'));
+        $this->assertSame(array('title' => 'X'), $called);
+        $this->assertSame(array('title' => 'x'), Form::withServerInputs(array(), array('title' => 'x')));
+    }
+
+    public function testVisitorsOnlySendsSignedInPeopleAway(): void
+    {
+        $options = array('visitorsOnly' => '/dashboard', 'success' => '/done');
+        $this->assertSame(array('redirect' => '/dashboard'), Form::outcome('qa_save_book', $options, array('title' => 'crash'), $this->user(), false, $this->env()));
+        $json = Form::outcome('qa_save_book', $options, array('title' => 'crash'), $this->user(), true, $this->env(array('csrf' => true)));
+        $this->assertSame(403, $json['status']);
+    }
+
+    public function testSignsInThePersonOfTheAnswer(): void
+    {
+        $signed = array();
+        $env = $this->env(array('signIn' => function ($id) use (&$signed) { $signed[] = $id; }));
+        Form::outcome('qa_save_book', array('signsIn' => 'id', 'success' => '/done'), array('title' => 'Dune', 'id' => 7), $this->user(), false, $env);
+        $this->assertCount(1, $signed);
+        $this->expectException(LogicException::class);
+        Form::outcome('qa_save_book', array('signsIn' => 'nothing_there'), array('title' => 'Dune'), $this->user(), false, $env);
+    }
+
+    public function testSuccessMayLeaveForAFullAddress(): void
+    {
+        $outcome = Form::outcome('qa_save_book', array('success' => function ($result) { return 'https://pay.example.com/s/1'; }), array('title' => 'Dune'), $this->user(), false, $this->env());
+        $this->assertSame(array('redirect' => 'https://pay.example.com/s/1'), $outcome);
+    }
+
+    public function testTheSignInOnlyGoesBackToAPageOfThisSite(): void
+    {
+        foreach (array('/books', '/books/3?page=2', '/') as $good) {
+            $this->assertTrue(\Caligrafy\AuthRoutes::safeReturn($good), $good);
+        }
+        foreach (array('https://evil.example', '//evil.example', '/\\evil.example', 'books', '', "/a\nb", null, array('/a')) as $bad) {
+            $this->assertFalse(\Caligrafy\AuthRoutes::safeReturn($bad), var_export($bad, true));
+        }
+    }
+
+    public function testKeepQueryAddsTheQueryStringOnly(): void
+    {
+        $this->assertSame('/books?page=2', Route::withQuery('/books', array('uri' => 'old/books', 'page' => '2')));
+        $this->assertSame('/books?a=1&page=2#top', Route::withQuery('/books?a=1#top', array('page' => '2')));
+        $this->assertSame('/books', Route::withQuery('/books', array('uri' => 'old/books')));
+    }
 }
