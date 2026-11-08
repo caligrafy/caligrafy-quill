@@ -395,7 +395,7 @@ switch(strtolower($argv[1])) {
 		$code = strtr($template, array('{{class}}' => $class, '{{name}}' => $name, '{{scope}}' => $scope, '{{readOnly}}' => $readOnly));
 		@mkdir(dirname($file), 0755, true);
 		file_put_contents($file, $code);
-		print("\n Created $file: capability '$name'" . ($scope ? " (scope $scope)" : '') . "\n Fill in \$rules and handle(), then call it from a controller (\$this->call('$name')), REST (Route::capability) or MCP (Route::mcp)\n\n");
+		print("\n Created $file: capability '$name'" . ($scope ? " (scope $scope)" : '') . "\n Fill in \$rules and handle(), then serve it: a page (Route::page data), a form (Route::form), REST (Route::capability or Route::capabilities), MCP (Route::mcp)\n\n");
 		break;
 
 	case 'client':
@@ -409,8 +409,10 @@ switch(strtolower($argv[1])) {
 			print("\n Could not write $target\n\n");
 			exit(1);
 		}
-		print("\n $target written: " . count(Caligrafy\Capabilities::all()) . " capabilities, calls $prefix (Route::capabilities('$prefix') in web.php)\n"
-			. " import { createBook, CapabilityError } from './capabilities.js'\n\n");
+		$names = array_keys(Caligrafy\Capabilities::all());
+		$example = $names ? lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $names[0])))) : 'myCapability';
+		print("\n $target written: " . count($names) . " capabilities, calls $prefix (Route::capabilities('$prefix') in web.php)\n"
+			. " import { $example, CapabilityError } from './capabilities.js'\n\n");
 		break;
 
 	case 'capabilities':

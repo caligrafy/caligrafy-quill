@@ -777,6 +777,12 @@ class Query
      */
     public function pluck($column, $key = null)
     {
+        // a count of withCount() (books_count) or a relation of with() is not a column: take it from the full rows
+        $added = array_merge(array_map(function ($name) { return $name . '_count'; }, array_keys($this->counts)), array_keys($this->eager));
+        if (in_array($column, $added, true) || ($key !== null && in_array($key, $added, true))) {
+            $rows = (clone $this)->arrays()->get();
+            return array_column($rows, $column, $key);
+        }
         $query = $this->bare();
         $query->columns = self::column($column) . ($key !== null ? ', ' . self::column($key) : '');
         $rows = $query->get();

@@ -84,6 +84,10 @@ final class QueryEagerTest extends TestCase
         $this->assertSame(4, $authors[1]['books_count']);
         $this->assertSame(array(), $authors[5]['books'], 'no books: []');
         $this->assertSame(0, $authors[5]['books_count']);
+        // a count is not a column: pluck() takes it from the full rows (2.19.0)
+        $counts = Database::table('authors')->withCount('books')->pluck('books_count', 'id');
+        $this->assertSame(3, $counts[$authors[0]['id']]);
+        $this->assertSame(0, $counts[$authors[5]['id']]);
     }
 
     public function testBelongsToManyThroughThePivotModelBelongsToManyCreates(): void
