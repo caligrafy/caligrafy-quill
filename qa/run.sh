@@ -112,7 +112,8 @@ $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n    Route::g
     . "    Route::auth([\"prefix\" => \"/qa/auth\", \"home\" => \"/qa/bare\", \"logout\" => \"/qa/bare\", \"attempts\" => 3, \"lock\" => 60, \"passkeys\" => true]);\n"
     . "    Route::webhook(\"/qa/hooks/stripe\", \"qa_record_stripe\", [\"verify\" => \"stripe\", \"secret_env\" => \"QA_STRIPE_WEBHOOK_SECRET\"]);\n"
     . "    Route::download(\"/qa/books.csv\", \"list_books\", [\"filename\" => \"books.csv\", \"bom\" => true]);\n"
-    . "    Route::download(\"/qa/books.json\", \"list_books\", [\"as\" => \"json\", \"filename\" => \"books.json\"]);\n";
+    . "    Route::download(\"/qa/books.json\", \"list_books\", [\"as\" => \"json\", \"filename\" => \"books.json\"]);\n"
+    . "    Route::download(\"/qa/book.csv\", \"get_book\", [\"columns\" => [\"title\", \"id\"]]);\n";
 $s = str_replace("    Route::run();", $qa . "    Route::run();", $s);
 file_put_contents($f, $s);
 '

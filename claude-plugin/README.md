@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.31.5** - Caligrafy Quill 2.19.5: `Route::auth`'s `level` option, `Route::download`'s `columns` option and its 422
+  on inputs to fix.
 - **1.31.4** - Caligrafy Quill 2.19.4: the sign-up page's human words and their `messages` keys (`mismatch`,
   `register_invalid`, `register_taken`, `registered`).
 - **1.31.3** - Caligrafy Quill 2.19.3: `Route::auth`'s human sign-in messages and its `messages` option, the

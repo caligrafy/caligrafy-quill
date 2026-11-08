@@ -6,6 +6,21 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.5] - 2026-11-08
+
+### Added
+- `Route::auth(['level' => 1])`: the lowest permission level that may sign in (0 by default). Below it, a sign-in is
+  refused exactly like a wrong password and counted toward the lock; a passkey sign-in answers 401, and
+  `signInAfterRegister` does not sign that person in (`AuthRoutes::mayEnter()`).
+- `Route::download(..., ['columns' => [...]])`: the header row and its order, written even when the result has no row.
+
+### Changed
+- A `Route::download` whose capability refuses its inputs (`invalid`: a wrong date, a bad filter) answers 422 with
+  the error as JSON, as REST does; it answered 404.
+
+### Documentation
+- Plugin 1.31.5; the wiki (Authentication, Declarative routes) documents both options.
+
 ## [2.19.4] - 2026-11-08
 
 ### Changed

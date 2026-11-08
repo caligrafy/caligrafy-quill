@@ -1545,4 +1545,17 @@ qa_test('Route::download: a CSV attachment of a read-only capability for the sig
     qa_contains('/login', (new QaBrowser())->get('/qa/books.csv')['location'], 'a visitor signs in first');
 });
 
+qa_test('Route::download: the columns option gives the header row and its order; inputs to fix answer 422 (2.19.5)', function () {
+    $b = qa_auth_user('columnsqa');
+    $bad = $b->get('/qa/book.csv');
+    qa_equals(422, $bad['status'], 'no id: ' . substr($bad['body'], 0, 200));
+    qa_contains('"invalid"', $bad['body']);
+    $books = json_decode($b->get('/qa/books.json')['body'], true);
+    $first = is_array($books) ? (isset($books[0]) ? $books[0] : (isset($books['data'][0]) ? $books['data'][0] : null)) : null;
+    qa_assert(is_array($first), 'a book to download');
+    $one = $b->get('/qa/book.csv?id=' . $first['id']);
+    qa_equals(200, $one['status'], substr($one['body'], 0, 200));
+    qa_equals('title,id', explode("\r\n", $one['body'])[0], 'the columns, in that order');
+});
+
 qa_summary();

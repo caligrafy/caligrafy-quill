@@ -571,6 +571,7 @@ views of the authentication module (`application/views/Auth/login.pug`, `registe
 | `register` | `true` | `true`: `/register` with the `register_user` capability; `false`: no sign-up; a capability name: yours |
 | `identifier` | `'username'` | the `users` column people sign in with, and the name of the sign-in field (`'email'`) |
 | `signInAfterRegister` | `false` | `true`: a new account is signed in and goes to `home` instead of the sign-in page |
+| `level` | `0` | the lowest permission level that may sign in (2.19.5): below it, a sign-in is refused like a wrong password |
 | `messages` | human words | what sign-in and sign-up say: `invalid`, `locked` (2.19.3, `{minutes}` is the wait), `mismatch`, `register_invalid`, `register_taken`, `registered` (2.19.4); the defaults are `AuthRoutes::MESSAGES` |
 | `attempts`, `lock` | `5`, `900` | failed sign-ins per username and address before a `429`, and the window in seconds |
 | `views` | `['login' => 'Auth/login', 'register' => 'Auth/register']` | your own views |
@@ -717,6 +718,7 @@ Route::download('/books.json', 'list_books', ['as' => 'json']);   // a page of l
 | Option | Default | What it does |
 |---|---|---|
 | `as` | `'csv'` | `'csv'` or `'json'` (pretty-printed); anything else stops with an error when `web.php` runs |
+| `columns` | the first row's keys | the header row and its order, written even when there is no row: `['title', 'year']` (2.19.5) |
 | `filename` | `<capability>.<as>` | a name, or `function ($result, $input) { return 'books-' . date('Y-m-d') . '.csv'; }` |
 | `bom` | `false` | `true` starts the CSV with a UTF-8 BOM (Excel) |
 | `formulas` | `false` | `true` keeps cells that start with `=`, `+`, `-`, `@` as they are |
@@ -724,8 +726,10 @@ Route::download('/books.json', 'list_books', ['as' => 'json']);   // a page of l
 
 + The capability must be read-only (opening a link must not change data). It gets the query string and the route
   variables (`/books.csv?author_id=2`) as the person who opens the link. Refusals are those of `Route::page`: a
-  visitor goes to sign in, `403`, or `404` (an input it refuses too: `?author_id=abc`).
-+ **CSV**: the header row comes from the first row's columns, values are quoted where needed (RFC 4180, lines end with
+  visitor goes to sign in, `403`, or `404`. An input to fix (`?author_id=abc`) answers `422` with the capability's
+  error as JSON, as REST does (2.19.5; before, `404`).
++ **CSV**: the header row comes from the `columns` option, else from the first row's columns (then an empty result is
+  an empty file), values are quoted where needed (RFC 4180, lines end with
   CRLF), UTF-8. A text cell that starts with `=`, `+`, `-`, `@` or a tab gets a `'` first, so a spreadsheet does not
   run it as a formula. Arrays in a cell are written as JSON, booleans as `true` / `false`.
 + **The columns are the keys of the first row.** A model query returns models, and a model carries every one of its

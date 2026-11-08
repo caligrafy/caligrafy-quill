@@ -445,12 +445,14 @@ class Route extends \stdClass
     /**
      * A read-only capability's result as a file (2.19.0, Caligrafy\Download): GET
      *   Route::download('/books.csv', 'list_books', ['as' => 'csv', 'filename' => 'books.csv']);
-     * Options: 'as' (csv or json), 'filename' (a name or a callable($result, $input)), 'bom' (bool), 'formulas' (keep
-     * cells that start with = + - @ as they are), 'signIn'. Refusals as Route::page.
+     * Options: 'as' (csv or json), 'columns' (2.19.5: the header row, written even with no row), 'filename' (a name or a
+     * callable($result, $input)), 'bom' (bool), 'formulas' (keep
+     * cells that start with = + - @ as they are), 'signIn'. Refusals as Route::page; inputs to fix answer 422 (2.19.5).
      */
     public static function download($route, $capability, array $options = array())
     {
         Download::format($options);   // an unknown format is refused when web.php runs
+        Download::columns($options);  // and 'columns' that is not a list of names (2.19.5)
         self::get($route, function () use ($capability, $options) { Download::handle($capability, $options); });
     }
 

@@ -50,6 +50,15 @@ class Download
                 redirect((string) ($options['signIn'] ?? '/login'));
                 return null;
             }
+            if ($e->kind === 'invalid') {
+                // inputs to fix (a date, a filter): 422 with what is wrong, as REST answers it (2.19.5)
+                if (!headers_sent()) {
+                    http_response_code(422);
+                    header('Content-Type: application/json; charset=utf-8');
+                }
+                echo json_encode($e->toArray(), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+                return null;
+            }
             throw Errors::raise($e->kind === 'forbidden' || $e->kind === 'unauthenticated' ? 1006 : 1005);
         }
         $filename = self::filename($options['filename'] ?? null, $result, $input, $capability . '.' . $format);
@@ -63,7 +72,7 @@ class Download
             echo json_encode($result, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
             return null;
         }
-        foreach (self::csvLines(self::rows($result), !empty($options['bom']), empty($options['formulas'])) as $line) {
+        foreach (self::csvLines(self::rows($result), !empty($options['bom']), empty($options['formulas']), self::columns($options)) as $line) {
             echo $line;
         }
         return null;
@@ -72,6 +81,21 @@ class Download
     /**
      * csv or json (an unknown format is a mistake in web.php)
      */
+    /**
+     * The 'columns' option (2.19.5): a list of column names, or null for the keys of the first row
+     */
+    public static function columns(array $options)
+    {
+        if (!isset($options['columns'])) {
+            return null;
+        }
+        $columns = array_values(array_map('strval', (array) $options['columns']));
+        if (!$columns) {
+            throw new \InvalidArgumentException("Route::download: 'columns' is a list of column names");
+        }
+        return $columns;
+    }
+
     public static function format(array $options)
     {
         $format = strtolower((string) ($options['as'] ?? 'csv'));
@@ -108,15 +132,16 @@ class Download
      * The lines of a CSV file (each ends with CRLF): the header row from the first row's keys, then one line per row
      * in that order (a missing column is empty, an extra one left out)
      */
-    public static function csvLines(array $rows, $bom = false, $escapeFormulas = true)
+    public static function csvLines(array $rows, $bom = false, $escapeFormulas = true, ?array $columns = null)
     {
         if ($bom) {
             yield "\xEF\xBB\xBF";
         }
-        if (!$rows) {
+        // the 'columns' option (2.19.5): the header row and its order, written even when there is no row
+        if (!$rows && !$columns) {
             return;
         }
-        $columns = array_keys(reset($rows));
+        $columns = $columns ?: array_keys(reset($rows));
         yield self::line($columns, false);
         foreach ($rows as $row) {
             $cells = array();
@@ -130,9 +155,9 @@ class Download
     /**
      * A whole CSV file
      */
-    public static function csv(array $rows, $bom = false, $escapeFormulas = true)
+    public static function csv(array $rows, $bom = false, $escapeFormulas = true, ?array $columns = null)
     {
-        return implode('', iterator_to_array(self::csvLines($rows, $bom, $escapeFormulas), false));
+        return implode('', iterator_to_array(self::csvLines($rows, $bom, $escapeFormulas, $columns), false));
     }
 
     /**

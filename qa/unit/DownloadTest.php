@@ -51,6 +51,17 @@ final class DownloadTest extends TestCase
         $this->assertSame("\"a,b\",\"q\"\"\"\r\nx,y\r\n", Download::csv(array(array('a,b' => 'x', 'q"' => 'y'))), 'header cells are quoted too');
     }
 
+    public function testColumnsGiveTheHeaderRowEvenWithoutRows(): void
+    {
+        // the 'columns' option (2.19.5): the header row and its order, even for an empty result
+        $this->assertSame("started_at,signs\r\n", Download::csv(array(), false, true, array('started_at', 'signs')));
+        $this->assertSame("b,a\r\n2,1\r\n,3\r\n", Download::csv(array(array('a' => 1, 'b' => 2), array('a' => 3)), false, true, array('b', 'a')));
+        $this->assertNull(Download::columns(array()));
+        $this->assertSame(array('a', 'b'), Download::columns(array('columns' => array('a', 'b'))));
+        $this->expectException(\InvalidArgumentException::class);
+        Download::columns(array('columns' => array()));
+    }
+
     public function testCells(): void
     {
         $this->assertSame('', Download::cell(null));

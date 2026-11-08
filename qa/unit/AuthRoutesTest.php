@@ -137,6 +137,22 @@ final class AuthRoutesTest extends TestCase
         $this->assertSame('This email already has an account: sign in instead.', $o['messages']['register_taken']);
     }
 
+    public function testALevelKeepsOutThePeopleBelowIt(): void
+    {
+        // Route::auth(['level' => 1]) (2.19.5): ann (permissions 0) is refused exactly like a wrong password, and counted
+        $throttle = $this->throttle(3);
+        $this->assertSame('invalid', AuthRoutes::attempt('ann', 'Passw0rd!', '10.0.0.1', $throttle, $this->finder(), 1)['status']);
+        $this->assertSame(1, $throttle->failures(Throttle::key('signin', '10.0.0.1', 'ann')));
+        $this->assertSame('ok', AuthRoutes::attempt('ann', 'Passw0rd!', '10.0.0.1', $throttle, $this->finder(), 0)['status'], 'no level: everyone');
+        $admin = (object) array('permissions' => 1);
+        $this->assertTrue(AuthRoutes::mayEnter($admin, 1));
+        $this->assertFalse(AuthRoutes::mayEnter((object) array('permissions' => 0), 1));
+        $this->assertTrue(AuthRoutes::mayEnter((object) array(), 0));
+        $this->assertSame(1, AuthRoutes::options(array('level' => '1'))['level']);
+        $this->expectException(\InvalidArgumentException::class);
+        AuthRoutes::options(array('level' => 'admins'));
+    }
+
     public function testASuccessForgetsTheFailures(): void
     {
         $throttle = $this->throttle(3);

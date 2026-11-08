@@ -29,7 +29,8 @@ namespace Caligrafy;
  * Options: prefix (''), home ('/'), logout ('/'), register (true, or the name of the capability), attempts, lock,
  * views (['login' => 'Auth/login', 'register' => 'Auth/register']), passkeys (false), identifier ('username': the
  * users column people sign in with and the name of its field, 'email' for instance), signInAfterRegister (false),
- * messages (what sign-in and sign-up say: 'invalid', 'locked' ({minutes} is the wait), 2.19.3; 'mismatch',
+ * level (2.19.5: the lowest permission level that may sign in, 0 by default; below it, the sign-in is refused like a
+ * wrong password), messages (what sign-in and sign-up say: 'invalid', 'locked' ({minutes} is the wait), 2.19.3; 'mismatch',
  * 'register_invalid', 'register_taken', 'registered', 2.19.4; see AuthRoutes::MESSAGES).
  * A failed sign-in shows the page again with what the person typed in the identifier field (never the password).
  * A JSON request (Accept: application/json) gets JSON answers and needs the X-CSRF-Token header.
@@ -53,6 +54,15 @@ class AuthRoutes
         'registered' => 'Your account is ready. Sign in to start.',
     );
 
+    /**
+     * Whether a user may sign in: their permission level (Context::$levelAttribute) is at least Route::auth's 'level'
+     */
+    public static function mayEnter($user, $level)
+    {
+        $attribute = Context::$levelAttribute;
+        return (int) $level <= 0 || (int) ($user->$attribute ?? 0) >= (int) $level;
+    }
+
     /** @var callable|null replaces session_regenerate_id(true) (tests) */
     public static $regenerate = null;
 
@@ -68,7 +78,13 @@ class AuthRoutes
             throw new \LogicException("Route::auth: password reset is not built in: the users table of the authentication module has no email address");
         }
         $o = array_merge(array('prefix' => '', 'home' => '/', 'logout' => '/', 'register' => true, 'attempts' => 5, 'lock' => 900,
-            'views' => array(), 'passkeys' => false, 'identifier' => 'username', 'signInAfterRegister' => false, 'messages' => array()), $options);
+            'views' => array(), 'passkeys' => false, 'identifier' => 'username', 'signInAfterRegister' => false, 'messages' => array(),
+            'level' => 0), $options);
+        // the lowest permission level that may sign in (2.19.5): 0 lets everyone in, 1 only administrators...
+        if (!is_int($o['level']) && !ctype_digit((string) $o['level'])) {
+            throw new \InvalidArgumentException("Route::auth: 'level' is the lowest permission level that may sign in (0, 1...)");
+        }
+        $o['level'] = (int) $o['level'];
         $o['messages'] = array_merge(self::MESSAGES, array_map('strval', array_intersect_key((array) $o['messages'], self::MESSAGES)));
         $o['identifier'] = (string) $o['identifier'];
         if (!preg_match(Query::NAME, $o['identifier']) || preg_match('/pass|secret|token/i', $o['identifier'])) {
@@ -114,7 +130,7 @@ class AuthRoutes
      * @param callable $find function (string $username): ?user (a model with verifyPassword())
      * @return array ['status' => 'ok', 'user' => $user] | ['status' => 'invalid'] | ['status' => 'locked']
      */
-    public static function attempt($username, $password, $ip, Throttle $throttle, callable $find)
+    public static function attempt($username, $password, $ip, Throttle $throttle, callable $find, $level = 0)
     {
         $username = trim((string) $username);
         $key = Throttle::key('signin', $ip, $username);
@@ -125,7 +141,8 @@ class AuthRoutes
         if (!$user) {
             password_verify((string) $password, self::DUMMY_HASH);
         }
-        if (!$user || !$user->verifyPassword((string) $password)) {
+        // below the 'level' of Route::auth: refused exactly like a wrong password, so the page never tells who exists
+        if (!$user || !$user->verifyPassword((string) $password) || !self::mayEnter($user, $level)) {
             $throttle->fail($key);
             return array('status' => $throttle->locked($key) ? 'locked' : 'invalid');
         }
@@ -233,7 +250,7 @@ class AuthRoutes
             $errors = $e->kind === 'conflict' ? array($o['identifier'] => $e->getMessage()) : $e->fields;
             return array('view' => $o['views']['register'], 'data' => $page + array('message' => $message, 'errors' => $errors));
         }
-        if ($o['signInAfterRegister'] && ($user = self::registered($o, $profile, $p)) !== null) {
+        if ($o['signInAfterRegister'] && ($user = self::registered($o, $profile, $p)) !== null && self::mayEnter($user, $o['level'])) {
             self::signIn($user);
             return $json ? array('status' => 201, 'json' => array('data' => $profile)) : array('redirect' => $o['home']);
         }
@@ -279,7 +296,7 @@ class AuthRoutes
         $text = function ($value) { return is_string($value) ? $value : ''; };
         $password = $text($p['passcode'] ?? ($p['password'] ?? ''));
         $result = self::attempt($text($p[$o['identifier']] ?? ''), $password, self::ip(), new Throttle($o['attempts'], $o['lock']),
-            self::finder($model, $o['identifier']));
+            self::finder($model, $o['identifier']), $o['level']);
         if ($result['status'] !== 'ok') {
             $locked = $result['status'] === 'locked';
             $message = $locked ? str_replace('{minutes}', (string) max(1, (int) ceil($o['lock'] / 60)), $o['messages']['locked']) : $o['messages']['invalid'];
@@ -374,7 +391,7 @@ class AuthRoutes
                 default:
                     $userId = (new Passkey())->authenticate($p);
                     $user = Auth::find($userId);
-                    if (!$user) {
+                    if (!$user || !self::mayEnter($user, $o['level'])) {
                         return self::json(401, array('error' => 'Unknown account'));
                     }
                     self::signIn($user);
