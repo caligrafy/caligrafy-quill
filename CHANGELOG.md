@@ -6,6 +6,14 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.4] - 2026-11-08
+
+### Fixed
+- The top bar no longer shifts between a short page and a long one: `layout.css` reserves the scrollbar's room.
+
+### Documentation
+- How a session signed in (`AuthRoutes::signedInBy()`), in the wiki, the plugin and the course.
+
 ## [2.21.3] - 2026-11-08
 
 ### Added

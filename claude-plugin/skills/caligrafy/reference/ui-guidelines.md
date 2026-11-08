@@ -223,3 +223,5 @@ selectors. So:
 - [ ] elements found by id; Pug expressions join strings with `.`, never `+`
 - [ ] opened in a browser at desktop width and at phone width (375px): no horizontal scroll, readable, touch-size buttons, the Menu opens the links
 - [ ] with a design style selected (`DESIGN_STYLE`): checked with the style on and off
+
+**The top bar does not move or change between pages** (2.21.4). `layout.css` reserves the scrollbar's room on every page (`html { scrollbar-gutter: stable }`). Mark the current link with a color or an underline, never a heavier `font-weight`: Inter is loaded at 400 and 500 only, so a heavier weight is faked by the browser and the text visibly changes.

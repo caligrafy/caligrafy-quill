@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.33.4** - Caligrafy Quill 2.21.4: UI guidelines for a top bar that never moves; how a session signed in, in the authentication reference.
 - **1.33.3** - Caligrafy Quill 2.21.3: `AuthRoutes::signedInBy()`; the face login recipe no longer lets a face-only session change the face or add a passkey. G146.
 - **1.33.2** - Caligrafy Quill 2.21.2: every skill, reference and the reviewer teach and generate the declared way (`Route::action`, no new controller); `client` leaves out web-only capabilities; G145.
 - **1.33.1** - Caligrafy Quill 2.21.1: a JSON call to `Route::action` needs the page's CSRF token or an API token, signed in or not. Gotcha G144.

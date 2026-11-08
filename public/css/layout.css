@@ -27,6 +27,9 @@
   --cq-transition: color .33s, background-color .33s, border-color .33s, box-shadow .25s;
 }
 
+/* the top bar stays put from page to page: a short page and a long one reserve the same room for the scrollbar */
+html { scrollbar-gutter: stable; }
+
 body.cq-site { margin: 0; background: var(--cq-color-canvas); color: var(--cq-color-text); font-size: var(--cq-font-size); }
 .cq-site *, .cq-site *::before, .cq-site *::after { box-sizing: border-box; }
 .cq-site h1, .cq-site h2, .cq-site h3 { color: var(--cq-color-ink); font-weight: 500; letter-spacing: normal; }
