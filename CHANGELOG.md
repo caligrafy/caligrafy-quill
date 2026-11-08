@@ -6,6 +6,48 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.0] - 2026-11-08
+
+### Performance
+- Faster than Symfony 8.1 and Laravel 13 on all 16 measures of the benchmark (requests per second, median, slowest
+  1%, memory; plain text, JSON, a database query, an HTML page), more than twice the requests per second of 2.18.2.
+- Phug's debug mode only with `APP_DEBUG=true`; cached views run through Phug's Optimizer (`VIEW_OPTIMIZER=false`
+  turns it off); views compiled in debug mode are kept apart.
+- No 1 MB output buffer per request.
+- Sessions only when used: a read (GET, HEAD) without a session cookie gets its session when it reads the CSRF
+  token, writes to the session after the settings ran, or its page carries the token; POST, PUT and DELETE always
+  start it. `SESSION_LAZY=false` starts every session at once, as before.
+- Database rows fetched as arrays, no longer encoded to JSON and back.
+- `.env` compiled to `.env.php` (`php caligrafer.php env cache | clear`; the deploy step does it), used while `.env`
+  keeps the content it was compiled from.
+- The class map is checked by one request at a time in production.
+
+### Added
+- Queries: `Database::table('books')` and `Book::query()` / `Book::where()` / `Book::find()`: bound values and
+  validated names, `paginate`, `count`, `pluck`, `chunk`, `search`, `insert` / `update` / `delete` (a where required),
+  eager loading `with()` / `withCount()` by naming convention or explicit settings, `Database::transaction()`, an N+1
+  warning in development.
+- Declarative routes: `Route::form` (a form's post calls a capability, then redirects, or goes back with
+  `errors()`, `old()` and `flash()`), `Route::auth` (sign-in, sign-out, sign-up, throttled, passkeys, `identifier`,
+  `signInAfterRegister`), `Route::webhook` (Stripe signatures), `Route::download` (CSV or JSON), `Route::redirect`,
+  and the `file` rule of capabilities.
+- Validation rules `exists,<table>.<column>`, `unique,<table>.<column>` and `current_year` in `min_numeric` /
+  `max_numeric`.
+
+### Changed
+- `Model` provides `find()` through `__call` (an instance: as before) and `__callStatic` (`Book::find()`: the query
+  builder) (G122).
+- The sign-in page uses `Route::auth`'s identifier.
+
+### Fixed
+- An empty argument in a rule (`max_numeric,`) no longer stops the capability schema.
+
+### Documentation
+- The wiki pages Queries, Declarative routes and the 2.19.0 release notes; every page revisited; the elegance
+  benchmark (the same app in Caligrafy, Laravel and Symfony).
+- Claude Code plugin 1.31.0: skills build with declarative routes and queries instead of controllers, the reviewer
+  checks them, API reference and gotchas G122-G135.
+
 ## [2.18.2] - 2026-11-07
 
 ### Fixed

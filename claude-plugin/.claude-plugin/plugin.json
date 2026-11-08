@@ -1,6 +1,6 @@
 {
   "name": "caligrafy-quill",
-  "version": "1.30.2",
+  "version": "1.31.0",
   "description": "Claude expertise for Caligrafy Quill - Describe it. Approve it. Ship it.: your idea turned into a complete app online without hand-offs (/caligrafy-quill:idea, /caligrafy-quill:ship), built once and experienced everywhere (PHP MVC): features written once as capabilities and served to web pages, Vue apps, REST and AI agents over MCP. The complete Caligrafy wiki plus a source-verified API reference, gotchas and end-to-end recipes (AI chat apps, face login), scaffolding skills (new-resource, new-app, new-capability: one capability served to web pages, REST, Vue apps and AI agents over MCP), Docker server and database skills, a ship skill that puts a project on GitHub and Caligrafy Cloud by itself (SSH, HTTPS or a browser approval; the Cloud sign-in approved in the browser), an update skill (php caligrafer.php update, then the .caligrafy-new merges), a deploy skill (readiness checks, Caligrafy Cloud or an own server), a marketplace skill that packages an app online for the marketplace of caligrafy.com (its screenshots, the prompt that recreates it, an estimated price) and submits it, a Caligrafy code reviewer agent, and a php -l hook.",
   "author": {
     "name": "Dory Azar",

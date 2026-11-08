@@ -50,6 +50,8 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.31.0** - Caligrafy Quill 2.19.0: skills build with declarative routes (`Route::form`, `auth`, `webhook`, `download`) and the
+  query builder instead of controllers; the reviewer checks them; G122-G135.
 - **1.30.2** - Caligrafy Quill 2.18.2: every skill, the reviewer agent and the references read again against 2.17 and 2.18:
   `db` writes migrations, `update` installs the new tables and fixes `tests/.gitignore`, `ship`, `idea`, `marketplace`
   and the reviewer check tests, migrations and background jobs.
