@@ -67,7 +67,8 @@
     ],
     "models/Auth/User.php": [
         "556e773f4fb94a579cc2e343f63d74bdee66edd5bcb9313778f7a643c9fdc8e5",
-        "693059b39a4259fbb7d8bd0d2907b4da5ec2913f295555a0385c0da743790fe6"
+        "693059b39a4259fbb7d8bd0d2907b4da5ec2913f295555a0385c0da743790fe6",
+        "e161a5d7481ef5bd9c6a26fe556cdc07c06f18cdfbd8169987f5a8eefa760492"
     ],
     "models/Auth/create_db.sql": [
         "43343045db96b8ca64724c6ab72d330a37b6c1db24f8844d1cef0bdc506e82e9",
@@ -122,6 +123,7 @@
         "ef5ff1b11d49fdeea3220f87d4ec522e838cf7e1e71fff898542a0bfd9e519b4"
     ],
     "views/Auth/login.pug": [
+        "1b5855ba4cc04b69f7b64f3a6bab0c5870d620612dac83c9dd4cec7a11f00897",
         "2d899fd1656faaf87dd3c0c35b7b0d1ed151d259979cd707e9769dd711787fa0",
         "307f5056f50c1634dd411081be39cc418969d0e245c3db53fbecb397adb906f2",
         "92dce54fb9d320c0dc99d370c98096f5ef0a299e0e240dc32900b089c0165511",

@@ -17,9 +17,12 @@ block content
       include ../default/modules/notice
       form#login_form(method='POST', enctype="multipart/form-data", action="{$home}login")
         =csrf()
+        //- the field people sign in with: Route::auth's 'identifier' option (username by default, email...) (2.19.0)
+        - $field = !empty($identifier) ? $identifier : 'username'
+        - $isEmail = $field === 'email'
         .cq-field
-          label(for='username') Username
-          input#username.form-control(type='text', name='username', required, autocomplete='username', autocapitalize='none', maxlength='100')
+          label(for=$field)= $isEmail ? 'Email' : ucfirst(str_replace('_', ' ', $field))
+          input.form-control(id=$field, type=$isEmail ? 'email' : 'text', name=$field, required, autocomplete=$isEmail ? 'email' : 'username', autocapitalize='none', maxlength='190')
         .cq-field
           label(for='passcode') Password
           input#passcode.form-control(type='password', name='passcode', required, autocomplete='current-password', maxlength='72')
