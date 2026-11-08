@@ -136,3 +136,17 @@ class QaAuthUser extends Caligrafy\Model
         return password_verify((string) $password, (string) $this->passcode);
     }
 }
+
+// Route::action (2.21.0)
+
+#[Capability(name: 'qa_web_action', description: 'A web-only capability', public: true, webOnly: true)]
+class QaWebAction extends Service
+{
+    public $rules = array('to' => '');
+
+    public function handle(array $input, Context $context)
+    {
+        return \Caligrafy\Web::redirect((string) ($input['to'] ?? '/'))->header('X-Qa', 'yes');
+    }
+}
+

@@ -1199,6 +1199,22 @@ qa_test('Route::page 2.20.0: visitorsOnly, comeBack, query; Route::redirect keep
     qa_equals(200, $bob->get('/qa/back')['status']);
 });
 
+qa_test('Route::action 2.21.0: a view, a redirect, text, data, refusals; never over REST', function () {
+    $guest = new QaBrowser();
+    qa_contains('show from the action', $guest->get('/qa/action')['body']);
+    qa_contains('/qa/bare', $guest->get('/qa/action?kind=go')['location']);
+    $r = $guest->get('/qa/action?kind=text');
+    qa_equals(203, $r['status']);
+    qa_contains('plain text', $r['body']);
+    qa_contains('"plain":true', $guest->get('/qa/action?kind=data')['body']);
+    qa_equals(403, $guest->get('/qa/action?kind=refuse')['status']);
+    qa_contains('/login?return=', $guest->get('/qa/action/members')['location']);
+    $page = new QaBrowser();
+    $r = qa_json('POST', '/capabilities/qa_action', [], null, $page, ['X-CSRF-Token: ' . qa_csrf($page)]);
+    qa_equals(404, $r['status']);
+    qa_contains('show fallback', $guest->get('/qa/client/any')['body']);
+});
+
 // ---- the user capabilities: the administration pages, REST and AI agents follow the same rules (2.5.0) ----
 qa_test('list_users over MCP: administrators only, never a password', function () {
     $aliceId = qa_sql("SELECT id FROM users WHERE username = 'alice'");

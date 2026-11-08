@@ -411,7 +411,7 @@ switch(strtolower($argv[1])) {
 			print("\n Could not write $target\n\n");
 			exit(1);
 		}
-		$names = array_keys(Caligrafy\Capabilities::all());
+		$names = array_keys(array_filter(Caligrafy\Capabilities::all(), function ($entry) { return !$entry['capability']->webOnly; }));
 		$example = $names ? lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $names[0])))) : 'myCapability';
 		print("\n $target written: " . count($names) . " capabilities, calls $prefix (Route::capabilities('$prefix') in web.php)\n"
 			. " import { $example, CapabilityError } from './capabilities.js'\n\n");

@@ -37,8 +37,17 @@ class Form
     public static function handle($capability, array $options = array(), $request = null)
     {
         $request = $request ?? request();
+        $outcome = self::outcome($capability, $options, Rest::input($request), Context::fromRequest($request, 'web'), $request->wantsJson(), self::environment($request));
+        return self::perform($outcome);
+    }
+
+    /**
+     * What outcome() and refused() need to know about the request
+     */
+    public static function environment($request)
+    {
         $headers = function_exists('getallheaders') ? array_change_key_case((array) getallheaders(), CASE_LOWER) : array();
-        $outcome = self::outcome($capability, $options, Rest::input($request), Context::fromRequest($request, 'web'), $request->wantsJson(), array(
+        return array(
             'referer' => (string) ($headers['referer'] ?? ($_SERVER['HTTP_REFERER'] ?? '')),
             'host' => (string) ($request->host ?: ($_SERVER['HTTP_HOST'] ?? '')),
             'route' => PageController::routeVariables(),
@@ -46,8 +55,7 @@ class Form
             'csrf' => $request->authorizeSessionRequest(),
             'method' => $request->method,
             'uploads' => new Uploads($_FILES ?? array()),
-        ));
-        return self::perform($outcome);
+        );
     }
 
     /**
@@ -245,7 +253,7 @@ class Form
         return $old;
     }
 
-    private static function refused(ServiceError $e, array $options, array $input, $json, array $env)
+    public static function refused(ServiceError $e, array $options, array $input, $json, array $env)
     {
         if ($json) {
             return array('status' => $e->status(), 'json' => $e->toArray());

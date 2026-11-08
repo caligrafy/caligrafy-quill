@@ -369,7 +369,7 @@ Route::page('/about', 'default/about', ['with' => ['title' => 'About the Bookshe
 | `signedIn` | `false` | `true`: visitors are sent to `/login` |
 | `comeBack` | `false` | `true`, with `signedIn` or `level`: visitors go to `/login?return=<this page>` and come back here after signing in (2.20.0) |
 | `visitorsOnly` | none | a path: people already signed in are sent there (a sign-up page, for example) (2.20.0) |
-| `query` | none | the names of the query string the view gets: `'query' => ['show']` gives `$show`, as a string, `''` when absent (2.20.0) |
+| `query` | none | the names of the query string the view gets: `'query' => ['show']` gives `$show`, as a string, `''` when absent (2.20.0); `'query' => ['app' => 'index']` gives a default (2.21.0) |
 | `level` | `0` | people whose level (the `permissions` column of `users`) is lower are sent to `/notAuthorized`, visitors to `/login` |
 | `with` | none | fixed values for the view: `['with' => ['title' => 'Books']]` |
 | `notFound` | none | a view shown with a `404` when a `data` capability refuses (not found, or inputs it refuses). It gets the route variables, the `with` values, `$message`, `$authorized` and `$user` |

@@ -281,4 +281,37 @@ final class FormRouteTest extends TestCase
         $this->assertSame('/books?a=1&page=2#top', Route::withQuery('/books?a=1#top', array('page' => '2')));
         $this->assertSame('/books', Route::withQuery('/books', array('uri' => 'old/books')));
     }
+
+    public function testAWebOnlyCapabilityIsReachedThroughRouteActionOnly(): void
+    {
+        foreach (array('web', 'rest', 'mcp', 'cli') as $channel) {
+            try {
+                \Caligrafy\Capabilities::call('qa_web_action', array('to' => '/x'), new Context($channel));
+                $this->fail("reached over $channel");
+            } catch (\Caligrafy\ServiceError $e) {
+                $this->assertSame('not_found', $e->kind, $channel);
+            }
+        }
+        $this->assertArrayNotHasKey('qa_web_action', \Caligrafy\Capabilities::available(Context::local('mcp')));
+        $outcome = Form::outcome('qa_web_action', array(), array('to' => '/x'), $this->user(), false, $this->env());
+        $this->assertArrayNotHasKey('redirect', array_diff_key($outcome, array('error' => 1)), 'Route::form cannot reach it');
+        $context = new Context('web');
+        $context->viaAction = true;
+        $answer = \Caligrafy\Capabilities::call('qa_web_action', array('to' => '/x'), $context);
+        $this->assertInstanceOf(\Caligrafy\Web::class, $answer);
+        $this->assertSame(array('type' => 'redirect', 'target' => '/x', 'data' => null, 'status' => 302, 'headers' => array('X-Qa' => 'yes')), $answer->describe());
+    }
+
+    public function testRouteActionRegistersItsMethods(): void
+    {
+        Route::action('/go', 'qa_web_action');
+        Route::action('/go/{id}', 'qa_web_action', array('method' => array('POST', 'DELETE')));
+        $this->assertSame(array(
+            array('method' => 'GET', 'route' => 'go'),
+            array('method' => 'POST', 'route' => 'go/{id}'),
+            array('method' => 'DELETE', 'route' => 'go/{id}'),
+        ), Route::routes());
+        $this->expectException(InvalidArgumentException::class);
+        Route::action('/go', 'qa_web_action', array('method' => 'PATCH'));
+    }
 }

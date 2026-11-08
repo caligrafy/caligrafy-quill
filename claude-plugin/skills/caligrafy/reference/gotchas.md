@@ -788,3 +788,5 @@ resolution and copies the media's `object-fit`; `fetchImage` draws at the canvas
 `detect.js?v=<file time>`. An app drawing its own overlay: size its canvas with `video.videoWidth`/`videoHeight`, never
 the element's attributes or `offsetWidth`, and give it the video's `object-fit`. Old client apps keep their own
 `public/<app>/index.php`: add the `?v=` to its `detect.js` script so browsers fetch the new file.
+
+**G143 (2.21.0). A `webOnly` capability answers "There is no capability" everywhere but `Route::action`.** REST, MCP, the JS client, `php caligrafer.php call`, `Route::page`, `Route::form` and `$this->call()` all get `not_found`: that is what lets it read the session, sign people in and change data on a GET. Keep plain capabilities for anything several channels share, and call them from it with `$this->capability($name, $input, $context)`. In tests use `$this->action()`, not `$this->call()`.

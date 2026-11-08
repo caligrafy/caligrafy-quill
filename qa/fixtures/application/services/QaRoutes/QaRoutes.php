@@ -33,3 +33,21 @@ class QaSetCover extends Service
         return array('cover' => $input['cover'], 'label' => $input['label'] ?? null);
     }
 }
+
+#[Capability(name: 'qa_action', description: 'Answers by the kind asked for (QA Route::action)', public: true, webOnly: true)]
+class QaAction extends Service
+{
+    public $rules = array('kind' => '');
+
+    public function handle(array $input, Context $context)
+    {
+        switch ($input['kind'] ?? '') {
+            case 'go': return \Caligrafy\Web::redirect('/qa/bare');
+            case 'text': return \Caligrafy\Web::text('plain text', 203)->header('X-Qa-Action', 'yes');
+            case 'refuse': throw \Caligrafy\ServiceError::forbidden();
+            case 'data': return array('plain' => true);
+            default: return \Caligrafy\Web::view('Qa/page', array('show' => 'from the action'));
+        }
+    }
+}
+

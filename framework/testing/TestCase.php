@@ -87,6 +87,17 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
     }
 
     /**
+     * Calls a webOnly capability as Route::action() does (2.21.0)
+     * @return mixed its answer: a Caligrafy\Web (describe() says what it answers), or plain data
+     */
+    protected function action($capability, array $input = array(), $as = null)
+    {
+        $context = $this->context($as);
+        $context->viaAction = true;
+        return Capabilities::call($capability, $input, $context);
+    }
+
+    /**
      * Asserts that a capability refuses: invalid, unauthenticated, forbidden, not_found or conflict
      * @return ServiceError the error, to check its message or fields
      */

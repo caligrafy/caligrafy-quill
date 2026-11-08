@@ -32,6 +32,9 @@ class Context
     /** @var string web, rest, mcp or cli */
     public $channel;
 
+    /** @var bool the call comes from Route::action() (2.21.0): the only way to a webOnly capability */
+    public $viaAction = false;
+
     /** @var object|null the user model (signed in, or the owner of the token) */
     public $user;
 

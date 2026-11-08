@@ -86,7 +86,7 @@ class Capabilities
     {
         return array_filter(self::all(), function ($entry) use ($context) {
             $capability = $entry['capability'];
-            return $capability->public || $context->allows($capability->scope, $capability->level);
+            return !$capability->webOnly && ($capability->public || $context->allows($capability->scope, $capability->level));
         });
     }
 
@@ -107,6 +107,9 @@ class Capabilities
             throw ServiceError::notFound("There is no capability '$name'");
         }
         $capability = $entry['capability'];
+        if ($capability->webOnly && empty($context->viaAction)) {
+            throw ServiceError::notFound("There is no capability '$name'");   // Route::action only (2.21.0)
+        }
         try {
             if (!$capability->public) {
                 if (!$context->authenticated()) {
@@ -120,7 +123,8 @@ class Capabilities
             if ($uploads !== null) {
                 $input = $uploads->apply($input, (array) $service->rules);
             }
-            $result = self::plain($service->handle($service->validate($input), $context));
+            $result = $service->handle($service->validate($input), $context);
+            $result = $result instanceof Web ? $result : self::plain($result);
         } catch (ServiceError $e) {
             if ($uploads !== null) {
                 $uploads->discard();
@@ -226,6 +230,9 @@ class Capabilities
         $list = array();
         foreach ($context ? self::available($context) : self::all() as $name => $entry) {
             $capability = $entry['capability'];
+            if ($capability->webOnly) {
+                continue;   // Route::action only (2.21.0)
+            }
             $list[] = array('name' => $name, 'description' => $capability->description, 'scope' => $capability->scope,
                 'level' => $capability->level, 'readOnly' => $capability->readOnly, 'destructive' => $capability->destructive,
                 'public' => $capability->public, 'input' => self::schema($name));

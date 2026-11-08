@@ -43,29 +43,17 @@ class PageController extends Controller
      */
     public function render($view, array $options = array())
     {
-        $level = (int) ($options['level'] ?? 0);
-        $mustSignIn = !empty($options['signedIn']) || $level > 0;
-        $visitorsOnly = $options['visitorsOnly'] ?? null;
-        if (($mustSignIn || $visitorsOnly) && !Auth::active()) {
-            throw new \LogicException("Route::page('$view'): 'signedIn', 'level' and 'visitorsOnly' need Auth::authentication(...) in web.php");
-        }
-        if ($visitorsOnly && Auth::authorized()) {
-            redirect((string) $visitorsOnly);
+        if (self::admit($options, "Route::page('$view')")) {
             return null;
-        }
-        if ($mustSignIn && !empty($options['comeBack']) && !Auth::authorized()) {
-            redirect(self::signInAddress());
-            return null;
-        }
-        if ($mustSignIn) {
-            Auth::guard(Context::$levelAttribute, $level);
         }
 
         $route = self::routeVariables();
         $data = $route;
-        foreach ((array) ($options['query'] ?? array()) as $name) {
+        foreach ((array) ($options['query'] ?? array()) as $key => $value) {
+            // 'query' => ['show'], or with a value when it is absent (2.21.0): 'query' => ['app' => 'index']
+            list($name, $default) = is_int($key) ? array($value, '') : array($key, (string) $value);
             if (!array_key_exists($name, $route)) {   // the route variables win
-                $data[self::name($view, $name)] = is_string($_GET[$name] ?? null) ? $_GET[$name] : '';
+                $data[self::name($view, $name)] = is_string($_GET[$name] ?? null) ? $_GET[$name] : $default;
             }
         }
         foreach ((array) ($options['with'] ?? array()) as $name => $value) {
@@ -93,6 +81,32 @@ class PageController extends Controller
         }
 
         return view($view, array_merge($data, self::identity()));
+    }
+
+    /**
+     * The access options of Route::page and Route::action: 'signedIn', 'level', 'comeBack', 'visitorsOnly'
+     * @return bool true when the person was sent elsewhere
+     */
+    public static function admit(array $options, $label)
+    {
+        $level = (int) ($options['level'] ?? 0);
+        $mustSignIn = !empty($options['signedIn']) || $level > 0;
+        $visitorsOnly = $options['visitorsOnly'] ?? null;
+        if (($mustSignIn || $visitorsOnly) && !Auth::active()) {
+            throw new \LogicException("$label: 'signedIn', 'level' and 'visitorsOnly' need Auth::authentication(...) in web.php");
+        }
+        if ($visitorsOnly && Auth::authorized()) {
+            redirect((string) $visitorsOnly);
+            return true;
+        }
+        if ($mustSignIn && !empty($options['comeBack']) && !Auth::authorized()) {
+            redirect(self::signInAddress());
+            return true;
+        }
+        if ($mustSignIn) {
+            Auth::guard(Context::$levelAttribute, $level);
+        }
+        return false;
     }
 
     /**

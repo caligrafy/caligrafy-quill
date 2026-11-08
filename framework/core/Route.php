@@ -349,6 +349,36 @@ class Route extends \stdClass
     }
 
     /**
+     * A request answered by a web-only capability (2.21.0, Caligrafy\Action): for what Route::page and Route::form
+     * cannot say, such as a sign-in between two sites, a gate or a payment page. The capability is declared
+     * #[Capability(..., webOnly: true)] and may return a Caligrafy\Web.
+     *   Route::action('/connect', 'cloud_connect');
+     *   Route::action('/unlock/{name}', 'unlock_app', ['method' => 'POST']);
+     * Options: 'method' ('GET' by default, 'POST', 'PUT', 'DELETE' or a list), 'signedIn', 'level', 'comeBack',
+     * 'visitorsOnly' (as Route::page), 'back', 'error' and 'signIn' (as Route::form, for a refusal it does not answer)
+     */
+    public static function action($route, $capability, array $options = array())
+    {
+        foreach ((array) ($options['method'] ?? 'GET') as $method) {
+            $method = strtolower((string) $method);
+            if (!in_array($method, array('get', 'post', 'put', 'delete'), true)) {
+                throw new \InvalidArgumentException("Route::action: unknown method '$method'");
+            }
+            self::$method($route, function () use ($capability, $options) { Action::handle($capability, $options); });
+        }
+    }
+
+    /**
+     * The data routes of the Watson bot apps (2.21.0): the addresses public/<app> of a bot calls
+     */
+    public static function bots()
+    {
+        self::post('/__bots__/{appName}/communicate', 'Caligrafy\\Controllers\\WatsonController@communicate');
+        self::post('/__bots__/{appName}/{appId}', 'Caligrafy\\Controllers\\WatsonController@connect');
+        self::delete('/__bots__/{appName}', 'Caligrafy\\Controllers\\WatsonController@end');
+    }
+
+    /**
      * Exposes every capability under a prefix: GET {prefix} lists what the caller may call (with the input schemas),
      * POST {prefix}/{name} calls one. The JS client of the Vue apps and the SPA (php caligrafer.php client) uses it.
      * @param string $prefix the uri prefix

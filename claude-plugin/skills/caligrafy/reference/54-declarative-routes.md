@@ -773,12 +773,55 @@ Route::redirect('/old/books/{id}', '/books/{id}', 301);  // moved for good
   or `308`; anything else, or an empty target, stops with an error when `web.php` runs.
 + To take the query string along (2.20.0): `Route::redirect('/old', '/new', 302, ['keepQuery' => true]);`
 
+## Everything else: `Route::action`
+
+Some requests are neither a page nor a form: a sign-in between two sites, a page that decides where to go, a gate, a
+payment page. Since 2.21.0 they are capabilities too, declared `webOnly: true`:
+
+```php
+#[Capability(name: 'open_proof', description: 'Sends the customer to their proof', webOnly: true)]
+class OpenProof extends Service
+{
+    public $rules = ['id' => 'required|integer'];
+
+    public function handle(array $input, Context $context)
+    {
+        $idea = Ideas::find($input['id']);
+        if (!$idea) {
+            return Web::view('Cloud/message', ['message' => 'It does not exist'], 404);
+        }
+        session('last_proof', $idea['id']);
+        return Web::redirect('https://proof.example.com/?pass=' . rawurlencode(Proofs::pass($idea)));
+    }
+}
+```
+
+```php
+Route::action('/proofs/{id}', 'open_proof', ['signedIn' => true, 'comeBack' => true]);
+Route::action('/unlock/{name}', 'unlock_app', ['method' => 'POST']);
+```
+
+| Option | Default | What it does |
+|---|---|---|
+| `method` | `'GET'` | `'POST'`, `'PUT'`, `'DELETE'`, or a list |
+| `signedIn`, `level`, `comeBack`, `visitorsOnly` | none | as in `Route::page` |
+| `back`, `error`, `signIn` | as in `Route::form` | for a refusal the capability does not answer itself |
+
++ **What it answers**: `Web::view($view, $data, $status)`, `Web::redirect($to, $status)`, `Web::json($data, $status)`,
+  `Web::text($body, $status)`, each with `->header($name, $value)`. Anything else is sent as JSON.
++ **What it may do that other capabilities may not**: read `session()`, `$_GET`, `$_POST`, `$_COOKIE`, `$_SERVER`, sign
+  people in with `AuthRoutes::signIn($user)`, and change data on a `GET`.
++ **That is why nothing else reaches it.** REST, MCP, the JS client, the command line, `Route::page`, `Route::form` and
+  `$this->call()` answer "There is no capability". Keep what several channels share in plain capabilities, and call them
+  with `$this->capability('list_books', $input, $context)`.
++ **Tests**: `$this->action('open_proof', ['id' => 3], $user)` returns the `Web`; `->describe()` says what it answers.
++ `Route::bots()` declares the data routes of a Watson bot app.
+
 ## Do you still need a controller?
 
-Rarely. With `Route::page`, `Route::form`, `Route::auth`, `Route::webhook`, `Route::download`, `Route::redirect` and
-the capability routes, a controller is for HTTP that is truly custom: an action that calls several capabilities with
-conditions or chooses between a redirect and a view, custom headers or streaming, password reset, face sign-in, an
-OAuth callback. It calls capabilities with `$this->call()`
+No. With `Route::page`, `Route::form`, `Route::auth`, `Route::webhook`, `Route::download`, `Route::redirect`,
+`Route::action` and the capability routes, every request is declared. Controllers still work, and existing ones can stay:
+they call capabilities with `$this->call()`
 ([Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)). Never write data in
 a closure route (`Route::post('/x', function () {...})`): it has no permission rules and no CSRF check for JSON calls.
 

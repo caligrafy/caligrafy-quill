@@ -6,6 +6,19 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.0] - 2026-11-08
+
+### Added
+- `Route::action($route, $capability, $options)`: a request answered by a capability declared `webOnly: true`, for what
+  `Route::page` and `Route::form` cannot say: a sign-in between two sites, a gate, a page that decides where to go, a
+  payment page. It takes the access options of `Route::page`; a `GET` may change data.
+- `#[Capability(..., webOnly: true)]`: reachable through `Route::action` only, never REST, MCP, the JS client, the CLI,
+  `Route::page`, `Route::form` or `$this->call()`.
+- `Caligrafy\Web`: what such a capability answers with: `Web::view()`, `Web::redirect()`, `Web::json()`, `Web::text()`,
+  `->header()`. `Service::capability()` calls another capability as the same person; `TestCase::action()` tests one.
+- `Route::bots()`: the data routes of the Watson bot apps.
+- `Route::page` `query` takes defaults: `'query' => ['app' => 'index']`.
+
 ## [2.20.0] - 2026-11-08
 
 ### Added

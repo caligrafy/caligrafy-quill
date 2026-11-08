@@ -25,6 +25,7 @@ class Capability
      * @param bool $destructive true when it deletes or overwrites data (agents ask before calling it)
      * @param bool $public true when anyone may call it without signing in or a token
      * @param bool $mcp false keeps it out of the MCP tools (one only a browser can use, such as a push subscription)
+     * @param bool $webOnly true (2.21.0): only Route::action() reaches it: it may read the session and sign people in
      */
     public function __construct(
         public string $name,
@@ -34,7 +35,8 @@ class Capability
         public bool $readOnly = false,
         public bool $destructive = false,
         public bool $public = false,
-        public bool $mcp = true
+        public bool $mcp = true,
+        public bool $webOnly = false
     ) {
         if (!preg_match('/^[a-z][a-z0-9_]{0,63}$/', $name)) {
             throw new \InvalidArgumentException("Capability name '$name' must be snake_case: letters, digits and _, starting with a letter");

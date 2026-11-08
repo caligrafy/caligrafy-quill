@@ -85,6 +85,14 @@ abstract class Service
     /**
      * Runs the service directly, without a capability check or audit (tests, other services)
      */
+    /**
+     * Calls another capability as the same person (2.21.0)
+     */
+    protected function capability($name, array $input, Context $context)
+    {
+        return Capabilities::call($name, $input, $context);
+    }
+
     public function run(array $input, ?Context $context = null)
     {
         return $this->handle($this->validate($input), $context ?? Context::cli());
