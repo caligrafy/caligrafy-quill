@@ -22,7 +22,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Learning Caligrafy from zero (a user asks for a tutorial or course): the Caligrafy course builds Bookshelf capabilities first in 15 lessons, up to putting it online, each with a manual track and a With Claude track (point the user to it; its lessons match these docs) | https://github.com/caligrafy/caligrafy-quill-course/wiki |
 | Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade, deploy, cloud | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G147) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G148) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, `Route::page` options, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -96,7 +96,7 @@ Online docs: https://github.com/caligrafy/caligrafy-quill/wiki
 ## Project layout (after `caligrafer initialize`)
 
 ```
-application/                 # YOUR server code - every .php here is auto-required (global namespace, unique class names)
+application/                 # YOUR server code - each class is loaded when first used (class map; global namespace, unique class names)
   config/config.php          # app-wide config (keywords(), copyright(), ...)
   config/routing/web.php     # ALL routes; ends with Route::run()
   controllers/               # the example controllers (core/Auth, core/AI) and older code; a new request never needs one
@@ -116,8 +116,8 @@ docker-compose.yaml, docker/ # dev server (8080), phpmyadmin (8077), mysql (3306
 - Every table has primary key `id`. Foreign keys are `<lowercase model name>_id` (model name, not table name).
 - One model class per entity, `use Caligrafy\Model;`, one `public $column;` per column, table given explicitly (`new Book('books')`, `associate()`); only the query builder (`Book::query()`, 2.19.0) guesses it: the class name lower-cased + plural, unless `protected static $tableName` (G123).
 - **Only capabilities touch models** (2.5.0): pages get their data with `Route::page(..., ['data' => [...]])`. Form posts are `Route::form`, sign-in `Route::auth`, webhooks `Route::webhook`, exports `Route::download`, and since 2.21.0 what a page or a form cannot say (a choice between a view and a redirect, the session, a sign-in of your own, a payment page) is `Route::action` on a capability declared `webOnly: true` that returns a `Caligrafy\Web`. Every request is declared: **never write a new controller**. A web-only capability is still a capability; it alone may read the session and the request, sign people in and change data on a GET, and nothing but `Route::action` reaches it (G143), so work other channels need stays in plain capabilities that it calls with `$this->capability($name, $input, $context)`. Existing controllers keep working: they call `$this->call('<capability>')`; `associate()`/`save()`/`all()` in one is legacy MVC.
-- Schema is written by hand in SQL: tables start in `application/models/<Entity>/create_db.sql`; a change to a table that has data goes in a migration (`application/migrations/<n>_<name>.sql`, `php caligrafer.php migrate make <name>`, then `migrate`; the deploy step runs them, G120). Many-to-many pivots are created by `belongsToMany()`.
-- Many-to-many pivots are created by `belongsToMany()` (typed like the referenced ids, unique constraint names - G10). Name your own FK constraints `fk_<table>_<column>`.
+- Schema is written by hand in SQL: tables start in `application/models/<Entity>/create_db.sql`; a change to a table that has data goes in a migration (`application/migrations/<n>_<name>.sql`, `php caligrafer.php migrate make <name>`, then `migrate`; the deploy step runs them, G120).
+- A many-to-many pivot is a table of its own in `create_db.sql` (`books_tags`, read by `with(['tags' => ['pivot' => true]])`, G124); older code's `belongsToMany()` creates it (typed like the referenced ids, unique constraint names, G10). Name your own FK constraints `fk_<table>_<column>`.
 - Model writes save `0`, `''` and `false`; only `null` is skipped (G7). `all()` clauses are raw SQL: use `'bindings'` for values (G8). Filters, sorting, paging and related rows: the query builder (`Book::where(...)->with('author')->paginate(20, $input['page'] ?? 1)`, 2.19.0, G122-G128), never a `where` string built from input or a query per row.
 - Pages: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book'], 'signedIn' => true])` gives the view `authorized`, `user`, the route variables and the data (G74, G83, G84); prefer it to closures returning `view()`.
 - One route file: `application/config/routing/web.php`. Keep `Route::run()` last; an address no route declares answers 404 (2.16.0, G4).
@@ -129,10 +129,8 @@ docker-compose.yaml, docker/ # dev server (8080), phpmyadmin (8077), mysql (3306
 ```php
 // application/models/Book/Book.php
 use Caligrafy\Model;
-use Caligrafy\Database;
 class Book extends Model {
-    public $id; public $title; public $author; public $publisher_id; public $created_at;
-    public function publisher() { return $this->hasOne('Publisher', 'publishers'); }   // books.publisher_id -> publishers.id
+    public $id; public $title; public $author; public $publisher_id; public $created_at;   // one public property per column
 }
 // queries (2.19.0), in capabilities: Book::where('title', $title)->get(), Book::with('publisher')->paginate(20, $input['page'] ?? 1)
 ```
@@ -143,7 +141,7 @@ use Caligrafy\Capability; use Caligrafy\Context; use Caligrafy\Service; use Cali
 class CreateBook extends Service {
     public $rules = ['title' => 'required|max_len,255', 'author' => 'required|max_len,255'];
     public $filters = ['title' => 'trim', 'author' => 'trim'];
-    public function handle(array $input, Context $context) { return (new Book('books'))->create($input); }
+    public function handle(array $input, Context $context) { $id = Book::insert($input); return Book::find($id); }
 }
 // list_books, get_book (ServiceError::notFound), update_book, delete_book (destructive: true) the same way
 ```
@@ -194,22 +192,30 @@ Browser forms instead need `=csrf()` (and `=methodField('PUT')` for PUT/DELETE) 
 
 ### Pug view with data
 ```pug
-//- application/views/Book/index.pug  -> view('Book/index', ['books' => $books])
-extends ../default/master/layoutblocks
+//- application/views/Books/index.pug  -> Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']])
+extends ../default/master/site
 
 block content
-    each $book in $books
-        p #{$book->title} by #{$book->author}
-    form(method='POST', action="{$home}books")
-        =csrf()
-        input(type='text', name='title')
-        input(type='text', name='author')
-        input(type='submit', value='Add')
+    section.cq-hero.cq-hero--page
+        h1.cq-display Books
+    section.cq-band.cq-band--tight
+        .cq-inner.cq-inner--narrow
+            ul.cq-rows
+                each $book in $books['data']
+                    li.cq-row= $book['title'] . ' by ' . $book['author']
+            form(method='POST', action=$home . 'books')
+                =csrf()
+                .cq-field
+                    label(for='title') Title
+                    input#title.form-control(type='text', name='title', value=old('title'))
+                    if errors('title')
+                        p.cq-field-error= errors('title')
+                button.btn.btn-primary(type='submit') Add
 ```
-Pug variables are PHP variables (`$books`, `$book->title`); `$home` is set by `master/layout.pug`. `layoutblocks` defines the blocks
-`headers`, `navigation_default`, `navigation_authorized`, `content`, `footer`, `scripts` (`additional_preload_scripts`, `additional_scripts`).
-Pass `'authorized' => authorized()` to show the logged-in navigation, `'install' => true` to invite visitors to install the app
-(Install button / iOS Share hint; the layout always links `public/manifest.webmanifest`; offline page with `PWA_SERVICE_WORKER=true`).
+Pug variables are PHP variables, and a capability's answer is a plain array (`$book['title']`); strings join with `.`, never `+` (G98); `$home` is set by the master `default/master/site`, whose blocks are
+`title`, `brand`, `nav_links`, `content`, `footer`, `additional_css`, `additional_scripts`. A `::` on an `if` line can be read as a filter: put the value in a `-` line first (G148).
+`Route::page` passes `authorized` and `user`; `'with' => ['install' => true]` invites visitors to install the app
+(Install button / iOS Share hint; the master always links `public/manifest.webmanifest`; offline page with `PWA_SERVICE_WORKER=true`).
 
 ### Vue client app with a page route and data routes
 ```bash
@@ -222,7 +228,7 @@ Route::capabilities('/capabilities');   // the capabilities for the JS client (p
 In `public/shop/scripts/main.js` use the generated client; a call to a JSON `Route::action` sends `{ headers: apiHeaders() }` (the session and its `X-CSRF-Token`, 2.7.0+; never the API key, which is off online, G87); read server data from `env` (`env.home`, `env.csrf`, your own view vars). See G15, G16, G27.
 
 ### Authentication
-Uncomment `Auth::authentication('User', 'users');` and, 2.19.0+, add `Route::auth(['home' => '/books']);` below it (`/login`, `/logout`, `/register`, `/notAuthorized`, throttled, new session id at sign-in; `'passkeys' => true`; follows `/login?return=<a page of this site>`, which `Route::page` builds with `'comeBack' => true`). Not in it: password reset (`Route::page` and `Route::form` on two capabilities, [09.1-authentication.md](reference/09.1-authentication.md)) and face sign-in or a sign-in through another site (web-only capabilities with `Route::action`, [recipes-face-login.md](reference/recipes-face-login.md)). A sign-up form of your own: `Route::form` with `same`, `accepted`, `signsIn`, `visitorsOnly`. Or before 2.19.0 uncomment the auth routes in web.php, create the `users` table from `application/models/Auth/create_db.sql` (safe to re-run in current templates; old copies start with `DROP TABLE` - G13), then use `authorized()`, `user()`, `guard('permissions', 1)`, `authorize($user)`, `logout('/')`. Passwords are `password_hash()`ed by `User::hashPassword()`; admin pages need `permissions >= 1` (promote in SQL). Read [09.1-authentication.md](reference/09.1-authentication.md) and G14.
+Uncomment `Auth::authentication('User', 'users');` and, 2.19.0+, add `Route::auth(['home' => '/books']);` below it (`/login`, `/logout`, `/register`, `/notAuthorized`, throttled, new session id at sign-in; `'passkeys' => true`; follows `/login?return=<a page of this site>`, which `Route::page` builds with `'comeBack' => true`). Not in it: password reset (`Route::page` and `Route::form` on two capabilities, [09.1-authentication.md](reference/09.1-authentication.md)) and face sign-in or a sign-in through another site (web-only capabilities with `Route::action`, [recipes-face-login.md](reference/recipes-face-login.md)). A sign-up form of your own: `Route::form` with `same`, `accepted`, `signsIn`, `visitorsOnly`. To sign in with an email, the `username` column holds the lower-cased address (wider column, `valid_email` and `lower_case` in `register_user`, labels of the two forms; [09.1-authentication.md](reference/09.1-authentication.md#emailsignin), G75). A sign-in of your own says how it signed in (`AuthRoutes::signIn($user, null, 'face')`, `AuthRoutes::signedInBy()`, 2.21.3, G146). Or before 2.19.0 uncomment the auth routes in web.php, create the `users` table from `application/models/Auth/create_db.sql` (safe to re-run in current templates; old copies start with `DROP TABLE` - G13), then use `authorized()`, `user()`, `guard('permissions', 1)`, `authorize($user)`, `logout('/')`. Passwords are `password_hash()`ed by `User::hashPassword()`; admin pages need `permissions >= 1` (promote in SQL). Read [09.1-authentication.md](reference/09.1-authentication.md) and G14.
 
 ### File uploads
 In a capability (2.19.0): `'cover' => 'required|file|extension,png;jpg|max_size,2mb'` in `$rules`; web pages (`Route::form`) and REST save the file and `handle()` gets its URL; MCP/CLI send a URL or path (G131). `Route::action` passes files the same way.

@@ -69,7 +69,7 @@ if ($valid !== true) { http_response_code(422); return api(['errors' => $valid])
 
 **G23. `Controller::save($inputs)` updates when the route has `{id}`.** `save()`, `find()` and `delete()` default the id to `$this->request->fetch('id')`. On a route like `POST /books/{id}/reviews`, `$this->save($review)` UPDATES review `{id}` instead of creating one. Name the route variable differently (`{book_id}`) or pass the id explicitly / use `$this->model->create($inputs)`. Proof: `Controller.php`.
 
-**G24. `Database::execute()` returns arrays of associative arrays** (it re-encodes rows), not objects. Use `arrayToModel()` to get models. Models use `public` properties for every column; ids are strings when they come from PDO.
+**G24. `Database::execute()` returns arrays of associative arrays** (fetched as arrays since 2.19.0), not objects. Use `arrayToModel()` to get models. Models use `public` properties for every column; ids are strings when they come from PDO.
 
 **G19. Global class namespace.** Since 2.18.0 the class map loads each class of `application/` when it is first used (G118; before, every `.php` file of `application/` and `tests/` was required on the first unknown class), and `tests/` is never loaded. Classes are global unless you declare a namespace: two files declaring the same fully qualified class name is a fatal "Cannot declare class" error. Use distinct names (`BookController`, `Book`, `BookService`) or a namespace (`Shop\OrderController`, routed as `'Shop\OrderController@show'`, G47); the example controllers are in `Caligrafy\Controllers` and keep scratch PHP out of `application/` (the QA suite lives in `qa/`, the app's tests in `tests/`, neither loaded on a page). Proof: `ClassMap.php`, `Framework.php`.
 
@@ -83,7 +83,7 @@ if ($valid !== true) { http_response_code(422); return api(['errors' => $valid])
 
 **G17. The Groq key is `GROQ_API_KEY`** (`Agent::settings()`, `.env.example`). The wiki said `GROQ_AI_KEY` (corrected). The other Agent providers read `TOGETHER_API_KEY`, `FIREWORKS_API_KEY`, `OPENROUTER_API_KEY`, then `AGENT_API_KEY`; the key of another provider is never used, so switching `AGENT_PROVIDER` without its key throws in `new Agent()`.
 
-**G25. `caligrafer initialize` side effects.** It keeps an existing `APP_KEY`/`API_KEY` (**Fixed**: it used to prepend new keys on every run, invalidating API keys), always rewrites `APP_ROOT` (the folder name, or empty when an argument follows: `.bin/caligrafer` passes `off` when no local `httpd` runs), copies `framework/settings/application` to `application/` if absent, `chmod -R 777 public/uploads`, and **deletes `.git`**. `.bin/caligrafer server start` does nothing when a local `httpd` (MAMP/LAMP) is running.
+**G25. `caligrafer initialize` side effects.** It keeps an existing `APP_KEY`/`API_KEY` (**Fixed**: it used to prepend new keys on every run, invalidating API keys), always rewrites `APP_ROOT` (the folder name, or empty when an argument follows: `.bin/caligrafer` passes `off` when no local `httpd` runs), copies `framework/settings/application` to `application/` if absent, `chmod -R 777 public/uploads`, and **deletes `.git`** (since 2.9.2 only with `--yes` or a yes typed in a terminal, G95). `.bin/caligrafer server start` does nothing when a local `httpd` (MAMP/LAMP) is running.
 
 **G39. Upgrading a project.** New projects initialized with this release already have the current templates. For older projects, updating the framework does not update `application/`: the auth module, `views/Client/app.pug`, `ClientController`, `AIController` and the auth views are project copies. Run `php caligrafer.php upgrade` (dry run; on a framework that has it) and `--apply`: missing and untouched files are updated with a backup in `backups/`, customized ones get `<file>.caligrafy-new` to merge by hand, the old `echo $e->getMessage();` routes `catch` becomes `Errors::handle($e);`; `.caligrafy-new` files and the reported client apps still need a manual merge. Without the command, compare them with `framework/settings/application`. Then copy the root and `public/uploads` `.htaccess` files, run `ALTER TABLE users MODIFY passcode varchar(255) NOT NULL;` and promote admins (`UPDATE users SET permissions = 1 WHERE ...`). Wiki page 9.5 Security and Upgrading lists every change.
 
@@ -92,7 +92,7 @@ if ($valid !== true) { http_response_code(422); return api(['errors' => $valid])
 **G15. Page routes for client apps (Vue-as-library, bot, facedetect, ml).** `ClientController@index` renders `views/Client/app.pug`, which includes `public/<appName>/<app>.php`:
 - the route path must END with the app folder name (`Route::get('/apps/{appName}', 'ClientController')` or `Route::get('/faceauth', ...)` for a fixed folder);
 - view vars `appName` (folder in `public/`) and `app` (markup file without `.php`, default `index`, overridable with `?app=`) select the file; both must match `[A-Za-z0-9_-]+` (G35);
-- every other view var, plus `app_root`, `service_root`, `app_resources`, `request`, `apiKey`, `token`, `home`, `keywords`, `metadata`, `copyright`, is JSON-encoded into `$env`, which the markup passes to `loadEnvironment(\`<?php echo $env; ?>\`)`; JS then reads `env.home`, `env.token`, `env.appName`, global `apiKey`;
+- every other view var, plus `scripts_version` (2.21.5, G147), `app_root`, `service_root`, `app_resources`, `request`, `apiKey`, `token`, `home`, `keywords`, `metadata`, `copyright`, is JSON-encoded into `$env`, which the markup passes to `loadEnvironment(\`<?php echo $env; ?>\`)`; JS then reads `env.home`, `env.token`, `env.appName`, global `apiKey`;
 - `loadVue({scripts: ['main']})` loads `public/<appName>/scripts/main.js`.
 `Route::page('/apps/{appName}', 'Client/app', ['query' => ['app' => 'index']])` does the same without the controller (2.21.0: `query` with a default); a fixed folder: `['with' => ['appName' => 'faceauth', 'app' => 'index']]`. A page that first decides what to show: `return Web::view('Client/app', ['appName' => 'faceauth', 'app' => 'index', 'shelf' => $data]);` in a web-only capability.
 
@@ -128,7 +128,7 @@ if ($valid !== true) { http_response_code(422); return api(['errors' => $valid])
 
 ## Testing the framework
 
-**G38. QA suite.** `./qa/run.sh` (Docker, PHP + curl, Node, `vendor/`) builds an isolated stack (compose project `quillqa`, the first free ports from 8090 and 3316, or `QA_WEB_PORT`/`QA_DB_PORT`) and runs framework (`qa/tests/cli_tests.php`), HTTP (`qa/tests/http_tests.php`) and tooling (`qa/tests/tooling_tests.sh`) tests, then removes everything (`--keep` to inspect). It refuses to run when a non-QA `application/` or `.env` exists. `qa/fixtures/docs/components.php` is a browser page of the wiki Vue samples (`/apps/qaapp?app=components` with `--keep`). It also runs the PHPUnit unit tests of the core (`qa/unit`, `phpunit.xml.dist`); run them alone with `vendor/bin/phpunit` (no Docker, database or `.env`), and add one there for new pure logic in `framework/core` (never under `tests/`: the framework requires every PHP file of `tests/` on each request). `QA_NO_BUILD=1` reuses an existing `quillqa-web` image instead of `up --build` (for networks where the image build fails during apt-get). Only one QA stack can run at a time (shared compose project and ports).
+**G38. QA suite.** `./qa/run.sh` (Docker, PHP + curl, Node, `vendor/`) builds an isolated stack (compose project `quillqa`, the first free ports from 8090 and 3316, or `QA_WEB_PORT`/`QA_DB_PORT`) and runs framework (`qa/tests/cli_tests.php`), HTTP (`qa/tests/http_tests.php`) and tooling (`qa/tests/tooling_tests.sh`) tests, then removes everything (`--keep` to inspect). It refuses to run when a non-QA `application/` or `.env` exists. `qa/fixtures/docs/components.php` is a browser page of the wiki Vue samples (`/apps/qaapp?app=components` with `--keep`). It also runs the PHPUnit unit tests of the core (`qa/unit`, `phpunit.xml.dist`); run them alone with `vendor/bin/phpunit` (no Docker, database or `.env`), and add one there for new pure logic in `framework/core` (never under `tests/`, which holds an application's own tests since 2.18.0). `QA_NO_BUILD=1` reuses an existing `quillqa-web` image instead of `up --build` (for networks where the image build fails during apt-get). Only one QA stack can run at a time (shared compose project and ports).
 
 ## Current libraries (October 2026 upgrade)
 
@@ -228,8 +228,10 @@ in `framework/settings/application/controllers/core/`.
 
 **G75. The sign-up form accepts usernames of letters and digits only.** `AuthController::register()` validates
 `username` with `required|alpha_numeric|max_len,100`: an email address, a dot or a dash is refused ("The username
-must only contain letters and digits"). Say so next to the *Sign up* link of an application, or change the rule in the
-project's copy of the controller.
+must only contain letters and digits"), and since 2.5.0 `register_user` holds the same rule. Say so next to the *Sign up* link
+of an application, or let people sign in with an email: the `username` column holds the lower-cased address (`varchar(254)`,
+`required|valid_email|max_len,254` and the filters `trim|lower_case` in `CaligrafyRegisterUser` and `CaligrafyUpdateUser`, the
+forms' field labeled Email but still `name='username'`; wiki `9.1-Authentication#emailsignin`).
 
 **G76. `php caligrafer.php service` without `--scope` writes `scope: ''`.** The template's `{{scope}}` becomes an empty
 string, so the capability needs no scope from a token: any token can call it. Always pass `--scope <resource:action>`
@@ -685,6 +687,7 @@ field is named after the identifier, so the shipped `login.pug` (a `username` fi
 field; the view gets `$identifier`. The lookup is the model's `findByUsername()` only for `username`; for another
 column it is `findBy($column, $value)` when the model has one (the shipped `User` since 2.19.0), else a bound query on
 the model's table. An older `findByUsername()` rewritten to search by email keeps working with the default identifier.
+For the simple case, people who sign in with an email and no separate username, keep the address in `username` instead (G75).
 Sign-up now sends the register capability every input its `$rules` declare (not only `username`/`passcode`): a form
 field the rules do not list never reaches it. Proof: `AuthRoutes::finder()`, `AuthRoutes::registerInput()`.
 
@@ -793,8 +796,10 @@ the element's attributes or `offsetWidth`, and give it the video's `object-fit`.
 
 **G144 (2.21.0). `$context` does not change when a web-only capability signs someone in.** It was built from the request, before `AuthRoutes::signIn()`. To call a capability as the person just signed in, build a new one: `Context::fromRequest(request(), 'web')`, and set `viaAction = true` if that capability is webOnly too. `AuthRoutes::signIn()` also gives the session a **new CSRF token**: right before a redirect, but a page that stays open and keeps sending JSON then gets `[ERROR 1004]`. There, `session_regenerate_id(true); Auth::authorize($user);` (recipes-face-login.md).
 
-**G145 (fixed in 2.21.2). Before 2.21.2, on a `GET`, `Route::action` and `Route::capability` let the query string replace a route variable** (`/books/3?id=9` gave `id = 9`). `Rest::input()` now applies the route's own variables last. A route variable still says nothing about who may open the row: check it against `$context`.
+**G145 (fixed in 2.21.2). Before 2.21.2, on a `GET`, `Route::action` and `Route::capability` let the query string replace a route variable** (`/books/3?id=9` gave `id = 9`). `Rest::input()` now applies the route's own variables last. Since 2.21.7 `Route` does not let the query string replace them either, so `fetch('id')` and `$this->call()` are safe too. A route variable still says nothing about who may open the row: check it against `$context`.
 
 **G146 (2.21.3). A face sign-in must not be able to change how the account signs in.** Without a liveness check a photo can pass, so a session opened with a face could otherwise replace the enrolled face, delete it or register a passkey, and keep the account. Check `AuthRoutes::signedInBy()` first (`'password'` or `'passkey'` through `Route::auth`; what the app recorded with `signIn($user, null, 'face')` or `rememberSignIn('face')`), and treat `null` as not allowed.
+
+**G148. In a Pug view, a `::` on an `if` line can be read as a filter.** `if $a ?? \Caligrafy\AuthRoutes::signUpOpen()` and `if isset($x) ? $x : \Caligrafy\AuthRoutes::signUpOpen()` stop with `Failed to compile: Unknown filter signUpOpen`, and `if \Caligrafy\Context::$levelAttribute` with a syntax error (`if \Caligrafy\AuthRoutes::signUpOpen()` alone compiles). Compute the value on a code line first: `- $open = isset($x) ? $x : \Caligrafy\AuthRoutes::signUpOpen()`, then `if $open`, as `site.pug` and `login.pug` do. Verified on 2.21.6.
 
 **G147 (fixed in 2.21.5). Before 2.21.5, `loadVue({ scripts: [...] })` loaded `public/<app>/scripts/<name>.js` with no version**, so a browser could keep the script of the deploy before while the page was new (a sign-in page that still checked the old rules). `Client/app.pug` now gives `env.scripts_version` (the time `app.js` was deployed) and `loadVue()` adds it. `app.js` needs a version of its own (the starter pages have it since 2.21.6; a page made earlier writes `app.js?v=<?php echo @filemtime(PUBLIC_PATH.'js/services/app.js'); ?>`). A page that loads its own script writes `?v=<?php echo @filemtime(...); ?>`.

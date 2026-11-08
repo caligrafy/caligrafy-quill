@@ -183,7 +183,7 @@ doctor` reports an invalid file too.
 
 ### While you develop
 
-`php caligrafer.php server start` starts the **scheduler** container: it runs `schedule work`, so your jobs run as they
+`.bin/caligrafer server start` starts the **scheduler** container: it runs `schedule work`, so your jobs run as they
 will online. Without Docker, run `php caligrafer.php schedule work` in a terminal. Projects made before 2.14.0 get the
 `scheduler` service in `docker-compose.yaml` with `php caligrafer.php update` (or `docker-compose.yaml.caligrafy-new`
 when you changed the file: copy its `scheduler` service into yours).

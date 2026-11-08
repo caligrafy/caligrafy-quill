@@ -263,12 +263,12 @@ Run `docker compose exec dev-box php caligrafer.php capabilities`: the list show
 **4. The routes.** In `application/config/routing/web.php`, above `Route::run();`, write:
 ```php
     // BOOKSHELF PAGES: rendered on the server with the data of the capabilities; the form calls one capability
-    Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books', 'authors' => 'list_authors']]);
+    Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books', 'authors' => 'list_authors'], 'query' => ['author_id']]);
     Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);
     Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book'], 'notFound' => 'Bookshelf/notfound']);
     Route::download('/authors.csv', 'list_authors', ['filename' => 'authors.csv']);   // the same capability, as a file
 ```
-+ `/books` gives its view `$books`, the page of books of `list_books` (`?page=2` and `?author_id=2` reach it as its inputs), and `$authors`, the answer of `list_authors`.
++ `/books` gives its view `$books`, the page of books of `list_books` (`?page=2` and `?author_id=2` reach it as its inputs), `$authors`, the answer of `list_authors`, and `$author_id`, the `?author_id=` of the address (`''` when absent), which the links to the next pages keep.
 + `/books/3` calls `get_book` with `id = 3` and gives the view `$book`, with its `author`; a missing book renders `Bookshelf/notfound` with status `404`.
 + A `POST /books` calls `create_book` with the form's fields, then goes to the new book's page (`{id}` is the id of the book it returns).
 + `/authors.csv` is the list of authors as a spreadsheet ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#download)).
@@ -341,7 +341,7 @@ block content
                                     a(href="{$home}books?author_id={$b['author_id']}")= $b['author']['name']
                                     | , #{$b['published_year']}
                 //- the next and previous pages keep the author of the address (?author_id=2)
-                - $filter = isset($_GET['author_id']) ? '&author_id=' . (int) $_GET['author_id'] : '';
+                - $filter = $author_id !== '' ? '&author_id=' . (int) $author_id : '';
                 p.cq-auth-note
                     | Page #{$books['page']} of #{$books['pages']}, #{$books['total']} books
                     if $books['page'] > 1
@@ -489,6 +489,8 @@ New pages extend the master **`default/master/site`** (`application/views/defaul
 | `additional_css` | more `link` tags, loaded after Caligrafy's stylesheets and before a design style |
 | `additional_scripts` | more scripts, at the end of the page |
 
+**The top bar stays put from page to page** (2.21.4). `layout.css` sets `html { scrollbar-gutter: stable }`, so a short page and a long one keep the same room for the scrollbar. To mark the current link in `nav_links`, change its color or underline it: never a heavier `font-weight`, because Inter is loaded at 400 and 500 only, and a heavier weight is faked by the browser and makes the text change width.
+
 The master also links the web app manifest, the icons and the page's [social card](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards), sets `$home` (the application's address, ending with `/`), and links its stylesheets with their modification time (`?v=...`) so browsers fetch every change. Link your own files the same way: `script(src=$home . 'public/js/books.js?v=' . @filemtime(PUBLIC_PATH . 'js/books.js'))`.
 
 **Pug in Caligrafy.** Pug writes HTML by indentation: `p.cq-lead Hello` is `<p class="cq-lead">Hello</p>`. Caligrafy runs Pug with **PHP expressions** ([Phug](https://phug-lang.com)):
@@ -500,6 +502,7 @@ The master also links the web app manifest, the icons and the page's [social car
 | `if $book` / `each $book in $books['data']` with the lines under it | `- if ($book) echo 'x'` on one line (does not compile) |
 | `p From &#36;40 a month` | `p From $40 a month` (`$40` is read as a variable and vanishes) |
 | `- $position = sprintf('%d of %d', $i + 1, count($books))` then `figure(aria-label=$position)` | an attribute value with parentheses and `.` (`aria-label=($i + 1) . ' of ' . count($books)`): a parse error |
+| `- $open = isset($signUp) ? $signUp : \Caligrafy\AuthRoutes::signUpOpen()` then `if $open` | a `::` on the `if` line after `??` or in a ternary (`if isset($signUp) ? $signUp : \Caligrafy\AuthRoutes::signUpOpen()`): it is read as a Pug filter, `Failed to compile: Unknown filter signUpOpen` |
 
 `php caligrafer.php doctor` points to the `$` before digits and the one-line `- if` it finds in `application/views`.
 
@@ -614,7 +617,7 @@ Pages written before 2.11.0 extend `default/master/layoutblocks`. It keeps worki
 
 + **`+` to join strings in a view**: the page becomes a template error. Use `.`.
 + **A `data` capability that writes**: `Route::page` accepts only `readOnly` capabilities; every visit answers `500`.
-+ **Reading `$_GET` in a view**: the view never gets the query string. Add the input to the capability's `$rules`.
++ **Reading `$_GET` in a view**: the view gets the query string only through the `query` option of `Route::page`; a capability gets it through its `$rules`.
 + **A `success` page that redirects again**: the flash messages and errors are read by the first page after the post, then gone.
 + **A `form` without `method='POST'`**: when its script does not run, the browser sends the fields in the address. Give every form `method='POST'`.
 + **A changed view that does not show after a copy**: `php caligrafer.php cache clear` as the web server's user.

@@ -1219,6 +1219,7 @@ qa_test('Route::action 2.21.0: a view, a redirect, text, data, refusals; never o
         $r = qa_json('GET', "/v2/books/$id?id=999999", null, null, $reader, ['X-CSRF-Token: ' . qa_csrf($reader)]);
         qa_equals(200, $r['status']);
     }
+    qa_equals('5', (string) (json_decode($guest->get('/qa/books/5?id=999', ['headers' => ['Accept: application/json', 'Authorization: Bearer ' . $GLOBALS['API_KEY']]])['body'], true)['id'] ?? ''));
     qa_contains('show fallback', $guest->get('/qa/client/any')['body']);
     qa_equals(401, $guest->get('/qa/action?kind=data', ['headers' => ['Accept: application/json']])['status']);
     $withToken = new QaBrowser();

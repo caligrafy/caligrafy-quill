@@ -199,7 +199,8 @@ class Route extends \stdClass
         
         // if there are any additional parameters from GET
         if (self::$_httpMethods[self::$_currentRouteKey] == 'GET') {
-            self::$currentBind = array_merge(self::$currentBind, self::$_request->parameters);
+            // the route's own variables win: /books/3?id=9 is the book 3 (2.21.7), and they stay first for fetch(1)
+            self::$currentBind = (array) self::$currentBind + (array) self::$_request->parameters;
         }
     }
 
@@ -433,7 +434,8 @@ class Route extends \stdClass
      * site), 'error' (the message for flash('error') instead of the capability's), 'signIn' (default /login);
      * 2.20.0: 'visitorsOnly' (a path: signed-in people are sent there), 'same' ([field => [other field, message]]),
      * 'accepted' ([field => message]: a box that must be ticked), 'inputs' (values only the server sets: an array or a
-     * callable($input)), 'signsIn' (the field of the answer that holds the id of the person to sign in).
+     * callable($input)), 'signsIn' (the field of the answer that holds the id of the person to sign in), 'signsInWith'
+     * (how: 'password' by default, what AuthRoutes::signedInBy() answers).
      * 'success' may be a full address, or a callable returning one (a payment page).
      * Invalid input goes back with errors($field), old($field) and flash('error') for the next page. JSON requests get
      * the REST answer.

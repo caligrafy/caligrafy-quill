@@ -450,6 +450,8 @@ Notes:
   `$minPrints` 3, `$maxPrints` 12). Never loosen 0.5.
 - Rotating `APP_KEY` makes every stored print unreadable: users must enrol again (passkeys keep working).
 - Never return descriptors or public keys from a route, never log them.
+- An app whose usernames are email addresses (wiki `9.1-Authentication#emailsignin`): `facelogin_register` tests the username itself:
+  replace its letters-and-digits test with `filter_var($username, FILTER_VALIDATE_EMAIL)`, keep it in lower case, and label the page's field Email.
 - `Passkey` keeps the WebAuthn challenge in the session (single use, `$timeout` 120 s) and checks the exact origin;
   `userVerification` and `residentKey` are `required` (the device asks for its PIN or biometrics; login without a username).
 
@@ -579,7 +581,7 @@ look and `passkey.js` after `detect.js`.
         <script src="<?php echo scripts('axios'); ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'app.js?v='.@filemtime(PUBLIC_PATH.'js/services/app.js'); ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'face-api.min.js'; ?>"></script>
-        <script src="<?php echo APP_SERVICE_ROOT.'detect.js'; ?>"></script>
+        <script src="<?php echo APP_SERVICE_ROOT.'detect.js?v='.@filemtime(PUBLIC_PATH.'js/services/detect.js'); ?>"></script>
         <script src="<?php echo APP_SERVICE_ROOT.'passkey.js'; ?>"></script>
         <script>loadEnvironment(`<?php echo $env; ?>`);</script>
         <script>loadVue({ scripts: ['main'] });</script>
@@ -986,6 +988,7 @@ app.mount('#app');
       a face already enrolled on another account refused.
 - [ ] Login: `FaceLogin::verify()` (nonce, liveness, prints), then `FaceLogin::match()`, used-print hashes, lockout outside `users`.
 - [ ] Prints encrypted with `encryptDecrypt` (APP_KEY), compared on the server, never returned.
+- [ ] A session opened with a face alone cannot replace the enrolled face or add a passkey (`mayChangeSignIn()`, `AuthRoutes::signedInBy()`, G146), and every sign-in records how (`rememberSignIn()`).
 - [ ] Passkey policy chosen and explained; `PASSKEY_RP_ID` / `PASSKEY_ORIGIN` set in production; https.
 - [ ] `session_regenerate_id(true)` + `Auth::authorize()` only after every required factor (not `AuthRoutes::signIn()`: the page stays open and keeps its CSRF token).
 - [ ] Client: `Vue.markRaw`, `autoStart: false` + `startStream()` errors, challenges from the server (no `blink`),

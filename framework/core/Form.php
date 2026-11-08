@@ -93,7 +93,7 @@ class Form
         }
 
         if (!empty($options['signsIn'])) {
-            self::signInFrom($capability, (string) $options['signsIn'], $result, $env);
+            self::signInFrom($capability, (string) $options['signsIn'], $result, $env, (string) ($options['signsInWith'] ?? 'password'));
         }
         if ($json) {
             return array('status' => strtoupper((string) ($env['method'] ?? 'POST')) === 'POST' && !$readOnly ? 201 : 200, 'json' => array('data' => $result));
@@ -151,7 +151,7 @@ class Form
     }
 
     // 'signsIn' => 'id' (2.20.0): the person whose id is that field of the capability's answer is signed in
-    private static function signInFrom($capability, $field, $result, array $env)
+    private static function signInFrom($capability, $field, $result, array $env, $how = 'password')
     {
         $id = is_array($result) ? ($result[$field] ?? null) : null;
         if (!is_scalar($id) || (string) $id === '') {
@@ -165,7 +165,7 @@ class Form
         if (!$user) {
             throw new \LogicException("Route::form: 'signsIn': no user with the id that '$capability' answered");
         }
-        AuthRoutes::signIn($user);
+        AuthRoutes::signIn($user, null, $how);   // AuthRoutes::signedInBy() answers it (2.21.7)
     }
 
     /**

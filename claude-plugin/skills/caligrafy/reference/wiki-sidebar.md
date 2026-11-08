@@ -51,7 +51,7 @@
 1. [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models)
 2. [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships)
 3. [Queries: filters, paging, related rows](https://github.com/caligrafy/caligrafy-quill/wiki/Queries)
-4. [Sign-in, users and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication)
+4. [Sign-in, users and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) · [with an email](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#emailsignin)
 
 ## Built-in features
 

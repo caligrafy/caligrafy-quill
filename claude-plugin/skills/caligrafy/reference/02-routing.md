@@ -346,10 +346,11 @@ Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']])
   of the view (`$id`).
 + In `Route::form`, `Route::download`, `Route::capability` and `Route::redirect`, they become inputs or fill the
   `{name}` of the target, the same way.
-+ In `Route::action`, they become inputs too. On a `GET`, a query string value of the same name replaces them there, and
-  in `Route::capability`: `/books/3?id=9` gives `id = 9`.
++ In `Route::action`, they become inputs too. Everywhere the route variable wins over a query string value of the same
+  name: `/books/3?id=9` gives `id = 3` (2.21.2; in 2.21.0 and 2.21.1, `Route::action` and `Route::capability` gave `9`).
 + In a controller you keep, read them with `$this->request->fetch('id')`
-  ([Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)).
+  ([Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)). Since 2.21.7, on a `GET`, a query string value of
+  the same name never replaces it.
 
 A variable is always a string, and the route does not check it: `/books/abc` reaches `get_book`, whose `integer` rule
 refuses it.

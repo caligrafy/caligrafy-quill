@@ -1,7 +1,7 @@
 # Caligrafy Quill architecture
 
 How the framework is built and how a request runs through it, for contributors and coding agents. It describes
-Caligrafy Quill 2.5.0, from the source. (The audit of 2.0.0 that led to this design is in the git history of this
+Caligrafy Quill 2.21, from the source. (The audit of 2.0.0 that led to this design is in the git history of this
 file, commit `67ea265`.)
 
 ## Build once, experience everywhere
@@ -12,7 +12,7 @@ and programs reach the application is an adapter around the same capabilities:
 
 | Experience | Adapter | Who is acting |
 | --- | --- | --- |
-| Web pages (Pug) | `Route::page()`: the page controller calls read-only capabilities for the page's data; the declarative routes (2.19.0) call a capability for a form post (`Route::form`), an export (`Route::download`) and sign-in (`Route::auth`); a controller calls `$this->call()` only for custom HTTP | the signed-in person (session) |
+| Web pages (Pug) | `Route::page()`: the page controller calls read-only capabilities for the page's data; the declarative routes (2.19.0) call a capability for a form post (`Route::form`), an export (`Route::download`) and sign-in (`Route::auth`); `Route::action` serves a web-only capability for the rest (2.21.0); no new application needs a controller | the signed-in person (session) |
 | Other services' events | `Route::webhook()`: the signature checked (`'stripe'` or a function), then the capability (2.19.0) | the system (`Context::system('webhook', $path)`) |
 | Vue apps, the Vite SPA, installable mobile pages | the generated JS client (`php caligrafer.php client`) calls `/capabilities` | the signed-in person (cookie + `X-CSRF-Token`) |
 | REST | `Route::capability()` routes and `POST /capabilities/{name}` | a personal access token, the legacy key, or the session |
@@ -46,11 +46,11 @@ application/       (a project: copied from framework/settings/application by ini
 ├── services/      capabilities, one class per feature; Users/ holds the user capabilities (2.5.0)
 ├── models/        one model per table, and the table's create_db.sql
 ├── migrations/    changes to tables that have data: numbered SQL files, each run once (2.18.0)
-├── views/         Pug pages built with the page components of public/css/tokens.css
+├── views/         Pug pages on the master default/master/site, built with the page components of public/css/layout.css
 ├── controllers/   the older way, still working; core/ holds the framework's (Auth, Admin, AI, Client, Watson)
 └── config/        config.php, routing/web.php (every route of the project), schedule.php (jobs), container.php (bindings)
 tests/             the application's own tests (php caligrafer.php test, Caligrafy\Testing\TestCase); never loaded on a page
-public/            css/tokens.css (the look), js/capabilities.js (the generated client), <app>/ (client apps)
+public/            css/ (tokens.css, layout.css, look.css, camera.css: the look), js/capabilities.js (the generated client), <app>/ (client apps)
 Dockerfile         the production image; docker/Dockerfile is the development image of docker-compose.yaml
 claude-plugin/     the Claude Code plugin: the documentation, skills, a reviewer agent
 ```
@@ -79,9 +79,11 @@ must be unique (the user capabilities are named `Caligrafy...` for that).
    when it exists) and `application/config/routing/web.php`. The routes end with
    `Route::run()`.
 5. `Route::run()` ages the flash data of the previous request (`Flash::age()`, 2.19.0), builds the `Request` (headers,
-   parameters; for POST, PUT and DELETE it checks the CSRF token unless the request asks for JSON, its user agent is
-   in `APPROVED_AGENTS`, or it posts to a `Route::webhook` address), keeps the routes with the same method and segment
-   count, matches the path, binds the route variables (`{id}`; for GET the query string is merged in), then:
+   parameters; for POST, PUT and DELETE it checks the CSRF token unless the request asks for JSON, carries a bearer token
+   or the session's token in `X-CSRF-Token`, its user agent is in `APPROVED_AGENTS`, or it posts to a `Route::webhook` or
+   `Route::mcp` address), keeps the routes with the same method and segment count, matches the path, binds the route
+   variables (`{id}`; for GET the query string is merged in `currentBind`, but `Route::page`, `Route::form`,
+   `Route::action` and `Route::capability` keep the route variable, 2.21.2), then:
    - **no route matches**: 404 (`[ERROR 1005]`, or JSON to an API call), or 405 with `Allow` when the address exists
      with another method (2.16.0);
    - `'Controller@action'`: a missing class or method raises 1001 (404); a JSON request needs the session's CSRF token
@@ -89,8 +91,8 @@ must be unique (the user capabilities are named `Caligrafy...` for that).
      key (else 1004, 401, with the reason); then `new Controller()` and the action;
    - a closure: called as is. `Route::page`, `Route::capability`, `Route::capabilities`, `Route::mcp` and the
      declarative routes (`Route::form` -> `Form`, `Route::auth` -> `AuthRoutes`, `Route::webhook` -> `Webhook`,
-     `Route::download` -> `Download`, 2.19.0) register closures that hand the request to the page controller, `Rest`,
-     `Mcp\Http` or those classes.
+     `Route::download` -> `Download`, 2.19.0; `Route::action` -> `Action`, 2.21.0) register closures that hand the request
+     to the page controller, `Rest`, `Mcp\Http` or those classes.
 6. The answer is a view (`view()` renders the Pug file, compiled once and kept in a private folder of the temporary
    directory until it or a file it includes changes, 2.17.0; `VIEW_CACHE=false`; since 2.19.0 a compiled, up-to-date
    view runs through Phug's Optimizer without the compiler, `VIEW_OPTIMIZER=false`, and Phug's debug mode is on only
@@ -117,7 +119,7 @@ again.
 
 ## Who is acting: the Context
 
-`Context` says who acts (`actorType()`: user, token, cli, key, guest), through which channel (`web`, `rest`, `mcp`,
+`Context` says who acts (`actorType()`: user, token, cli, key, guest, or the system of a job or an event: schedule, queue, webhook), through which channel (`web`, `rest`, `mcp`,
 `cli`), and answers `allows($scope, $level)`:
 
 | Actor | Scopes | Level |
@@ -127,6 +129,7 @@ again.
 | a token without an owner | the token's scopes | passes any level: an application token. It is not someone, so it never manages users |
 | the legacy API key (`LEGACY_API_KEY=true`) | full access | full: it is public by design (client app pages), so the user capabilities refuse it |
 | the command line (`php caligrafer.php call`, `mcp` without a token) | full access | full, audited as `cli` |
+| the scheduler, the queue, a webhook (`Context::system()`) | full access | full, audited under `schedule`, `queue` or `webhook` |
 | a guest | public capabilities only | 0 |
 
 `Context::fromRequest()` builds it for HTTP: a bearer token, else the legacy key, else the session, else a guest.
@@ -147,11 +150,12 @@ capability that calls `Tokens::create()` for the signed-in person (how an applic
   `conflict` go back with `errors()`, `old()` and `flash('error')` kept for one request by `Flash`; JSON requests get the
   REST answer and need `X-CSRF-Token` with the session), `Route::auth` (`AuthRoutes`: `/login`, `/logout`, `/register`,
   `/notAuthorized`, passkeys; failed sign-ins counted by `Throttle`; a new session id and CSRF token at sign-in and
-  sign-out), `Route::webhook` (`Webhook`: no CSRF token, the signature checked before the capability runs as the
-  system), `Route::download` (`Download`: a read-only capability as CSV or JSON). The `file` rule of a capability
+  sign-out; `?return=` to a page of this site, 2.20.0), `Route::webhook` (`Webhook`: no CSRF token, the signature checked before the capability runs as the
+  system), `Route::download` (`Download`: a read-only capability as CSV or JSON), `Route::redirect`. The `file` rule of a capability
   (`Uploads`) saves an uploaded file after the access check and gives `handle()` its URL.
 - **`Route::action`** (`Action`, 2.21.0): HTTP none of these covers (a sign-in between two sites, a gate, a page that
-  decides where to go): a capability declared `webOnly: true` answers with a `Caligrafy\Web`. Nothing else reaches it.
+  decides where to go): a capability declared `webOnly: true` answers with a `Caligrafy\Web`. Nothing else reaches it. A
+  JSON call needs the page's CSRF token or an API token that grants `*`, signed in or not (2.21.1).
 - **How a session signed in** (`AuthRoutes::signedInBy()`, 2.21.3): `password` or `passkey` through `Route::auth`, what the
   application recorded otherwise. A face alone must not change how the account signs in.
 - **Controllers** still work; no application needs one since 2.21.0.
@@ -160,7 +164,7 @@ capability that calls `Tokens::create()` for the signed-in person (how an applic
   through `register_user`), `AdminController` (the user capabilities), `ClientController` (client app pages),
   `AIController`, `WatsonController`.
 - **REST** (`Rest`): `Route::capability('POST', '/api/books', 'create_book')` maps a route to a capability (route
-  variables become inputs and win over the body); `Route::capabilities('/capabilities')` lists what the caller may use
+  variables become inputs and win over the body and the query string, 2.21.2); `Route::capabilities('/capabilities')` lists what the caller may use
   (`GET`) and calls one (`POST /capabilities/{name}`). A session caller must send the CSRF token (`X-CSRF-Token`); a
   bearer token does not need it (a browser cannot send one on its own).
 - **The JS client** (`Client`, `php caligrafer.php client`): one function per capability (`createBook({ title })`)
@@ -223,18 +227,18 @@ cannot be created in bulk over REST or MCP.
 
 - `php caligrafer.php`: `quickstart` (a project in one command), `initialize`, `service` (a capability skeleton),
   `capabilities`, `call`, `client`, `sql`, `migrate`, `platform install`, `token`, `mcp`, `audit`, `schedule`, `queue`,
-  `cache clear`, `env cache | clear` (2.19.0), `test`, `doctor` (a read-only health
-  check), `upgrade` (`Upgrader`: compares `application/` with the templates and `template-history.json`; replaces
+  `cache clear`, `env cache | clear` (2.19.0), `test`, `notify`, `design`, `plugin`, `doctor` (a read-only health
+  check), `update` (`Updater`: moves a project to another release), `upgrade` (`Upgrader`: compares `application/` with the templates and `template-history.json`; replaces
   untouched copies, keeps customized ones with a `.caligrafy-new` next to them, never replaces `web.php`, and holds
   the user capabilities when the project manages users its own way), `deploy`, `cloud`, `version`.
 - The Claude Code plugin (`claude-plugin/`): the documentation, a source-verified API reference and gotchas, skills
-  that build features capabilities first (`idea`, `new-capability`, `new-resource`, `new-app`, `deploy`), and a reviewer
+  that build features capabilities first (`idea`, `new-capability`, `new-resource`, `new-app`, `ship`, `deploy`), and a reviewer
   agent that checks the rules of this file.
 
 ## What existing projects depend on (must keep working)
 
 - `web.php` with `Route::get/post/put/delete`, `'Controller@action'` and closures, `Auth::activateAPI()`,
-  `Auth::authentication()`, `Route::run()`, `Errors::handle()`; the first-route fallback for unknown addresses.
+  `Auth::authentication()`, `Route::run()`, `Errors::handle()`.
 - Controllers extending `Caligrafy\Controller` (`associate`, `all`, `find`, `save`, `delete`, `search`, `check`,
   `validate`, `view`, `api`), models extending `Caligrafy\Model`, the global helpers (`view`, `api`, `session`, `csrf`,
   `methodField`, `authorized`, `user`, `guard`, `redirect`...).
@@ -257,8 +261,8 @@ cannot be created in bulk over REST or MCP.
    with a CSRF token; the shared key and tokens without an owner are never treated as a person.
 6. **Audit by default** for every change and every refusal.
 7. **MCP tools are the capabilities**, called directly, never through the REST routes.
-8. **One look** for every page and device: the page components of `public/css/tokens.css`, the look of the Caligrafy
-   sign-in card.
+8. **One look** for every page and device: the master `site.pug` and the page components of `public/css/layout.css` and
+   `look.css`, restyled by a design style (`DESIGN_STYLE`).
 9. **The database follows the code**: `create_db.sql` scripts safe to run again, run at every start in production.
 10. **Upgrades respect the project**: untouched templates are replaced, customized ones kept, routes never touched, and
     new framework pieces that could clash with the project are held with an explanation.

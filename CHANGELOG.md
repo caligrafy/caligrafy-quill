@@ -6,6 +6,18 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.7] - 2026-11-08
+
+### Security
+- On a `GET`, the query string no longer replaces a route variable anywhere: `fetch('id')` and `$this->call()` are safe too.
+- The SPA template no longer holds an API key.
+
+### Fixed
+- `Route::form` with `signsIn` records how the person signed in: `password`, or `signsInWith`.
+
+### Documentation
+- The wiki, the README and the plugin were read in full against the code and corrected.
+
 ## [2.21.6] - 2026-11-08
 
 ### Fixed

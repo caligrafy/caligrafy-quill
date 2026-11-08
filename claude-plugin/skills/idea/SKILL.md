@@ -45,6 +45,7 @@ You'll only approve sign-ins in your browser; I'll ask before spending any credi
 | Tables | each table, its columns and types, links between tables (foreign keys) |
 | Capabilities | `list_<things>`, `get_<thing>`, `create_<thing>`, `update_<thing>`, `delete_<thing>` per table, plus the actions the idea needs (`mark_read`, `rate_book`...); for each: what it does, read-only or destructive, its scope `<things>:read` / `<things>:write` |
 | Who may do what | **Default: anyone can read, people who signed up change** (sign-in pages on; writes are not `public`). The other choice, everything `public` like the Tasks example, is for a demo only: say that online, anyone could change or delete the data |
+| How people sign in | a username (letters and digits) by default; when the idea is for the public, or the user says so, their **email**, kept in the `username` column. Say which in the plan |
 | Pages | one page per main table at `/<things>`: a form, the list with its actions, an empty state; `/` opens the main page |
 | Sample data | 3 to 6 rows so the app is not empty, online too |
 | Slow work | only when the idea has work that is slow or may fail (an AI call, an email to many, a report): the capability the page calls pushes a **background job** (`Caligrafy\Queue::push`) on a second capability, and a `queue_work` job runs it |
@@ -101,8 +102,12 @@ a page that needs someone: `'signedIn' => true, 'comeBack' => true`, so that sig
 with more than `/register` gives: `Route::form` with `same`, `accepted`, `signsIn`. Run `application/models/Auth/create_db.sql`. Add to
 the main page a line with *Sign in* / *Sign up* links for visitors and *Sign out* for signed-in people. Every page is a
 `Route::page` (`/`, `/<things>`, `/home`): it gives the view `$authorized` and `$user` (G74); a closure that returns
-`view()` does not. The sign-up page accepts usernames of letters and digits only (no email
-address, G75): say so next to the *Sign up* link. A capability that is not `public` is refused (401) to visitors: the page
+`view()` does not. By default the sign-up page accepts usernames of letters and digits only (no email
+address, G75): say so next to the *Sign up* link. When the plan signs in with an email, follow
+[09.1-authentication.md](../caligrafy/reference/09.1-authentication.md#emailsignin) before the first run of the Auth script: `username varchar(254)` in
+`application/models/Auth/create_db.sql`, `'required|valid_email|max_len,254'` and `$filters` `'trim|lower_case'` in
+`application/services/Users/CaligrafyRegisterUser.php` (and the rule of `CaligrafyUpdateUser.php`), the field labeled Email with `type='email'` but still
+`name='username'` in `login.pug` and `register.pug`, and the `messages` of `Route::auth`. A capability that is not `public` is refused (401) to visitors: the page
 shows its message in `.cq-error`.
 
 **A token page** (so AI agents can use the app online, where there is no command line, G79): a capability

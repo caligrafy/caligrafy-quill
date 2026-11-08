@@ -90,7 +90,7 @@ Every step Claude takes is a step you can take yourself: the [Quickstart](https:
 | `/caligrafy-quill:idea` is not a command | in `myapp`, run `php caligrafer.php plugin` (with PHP on your computer) or `.bin/caligrafer quickstart` (with Docker): it registers the project's plugin with Claude Code. Then restart `claude` there |
 | Docker is not running | start Docker Desktop, then tell Claude to go on |
 | A port is already in use (8080, 8077, 3306) | Claude gives this project other ports with a `docker-compose.override.yml` and uses them in every address |
-| Your app's sign-up refuses an email address | your app's usernames are letters and digits only, for example `sam42` (Caligrafy Cloud's own accounts use your email) |
+| Your app's sign-up refuses an email address | by default usernames are letters and digits, for example `sam42` (Caligrafy Cloud's own accounts use your email). To sign in with an email, say so in the idea, or ask Claude: *"people sign in with their email, kept in the username column"* ([Signing in with an email](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#emailsignin)) |
 | The name is taken on Caligrafy Cloud or GitHub | Claude proposes another name |
 | The browser page did not open | Claude prints its address: open it, approve the code, and Claude goes on |
 | Caligrafy Cloud says *Confirm your email first* | open the link of the email from Caligrafy (look in spam), then sign in on the same page; it can send the link again |

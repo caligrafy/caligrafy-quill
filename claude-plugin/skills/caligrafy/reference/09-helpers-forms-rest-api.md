@@ -107,8 +107,8 @@ Vue apps send it with `apiHeaders()`). A `public: true` capability answers anyon
 `php caligrafer.php token create <name> --scopes <scopes> [--user <id>] [--expires <days>]`, `token list`,
 `token revoke <id>` ([Personal access tokens](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#tokens)).
 
-**Inputs.** The JSON body (or the form fields, or the query string for a `GET`), and the route variables. On a `POST`,
-`PUT` or `DELETE` the route variables win; on a `GET`, a query string value of the same name replaces them.
+**Inputs.** The JSON body (or the form fields, or the query string for a `GET`), and the route variables, which win
+(2.21.2: `/api/books/3?id=9` is the book 3).
 Only the inputs the capability declares in `$rules` reach it. A `file` input takes a multipart upload
 (`curl -F "cover=@cover.png"`) ([File inputs](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#files)).
 
@@ -128,7 +128,7 @@ Only the inputs the capability declares in `$rules` reach it. A `file` input tak
 
 | Status | Error | When |
 | - | - | - |
-| `401` | `1004` Access Denied | a JSON call to `Route::action` or a controller route without `X-CSRF-Token` (pages) or a token that grants `*`. The message ends with the reason |
+| `401` | `1004` Access Denied | a JSON call to `Route::action` or a controller route, `GET` included, without `X-CSRF-Token` (pages) or a token that grants `*`. The message ends with the reason |
 | `403` | `3000` Cross Site Forgery | a form post without a valid `_token` |
 | `403` | `1006` Forbidden | a `Route::page`, `Route::form`, `Route::action` or `Route::download` whose capability refuses the person |
 | `404` | `1001` Invalid Controller or Action | a route names a controller or an action that does not exist |

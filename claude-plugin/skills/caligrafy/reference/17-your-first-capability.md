@@ -335,11 +335,11 @@ docker compose exec dev-box php caligrafer.php call create_book title=Dawn
 Add these lines to `application/config/routing/web.php`, inside the `try` block, above the comment `// MUST NOT BE REMOVED - Routes need to be run after being defined` and its `Route::run();`:
 ```php
     // BOOKSHELF PAGES: rendered on the server with the data of the capabilities; the form calls create_book
-    Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books', 'authors' => 'list_authors']]);
+    Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books', 'authors' => 'list_authors'], 'query' => ['author_id']]);
     Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);
     Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book'], 'notFound' => 'Bookshelf/notfound']);
 ```
-+ `Route::page` shows a view with the results of read-only capabilities: in the view, `$books` is the answer of `list_books` and `$authors` the answer of `list_authors`, as arrays. The query string becomes inputs (`/books?author_id=2`, `?page=2`). On `/books/{id}`, the `id` of the address is the input of `get_book`; an unknown id renders the `notFound` view with status `404`.
++ `Route::page` shows a view with the results of read-only capabilities: in the view, `$books` is the answer of `list_books` and `$authors` the answer of `list_authors`, as arrays. The query string becomes inputs (`/books?author_id=2`, `?page=2`), and `query` gives the view `$author_id` (`''` when absent). On `/books/{id}`, the `id` of the address is the input of `get_book`; an unknown id renders the `notFound` view with status `404`.
 + `Route::form` takes the form's `POST`, checks its CSRF token, calls `create_book` with its fields as the person who sent it, and redirects to `success` (`{id}` comes from the new book) with the `flash` message. Refused input goes back to the form with a message per field ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form)).
 
 Create the folder `application/views/Bookshelf` and three views. Views are [Pug](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views) in PHP mode: variables start with `$`, and strings join with `.`.
@@ -407,7 +407,7 @@ block content
                                     a(href="{$home}books?author_id={$b['author_id']}")= $b['author']['name']
                                     | , #{$b['published_year']}
                 //- the next and previous pages keep the author of the address (?author_id=2)
-                - $filter = isset($_GET['author_id']) ? '&author_id=' . (int) $_GET['author_id'] : '';
+                - $filter = $author_id !== '' ? '&author_id=' . (int) $author_id : '';
                 p.cq-auth-note
                     | Page #{$books['page']} of #{$books['pages']}, #{$books['total']} books
                     if $books['page'] > 1
@@ -584,7 +584,7 @@ Now:
 + A visitor who submits the form on `/books` is sent to `/login`.
 + `POST /api/books` without a token gets `401` and `Sign in or send a personal access token`.
 + The `books agent` token still adds books (`201`): it has `books:write`.
-+ Create an account at `/register` (usernames are letters and digits, for example `sam42`); you are sent to `/login`. Sign in: you land on `/books`, and the form adds the book.
++ Create an account at `/register` (usernames are letters and digits, for example `sam42`; to sign in with an email instead, see [Signing in with an email](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#emailsignin)); you are sent to `/login`. Sign in: you land on `/books`, and the form adds the book.
 
 `docker compose exec dev-box php caligrafer.php audit` lists every change and every refusal: when, through which channel, who, which capability:
 ```text

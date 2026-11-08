@@ -17,6 +17,10 @@ and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G2
 controller or a page. Pages get their data with `Route::page`, forms post with `Route::form` (2.19.0+), exports use `Route::download`,
 anything else is `Route::action` on a `webOnly: true` capability (2.21.0+, G143): no controller.
 
+**The people who sign in are not a new resource**: the `users` table, the `User` model and the user capabilities ship with the
+authentication module. When the entity is an account, or the user wants people to sign in with an email, do not add a table or an
+`email` column: the `username` column holds the lower-cased address ([09.1-authentication.md](../caligrafy/reference/09.1-authentication.md#emailsignin)).
+
 ## Preconditions
 1. Confirm this is an initialized Quill project: `application/config/routing/web.php` exists. If only `framework/settings/application` exists, tell the user to run `php caligrafer.php initialize` (it deletes `.git` - ask first).
 2. Choose names. Entity `Book` -> model class `Book`, table `books` (lowercase plural, ask if irregular), capabilities `list_books`, `get_book`, `create_book`, `update_book`, `delete_book` in `application/services/Books/`, scopes `books:read` / `books:write`. Grep `application/` for `class Book\b`, `class ListBooks\b`... and `php caligrafer.php capabilities` for the names: class names are global (G19) and capability names unique (G80) - pick another name on a clash.

@@ -117,9 +117,9 @@ Claude declares `author_id` in `$rules`, so the capability gets it as an input, 
   new `Request` each time.
 + In a controller you keep: `$this->request`, built once when the controller is created.
 + In any other capability: never. Its inputs come from the route (the fields, the query string and the route variables),
-  and `$context` says who calls (`$context->user`, `$context->userId()`). On a `GET`, `Route::page` lets the route variables
-  win over the query string; `Route::action` and `Route::capability` let the query string win: `/echo/3?id=9` gives `id = 9`
-  there. Keep a route variable that decides what is reached safe by checking it against the person.
+  and `$context` says who calls (`$context->user`, `$context->userId()`). The route variables win over the query string on
+  every declared route: `/echo/3?id=9` gives `id = 3` (`Route::action` and `Route::capability` since 2.21.2). Still check a
+  route variable that decides what is reached against the person.
 
 ## Properties
 
@@ -133,7 +133,7 @@ Claude declares `author_id` in `$rules`, so the capability gets it as an input, 
 | `$uriParameters` | `GET`: the query string (`$_GET`); `POST`, `PUT`, `DELETE`: the form fields, else the decoded JSON body | `['title' => 'Dune']` |
 | `$parameters` | `$uriParameters`, or the route variables when there are none | `['title' => 'Dune']` |
 | `$currentRoute` | the pattern of the matched route | `echo/{id}` |
-| `$currentBind` | the route variables, plus the query string for a `GET` route | `['id' => '3']` |
+| `$currentBind` | the route variables, plus the query string for a `GET` route; a route variable is never replaced (2.21.7) | `['id' => '3']` |
 | `$fetch` | `$currentBind` as an object: `$this->request->fetch->id` | `{id: "3"}` |
 | `$host` | the `Host` header | `localhost:8080` |
 | `$authorization` | the `Authorization` header | `Bearer cq_...` |
@@ -167,6 +167,8 @@ with `WWW-Authenticate`, never as the session's user) or the notifications unsub
 
 + **`fetch('id')` is a string.** Compare with `==` or cast it: `(int) $this->request->fetch('id')`. Give it to a
   capability with an `integer` rule rather than checking it yourself.
++ **`fetch('id')` on a `GET` with `?id=9`** gives the route variable: since 2.21.7 the query string never replaces it. Read the
+  query string value under another name.
 + **`fetch()` of a query string value on a `POST` route** returns `''`: the query string is only merged for `GET`
   routes. Read the body with `parameters()`.
 + **A JSON body without `Accept: application/json`** fails the CSRF check (`[ERROR 3000]`): the token is only read

@@ -5,13 +5,12 @@ This file is for any coding agent (Cursor, Codex, Copilot, Claude Code...). Clau
 
 ## What this project is
 A Caligrafy Quill PHP MVC project (PHP 8.3+, MySQL via PDO, Pug views, GUMP validation, Vue 3 client apps).
-Your code goes in `application/` (routes in `application/config/routing/web.php`, controllers, models, services,
-Pug views) and `public/<app>/` (client apps). `framework/` is the framework itself: change it only when asked.
+Your code goes in `application/` (routes in `application/config/routing/web.php`, services, models, Pug views) and `public/<app>/` (client apps). `framework/` is the framework itself: change it only when asked.
 
 ## Read before writing code
 - `claude-plugin/skills/caligrafy/SKILL.md`: the index of the framework knowledge and the workflow rules.
 - `claude-plugin/skills/caligrafy/reference/api-reference.md`: exact signatures, verified against the source.
-- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G135 (read the relevant ones).
+- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G148 (read the relevant ones).
 - `claude-plugin/skills/caligrafy/reference/13-build-once-services-capabilities-mcp.md`: capabilities, tokens, MCP.
 - `claude-plugin/skills/caligrafy/reference/ui-guidelines.md`: how every new page and client app looks (page components).
 - `ARCHITECTURE.md`: how a request runs and the build-once design.
@@ -32,10 +31,12 @@ service's events), `Route::action` with a `webOnly: true` capability for custom 
 (agents). `php caligrafer.php capabilities` lists them.
 
 ## Rules
-- Only capabilities touch models: pages use `Route::page` (with `data` from capabilities), forms `Route::form`, sign-in `Route::auth` (2.19.0+), controllers call `$this->call()`; never a model in a controller, a route or a view, and never data work in a closure route.
+- Only capabilities touch models: pages use `Route::page` (with `data` from capabilities), forms `Route::form`, sign-in `Route::auth` (2.19.0+), webhooks `Route::webhook`, exports `Route::download`, anything else `Route::action` on a `webOnly: true` capability (2.21.0); no new controller (existing ones call `$this->call()`), never a model in a controller, a route or a view, and never data work in a closure route.
 - The query builder or bound queries only (`?` placeholders and `'bindings'`): never concatenate request data into SQL; load related rows with `with()`, never a query per row.
-- Every new page or client app UI uses the page components of `public/css/tokens.css` (`main.cq-page > .cq-card`, `.cq-form`,
-  `.cq-tabs`, `.cq-list`): see `ui-guidelines.md`, and check it at desktop and phone width.
+- Every new page extends `../default/master/site` and uses the page components of `public/css/layout.css` (`section.cq-hero.cq-hero--page`,
+  `section.cq-band`, `.cq-field`, `ul.cq-rows`, `.cq-tiles`), and every client app the same classes: see `ui-guidelines.md`, and check it at desktop and phone width. In Pug, strings join with `.`, never `+`.
+- A JSON call to `Route::action` needs the page's `X-CSRF-Token` or an API token that grants `*`, signed in or not (2.21.1). A route variable wins over the query string (2.21.2).
+- To sign in with an email, keep the lower-cased address in the `username` column (wiki `9.1-Authentication#emailsignin`). A session opened with a face alone must not change how the account signs in (`AuthRoutes::signedInBy()`, 2.21.3).
 - Another look is a design style (`DESIGN_STYLE` in `.env`, `php caligrafer.php design`): restyle only in
   `public/css/designs/<name>.css`, written from its `DESIGN.md` (`framework/design/`, or the project's own in
   `application/design/<name>/`); never edit `tokens.css`, `theme.css`, `styles.css` or the views for it, so that an

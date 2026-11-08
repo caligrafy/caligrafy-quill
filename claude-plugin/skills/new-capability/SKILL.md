@@ -73,15 +73,19 @@ the declarative routes, G134-G135 for the rules `exists`, `unique` and `current_
      webhook calls this'); }`, and `mcp: false` in its attribute: the capability is also served by `/capabilities`,
      `/mcp` and `call` to anyone its scope and level allow (G137). A capability only the scheduler or the queue runs
      checks `schedule` / `queue` the same way.
-   - Sign-in pages: `Route::auth([...])` after `Auth::authentication('User', 'users')`, not a controller. Password reset:
+   - Sign-in pages: `Route::auth([...])` after `Auth::authentication('User', 'users')`, not a controller. To sign in with an email,
+     the `username` column holds the lower-cased address (`09.1-authentication.md#emailsignin`). Password reset:
      `Route::page` and `Route::form` on two capabilities (`09.1-authentication.md`). Face sign-in: `recipes-face-login.md`.
+     What changes how an account signs in checks `AuthRoutes::signedInBy()` first (G146).
    - A file input: the `file` rule, `'cover' => 'required|file|extension,png;jpg|max_size,2mb'`; `handle()` gets its URL (G131).
    - Anything else a browser asks (several capabilities with conditions, a choice between a view and a redirect, the
      session, a sign-in between two sites, a gate, a payment page, custom headers, streaming): `Route::action('/x', '<name>')`
      (`'method' => 'POST'`, `signedIn`, `level`, `comeBack`, `visitorsOnly`, `back`) on a capability declared
      `webOnly: true`, which returns `Web::view()`, `Web::redirect()`, `Web::json()` or `Web::text()` (`use Caligrafy\Web;`), and
      calls plain capabilities with `$this->capability($name, $input, $context)`. Nothing but that route reaches it (G143),
-     so the work REST or agents need stays in a plain capability. Test it with `$this->action()`.
+     so the work REST or agents need stays in a plain capability. A JSON call to it needs the page's `X-CSRF-Token`
+     (`apiHeaders()`) or a token that grants `*`, signed in or not (G144); a route variable wins over the query string.
+     Test it with `$this->action()`.
      **Never write a controller.** Never data work in a closure route (G130). Never `new <Model>()`, `associate()` or `save()` outside `application/services/`: only capabilities touch models.
    - Any page you build for it (Pug, or a page calling the JS client) uses the page components and the worked example of
      [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md): `extends ../default/master/site`, a title band, labeled

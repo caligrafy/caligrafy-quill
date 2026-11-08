@@ -47,8 +47,8 @@ A feature, by hand, is four small pieces:
 
 | Piece | File | Example |
 | --- | --- | --- |
-| A table | `application/migrations/` | `php caligrafer.php migrate make create_books`, then `php caligrafer.php migrate` |
-| A model | `application/models/Book.php` | `class Book extends Model {}` |
+| A table | `application/models/Bookshelf/create_db.sql` | `CREATE TABLE IF NOT EXISTS books (...)`, run with `php caligrafer.php sql application/models/Bookshelf/create_db.sql` (a later change: `php caligrafer.php migrate make <name>`) |
+| A model | `application/models/Bookshelf/Book.php` | `class Book extends Model { public $id; public $title; ... }`, one property per column |
 | A capability | `application/services/` | `#[Capability(name: 'list_books', readOnly: true)]` with `Book::with('author')->paginate(20)` |
 | Its routes | `application/config/routing/web.php` | `Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']])` |
 
@@ -75,7 +75,7 @@ with retries).
 | --- | --- |
 | **Data** | [models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models), [queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) (filters, paging, related rows, every value bound), [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), [the cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching) |
 | **Pages** | [Pug views and page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views), [declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes), [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles), install to home screen |
-| **People** | [sign-in, passkeys, permissions and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) |
+| **People** | [sign-in with a username or an email, passkeys, permissions and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) |
 | **In the box** | [payments](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment), AI (OpenAI, open models, Watson), face detection, machine learning, [social cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards), a production `Dockerfile` |
 | **Quality** | [tests](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App) that call capabilities the way every channel does, `php caligrafer.php doctor` |
 

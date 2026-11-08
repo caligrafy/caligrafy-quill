@@ -193,8 +193,8 @@ feature step by step: the table, the model, the page, a form and sign-in.
 | Take a form, sign people in, receive webhooks, export a CSV | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes) |
 | Change your tables, test your app | [Migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App) |
 | Work in the background, keep slow results | [Background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs), [The cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching), [Dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection) |
-| Let people sign in | [Sign-in, users and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) (`Route::auth`) |
-| See what changed in 2.19 | [Release notes: 2.19.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0) |
+| Let people sign in | [Sign-in, users and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) (`Route::auth`), [with an email](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#emailsignin) |
+| See what changed | [Release notes: 2.21.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.21.0), [2.20.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.20.0), [2.19.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0) and the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md) |
 | Take payments, add AI, face login... | the **Built-in features** of the sidebar |
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
 | Sell your app | [Selling your app on the marketplace](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#marketplace): a prompt that recreates it, 25% of every sale |

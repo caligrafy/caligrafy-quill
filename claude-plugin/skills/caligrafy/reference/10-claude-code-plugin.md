@@ -5,13 +5,13 @@
 
 Caligrafy Quill ships with its own **[Claude Code](https://code.claude.com) plugin**, `caligrafy-quill`, in the [`claude-plugin/`](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin) folder of every project. When you open a project in Claude Code, Claude knows the framework from its source: capabilities, the declarative routes, the query builder, models, Pug views, authentication, payments, Vue apps, bots, face detection, machine learning and the AI integrations. It builds the Caligrafy way, **build once, experience everywhere**: a feature becomes a capability, and every experience (pages, Vue apps, REST, AI agents) calls it. With `/caligrafy-quill:idea` it goes from your idea to an app online: **Describe it. Approve it. Ship it.**
 
-Current version: **1.33.6**, for Caligrafy Quill v2.21.6.
+Current version: **1.33.7**, for Caligrafy Quill v2.21.7.
 
 ## What the plugin gives Claude
 
 | Component | Name | What it does |
 | --- | --- | --- |
-| Skill (automatic) | `caligrafy` | The framework knowledge: every page of this wiki, an API reference and 142 verified gotchas (G1-G142) written from the framework source, UI guidelines for every new page, and recipes for AI chat apps and face login. Claude Code loads it whenever it works in a Caligrafy project |
+| Skill (automatic) | `caligrafy` | The framework knowledge: every page of this wiki, an API reference and 148 verified gotchas (G1-G148) written from the framework source, UI guidelines for every new page, and recipes for AI chat apps and face login. Claude Code loads it whenever it works in a Caligrafy project |
 | Command | `/caligrafy-quill:idea` | Your idea turned into a complete app online, with one confirmation: the plan, the project, every feature as a capability, the checks, then GitHub and Caligrafy Cloud |
 | Command | `/caligrafy-quill:new-capability` | One capability, served to the channels you need (REST, the JavaScript client, pages and forms, MCP), with a token and tests |
 | Command | `/caligrafy-quill:new-resource` | A table, its model, its five CRUD capabilities, their REST routes, pages and forms |
@@ -74,7 +74,7 @@ Claude Code runs a copy of the plugin made when it was installed, not the projec
 ### `/caligrafy-quill:idea <your idea>`
 The [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude). Claude:
 1. **Describe it**: turns the idea into a plan (a name, 1 to 3 tables, 4 to 12 capabilities, who may do what, one page per main table, sample data; jobs, alerts and background work only when the idea needs them) and waits for your OK.
-2. **Approve it**: sets the project up (`.bin/caligrafer quickstart`, after checking Docker and the ports), writes each table's `create_db.sql` and model, each capability with `php caligrafer.php service`, sign-in with `Route::auth`, the pages with `Route::page` and `Route::form`, the REST routes, the JavaScript client, a card where signed-in people create a token for their AI agents, and tests; then checks every capability (`call`), REST, the page at desktop and phone width, MCP, `test`, `doctor` and a review by `caligrafy-reviewer`, and shows you the app locally.
+2. **Approve it**: sets the project up (`.bin/caligrafer quickstart`, after checking Docker and the ports), writes each table's `create_db.sql` and model, each capability with `php caligrafer.php service`, sign-in with `Route::auth` (a username by default; an email when the plan says so, [kept in the `username` column](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#emailsignin)), the pages with `Route::page` and `Route::form`, the REST routes, the JavaScript client, a card where signed-in people create a token for their AI agents, and tests; then checks every capability (`call`), REST, the page at desktop and phone width, MCP, `test`, `doctor` and a review by `caligrafy-reviewer`, and shows you the app locally.
 3. **Ship it**: follows `/caligrafy-quill:ship`.
 
 Your OK at the plan covers everything after it, the framework's `.git` included. You only approve sign-ins in the browser pages Claude opens, and say yes before credits are spent. "Stop before putting it online" makes it wait after the checks.
@@ -83,7 +83,7 @@ Your OK at the plan covers everything after it, the framework's `.git` included.
 ```
 
 ### `/caligrafy-quill:new-capability <capability_name> [scope] [read-only|destructive]`
-Scaffolds the class with `php caligrafer.php service <Folder>/<Name> --scope <scope>`, writes its description for agents, its `$rules`, `$filters` and `$descriptions`, and a `handle()` that reads with the query builder and refuses with `ServiceError`. It adds the channels you ask for in `web.php`: `Route::capability`, `Route::capabilities` and the JavaScript client, `Route::page`, `Route::form`, `Route::download`, `Route::webhook`, `Route::mcp`. It creates a token when an agent needs one, checks every channel (`capabilities`, `call`, REST with and without the scope, MCP `tools/list` and `tools/call`, `audit`), writes a test, and asks `caligrafy-reviewer` to review. Learn more in [Build Once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP).
+Scaffolds the class with `php caligrafer.php service <Folder>/<Name> --scope <scope>`, writes its description for agents, its `$rules`, `$filters` and `$descriptions`, and a `handle()` that reads with the query builder and refuses with `ServiceError`. It adds the channels you ask for in `web.php`: `Route::capability`, `Route::capabilities` and the JavaScript client, `Route::page`, `Route::form`, `Route::download`, `Route::webhook`, `Route::action` (a web-only capability, for what a page or a form cannot say), `Route::mcp`. It creates a token when an agent needs one, checks every channel (`capabilities`, `call`, REST with and without the scope, MCP `tools/list` and `tools/call`, `audit`), writes a test, and asks `caligrafy-reviewer` to review. Learn more in [Build Once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP).
 ```text
 /caligrafy-quill:new-capability create_book books:write
 ```

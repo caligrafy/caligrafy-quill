@@ -648,7 +648,8 @@ person who sent it. The page that shows the form stays a `Route::page`.
 | `same` | none | fields that must match: `['password_again' => ['password', 'The two passwords are not the same']]`; without a message, "The two values are not the same" |
 | `accepted` | none | boxes that must be ticked: `['terms' => 'Accept the terms of use']` |
 | `inputs` | none | values only the server sets: an array, or `function ($input) { return [...]; }`. They replace what the form sent; the route variables still win |
-| `signsIn` | none | the field of the capability's answer that holds the id of the person to sign in: `'signsIn' => 'id'`. A new session id and a new CSRF token, as for `Route::auth` |
+| `signsInWith` | `'password'` | how `signsIn` signed the person in, for `AuthRoutes::signedInBy()` (2.21.7) |
+| `signsIn` | none | the field of the capability's answer that holds the id of the person to sign in: `'signsIn' => 'id'`. A new session id and a new CSRF token, as for `Route::auth`. It records no way of signing in: `AuthRoutes::signedInBy()` answers `null` for that session |
 
 The last five options arrived in 2.20.0.
 
@@ -718,7 +719,7 @@ public $rules = array('cover' => 'required|file|extension,png;jpg;webp|max_size,
 ```php
 Auth::authentication('User', 'users');
 Route::auth(['home' => '/books']);
-// people sign in with their email address and are signed in right after signing up
+// a users table with an email column: people sign in with it, and are signed in right after signing up
 Route::auth(['home' => '/books', 'identifier' => 'email', 'signInAfterRegister' => true]);
 ```
 
@@ -755,8 +756,15 @@ views of the authentication module (`application/views/Auth/login.pug`, `registe
   `Route::page` and `Route::form`, [face sign-in](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition#face-login)
   is `Route::action`.
 
++ **Sign in with an email.** The simplest way keeps the `users` table: the `username` column holds the lower-cased address.
+  [Signing in with an email](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#emailsignin) has the
+  steps. `'identifier' => 'email'` is for a table with a separate `email` column.
++ **How a session signed in.** `Route::auth` records `password` or `passkey`, and `AuthRoutes::signedInBy()` reads it (2.21.3).
+  A face alone must not change how an account signs in:
+  [How a session signed in](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#signedinby).
+
 Everything about users, levels and the sign-in views:
-[Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#routeauth).
+[https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#routeauth).
 
 ## Webhooks: `Route::webhook`
 
@@ -1002,9 +1010,9 @@ answers of `Route::form`:
 variables. Its files are saved and given as URLs, as for `Route::form`. It runs as the person who sent the request, with
 its `public`, `scope` and `level` checks, its validation and its audit log, like any capability.
 
-> On a `GET`, the query string is merged over the route variables by the router: `/books/3?id=9` gives `id = 9` here, while
-> `Route::page` and `Route::form` keep `3`. When a route variable decides who or what is reached, read it with
-> `Caligrafy\PageController::routeVariables()['id']`, or check that the person may open that row.
+> The route variables win over the query string and the form, as on `Route::page` and `Route::form`: `/books/3?id=9` gives
+> `id = 3` (2.21.2; in 2.21.0 and 2.21.1 the query string replaced them here and in `Route::capability`). When a route
+> variable decides what is reached, still check that the person may open that row.
 
 ### What a web-only capability may do
 
@@ -1029,8 +1037,9 @@ $books = $this->capability('list_books', array('author_id' => 2), $context);   /
 
 `$this->capability()` runs the other capability with its checks, validation and audit, and throws its `ServiceError`.
 
-**Signing someone in.** For a page that leaves or reloads, `Caligrafy\AuthRoutes::signIn($user)`: a new session id and a
-new CSRF token. For a page that stays open and keeps sending JSON, `session_regenerate_id(true); Auth::authorize($user);`:
+**Signing someone in.** For a page that leaves or reloads, `Caligrafy\AuthRoutes::signIn($user, null, 'partner')`: a new
+session id, a new CSRF token and how it signed in (the third argument, 2.21.3, read by `AuthRoutes::signedInBy()`). For a page
+that stays open and keeps sending JSON, `session_regenerate_id(true); Auth::authorize($user); AuthRoutes::rememberSignIn('face');`:
 the page keeps its token. `$context` was built before the sign-in and does not change: to call a capability as the person
 just signed in, build a new one with `Context::fromRequest(request(), 'web')`.
 
@@ -1038,8 +1047,9 @@ just signed in, build a new one with `Context::fromRequest(request(), 'web')`.
 
 + A form's `POST`, `PUT` or `DELETE` needs its `_token` (`=csrf()`), as for every form: `403` `[ERROR 3000]` without it.
 + A JSON call (`Accept: application/json`), `GET` included, needs the page's `X-CSRF-Token` header (`apiHeaders()` of the
-  Vue apps) or a token that grants everything (`--scopes "*"`), signed in or not: `401` `[ERROR 1004]` without it (2.21.1).
-  A scoped token is refused: programs use the capability routes.
+  Vue apps) or, with `Auth::activateAPI();` in `web.php` (the template has it), a token that grants everything
+  (`--scopes "*"`), signed in or not: `401` `[ERROR 1004]` without it (2.21.1). A scoped token is refused: programs use the
+  capability routes.
 + A plain `GET` opened by a link has no token. A `GET` that changes data can be triggered by a link on another site: keep
   it to what is harmless when that happens, and use `'method' => 'POST'` with a form for the rest.
 

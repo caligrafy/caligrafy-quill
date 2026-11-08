@@ -14,7 +14,7 @@ Run every command from the root of a **clean checkout of the framework** (`git c
 | Where | `qa/unit` | `qa/run.sh`, `qa/tests`, `qa/fixtures` |
 | What | The core classes, one at a time | The whole framework: database, HTTP requests through Apache, Caligrafer, client apps, the Claude plugin |
 | Needs | PHP 8.3+ and `composer install` | Docker, PHP with curl on the host, Node.js and `composer install` |
-| Time | A few seconds (318 tests) | Several minutes (the first run builds a Docker image) |
+| Time | A few seconds (333 tests) | Several minutes (the first run builds a Docker image) |
 | Command | `vendor/bin/phpunit` | `./qa/run.sh` |
 
 Run the unit tests while you work, and the QA suite before you open a pull request. When you change `framework/` or `framework/settings/application`, add a test for the change.

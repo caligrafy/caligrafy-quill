@@ -383,7 +383,7 @@ curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
      http://localhost:8080/mcp
 ```
 ```json
-{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"caligrafy-app","title":"caligrafy-app","version":"2.21.6"},"instructions":"Tools are the capabilities of this application that your token allows. Tools marked destructive delete or overwrite data: confirm with the user first."}}
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"caligrafy-app","title":"caligrafy-app","version":"2.21.7"},"instructions":"Tools are the capabilities of this application that your token allows. Tools marked destructive delete or overwrite data: confirm with the user first."}}
 ```
 (`serverInfo.name` is your `APP_NAME`.) Then the tools:
 ```bash
@@ -555,7 +555,7 @@ validation and its audit, and throws its `ServiceError`.
 For a request that belongs to the browser: a sign-in between two sites, a page that chooses where to go, a gate, a payment
 page. A capability declared `webOnly: true` keeps its `public`, `scope` and `level` checks, its validation and its audit,
 and may also return a `Caligrafy\Web` (`Web::view`, `Web::redirect`, `Web::json`, `Web::text`), read `session()` and
-`request()`, sign people in, and change data on a `GET`. In exchange, **`Route::action` is the only way to it**: REST, MCP, the
+`request()`, sign people in, and change data on a `GET`. A JSON call to it needs the page's `X-CSRF-Token` or a token that grants `*`, signed in or not (2.21.1), and its route variables win over the query string (2.21.2). In exchange, **`Route::action` is the only way to it**: REST, MCP, the
 JS client, `php caligrafer.php call`, `Route::page`, `Route::form` and a controller's `$this->call()` answer `not_found`, and it
 is not listed in `GET /capabilities`, MCP or `php caligrafer.php capabilities`. A `service` command has no flag for it: add
 `webOnly: true` to the attribute. Everything: [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#webonly).
@@ -594,6 +594,7 @@ is not listed in `GET /capabilities`, MCP or `php caligrafer.php capabilities`. 
 | `$context->allows('books:write', 1)` | whether this caller has that scope and level |
 | `$context->userId()`, `$context->level()` | the user's id, and `permissions` (0 without a user) |
 | `$context->authenticated()` | anyone but a guest |
+| `$context->actorType()`, `$context->actorId()` | who acts: `user`, `token`, `key`, `cli`, `guest`, or the system of a job or an event (`schedule`, `queue`, `webhook`), and its id. A capability only a webhook, the scheduler or the queue may run refuses every other `actorType()` |
 
 **Scopes and levels** (`allows()`): the command line and the legacy key pass everything. A signed-in person needs
 `permissions >= level` (no scopes). A token needs the scope (exact, `books:*` or `*`); when it has an owner

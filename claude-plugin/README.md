@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 78 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G145) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (its 81 mirrored pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G148) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` and forms with `Route::form` (no controller) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: describe it, approve it, ship it. Your idea turned into a complete app online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.33.7** - Caligrafy Quill 2.21.7: a full read of the wiki and the references against the code; route variables in `Route`; `signsInWith`; no key in the SPA template.
 - **1.33.6** - Caligrafy Quill 2.21.6: new client apps load `app.js` with a version too.
 - **1.33.5** - Caligrafy Quill 2.21.5: `loadVue()` loads a client app's scripts with a version that changes at each deploy. G147.
 - **1.33.4** - Caligrafy Quill 2.21.4: UI guidelines for a top bar that never moves; how a session signed in, in the authentication reference.
