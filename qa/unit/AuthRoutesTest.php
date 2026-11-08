@@ -2,6 +2,10 @@
 
 use Caligrafy\Auth;
 use Caligrafy\AuthRoutes;
+use Caligrafy\Context;
+use Caligrafy\Database;
+use Caligrafy\Flash;
+use Caligrafy\Query;
 use Caligrafy\Route;
 use Caligrafy\Throttle;
 use PHPUnit\Framework\TestCase;
@@ -27,6 +31,8 @@ final class AuthRoutesTest extends TestCase
 
     protected function tearDown(): void
     {
+        Database::useConnection(null);
+        Flash::reset();
         Route::reset();
         Auth::reset();
         AuthRoutes::$regenerate = null;
@@ -180,5 +186,117 @@ final class AuthRoutesTest extends TestCase
         $this->assertArrayNotHasKey('__authorization', $_SESSION);
         Auth::reset();
         $this->assertNull(Auth::model());
+    }
+
+    // an SQLite users table with ann (ann@example.com) and a team
+    private function database(): PDO
+    {
+        $pdo = new PDO('sqlite::memory:');
+        $pdo->setAttribute(PDO::ATTR_ERRMODE, PDO::ERRMODE_EXCEPTION);
+        $pdo->exec('CREATE TABLE users (id INTEGER PRIMARY KEY AUTOINCREMENT, username TEXT, email TEXT, passcode TEXT, permissions INTEGER)');
+        $pdo->exec('CREATE TABLE teams (id INTEGER PRIMARY KEY, name TEXT)');
+        $pdo->exec("INSERT INTO teams VALUES (7, 'Readers')");
+        $stmt = $pdo->prepare('INSERT INTO users (username, email, passcode, permissions) VALUES (?, ?, ?, 0)');
+        $stmt->execute(array('ann', 'ann@example.com', password_hash('Passw0rd!', PASSWORD_BCRYPT, array('cost' => 4))));
+        Database::useConnection($pdo);
+        Query::watch(false);
+        return $pdo;
+    }
+
+    public function testTheIdentifierOptionAndItsChecks(): void
+    {
+        $this->assertSame('username', AuthRoutes::options(array())['identifier']);
+        $this->assertFalse(AuthRoutes::options(array())['signInAfterRegister']);
+        $this->assertSame('email', AuthRoutes::options(array('identifier' => 'email'))['identifier']);
+        foreach (array('passcode', 'email; DROP TABLE users', '', 'users.email') as $bad) {
+            try {
+                AuthRoutes::options(array('identifier' => $bad));
+                $this->fail("'$bad' is refused");
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString('identifier', $e->getMessage());
+            }
+        }
+    }
+
+    public function testSignInWithTheEmailAddressThroughTheQueryBuilder(): void
+    {
+        $this->database();
+        $find = AuthRoutes::finder(new QaAuthUser('users'), 'email');
+        $result = AuthRoutes::attempt('ann@example.com', 'Passw0rd!', '10.0.0.1', $this->throttle(), $find);
+        $this->assertSame('ok', $result['status']);
+        $this->assertInstanceOf(QaAuthUser::class, $result['user']);
+        $this->assertSame('ann', $result['user']->username);
+        $this->assertSame('invalid', AuthRoutes::attempt('ann', 'Passw0rd!', '10.0.0.1', $this->throttle(), $find)['status'], 'the username is not the identifier');
+        $this->assertNull(AuthRoutes::finder(new QaAuthUser('users'), 'username')("' OR 1=1 --"), 'a bound query');
+    }
+
+    public function testTheFinderPrefersFindByUsernameThenFindBy(): void
+    {
+        $model = new class('users') extends QaAuthUser {
+            public $calls = array();
+            public function findByUsername($u) { $this->calls[] = "username:$u"; return null; }
+            public function findBy($column, $value) { $this->calls[] = "$column:$value"; return null; }
+        };
+        AuthRoutes::finder($model, 'username')('ann');
+        AuthRoutes::finder($model, 'email')('ann@example.com');
+        $this->assertSame(array('username:ann', 'email:ann@example.com'), $model->calls);
+    }
+
+    public function testTheShippedUserModelFindsByAnyColumn(): void
+    {
+        $this->database();
+        if (!class_exists('User', false)) {
+            require dirname(__DIR__, 2) . '/framework/settings/application/models/Auth/User.php';
+        }
+        $this->assertSame('ann', (new User('users'))->findBy('email', 'ann@example.com')->username);
+        $this->assertSame('ann@example.com', (new User('users'))->findByUsername('ann')->email);
+        $this->assertNull((new User('users'))->findByUsername('bob'));
+    }
+
+    public function testSignUpPassesEveryDeclaredInputAndNeverEchoesPasswords(): void
+    {
+        $this->database();
+        Auth::authentication('QaAuthUser', 'users');
+        $o = AuthRoutes::options(array('register' => 'qa_register_member', 'identifier' => 'email'));
+        $form = array('username' => 'bob', 'email' => 'ann@example.com', 'passcode' => 'long-password', 'confirmpasscode' => 'long-password',
+            'team_id' => '99', 'permissions' => '9', '_token' => 'x');
+        $this->assertSame(array('username' => 'bob', 'email' => 'ann@example.com', 'passcode' => 'long-password', 'confirmpasscode' => 'long-password', 'team_id' => '99'),
+            AuthRoutes::registerInput('qa_register_member', $form), 'only what the rules declare');
+        $this->assertSame(array('username' => 'bob', 'passcode' => 'long-password'), AuthRoutes::registerInput('no_such_capability', $form));
+
+        $outcome = AuthRoutes::registration($o, $form, Context::guest('web'));
+        $this->assertSame('Auth/register', $outcome['view']);
+        $this->assertSame('This email is already used', $outcome['data']['errors']['email']);
+        $this->assertSame('There is no such team', $outcome['data']['errors']['team_id']);
+        $this->assertEquals((object) array('username' => 'bob', 'email' => 'ann@example.com', 'team_id' => '99'), $outcome['data']['user'], 'no password in the old input');
+
+        $outcome = AuthRoutes::registration($o, array('email' => 'bob@example.com', 'passcode' => 'a', 'confirmpasscode' => 'b'), Context::guest('web'), true);
+        $this->assertSame(422, $outcome['status']);
+
+        $outcome = AuthRoutes::registration($o, array('team_id' => '7', 'email' => 'bob@example.com') + $form, Context::guest('web'));
+        $this->assertSame(array('redirect' => '/login'), $outcome, 'then the sign-in page, as before');
+        Flash::age();
+        $this->assertSame('Your account is ready: sign in', Flash::get('messages', array())['success'] ?? null);
+        $this->assertSame(0, $this->regenerated, 'not signed in');
+        $this->assertArrayNotHasKey('__authorization', $_SESSION);
+        $this->assertSame('0', (string) Database::table('users')->where('email', 'bob@example.com')->value('permissions'), 'permissions was not passed');
+    }
+
+    public function testSignInAfterRegister(): void
+    {
+        $this->database();
+        Auth::authentication('QaAuthUser', 'users');
+        $o = AuthRoutes::options(array('register' => 'qa_register_member', 'identifier' => 'email', 'signInAfterRegister' => true, 'home' => '/books'));
+        $form = array('username' => 'cy', 'email' => 'cy@example.com', 'passcode' => 'long-password', 'confirmpasscode' => 'long-password');
+        $this->assertSame(array('redirect' => '/books'), AuthRoutes::registration($o, $form, Context::guest('web')));
+        $this->assertSame(1, $this->regenerated, 'a new session id, as at sign-in');
+        $this->assertNotSame(str_repeat('a', 64), $_SESSION['token'], 'and a new CSRF token');
+        $this->assertArrayHasKey('__authorization', $_SESSION);
+
+        AuthRoutes::signOut();
+        $json = AuthRoutes::registration($o, array('email' => 'dee@example.com', 'username' => 'dee') + $form, Context::guest('web'), true);
+        $this->assertSame(201, $json['status']);
+        $this->assertSame('dee@example.com', $json['json']['data']['email']);
+        $this->assertArrayHasKey('__authorization', $_SESSION);
     }
 }

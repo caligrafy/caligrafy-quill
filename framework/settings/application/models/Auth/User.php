@@ -17,8 +17,17 @@ class User extends Model {
      */
     public function findByUsername($username)
     {
-        $rows = Database::toArray(Database::execute('SELECT * FROM ' . $this->table . ' WHERE username = ? LIMIT 1', [(string)$username]));
-        return !empty($rows[0])? $this->arrayToModel($rows[0]) : null;
+        return $this->findBy('username', $username);
+    }
+
+    /**
+     * Finds a user by the exact value of a column (Route::auth(['identifier' => 'email']) signs in with it), bound
+     * @return User|null
+     */
+    public function findBy($column, $value)
+    {
+        $row = Database::table($this->table)->where($column, (string)$value)->first();
+        return $row ? $this->arrayToModel($row) : null;
     }
 
     /**

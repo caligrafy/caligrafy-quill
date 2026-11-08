@@ -122,6 +122,16 @@ class Query
     }
 
     /**
+     * Forgets the shapes counted so far, keeping watch() as it is: a new request (Caligrafy\Testing\TestCase calls it
+     * before each test, so queries of earlier tests never add up to a warning)
+     */
+    public static function forgetShapes()
+    {
+        self::$shapes = array();
+        self::$warned = array();
+    }
+
+    /**
      * Counts a SELECT by its shape (values, numbers and IN lists folded) and logs one warning when the same shape
      * reaches $threshold in the request. Called by Database::execute() and by the builder's own executor.
      */

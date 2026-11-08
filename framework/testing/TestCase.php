@@ -13,6 +13,7 @@ use Caligrafy\Capabilities;
 use Caligrafy\Container;
 use Caligrafy\Context;
 use Caligrafy\Database;
+use Caligrafy\Query;
 use Caligrafy\Queue;
 use Caligrafy\ServiceError;
 use Caligrafy\View;
@@ -34,8 +35,8 @@ use Caligrafy\View;
  *
  * Each test runs in a database transaction that is rolled back at its end (with DB_ACTIVATE=true), so tests leave the
  * database as they found it; a CREATE, ALTER or DROP ends the transaction (MySQL commits it). Use a database of its own
- * for tests: DB_TEST_DATABASE in .env, or the settings of .env.testing. Bindings of the container and the cache's copies
- * are forgotten between tests.
+ * for tests: DB_TEST_DATABASE in .env, or the settings of .env.testing. Bindings of the container, the cache's copies
+ * and the query shapes the N+1 warning counts (Query::forgetShapes) are forgotten between tests.
  */
 abstract class TestCase extends \PHPUnit\Framework\TestCase
 {
@@ -50,6 +51,7 @@ abstract class TestCase extends \PHPUnit\Framework\TestCase
         Container::reset();
         Container::boot();             // the app's bindings first, so that a fake replaces them
         Cache::clearMemory();
+        Query::forgetShapes();         // the N+1 warning counts the queries of this test only
         $this->transaction = false;
         if ($this->transactions && strtolower((string) getenv('DB_ACTIVATE')) === 'true') {
             $pdo = Database::connection();

@@ -107,11 +107,27 @@ class QaExportRows extends Service
     }
 }
 
+// a sign-up with an email address (Route::auth: every declared input, the rules exists and unique), on an SQLite users table
+#[Capability(name: 'qa_register_member', description: 'Creates an account with an email address', scope: 'users:write', public: true)]
+class QaRegisterMember extends Service
+{
+    public $rules = array('username' => 'required|alpha_numeric|max_len,100', 'email' => 'required|valid_email|unique,users.email',
+        'passcode' => 'required|min_len,8', 'confirmpasscode' => 'required|equalsfield,passcode', 'team_id' => 'exists,teams.id');
+
+    public function handle(array $input, Context $context)
+    {
+        $id = Caligrafy\Database::table('users')->insert(array('username' => $input['username'], 'email' => $input['email'],
+            'passcode' => password_hash($input['passcode'], PASSWORD_BCRYPT, array('cost' => 4)), 'permissions' => 0));
+        return array('id' => (int) $id, 'username' => $input['username'], 'email' => $input['email'], 'team_id' => $input['team_id'] ?? null);
+    }
+}
+
 // an authentication model that needs no database (Route::auth tests)
 class QaAuthUser extends Caligrafy\Model
 {
     public $id;
     public $username;
+    public $email;
     public $passcode;
     public $permissions;
 

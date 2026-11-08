@@ -178,11 +178,12 @@ class Capabilities
                     case 'valid_url': $property['format'] = 'uri'; break;
                     case 'uuid': $property['format'] = 'uuid'; break;
                     case 'date': $property['format'] = 'date'; break;
-                    case 'max_len': $property['maxLength'] = (int) $argument; break;
-                    case 'min_len': $property['minLength'] = (int) $argument; break;
-                    case 'exact_len': $property['minLength'] = $property['maxLength'] = (int) $argument; break;
-                    case 'min_numeric': $property['minimum'] = $argument + 0; break;
-                    case 'max_numeric': $property['maximum'] = $argument + 0; break;
+                    // a missing or wrong argument (max_numeric, with nothing after it) is left out of the schema
+                    case 'max_len': if (ctype_digit((string) $argument)) { $property['maxLength'] = (int) $argument; } break;
+                    case 'min_len': if (ctype_digit((string) $argument)) { $property['minLength'] = (int) $argument; } break;
+                    case 'exact_len': if (ctype_digit((string) $argument)) { $property['minLength'] = $property['maxLength'] = (int) $argument; } break;
+                    case 'min_numeric': if (($bound = self::bound($argument)) !== null) { $property['minimum'] = $bound; } break;
+                    case 'max_numeric': if (($bound = self::bound($argument)) !== null) { $property['maximum'] = $bound; } break;
                     case 'contains_list': $property['enum'] = array_values(array_filter(array_map('trim', explode(';', (string) $argument)), 'strlen')); break;
                     // a file input (Uploads): agents send the URL or the path of the file
                     case 'file': $property['description'] = 'The URL or the path of a file'; break;
@@ -204,6 +205,15 @@ class Capabilities
             $schema['required'] = array_values(array_unique($required));
         }
         return $schema;
+    }
+
+    // the number of min_numeric/max_numeric: current_year is the year of today (Validator), anything else not numeric none
+    private static function bound($argument)
+    {
+        if ($argument === 'current_year') {
+            return (int) date('Y');
+        }
+        return is_numeric($argument) ? $argument + 0 : null;
     }
 
     /**

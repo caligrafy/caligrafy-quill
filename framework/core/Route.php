@@ -414,7 +414,8 @@ class Route extends \stdClass
      * /notAuthorized and, with 'passkeys' => true, the passkey endpoints. Needs Auth::authentication(...) before it.
      *   Route::auth(['home' => '/books']);
      * Options: prefix, home ('/'), logout ('/'), register (true, false or the capability), attempts (5), lock (900
-     * seconds), views, passkeys (false). See AuthRoutes.
+     * seconds), views, passkeys (false), identifier ('username', or the users column people sign in with: 'email'),
+     * signInAfterRegister (false: true signs the new account in and goes 'home'). See AuthRoutes.
      */
     public static function auth(array $options = array())
     {
@@ -447,6 +448,40 @@ class Route extends \stdClass
     {
         Download::format($options);   // an unknown format is refused when web.php runs
         self::get($route, function () use ($capability, $options) { Download::handle($capability, $options); });
+    }
+
+    /**
+     * A GET that sends the visitor elsewhere (2.19.0): no closure, no controller
+     *   Route::redirect('/', '/books');
+     *   Route::redirect('/old/books/{id}', '/books/{id}', 301);
+     * {name} in $to takes the route variable of $from (url-encoded). $to is a path of this site or a full http(s) address.
+     * @param int $status 301, 302 (default), 303, 307 or 308
+     */
+    public static function redirect($from, $to, $status = 302)
+    {
+        $status = (int) $status;
+        if (!in_array($status, array(301, 302, 303, 307, 308), true)) {
+            throw new \InvalidArgumentException("Route::redirect('$from'): the status is 301, 302, 303, 307 or 308, not $status");
+        }
+        if (!is_string($to) || trim($to) === '') {
+            throw new \InvalidArgumentException("Route::redirect('$from'): where to send the visitor is a path or an address");
+        }
+        self::get($from, function () use ($from, $to, $status) {
+            // the route variables only: the query string never fills a placeholder
+            $variables = self::$_request !== null ? bindRouteToVar(sanitizePath($from), self::$_request->uri) : array();
+            if (!headers_sent()) {
+                http_response_code($status);
+            }
+            redirect(self::redirectTarget($to, $variables));
+        });
+    }
+
+    /**
+     * Where a Route::redirect sends: $to with its {placeholders} filled from the route variables (url-encoded)
+     */
+    public static function redirectTarget($to, array $variables = array())
+    {
+        return Form::fill((string) $to, $variables, true);
     }
 
     /**
