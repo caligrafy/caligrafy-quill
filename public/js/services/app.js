@@ -23,7 +23,9 @@ function loadVue(parameters) {
     var appName = env.appName? `/${env.appName}` : '';
     for(i = 0; i < parameters.scripts.length; i++) {
         var script = document.createElement('script');
-        script.setAttribute('src', env.home + 'public' + appName + '/scripts/' + parameters.scripts[i] + '.js');
+        // the version changes with each deploy, so a browser never keeps the scripts of the one before (2.21.5)
+        var version = env.scripts_version ? '?v=' + env.scripts_version : '';
+        script.setAttribute('src', env.home + 'public' + appName + '/scripts/' + parameters.scripts[i] + '.js' + version);
         body.appendChild(script);        
     }
     

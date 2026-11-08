@@ -6,6 +6,12 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.5] - 2026-11-08
+
+### Fixed
+- `loadVue()` adds a version to a client app's scripts, which changes at each deploy: a browser no longer keeps the
+  scripts of the deploy before.
+
 ## [2.21.4] - 2026-11-08
 
 ### Fixed
