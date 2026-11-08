@@ -1,6 +1,6 @@
 ---
 name: server
-description: Start, stop or check the Caligrafy Quill Docker development server (dev-box on 8080, phpMyAdmin on 8077, MySQL on 3306) via .bin/caligrafer / docker-compose, checking for port clashes and .env Docker settings first.
+description: Start, stop or check the Caligrafy Quill Docker development server (dev-box on 8080, phpMyAdmin on 8077, MySQL on 3306) via .bin/caligrafer / docker compose, checking for port clashes and .env Docker settings first.
 when_to_use: The user asks to start, stop, restart, run or check the Caligrafy server, Docker containers, phpMyAdmin or the local MySQL of a Quill project, or the app is unreachable on localhost:8080, a port is already in use, or PHP cURL in Docker fails with "self-signed certificate in certificate chain" (corporate TLS proxy).
 argument-hint: "<start|stop|status>"
 ---
@@ -12,7 +12,7 @@ Action: `$ARGUMENTS` (default `status`). Read [gotchas.md](../caligrafy/referenc
 ## status
 ```bash
 docker ps --format '{{.Names}}\t{{.Status}}\t{{.Ports}}'
-docker-compose ps            # from the project root (or: docker compose ps)
+docker compose ps            # from the project root (or the legacy: docker-compose ps)
 ```
 Report which services of this project run, their host ports, and the URLs (app `http://localhost:<dev-box port>`, phpMyAdmin `http://localhost:<pma port>`, root/root).
 
@@ -27,7 +27,7 @@ which MySQL answers on the port first), else Docker; `--local` / `--docker` choo
 `composer create-project caligrafy/caligrafy-quill <folder>`, which prints the next command. It asks before `initialize` deletes `.git` (G25); never pass `--yes` without the user's OK.
 
 1. **Docker running?** `docker info >/dev/null 2>&1` - if not, ask the user to start Docker Desktop.
-2. **Compose command.** Prefer `docker-compose` (what caligrafer calls); if missing use `docker compose`.
+2. **Compose command.** Prefer `docker compose` (the Compose v2 plugin: what `.bin/caligrafer` and `caligrafer.php` use when `docker compose version` answers); fall back to the legacy `docker-compose` only when it does not. The commands below use `docker compose`.
 3. **Ports.** Read the host ports from `docker-compose.yaml` (defaults 8080 dev-box/prod-box, 8077 phpmyadmin, 3306 mysql). For each:
    ```bash
    lsof -nP -iTCP:<port> -sTCP:LISTEN
@@ -53,13 +53,13 @@ which MySQL answers on the port first), else Docker; `--local` / `--docker` choo
 
 ## stop
 ```bash
-.bin/caligrafer server stop      # = docker-compose stop
+.bin/caligrafer server stop      # = docker compose stop
 ```
 Use `stop`, never `down`, unless the user explicitly wants containers removed: the MySQL service has no named volume, so after `down` a new container starts with an empty database (the old data stays orphaned in an anonymous volume).
 
 ## Troubleshooting
 
-Run the read-only health check first: `docker-compose exec dev-box php caligrafer.php doctor` (inside the container, so
+Run the read-only health check first: `docker compose exec dev-box php caligrafer.php doctor` (inside the container, so
 that `DB_HOST=mysql` resolves and the network is the app's; `php caligrafer.php doctor` without Docker). It reports
 PHP/extensions, `.env`, keys (masked), the database, OpenAI/Groq keys and models, the Agent provider (`AGENT_PROVIDER`; Ollama on the host is `http://host.docker.internal:11434/v1` from the container), Stripe, Coinbase, Watson and SMTP, with
 one fix per problem and hints for TLS, DNS and timeout errors. `--only openai,groq` limits it, `--json` for parsing.
@@ -83,7 +83,7 @@ services:
     ports: !override
       - "3307:3306"
 ```
-Without `!override` compose keeps `8080:80` too and still fails on the taken port. Then `docker-compose up -d dev-box`
+Without `!override` compose keeps `8080:80` too and still fails on the taken port. Then `docker compose up -d dev-box`
 and report the new URLs.
 
 ### "SSL certificate problem: self-signed certificate in certificate chain" from PHP in Docker
@@ -94,8 +94,8 @@ Debian-based `php:8.5-apache` image does not. Never "fix" it with `CURLOPT_SSL_V
 
 1. Confirm from the container:
    ```bash
-   docker-compose exec dev-box curl -sS -o /dev/null https://api.openai.com/v1/models   # fails: self-signed certificate in certificate chain
-   docker-compose exec dev-box sh -c 'openssl s_client -connect api.openai.com:443 -showcerts </dev/null 2>/dev/null | grep "i:"'   # issuer = corporate CA
+   docker compose exec dev-box curl -sS -o /dev/null https://api.openai.com/v1/models   # fails: self-signed certificate in certificate chain
+   docker compose exec dev-box sh -c 'openssl s_client -connect api.openai.com:443 -showcerts </dev/null 2>/dev/null | grep "i:"'   # issuer = corporate CA
    ```
 2. Export the corporate root CA (public certificate, not a secret) from the System keychain; ask the user for its
    name if the issuer above does not make it obvious (Keychain Access > System > Certificates):
@@ -112,5 +112,5 @@ Debian-based `php:8.5-apache` image does not. Never "fix" it with `CURLOPT_SSL_V
          - ./docker/certs/corporate-root-ca.crt:/usr/local/share/ca-certificates/corporate-root-ca.crt:ro
        command: sh -c "update-ca-certificates && exec apache2-foreground"
    ```
-4. `docker-compose up -d --force-recreate dev-box` and re-run the curl of step 1 (expect no error, HTTP 401 without a
+4. `docker compose up -d --force-recreate dev-box` and re-run the curl of step 1 (expect no error, HTTP 401 without a
    key is fine). PHP cURL uses the system store, so no php.ini change is needed. Propose adding `docker/certs/` to `.gitignore`.

@@ -1,8 +1,9 @@
-import { createRouter, createWebHistory } from 'vue-router'
+import { createRouter, createWebHashHistory } from 'vue-router'
 import HomePage from '../components/pages/HomePage.vue'
 
 const router = createRouter({
-  history: createWebHistory(import.meta.env.BASE_URL),
+  // hash history (#/page): the built app works from any folder (public/<name>/dist/) without a server fallback
+  history: createWebHashHistory(),
   routes: [
     {
       path: '/',

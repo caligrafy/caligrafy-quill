@@ -7,260 +7,332 @@
 > - `belongsTo()` is implemented as `hasMany()` (returns an array of rows whose FK points at this model) - for the inverse of one-to-many use `hasOne()` (gotchas G9).
 > - `hasOne()` reads `<model>_id` on the CALLING model's table. `belongsToMany()` pivots copy the referenced id types and use unique constraint names (G10, fixed in the security release).
 
-> **Where this fits.** Relationships live in the models, so a capability can return a book with its author (`$book->author()`) and every experience gets the same data.
+Tables point at each other: a book has one author (`books.author_id`), an author has many books, a book has many
+loans, and books and tags are linked many to many through `books_tags`. A capability loads those **related rows** with
+`with()` of the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries): one query for the books,
+one more per relation, never one query per book. The relations follow the names of your tables, so the models need no
+code for them. This page uses the Bookshelf tables of [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models).
 
-In relational databases, tables are related to one another. There are several types of relationships that can be defined. This framework makes it easy to define and use relationships without having to write extensive code.
-There are 3 types of relationships defined in this framework: `One-to-One`, `One-to-Many` and `Many-to-Many`.
+```php
+$book    = Book::with('author', 'loans', ['tags' => ['pivot' => true]])->find(3);   // its author, its loans, its tags
+$authors = Author::withCount('books')->orderBy('name')->get();                       // each author with books_count
+```
 
 > #### (video) [Relationships](https://www.youtube.com/watch?v=o6knV88iCkw&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)
 >
-> In this video, we will learn how to define one-to-one, one-to-many and many-to-many relationships among models in Caligrafy.
+> An older video: it shows the relationship methods of the model (under "Other ways" below).
 
-## One-To-One Relationship
+## With Claude
 
-A `One-to-One` relationship is the simplest relationship between two entities. For example, we can have an authorization module where every `User` has one `Account` and reciprocally every `Account` has one `User`. This is a typical `One-to-One` relationship.
+Ask for the capability with the `new-capability` skill, and say which related rows it returns:
 
-### Declaration
-In order to create such a relationship, you first need to make sure that the database tables that you create for the two entities have the foreign keys that link them. `hasOne()` reads the foreign key **on the table of the model that calls it**: `$user->account()` uses `users.account_id` and `$account->user()` uses `accounts.user_id`. If you only need one direction, you only need that foreign key.
+```text
+/caligrafy-quill:new-capability get_book books:read read-only: one book with its author, its loans and its tags
+```
 
-> Learn more about `Relational Databases` [here](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models)
+Claude writes `application/services/Bookshelf/GetBook.php` (or the folder of your resource), reads the rows with
+`Book::with(...)`, and never queries in a loop. For a resource with a parent (`/caligrafy-quill:new-resource Book ... author:fk`),
+it writes the foreign key `author_id` and its constraint in `create_db.sql`.
 
-Once your database tables are created, one of the models `User`, for example, will add a new method that invokes the `hasOne()` method to define that relationship. 
-```php
-use Caligrafy\Model;
+**Check** before you say OK:
++ the capability reads related rows with `with()` or `withCount()`, not a query inside a `foreach`;
++ many-to-many relations say `['pivot' => true]` (or the pivot's name);
++ `php caligrafer.php call get_book id=3` shows the related rows under their names (`author`, `loans`, `tags`).
 
-class User extends Model {
+## By hand
 
-    // properties go here
-    //...
+Run every command in the Docker container: `docker compose exec dev-box php caligrafer.php ...` (without Docker, drop
+`docker compose exec dev-box`).
 
-    //new method that defines a One-to-One relationship
-    public function account()
+1. **A book with its author, its loans and its tags.** Make `application/services/Bookshelf/GetBook.php` read:
+    ```php
+    <?php
+
+    use Caligrafy\Capability;
+    use Caligrafy\Context;
+    use Caligrafy\Service;
+    use Caligrafy\ServiceError;
+
+    #[Capability(
+        name: 'get_book',
+        description: 'Returns one book by its id, with its author, its tags and its loans.',
+        scope: 'books:read',
+        readOnly: true,
+        public: true
+    )]
+    class GetBook extends Service
     {
-       return $this->hasOne('Account','accounts');
-       // the first argument is the model name to link to
-       // the second argument is the database table name of to link to
+        public $rules = array('id' => 'required|integer');
 
+        public $descriptions = array('id' => 'The id of the book');
+
+        public function handle(array $input, Context $context)
+        {
+            $book = Book::with('author', 'loans', array('tags' => array('pivot' => true)))->find($input['id']);
+            if (!$book) {
+                throw ServiceError::notFound('There is no book #' . $input['id']);
+            }
+            return $book;
+        }
+    }
+    ```
+    Run `docker compose exec dev-box php caligrafer.php call get_book id=3`:
+    ```json
+    {
+        "data": {
+            "id": 3,
+            "title": "Kindred",
+            "published_year": 1979,
+            "summary": "A young woman is pulled back in time to a plantation in Maryland.",
+            "author_id": 2,
+            "created_at": "2026-11-07 23:23:48",
+            "modified_at": "2026-11-07 23:23:48",
+            "author": {
+                "id": 2,
+                "name": "Octavia E. Butler",
+                "bio": "American science fiction author, the first to receive a MacArthur fellowship.",
+                "created_at": "2026-11-07 23:23:48",
+                "modified_at": "2026-11-07 23:23:48"
+            },
+            "loans": [
+                {"id": 2, "book_id": 3, "borrower": "Ben", "due_on": "2026-10-30", "returned_at": "2026-10-28 10:00:00", "created_at": "2026-11-07 23:23:48", "modified_at": "2026-11-07 23:23:48"},
+                {"id": 3, "book_id": 3, "borrower": "Chloe", "due_on": "2026-11-25", "returned_at": null, "created_at": "2026-11-07 23:23:48", "modified_at": "2026-11-07 23:23:48"}
+            ],
+            "tags": [
+                {"id": 2, "name": "science fiction", "created_at": "2026-11-07 23:23:48", "modified_at": "2026-11-07 23:23:48"}
+            ]
+        }
+    }
+    ```
+    (Your dates differ.) Four queries ran: the book, then its author, its loans and its tags, each with
+    `WHERE ... IN (...)`.
+
+2. **Every author with the number of their books.** Run
+   `docker compose exec dev-box php caligrafer.php service Bookshelf/ListAuthors --scope books:read --read-only`,
+   then make `application/services/Bookshelf/ListAuthors.php` read:
+    ```php
+    <?php
+
+    use Caligrafy\Capability;
+    use Caligrafy\Context;
+    use Caligrafy\Service;
+
+    #[Capability(
+        name: 'list_authors',
+        description: 'Lists every author of the Bookshelf, sorted by name, with books_count: how many books each one has in the catalog.',
+        scope: 'books:read',
+        readOnly: true,
+        public: true
+    )]
+    class ListAuthors extends Service
+    {
+        public function handle(array $input, Context $context)
+        {
+            return Author::withCount('books')->orderBy('name')->get();
+        }
+    }
+    ```
+    `docker compose exec dev-box php caligrafer.php call list_authors` returns the three authors, each with
+    `books_count`: Italo Calvino `1`, Octavia E. Butler `2`, Ursula K. Le Guin `2`. `withCount()` ran one
+    `GROUP BY` query for all of them.
+
+3. **Link and unlink a tag.** The rows of a many-to-many relation live in the pivot table `books_tags`: add and remove
+   them with the query builder. Run
+   `docker compose exec dev-box php caligrafer.php service Bookshelf/TagBook --scope books:write`, then make
+   `application/services/Bookshelf/TagBook.php` read:
+    ```php
+    <?php
+
+    use Caligrafy\Capability;
+    use Caligrafy\Context;
+    use Caligrafy\Database;
+    use Caligrafy\Service;
+
+    #[Capability(
+        name: 'tag_book',
+        description: 'Adds a tag to a book (nothing changes when the book has it already) and returns the book with all its tags.',
+        scope: 'books:write'
+    )]
+    class TagBook extends Service
+    {
+        public $rules = array(
+            'book_id' => 'required|integer|exists,books.id',
+            'tag_id' => 'required|integer|exists,tags.id'
+        );
+
+        public function handle(array $input, Context $context)
+        {
+            $link = array('book_id' => $input['book_id'], 'tag_id' => $input['tag_id']);
+            if (!Database::table('books_tags')->where($link)->exists()) {
+                Database::table('books_tags')->insert($link);
+            }
+            return Book::with(array('tags' => array('pivot' => true)))->find($input['book_id']);
+        }
+    }
+    ```
+    Run `docker compose exec dev-box php caligrafer.php service Bookshelf/UntagBook --scope books:write`, then make
+    `application/services/Bookshelf/UntagBook.php` read:
+    ```php
+    <?php
+
+    use Caligrafy\Capability;
+    use Caligrafy\Context;
+    use Caligrafy\Database;
+    use Caligrafy\Service;
+
+    #[Capability(
+        name: 'untag_book',
+        description: 'Removes a tag from a book and returns the book with the tags it has left.',
+        scope: 'books:write'
+    )]
+    class UntagBook extends Service
+    {
+        public $rules = array(
+            'book_id' => 'required|integer|exists,books.id',
+            'tag_id' => 'required|integer'
+        );
+
+        public function handle(array $input, Context $context)
+        {
+            Database::table('books_tags')->where(array('book_id' => $input['book_id'], 'tag_id' => $input['tag_id']))->delete();
+            return Book::with(array('tags' => array('pivot' => true)))->find($input['book_id']);
+        }
+    }
+    ```
+    Run `docker compose exec dev-box php caligrafer.php call tag_book book_id=3 tag_id=3`: *Kindred* now has the tags
+    `science fiction` and `classic`. Running it again changes nothing. `call untag_book book_id=3 tag_id=3` leaves
+    `science fiction`. `call tag_book book_id=3 tag_id=9` answers `"tag_id": "There is no such tag"`.
+
+**Check:**
++ `call get_book id=3` has `author`, `loans` and `tags`;
++ `call list_authors` gives each author a `books_count`;
++ `docker compose exec mysql mysql -uroot -proot caligrafy -e "SELECT * FROM books_tags WHERE book_id = 3"` shows
+  the links you made.
+
+## Reference
+
+### How `with()` reads a name
+
+`with()` follows the name you give and the table it is called on:
+
+| Name | Called on | Kind | It reads | You get |
+|---|---|---|---|---|
+| `author` (singular) | `books` | belongs to | `books.author_id` -> `authors.id` | one row, or `null` |
+| `books` (plural) | `authors` | has many | `books.author_id` = `authors.id` | a list, or `[]` |
+| `loans` (plural) | `books` | has many | `loans.book_id` = `books.id` | a list, or `[]` |
+| `['tags' => ['pivot' => true]]` | `books` | many to many | `books_tags.book_id` = `books.id`, `books_tags.tag_id` = `tags.id` | a list, or `[]` |
+| `book.author` | `loans` | nested: the relation of a relation | `loans.book_id` -> `books.id`, then `books.author_id` -> `authors.id` | `book` with its `author` |
+| `['current_loan' => ['type' => 'hasOne', 'table' => 'loans']]` | `books` | has one | `loans.book_id` = `books.id` | the first row, or `null` |
+
++ Singular and plural: `author` -> `authors`, `category` -> `categories`, `box` -> `boxes`. An irregular plural
+  (`person`/`people`) needs `'table'`.
++ The related rows are **arrays**, also under models: `$book->author['name']`, `$book->tags[0]['name']`.
++ The key must be in the rows: `Book::select('id', 'title')->with('author')` has no `author_id`, so `author` is `null`.
++ Several names at once: `with('author', 'loans')`; one name's settings: `with(['author' => [...]])`; both:
+  `with('author', ['tags' => ['pivot' => true]])`.
+
+### Many to many: the pivot
+
+The pivot of `books` and `tags` is `books_tags` (`<this table>_<related table>`), with `book_id` and `tag_id`. When
+that table does not exist but `tags_books` does, `with()` uses `tags_books` (it tries `books_tags` first, then
+remembers). `['pivot' => 'book_tag_links']` names another pivot. Write the pivot in `create_db.sql`, with a
+`UNIQUE KEY` on its two columns, as on [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models). Add and
+remove links with `Database::table('books_tags')->insert([...])` and `->where([...])->delete()`, as in step 3.
+
+### When your names differ: the settings
+
+```php
+Book::with(['writer' => ['table' => 'authors', 'foreign_key' => 'author_id']])->find(3);   // $book->writer
+Book::with(['current_loan' => ['type' => 'hasOne', 'table' => 'loans', 'query' => function ($q) { $q->whereNull('returned_at'); }]])->get();
+```
+
+| Setting | Meaning | Default |
+|---|---|---|
+| `type` | `belongsTo`, `hasOne`, `hasMany` or `belongsToMany` | singular name: `belongsTo`; plural: `hasMany`; with `pivot`: `belongsToMany` |
+| `table` | the related table | the name in the plural (`belongsTo`, `hasOne`), the name itself (`hasMany`, `belongsToMany`) |
+| `foreign_key` | belongs to: the column of this table; has one/many: the column of the related table; many to many: the pivot's column toward this table | `<name>_id` (belongs to), `<this table in the singular>_id` (the others) |
+| `local_key` | the column of this table the others point at | `id` |
+| `owner_key` | the column of the related table that is pointed at | `id` |
+| `pivot` | `true` (the conventional pivot) or its name | none |
+| `related_key` | the pivot's column toward the related table | `<name in the singular>_id` |
+| `query` | a function that narrows the related rows: `function ($q) { $q->where('published_year', '<', 1970); }` | none |
+
+A function alone is the `query` setting: `with(['loans' => function ($q) { $q->whereNull('returned_at'); }])`. An unknown
+setting, or a name that is not letters, digits and `_`, is refused before any query runs.
+
+### Counting: `withCount()`
+
+```php
+Author::withCount('books')->get();                                   // books_count on each author
+Database::table('tags')->withCount(['books' => ['pivot' => true]])->pluck('books_count', 'name');
+// ['fantasy' => 1, 'science fiction' => 3, 'classic' => 3]
+Author::withCount(['books' => function ($q) { $q->where('published_year', '<', 1970); }])->pluck('books_count', 'name');
+// ['Ursula K. Le Guin' => 2, 'Octavia E. Butler' => 0, 'Italo Calvino' => 0]
+```
+
+`withCount()` counts plural relations only (has many, many to many): `withCount('author')` is refused ("counts a
+plural relation"). A row with nothing to count gets `0`.
+
+## Other ways: the relationship methods of a model
+
+Before 2.19, relations were methods of the model. They still work, for one model object at a time; `with()` replaces
+them, for one row or a thousand.
+
+```php
+class Book extends Model
+{
+    // ... the properties
+
+    public function author()   // the author: books.author_id -> authors.id
+    {
+        return $this->hasOne('Author', 'authors');
+    }
+
+    public function loans()    // the loans: loans.book_id = books.id
+    {
+        return $this->hasMany('Loan', 'loans');
+    }
+
+    public function tags()     // the tags, through books_tags (book_id, tag_id)
+    {
+        return $this->belongsToMany('Tag', 'tags');
     }
 }
-```
-### Inverse Relationship
-In the `Account` model, you will need to do the same using the `hasOne` method.
-```php
-use Caligrafy\Model;
 
-class Account extends Model {
-
-    // properties go here
-    //...
-
-    //new method that defines the inverse of a One-to-One relationship
-    public function user()
-    {
-       return $this->hasOne('User','users');
-       // the first argument is the model name to link to
-       // the second argument is the database table name of to link to
-
-    }
-}
-```
-> **Notice:** In both the examples, there is no restriction as to the name of the method used to define the relationships. We recommend using a name that is representative enough of the type of relationship.
-
-### Usage
-After the relationship has been defined in the respective models, making use of that relationship takes place in the context of the `Controller` or in the 'Model' itself in the constructor or the invoke functions. For example, in order to get the `Account` associated with a `User`, you would do the following in the `UserController`:
-```php
-use Caligrafy\Controller;
-
-class UserController extends Controller {
-
-    public function getAccount() 
-    {
-        $this->associate('User', 'users'); // create the association
-        $account = $this->find(1)->account(); // returns account for user with id 1
-    }
-}
-```
-## One-To-Many Relationship
-A `One-to-Many` relationship is a common type of relationship between two entities. Taking the same example as before, you could allow one `User` to have multiple `Account` but an `Account` to belong to one user. For that you would want to use a `One-to-Many` relationship.
-
-### Declaration
-In order to create such a relationship, you first need to make sure that the entity that could exist many times has a reference in the table of the other entity. In our example, that means that there should be a `foreign_key` in the `accounts` table that references the `users` table.
-
-> Learn more about `Relational Databases` [here](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models)
-
-Once your database tables are created, the `User` model needs a new method that invokes the `hasMany()` method to define that relationship. 
-```php
-use Caligrafy\Model;
-
-class User extends Model {
-
-    // properties go here
-    //...
-
-    //new method that defines a One-to-Many relationship
-    public function accounts()
-    {
-       return $this->hasMany('Account','accounts');
-       // the first argument is the model name to link to
-       // the second argument is the database table name of to link to
-
-    }
-}
-```
-### Inverse Relationship
-In the `Account` model, the account belongs to one `User`. Use the `hasOne` relationship: it reads `accounts.user_id` and returns the `User`.
-
-> **Notice:** `belongsTo()` is not the inverse of `hasMany()` in Caligrafy: it behaves exactly like `hasMany()` (it looks for `<thismodel>_id` in the joined table and returns an array). Use `hasOne()` for the inverse of a One-to-Many relationship.
-```php
-use Caligrafy\Model;
-
-class Account extends Model {
-
-    // properties go here
-    //...
-
-    //new method that defines the One to relationship
-    public function user()
-    {
-       return $this->hasOne('User','users');
-       // the first argument is the model name to link to
-       // the second argument is the database table name of to link to
-
-    }
-}
-```
-> **Notice:** In both the examples, there is no restriction as to the name of the method used to define the relationships. We recommend using a name that is representative enough of the type of relationship.
-
-### Usage
-After the relationship has been defined in the respective models, making use of that relationship takes place in the context of the `Controller` or in the 'Model' itself in the constructor or the invoke functions. For example, in order to get all the accounts associated with a `User`, you would do the following in the `UserController`:
-```php
-use Caligrafy\Controller;
-
-class UserController extends Controller {
-
-    public function getAccounts() 
-    {
-        $this->associate('User', 'users'); // create the association
-        $accounts = $this->find(1)->accounts(); // returns accounts for user with id 1
-    }
-}
-```
-## Many-to-Many Relationship
-A `Many-to-Many` relationship ensures that two entities could have multiple instances of each other. Taking the same example as before, you could allow one `User` to have multiple `Account` and one `Account` to have multiple `User`. For that you would want to use a `Many-to-Many` relationship.
-
-### Declaration
-In order to create such a relationship, you do not need to do anything in the database other than making sure to follow the naming conventions.
-
-> Learn more about Naming Conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started)
-
-The `User` model needs a new method that invokes the `belongsToMany()` method to define that relationship. 
-```php
-use Caligrafy\Model;
-
-class User extends Model {
-
-    // properties go here
-    //...
-
-    //new method that defines a Many-to-Many relationship
-    public function accounts()
-    {
-       return $this->belongsToMany('Account','accounts');
-       // the first argument is the model name to link to
-       // the second argument is the database table name of to link to
-
-    }
-}
-```
-### Inverse Relationship
-Similarly, the `Account` model needs to define a `belongsToMany` relationship.
-```php
-use Caligrafy\Model;
-
-class Account extends Model {
-
-    // properties go here
-    //...
-
-    //new method that defines a Many-to-Many relationship
-    public function users()
-    {
-       return $this->belongsToMany('User','users');
-       // the first argument is the model name to link to
-       // the second argument is the database table name of to link to
-
-    }
-}
-```
-> **Notice:** In both the examples, there is no restriction as to the name of the method used to define the relationships. We recommend using a name that is representative enough of the type of relationship.
-
-### Usage
-After the relationship has been defined in the respective models, making use of that relationship takes place in the context of the `Controller` or in the 'Model' itself in the constructor or the invoke functions. For example, in order to get all the accounts associated with a `User`, you would do the following in the `UserController`:
-```php
-use Caligrafy\Controller;
-
-class UserController extends Controller {
-
-    public function getAccounts() 
-    {
-        $this->associate('User', 'users'); // create the association
-        $user = $this->find(1);
-        $accounts = $user->accounts(); // returns all accounts for user with id 1
-
-        // Alternatively, you can use the pivot property to access all the pivots associated with a user
-        $accounts = $user->pivot->accounts->all; // returns all accounts for user with id 1
-    }
-}
+$book = (new Book('books'))->find(1);
+$book->author()->name;           // 'Ursula K. Le Guin' (a model, or null)
+$book->loans();                  // a list of Loan
+$book->tags();                   // a list of Tag
+$book->attach('tags', 2);        // adds the link 1-2 (call tags() first); returns the tags again
+$book->detach('tags', 2);        // removes it
 ```
 
-### The pivot table
-The pivot table is created the first time the relationship method is called:
-+ it is named `<table1>_<table2>` (`users_accounts` when called from `User`), or `<table2>_<table1>` if that table already exists
-+ it has the columns `id`, `user_id`, `account_id`, `created_at` and `modified_at`. The foreign key columns copy the type of the `id` columns they reference, so `INT` and `INT UNSIGNED` ids both work
-+ its foreign key constraints are named `fk_<pivot>_<column>`, which keeps them unique in the database
+| Method | It reads | Returns |
+|---|---|---|
+| `hasOne($model, $table, $foreignKey = null, $localKey = null)` | the foreign key **on this model's table**: `books.author_id` -> `authors.id` (`$foreignKey` names this table's column, `$localKey` the other table's) | a model, or `null` |
+| `hasMany($model, $table, $foreignKey = null, $localKey = null)` | `<table>.<this class>_id` = this id (`$foreignKey` names that column, `$localKey` a property of this model to use instead of `id`) | a list of models |
+| `belongsTo(...)` | the same as `hasMany()`: it is **not** the inverse of `hasMany()`. For a child's parent, use `hasOne()` | a list |
+| `belongsToMany($model, $table, $foreignKeyLocal = null, $foreignKeyJoin = null)` | the pivot `<this table>_<table>` (or `<table>_<this table>` when that one exists); its columns are `<this class>_id` and `<model>_id`. It **creates the pivot** with `CREATE TABLE IF NOT EXISTS` the first time | a list of models; `$book->pivot->tags->all` holds the rows |
+| `attach($table, $id)`, `detach($table, $id)` | add or remove a pivot row; call the relationship method first | the relationship again |
 
-If you prefer to create the pivot table yourself (to add columns for example), create it with the same name and columns before calling the relationship: the framework will leave it untouched. On a database that already has data, create it in a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) (2.18.0+), so every server gets it.
+The method's name is up to you; it is never saved as a column. The foreign key names come from the class name in lower
+case (`Book` -> `book_id`).
 
-### Attaching and detaching
-`attach()` and `detach()` add and remove links in the pivot table. Call the relationship method first so that the model knows its pivot, then give the **joined table name** and the id to link. Both return the refreshed list of related models.
-```php
-$user = $this->find(1);
-$user->accounts();                       // loads the relationship and its pivot
-$accounts = $user->attach('accounts', 5); // links account 5 to user 1
-$accounts = $user->detach('accounts', 5); // removes the link
-```
+## Common mistakes
 
-## Overriding Naming Convention
-Relationships work under the premise that all tables have and 'id' primary key. This convention cannot be overridden. Also, the relationship methods assume that all foreign keys have the format `modelname_id` with the model name being in small caps. Taking the `User` and `Account` example again, the foreign keys are by default assumed to be `user_id` (in the `accounts` table) and `account_id` (in the `users` table).
++ **A query inside a `foreach`** (the N+1 problem): 50 books and their authors become 51 queries. In development the
+  PHP error log says "Probable N+1 query" with the file and line (G127). Load them with `with('author')`.
++ **`with('tags')` without `pivot`** (G124): `tags` is plural, so it is read as has many: `tags.book_id`, which fails
+  with "Unknown column 'book_id'". Write `with(['tags' => ['pivot' => true]])`.
++ **`belongsTo()` as the inverse of `hasMany()`** (G9): it returns the children, like `hasMany()`. Use `with('author')`
+  (or `hasOne()`).
++ **A foreign key of another type than the `id` it points at** (G10): MySQL refuses the constraint. Give both
+  `INT UNSIGNED`.
++ **Reading `$book->author->name`**: related rows are arrays. Write `$book->author['name']`.
 
-This framework provides the flexibility to override the foreign keys naming.
-```php
-// One-to-One relationship 
-public function hasOne($modelName, $joinedTableName, $foreignKey = null, $localKey = null)
+## Related pages
 
-// One-to-Many relationship
-public function hasMany($modelName, $joinedTableName, $foreignKey = null, $localKey = null)
-public function belongsTo($modelName, $joinedTableName, $foreignKey = null, $localKey = null)
-
-// Many-to-Many relationship in both directions
-public function belongsToMany($modelName, $joinedTableName, $foreignKeyLocal = null, $foreignKeyJoin = null)
-
-```
-## Model Methods
-The core `Model` class comes prepackaged with a set of properties and methods that help establish the relationships and interfacing with joined tables.
-```php
-// One-to-One relationship 
-public function hasOne($modelName, $joinedTableName, $foreignKey = null, $localKey = null)
-
-// One-to-Many relationship
-public function hasMany($modelName, $joinedTableName, $foreignKey = null, $localKey = null)
-public function belongsTo($modelName, $joinedTableName, $foreignKey = null, $localKey = null)
-
-// Many-to-Many relationship in both directions
-public function belongsToMany($modelName, $joinedTableName, $foreignKeyLocal = null, $foreignKeyJoin = null)
-public function attach($joinedTableName, $id) // attaches an ID to a joined many-to-many table
-public function detach($joinedTableName, $id) // detaches and ID from a joined many-to-many table 
-
-```
-
->[Next Section: Learn about Validation](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation)
++ [Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries#eager): `with()` among the other calls
++ [Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models): the tables and the models
++ [Validation](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation#database-rules): `exists` and `unique`
++ [Build once](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service): writing a capability

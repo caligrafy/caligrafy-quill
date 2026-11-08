@@ -6,141 +6,517 @@
 > **Verified against framework source (see gotchas.md):**
 > - Unmatched URLs do not 404: they run the FIRST route registered in web.php (gotchas G4).
 
-> **Where this fits.** Routes connect URLs to what answers them. For a feature written as a capability, one line is enough: `Route::capability('POST', '/books', 'create_book')` for REST, and `Route::capabilities()` and `Route::mcp()` (added by the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart)) for the Vue apps and AI agents: see [Capability Routes](#capabilityroutes). Forms, sign-in, webhooks and downloads are one line too (2.19.0+): see [Declarative routes](#declarativeroutes). The rest of this page covers page routes and controller routes.
+# Routing
 
-The very first thing that you need to do when building your application is structuring your URIs in a flexible and scalable way that is agnostic of how your application files are structured. This framework does it all for you. What you need to focus your effort on is planning where the URIs should go.
+A route connects an address (`GET /books/3`) to what answers it. Every route of a Caligrafy project is one line of
+`application/config/routing/web.php`. In 2.19 most routes name a capability (a feature written once, in
+`application/services/`) and say how the web reaches it: a page that shows its data (`Route::page`), a form that calls
+it (`Route::form`), a file to download (`Route::download`), a JSON API (`Route::capability`). This page covers how
+routes match, pages, redirects and capability routes. Forms, sign-in, webhooks and downloads have their own page:
+[Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes).
 
-## Defining Routes
-A route file is provided for you `/application/config/routing/web.php`. This is where your routes should be defined. There are 4 route methods available
-```php
-Route::get($uri, $callback);
-Route::post($uri, $callback);
-Route::put($uri, $callback);
-Route::delete($uri, $callback);
-```
-Keep the following rules in mind when you define routes:
-+ A request matches a route when the HTTP method is the same and the path has the same number of segments, each fixed segment being identical. `{variables}` match any single segment.
-+ The routes are evaluated in the order they are defined and the first match wins.
-+ When no route matches, the answer is **404 Page Not Found** (`[ERROR 1005]`, or `{"error": ...}` to an API call); when the address exists but not with that HTTP method, **405** with an `Allow` header listing the methods it takes. `HEAD` is answered like `GET`. Before 2.16.0 an unmatched URL ran the first route of the file instead.
-+ `Route::run();` must always be the last statement inside the `try` block of the file.
+## With Claude
 
-Your first reaction might be that HTML `forms` do not support `PUT` and `DELETE`. True that and the framework is capable of doing that work for you. You can check [here](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#htmlformmethods) how it is done.
+Ask for the feature, not the route: the `caligrafy-quill` plugin writes the capability and the routes together.
 
-## "Hello World" Route
-The most basic route provides a simple way to execute any method (through Closure) upon the definition of the route. `application/config/routing/web.php` already has one `try` block, and the template already defines this route: add yours inside the `try`, before `Route::run();`.
-```php
-try {
-    // ...
-    Route::get('helloworld', function() {
-            echo 'Hello World';
-    });
-
-    Route::run();
-} catch (Exception $e) {
-    Errors::handle($e);   // HTTP status code (404, 401, 403, 500...) with the error text, or JSON for API calls
-}
-```
-You should be able to access it by navigating to `http://your-app/helloworld` in your browser: `http://localhost/caligrafy-quill/helloworld` on a local server where the folder is `caligrafy-quill`, or `http://localhost:8080/helloworld` with Docker.
-
-> #### (video) [Basic Routing](https://www.youtube.com/watch?v=VUxL2lVgs4E&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)
->
-> In this tutorial, we test if the Caligrafy framework has been installed properly, we explain how basic routing can be achieved and we create a couple of basic routes.
-
-## Routing with parameters
-It is not unusual to want to capture variables from the URI to act on them. For example if you want to access all the information on a specific book, you would want the URI to be `http://your-app/books/1` where `1` is the id of the book that you want.
-
-In order to do that with this framework you need to use `{variablename}` syntax:
-```php
-Route::get('books/{id}', function() {
-   // any code would go here
-});
-```
-By doing so, any value that you put after `books/` will be captured and you will be able to use it in your code. So if you navigate to `http://your-app/books/1`, your code will be able to capture 1. Similarly, if you replace the one with another value, your code will be able to capture that value. Later you will learn how you can fetch this value in your code.
-
-## Page Routes
-
-Since 2.5.0 a **page** has its own route method. `Route::page` renders a view through the framework's page controller, so every page is built the same way:
-```php
-Route::page('/', 'default/index');                                             // a page
-Route::page('/books', 'Books/index');                                          // its data comes from the JS client in the browser
-Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book'], 'notFound' => 'Books/missing']);  // its data comes from a capability
-Route::page('/account', 'Account/index', ['signedIn' => true]);                // signed-in people only
-Route::page('/admin/books', 'Books/admin', ['level' => 1, 'data' => ['books' => 'list_books']]);
+```text
+/caligrafy-quill:new-resource Book title:string published_year:int author:fk
 ```
 
-| Option | What it does |
+or, for one feature:
+
+```text
+/caligrafy-quill:new-capability get_book books:read read-only
+"Show each book on its own page at /books/{id}, with a 'Book not found' page when the id does not exist."
+```
+
+What Claude writes: the capabilities in `application/services/<Folder>/`, the routes in
+`application/config/routing/web.php` (`Route::page` for pages, `Route::form` for forms, `Route::capability` for the
+REST API, inside the `try` block and before `Route::run();`) and the Pug views in `application/views/`.
+
+**Check** before you say OK:
+
+- [ ] Every new route is in the `try` block of `web.php`, before `Route::run();`.
+- [ ] Pages are `Route::page`, forms are `Route::form`: no controller and no closure that reads or writes data.
+- [ ] A fixed address such as `/books/new` comes before `/books/{id}` (the first route that matches wins).
+- [ ] Each page's `data` names a read-only capability (`readOnly: true`).
+- [ ] `curl -i` of each new address answers the status you expect (200, 302, 404).
+
+## By hand
+
+You need a project from the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) with its
+database. The commands below run in the project folder; with the Docker dev server, run them as
+`docker compose exec dev-box php caligrafer.php ...`. The addresses use `http://localhost:8080`, the Docker dev server.
+
+1. **Create the Bookshelf tables.** Write `application/models/Bookshelf/create_db.sql` (it can run more than once: it
+   never drops anything):
+
+   ```sql
+   /* Bookshelf: the first version of its tables, and sample books.
+    * Run it with: docker compose exec dev-box php caligrafer.php sql application/models/Bookshelf/create_db.sql
+    * Safe to run again: CREATE TABLE IF NOT EXISTS skips a table that exists, INSERT IGNORE a row whose id exists.
+    */
+
+   CREATE TABLE IF NOT EXISTS authors (
+       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+       name VARCHAR(150) NOT NULL,
+       bio TEXT NULL,
+       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       modified_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+       PRIMARY KEY (id)
+   ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+   CREATE TABLE IF NOT EXISTS books (
+       id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+       title VARCHAR(200) NOT NULL,
+       published_year SMALLINT UNSIGNED NOT NULL,
+       summary TEXT NULL,
+       author_id INT UNSIGNED NOT NULL,
+       created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+       modified_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+       PRIMARY KEY (id),
+       KEY idx_books_author_id (author_id),
+       CONSTRAINT fk_books_author_id FOREIGN KEY (author_id) REFERENCES authors (id)
+           ON UPDATE CASCADE ON DELETE RESTRICT
+   ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+   -- Sample data, with fixed ids so that book 3 is Kindred everywhere
+   INSERT IGNORE INTO authors (id, name, bio) VALUES
+       (1, 'Ursula K. Le Guin', 'American author of science fiction and fantasy, known for the Earthsea books.'),
+       (2, 'Octavia E. Butler', 'American science fiction author, the first to receive a MacArthur fellowship.'),
+       (3, 'Italo Calvino', 'Italian writer of playful, inventive novels and short stories.');
+
+   INSERT IGNORE INTO books (id, title, published_year, summary, author_id) VALUES
+       (1, 'A Wizard of Earthsea', 1968, 'A gifted boy learns magic and must face the shadow he set loose.', 1),
+       (2, 'The Left Hand of Darkness', 1969, 'An envoy visits a planet whose people have no fixed sex.', 1),
+       (3, 'Kindred', 1979, 'A young woman is pulled back in time to a plantation in Maryland.', 2),
+       (4, 'Parable of the Sower', 1993, 'In a collapsing California, a teenager starts a new belief system.', 2),
+       (5, 'Invisible Cities', 1972, 'Marco Polo describes imaginary cities to the emperor Kublai Khan.', 3);
+   ```
+
+   Run `docker compose exec dev-box php caligrafer.php sql application/models/Bookshelf/create_db.sql`. It prints
+   ` application/models/Bookshelf/create_db.sql run on caligrafy`. A later change to these tables, once they hold
+   data, is a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations).
+
+2. **Describe an author and a book.** Write `application/models/Bookshelf/Author.php`:
+
+   ```php
+   <?php
+
+   use Caligrafy\Model;
+
+   // One Author = one row of the authors table (Author::query() reads authors: the class name in lower case, plus s)
+   class Author extends Model {
+
+       // one public property per column of the table
+       public $id;
+       public $name;
+       public $bio;
+       public $created_at;
+       public $modified_at;
+   }
+   ```
+
+   and `application/models/Bookshelf/Book.php`:
+
+   ```php
+   <?php
+
+   use Caligrafy\Model;
+
+   // One Book = one row of the books table. Book::with('author') adds the row of authors whose id is author_id
+   class Book extends Model {
+
+       // one public property per column of the table
+       public $id;
+       public $title;
+       public $published_year;
+       public $summary;
+       public $author_id;
+       public $created_at;
+       public $modified_at;
+   }
+   ```
+
+3. **Write the two capabilities the pages read.** Run:
+
+   ```bash
+   docker compose exec dev-box php caligrafer.php service Bookshelf/ListBooks --scope books:read --read-only
+   docker compose exec dev-box php caligrafer.php service Bookshelf/GetBook --scope books:read --read-only
+   ```
+
+   Each prints ` Created application/services/Bookshelf/<Name>.php: capability '<name>' (scope books:read)`. Replace
+   the content of `application/services/Bookshelf/ListBooks.php` with:
+
+   ```php
+   <?php
+
+   use Caligrafy\Capability;
+   use Caligrafy\Context;
+   use Caligrafy\Service;
+
+   // list_books: the catalog, sorted by title, 20 books per page, each with its author. Anyone may read it
+   #[Capability(
+       name: 'list_books',
+       description: 'Lists the books of the Bookshelf catalog, sorted by title, 20 per page, each with its author (id, name, bio). Give author_id to list only the books of one author, and page for the next pages. Returns data (the books), total, page, per_page and pages.',
+       scope: 'books:read',
+       readOnly: true,
+       public: true
+   )]
+   class ListBooks extends Service
+   {
+       public $rules = array('author_id' => 'integer', 'page' => 'integer');
+       public $descriptions = array(
+           'author_id' => 'Optional: only the books of this author',
+           'page' => 'Optional: the page, 1 by default (20 books per page)'
+       );
+
+       public function handle(array $input, Context $context)
+       {
+           // two queries for the page (the count, then the books) and one for all their authors
+           $query = Book::with('author')->orderBy('title');
+           if (!empty($input['author_id'])) {
+               $query->where('author_id', $input['author_id']);   // the value is bound, never pasted into the SQL
+           }
+           return $query->paginate(20, $input['page'] ?? 1);
+       }
+   }
+   ```
+
+   and the content of `application/services/Bookshelf/GetBook.php` with:
+
+   ```php
+   <?php
+
+   use Caligrafy\Capability;
+   use Caligrafy\Context;
+   use Caligrafy\Service;
+   use Caligrafy\ServiceError;
+
+   // get_book: one book with its author, or "not found"
+   #[Capability(
+       name: 'get_book',
+       description: 'Returns one book of the catalog with its author (id, name, bio), by the id of the book.',
+       scope: 'books:read',
+       readOnly: true,
+       public: true
+   )]
+   class GetBook extends Service
+   {
+       public $rules = array('id' => 'required|integer');
+       public $descriptions = array('id' => 'The id of the book');
+
+       public function handle(array $input, Context $context)
+       {
+           $book = Book::with('author')->find($input['id']);
+           if (!$book) {
+               throw ServiceError::notFound("There is no book #{$input['id']}");
+           }
+           return $book;
+       }
+   }
+   ```
+
+   Run `docker compose exec dev-box php caligrafer.php capabilities`: the list shows `get_book` and `list_books`, both
+   `public` and `read`.
+
+4. **Declare the routes.** In `application/config/routing/web.php`, inside the `try` block, after
+   `Route::page('/', 'default/index');` and before `Route::run();`, write:
+
+   ```php
+       // the Bookshelf pages: their data comes from read-only capabilities
+       Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books']]);
+       Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book'], 'notFound' => 'Bookshelf/notfound']);
+       Route::redirect('/catalog', '/books');
+   ```
+
+5. **Write the views.** `application/views/Bookshelf/books.pug` (the [Views](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views)
+   page adds the form that creates a book):
+
+   ```pug
+   extends ../default/master/site
+
+   block title
+     | Bookshelf
+
+   block content
+     section.cq-hero.cq-hero--page
+       h1.cq-display Books
+
+     section.cq-band.cq-band--tight
+       .cq-inner.cq-inner--narrow
+         if $books['total'] == 0
+           p.cq-empty-state No books yet.
+         else
+           ul.cq-rows
+             each $b in $books['data']
+               li.cq-row
+                 .cq-row-main
+                   p.cq-row-title
+                     a(href=$home . 'books/' . $b['id'])= $b['title']
+                   p.cq-row-meta= $b['author']['name'] . ', ' . $b['published_year']
+   ```
+
+   `application/views/Bookshelf/book.pug`:
+
+   ```pug
+   extends ../default/master/site
+
+   block title
+     = $book['title'] . ' · Bookshelf'
+
+   block content
+     section.cq-hero.cq-hero--page
+       h1.cq-display= $book['title']
+       p.cq-lead= 'by ' . $book['author']['name'] . ', ' . $book['published_year']
+   ```
+
+   `application/views/Bookshelf/notfound.pug`:
+
+   ```pug
+   extends ../default/master/site
+
+   block title
+     | Not found · Bookshelf
+
+   block content
+     section.cq-hero
+       h1.cq-display Not found
+       p.cq-lead= $message
+       .cq-cta
+         a.btn.btn-primary(href=$home . 'books') All books
+   ```
+
+6. **Try every route.** Run:
+
+   ```bash
+   curl -s http://localhost:8080/helloworld
+   ```
+
+   It prints `Hello World` (the template's own closure route). Open `http://localhost:8080/books`: the five books,
+   *A Wizard of Earthsea* first, each with its author and year. Open `http://localhost:8080/books/3`: the title
+   "Kindred" and "by Octavia E. Butler, 1979". Then:
+
+   ```bash
+   curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/books/999
+   curl -s -i http://localhost:8080/catalog | grep -i "^location"
+   curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/nothing
+   ```
+
+   They print `404` (the "Not found" page with "There is no book #999"), `Location: http://localhost:8080/books`
+   and `404`.
+
+**Check**
+
+- [ ] `/books` lists the books and `/books/3` shows one.
+- [ ] `/books/999` and `/books/abc` show "Not found" with a 404 status.
+- [ ] `/catalog` answers `302` with `Location: .../books`.
+- [ ] An address no route declares answers `404`.
+
+## How a request finds its route
+
+`Route::run()`, the last line of the `try` block, compares the request with the routes in the order they are declared:
+
+1. The HTTP method must be the same. `HEAD` is answered as `GET`. A form sends `PUT` or `DELETE` with a hidden
+   `_method` field ([HTML form methods](#htmlformmethods)).
+2. The path must have the same number of segments, and each fixed segment must be identical. A `{name}` segment
+   matches any one segment. Leading and trailing slashes do not count, nor does the query string.
+3. The **first** route that matches wins: declare `/books/new` before `/books/{id}`, or `/books/{id}` answers
+   `/books/new` with the id `new`.
+4. Nothing matches: `404` (`[ERROR 1005] Page Not Found`, or `{"error":{"code":1005,"message":"Page Not Found"}}` to a
+   JSON request). The address exists with other methods: `405` with an `Allow` header
+   (`Invalid Http Request Method: this address answers GET`).
+
+A `POST`, `PUT` or `DELETE` that is not JSON is checked for its CSRF token before any route runs: without it the answer
+is `403` `[ERROR 3000] Security Error - Cross Site Forgery`, whatever the address. `Route::webhook` addresses (checked by
+their signature) and `Route::mcp` addresses (2.19.1: a post without a personal access token answers `401` with
+`WWW-Authenticate`) skip it.
+
+## Route variables
+
+`{name}` in a route captures one segment of the address:
+
+```php
+Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']]);
+```
+
++ In a `Route::page`, the variables become the inputs of the `data` capabilities (`get_book` gets `id`) and variables
+  of the view (`$id`).
++ In `Route::form`, `Route::download`, `Route::capability` and `Route::redirect`, they become inputs or fill the
+  `{name}` of the target, the same way.
++ In a controller or a closure, read them with `request()->fetch('id')` or `$this->request->fetch('id')`
+  ([Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)).
+
+A variable is always a string, and the route does not check it: `/books/abc` reaches `get_book`, whose `integer` rule
+refuses it.
+
+## Page routes: `Route::page`
+
+`Route::page($route, $view, $options)` answers a `GET` with a Pug view, through the framework's page controller.
+
+```php
+Route::page('/', 'default/index');
+Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books']]);
+Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book'], 'notFound' => 'Bookshelf/notfound']);
+Route::page('/books/new', 'Bookshelf/new', ['signedIn' => true]);
+Route::page('/admin/books', 'Bookshelf/admin', ['level' => 1, 'data' => ['books' => 'list_books']]);
+Route::page('/about', 'default/about', ['with' => ['title' => 'About the Bookshelf']]);
+```
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `data` | none | `name => 'capability'`: calls each capability as the person who opens the page and gives the result to the view as `$name`. Its inputs are the query string and the route variables; the route variables win (`/books/3?id=9` gives `id = 3`). `name => ['capability', ['author_id' => 2]]` gives fixed inputs instead. Only read-only capabilities: a capability that changes data, or does not exist, stops the page with an error that names it |
+| `signedIn` | `false` | `true`: visitors are sent to `/login` |
+| `level` | `0` | people whose level (the `permissions` column of `users`) is lower are sent to `/notAuthorized`, visitors to `/login` |
+| `with` | none | fixed values for the view: `['with' => ['title' => 'Books']]` |
+| `notFound` | none | a view shown with a `404` when a `data` capability refuses (not found, or inputs it refuses). It gets the route variables, the `with` values, `$message`, `$authorized` and `$user` |
+
+`signedIn` and `level` need `Auth::authentication('User', 'users');` in `web.php`; without it, opening the page stops
+with an error that says so.
+
+**What the view receives**: the route variables, the `with` values, the `data` results (plain arrays:
+`$book['title']`), `$authorized` (true when someone is signed in) and `$user` (`id`, `username`, `permissions`, or
+`null`). Never the query string: a page reads it through a capability's inputs. `authorized` and `user` are reserved
+names: a `data` or `with` entry with one of them is an error.
+
+**When a capability refuses the page's data**:
+
+| The capability | The answer |
 | --- | --- |
-| `data` | `name => capability`: calls each capability as the person who opens the page and passes the result to the view as `$name`. Its inputs are the query string and the route variables, the route variables winning (`/books/3?id=9` gives `get_book` the input `id = 3`). `name => ['capability', ['input' => 'value']]` gives fixed inputs instead. Only **read-only** capabilities (`readOnly: true`): opening a page never changes data, and a capability that does, or does not exist, stops the page with an error that says so |
-| `signedIn` | `true`: visitors are sent to `/login` |
-| `level` | people whose level (the `permissions` column) is lower are sent to `/notAuthorized` (visitors to `/login`) |
-| `with` | fixed values for the view: `['with' => ['title' => 'Books']]` |
-| `notFound` | a view shown, with a `404`, when a `data` capability finds nothing: `['notFound' => 'Books/missing']`. It gets the route variables, the `with` values, `$message`, `$authorized` and `$user` |
+| needs someone signed in, nobody is | a redirect to `/login` (with the authentication module), else `403` |
+| refuses the person (`forbidden`) | `403` `[ERROR 1006] Forbidden` |
+| finds nothing, or refuses the inputs | the `notFound` view with `404`, else `404` `[ERROR 1005] Page Not Found` |
 
-**What the view receives**, on every page: `$authorized` (true when someone is signed in), `$user` (`id`, `username`, `permissions`, or `null`), the route variables (`$id`) and the `data` and `with` values. Never the query string: a page reads it through a capability's inputs. `authorized` and `user` are reserved: a `data` or `with` entry with one of those names is an error. Capabilities return plain arrays: `$book['title']` in the view. A page on a closure route (`Route::get('/books', function () { return view('Books/index'); })`) gets none of this unless the closure passes it.
+A request with `Accept: application/json` gets the view's data as JSON instead of the page.
 
-**When a capability refuses** the page's data: a visitor is sent to `/login`; a signed-in person gets `[ERROR 1006] Forbidden` (403) when the capability is not allowed to them, and `[ERROR 1005] Page Not Found` (404) otherwise (no record, or inputs the capability refuses), or the `notFound` view when the page has one.
+## Forms, sign-in, webhooks, downloads and redirects
 
-`signedIn` and `level` need the authentication module (`Auth::authentication('User', 'users');` in `web.php`): without it, such a page fails with an error that says so.
+One line each, calling a capability, without a controller:
 
-**Pages never read models**: their data comes from capabilities, so a page, the REST API and AI agents follow the same rules. A form posts to [`Route::form`](#declarativeroutes) (2.19.0+). Use a [controller](#controllerroute) only when a page has logic of its own (several capabilities with conditions, custom HTTP), and make it call capabilities too ([Calling a capability](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)).
-
-## Controller Routing
-
-In an MVC structure, you most likely want to route to a controller to hand off the logic to a controller class that will handle executing that logic. In order to do this, you could define a route that will call the controller:
 ```php
-Route::get('books', 'BookController');
+Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);   // a form's POST
+Route::auth(['home' => '/books']);                                                          // /login, /logout, /register
+Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe']);                  // events another service posts
+Route::download('/books.csv', 'list_books', ['filename' => 'books.csv']);                   // a read-only capability as a file
+Route::redirect('/old/books/{id}', '/books/{id}', 301);                                     // an address that moved
 ```
-This route will redirect all calls to `http://your-app/books` to the controller `BookController`. 
 
-You could also specify a specific method from the `BookController` to execute:
+Every option, with a complete example of each:
+[Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes).
+
+## Capability routes: REST, the JS client and agents
+
 ```php
-Route::get('books', 'BookController@read');
+Route::capability('GET', '/api/books', 'list_books');          // one route, one capability, JSON
+Route::capability('GET', '/api/books/{id}', 'get_book');       // {id} becomes the input "id"
+Route::capability('POST', '/api/books', 'create_book');
+Route::capabilities('/capabilities');                          // GET lists, POST /capabilities/{name} calls: the JS client of the Vue apps
+Route::mcp('/mcp');                                            // AI agents: the capabilities their token allows, as MCP tools
 ```
-This route would call the method `read` from `BookController`.
 
-Controllers can be namespaced: `Route::get('orders/{id}', 'Shop\OrderController@show');` (a leading backslash is accepted). A short name that is not a declared class falls back to the example controllers of `Caligrafy\Controllers` (`'ClientController'`, `'AuthController@login'`...), and a controller or action that does not exist returns a `404`. Learn more in [Namespaced controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#namespacedcontrollers).
+They check who calls (a personal access token, or the signed-in person with the `X-CSRF-Token` header for writes),
+validate the inputs and answer JSON: `{"data": ...}` with `200` (`201` for a `POST` that changes data), or
+`{"error": {"code", "message", "fields"}}` with `401`, `403`, `404`, `409` or `422`.
 
-> Routes that point to a controller (`'BookController'` or `'BookController@read'`) are protected for API calls: a request that asks for JSON (`Accept: application/json`) must come from a page with the session and its CSRF token in an `X-CSRF-Token` header (`apiHeaders()`, since 2.7.0), or from a program with a personal access token as a Bearer token (`php caligrafer.php token create ...`). The legacy `API_KEY` still works where `LEGACY_API_KEY` is not `false`, for old programs only: Caligrafy Cloud turns it off. The template enables the API with `Auth::activateAPI();` at the top of `web.php`: without it, every API call to a controller answers `401`. Routes defined with a closure (`function() {...}`) are not checked. Learn more about the [REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#restapi).
-Later on, you will learn how to create controllers.
+```bash
+curl -s -H "Accept: application/json" http://localhost:8080/api/books/2
+```
 
-> #### (video) [Advanced Routing](https://www.youtube.com/watch?v=32UvcK2bSzo&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)
->
-> This video explains how to create more advanced routes in Caligrafy. You will learn how to create routes with parameters and how to redirect a route to a controller or to a specific action in a controller.
+prints `{"data":{"id":2,"title":"The Left Hand of Darkness","published_year":1969,"summary":"...","author_id":1,"created_at":"...","modified_at":"...","author":{"id":1,"name":"Ursula K. Le Guin",...}}}`
+(with `Route::capability('GET', '/api/books/{id}', 'get_book');` in `web.php`).
+More: [REST](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#rest)
+and [REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#restapi).
 
-## Capability Routes
+## Reference
 
-A capability is a feature written once and served to every experience (build once, experience everywhere). Three route methods expose capabilities instead of a controller action:
+All are static methods of `Caligrafy\Route` (`use Caligrafy\Route;` at the top of `web.php`).
+
+| Method | Answers | What it does |
+| --- | --- | --- |
+| `page($route, $view, $options = [])` | GET | a Pug view with data from read-only capabilities ([above](#pageroutes)) |
+| `form($route, $capability, $options = [])` | POST (or PUT, DELETE) | a form's post calls a capability, then redirects |
+| `auth($options = [])` | several | `/login`, `/logout`, `/register`, `/notAuthorized` (needs `Auth::authentication(...)` before it) |
+| `webhook($route, $capability, $options)` | POST | events another service posts, signature checked, no CSRF token |
+| `download($route, $capability, $options = [])` | GET | a read-only capability's result as a CSV or JSON file |
+| `redirect($from, $to, $status = 302)` | GET | sends the visitor to `$to` (`301`, `302`, `303`, `307` or `308`) |
+| `capability($method, $route, $name)` | the method given | one capability as JSON (`GET`, `POST`, `PUT` or `DELETE`) |
+| `capabilities($prefix = '/capabilities')` | GET, POST | the listing and `POST {prefix}/{name}` for the JS client |
+| `mcp($route = '/mcp')` | POST (GET, DELETE: 405) | the MCP endpoint for AI agents |
+| `notifications()` | GET, POST | the confirm and unsubscribe pages of notification emails |
+| `get`, `post`, `put`, `delete($route, $method)` | that method | a closure, `'Controller'` or `'Controller@action'` ([Other ways](#controllerroute)) |
+| `run()` | | matches the request and runs its route: the last line of the `try` block |
+| `routes()` | | the routes declared so far: `[['method' => 'GET', 'route' => 'books/{id}'], ...]` (tests) |
+| `handler($method, $route)` | | the closure or `'Controller@action'` of a declared route (tests) |
+| `reset()` | | forgets every route (tests) |
+| `Route::$currentRoute`, `Route::$currentBind` | | the matched pattern (`books/{id}`) and its variables (`currentRoute()`, `currentBind()`) |
+
+Errors of the router (each one also answers JSON to a JSON request):
+
+| Status | Error | When |
+| --- | --- | --- |
+| `404` | `1005` Page Not Found | no route matches, or a page's data is not found |
+| `405` | `1000` Invalid Http Request Method | the address exists with other methods (`Allow` header) |
+| `403` | `3000` Cross Site Forgery | a form post without the session's `_token` |
+| `403` | `1006` Forbidden | a page's capability refuses the person |
+| `404` | `1001` Invalid Controller or Action | a `'Controller@action'` route whose class or method does not exist |
+| `401` | `1004` Access Denied | a JSON request to a controller route without `X-CSRF-Token` or a token that grants `*` |
+
+## Other ways: closures and controller routes
+
+`Route::get`, `post`, `put` and `delete` take a closure or a controller. Use them only for HTTP that no route above
+covers (a response that is neither a page, a redirect, JSON nor a file): see
+[Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#when).
+
 ```php
-Route::capability('POST', '/books', 'create_book');   // REST: one route, one capability; {id} becomes the input "id"
-Route::capabilities('/capabilities');                  // GET lists, POST /capabilities/{name} calls: used by the JS client of the Vue apps
-Route::mcp('/mcp');                                    // AI agents: every capability their token allows becomes an MCP tool
+Route::get('/helloworld', function () { echo 'Hello World'; });          // a closure
+Route::get('/authors/{author_id}/books', 'BookController@byAuthor');      // a controller and its action
+Route::get('/reports/{id}', 'Shop\ReportController@show');                // a namespaced controller
+Route::get('/books', 'BookController');                                   // no action: index()
 ```
-They check who calls (a personal access token or the signed-in user), validate the inputs and answer JSON with real status codes. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#rest).
 
-## Declarative Routes (2.19.0+)
++ `'Name@action'` finds a declared class `Name` first (global or fully qualified, a leading `\` is accepted), then
+  the example controllers of `Caligrafy\Controllers` (`'ClientController'`); a class or action that does not exist
+  answers `404` `[ERROR 1001]`. More: [Namespaced controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#namespacedcontrollers).
++ A **controller route** refuses a JSON request (`Accept: application/json`) unless it comes from a page of the app
+  (the session cookie and the `X-CSRF-Token` header) or, with `Auth::activateAPI();` in `web.php`, from a program
+  with a personal access token that grants `*` (`401` `[ERROR 1004] Access Denied: <why>` otherwise).
++ A **closure route** has no such check, and a JSON request skips the form's CSRF check. Never read or write data in
+  a closure: use `Route::page`, `Route::form` or a capability route.
 
-One line of `web.php` for each web need, calling a capability, with no controller:
-```php
-Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);   // a form's POST (also 'method' => 'PUT' or 'DELETE')
-Route::auth(['home' => '/books']);                                                          // /login, /logout, /register, /notAuthorized
-Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe']);                  // events Stripe posts, signature checked
-Route::download('/books.csv', 'list_books');                                                // a read-only capability as a CSV file
-```
-A refused form goes back with `errors()`, `old()` and `flash()` for the view. Every option and a full example of each: [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes).
+## HTML form methods
 
-## HTML Form Methods
+HTML forms only send `GET` and `POST`. A `POST` with a hidden `_method` field set to `PUT` or `DELETE` is routed as
+that method (method spoofing). In a Pug form, `=methodField('PUT')` writes the field:
 
-HTML forms do not support `PUT` and `DELETE`. The framework does this for you from the moment you include a hidden `_method` field in the form with a value of `PUT` or `DELETE`. This is called **method spoofing**.
-
-This can be achieved using regular HTML:
-```html
-<form action="/books" method="POST">
-    <input type="hidden" name="_method" value="PUT">
-</form>
-```
-Or, using Pug directives that will do it automatically for you:
 ```pug
-form(action="/books", method="POST")
-    =methodField('PUT')      
+form(method='POST', action=$home . 'books/' . $book['id'])
+  =csrf()
+  =methodField('PUT')
+  button.btn.btn-primary(type='submit') Save
 ```
+
+It reaches `Route::put('/books/{id}', ...)` or `Route::form('/books/{id}', 'update_book', ['method' => 'PUT'])`.
+`_method` is read from the form fields or the query string, never from a JSON body: a script that sends JSON uses the
+real method (`fetch(url, {method: 'PUT', ...})`).
+
+## Common mistakes
+
++ **A route after `Route::run();`** is never declared. Every route goes before it, in the `try` block.
++ **`/books/{id}` before `/books/new`**: `/books/new` shows the book `new` (a 404). Declare fixed addresses first.
++ **A page whose data capability writes**: `Route::page` refuses it (opening a page must not change data). Use
+  `Route::form` for writes.
++ **Data work in a closure route**: it has no permission rules and no CSRF check for JSON calls. Write a capability.
++ **`redirect()` in a closure without `return`**: `redirect()` only sends a `Location` header; code after it still
+  runs. `Route::redirect` has no such problem.
++ **Before 2.16.0** an unknown address ran the first route of the file instead of answering 404.
+
+## Related pages
+
++ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): forms, sign-in, webhooks, downloads, redirects
++ [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request): what a controller or closure reads from the request
++ [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers): custom HTTP only
++ [Views](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views): Pug pages and `errors()`, `old()`, `flash()`
++ [Build once: services, capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)
++ [Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries): the query builder the capabilities use
+
 >[Next Section: Learn about Requests](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)

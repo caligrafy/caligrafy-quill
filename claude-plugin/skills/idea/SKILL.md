@@ -65,8 +65,8 @@ You'll only approve sign-ins in your browser; I'll ask before spending any credi
 ## 3. Build once
 
 For each table (parents first):
-1. `application/models/<Folder>/create_db.sql`: `CREATE TABLE IF NOT EXISTS`, `id` + `created_at` + `modified_at`
-   like the Tasks example, foreign keys, InnoDB utf8mb4. It runs again at every deploy when it changes: never
+1. `application/models/<Folder>/create_db.sql`: the first version of the table, `CREATE TABLE IF NOT EXISTS`, `id` + `created_at` + `modified_at`
+   like the Tasks example, foreign keys, InnoDB utf8mb4 (every later change is a migration, below). It runs again at every deploy when it changes: never
    `DROP`, `DELETE` or `TRUNCATE` (G68). Folders run in alphabetical order online: name them so that a parent's
    folder sorts before its children's, or put every table in one folder's script, parents first.
 2. The model `application/models/<Folder>/<Thing>.php` (see the Tasks model).
@@ -83,7 +83,11 @@ input, bound queries, `ServiceError` refusals, `readOnly`, `destructive`, `publi
 Reads use the query builder (2.19.0+, reference/53-queries.md): lists, filters, sorting and paging are
 `<Thing>::where(...)->orderBy(...)->paginate(20, $input['page'] ?? 1)`, related rows `->with('<parent>')` (one query per
 relation, never a query per row), several writes that belong together in `Database::transaction()`; never a `where`
-string built from input.
+string built from input. Writes use it too: `$id = <Thing>::insert($row); return <Thing>::find($id);`,
+`<Thing>::where('id', $input['id'])->update($changes)`, `<Thing>::where('id', $input['id'])->delete()`. A read of a few
+columns that REST, MCP or a CSV shows ends with `->arrays()` (models would add every other column as `null`, G138).
+GUMP rules with several parameters take `;` (`word_count,min;10;max;500`, G139); a custom rule goes in
+`application/rules/<name>.php`, never `config.php` (the CLI, the scheduler and the queue do not load it, G141).
 
 **Sign-in** (unless everything is public): in `web.php` uncomment `Auth::authentication('User', 'users');` and, on
 2.19.0+, add `Route::auth(['home' => '/<things>']);` below it (`/login`, `/logout`, `/register`, `/notAuthorized`,
@@ -135,8 +139,11 @@ calls it, then shows the token once and the line to paste:
   `p.cq-field-error= errors('<field>')` and `flash('success')` (reference/54-declarative-routes.md); a page that sends
   its form with the JS client needs none;
 - a CSV export when the plan has one: `Route::download('/<things>.csv', 'list_<things>_export')` (a read-only capability
-  returning `->get()`); payments or another service's events: `Route::webhook(..., ['verify' => 'stripe'])` (G132);
-  a file field: the `file` rule (G131). A controller only for HTTP none of these covers;
+  returning `->get()`); payments or another service's events: `Route::webhook(..., ['verify' => 'stripe'])` (G132),
+  whose capability starts `handle()` with `if ($context->actorType() !== 'webhook') { throw ServiceError::forbidden('Only the webhook calls this'); }`
+  and has `mcp: false` (otherwise `/capabilities` and `/mcp` let a signed-in user or a token post a made-up event,
+  G137; a scheduled or queued capability checks `schedule` / `queue` the same way);
+  a file field: the `file` rule, `required|file` when it must be sent (G131). A controller only for HTTP none of these covers;
 - REST for every capability: `Route::capability('GET', '/api/<things>', 'list_<things>');`,
   `Route::capability('GET', '/api/<things>/{id}', 'get_<thing>');`, `POST`, `PUT /{id}`, `DELETE /{id}`...;
 - `Route::capabilities('/capabilities');` and `Route::mcp('/mcp');` (quickstart adds them: keep one of each);

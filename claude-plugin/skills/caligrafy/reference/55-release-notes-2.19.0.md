@@ -10,7 +10,7 @@ webhooks and downloads.
 ## What is new
 
 + **Faster, with less memory.** More than twice as many requests per second (the benchmark's HTML page: 1,350, now
-  3,142), and each request uses about a third of the memory it did (details [below](#speed)).
+  2,887), and each request uses about a third of the memory it did (details [below](#speed)).
 + **[Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries):** `Database::table('books')` (arrays) and
   `Book::query()`, `Book::where(...)`, `Book::find(12)` (models): filters, sorting, `paginate()`, `count()`,
   `chunk()`, `insert`/`update`/`delete`, every value bound and every name checked. `with('author', 'tags')` loads
@@ -62,27 +62,27 @@ docs teach and counted the same way:
 + **Database rows fetched as arrays**, no longer encoded to JSON and back.
 + **`.env` compiled** to `.env.php` by the deploy step, used while `.env` is unchanged.
 
-**The benchmark** (7 November 2026, the same setup as before: Docker on an Apple M3 Pro, 2 CPUs and 1 GB for the app,
-PHP 8.5 with OPcache, Apache, MySQL 8.4, `wrk` with 32 connections, the median of 3 runs). Caligrafy 2.19 beats
-Symfony 8.1.11 and Laravel 13.40 on **all 16 measures**:
+**The benchmark** (8 November 2026, on the 2.19.0 release commit, the same setup as before: Docker on an Apple M3
+Pro, 2 CPUs and 1 GB for the app, PHP 8.5 with OPcache, Apache, MySQL 8.4, `wrk` with 32 connections, the median of 3
+runs). Caligrafy 2.19 beats Symfony 8.1.11 and Laravel 13.40 on **all 16 measures**:
 
 | Endpoint | Measure | Caligrafy 2.19 | Symfony 8.1.11 | Laravel 13.40 | Caligrafy 2.18.2 |
 |---|---|---|---|---|---|
-| Plain text | requests per second | **4,730** | 2,445 | 308 | 2,327 |
-| | median (ms) | **2.5** | 5.5 | 8.4 | 6.6 |
-| | slowest 1% (ms) | **84** | 91 | 309 | 646 |
-| | memory (KB) | **533** | 578 | 808 | 1,549 |
-| JSON | requests per second | **4,340** | 2,390 | 957 | 2,112 |
-| | median (ms) | **2.8** | 6.0 | 35.8 | 6.9 |
-| | slowest 1% (ms) | **85** | 92 | 158 | 708 |
-| | memory (KB) | **533** | 585 | 774 | 1,549 |
-| Database query | requests per second | **2,217** | 1,101 | 515 | 1,250 |
-| | median (ms) | **7.3** | 15.1 | 87.3 | 13.3 |
-| | slowest 1% (ms) | **74** | 93 | 184 | 192 |
-| | memory (KB) | **568** | 772 | 1,005 | 1,597 |
-| HTML page | requests per second | **3,142** | 1,921 | 269 | 1,350 |
-| | median (ms) | **4.4** | 8.3 | 82.0 | 14.4 |
-| | slowest 1% (ms) | **86** | 93 | 1,340 | 233 |
+| Plain text | requests per second | **4,471** | 2,197 | 240 | 2,327 |
+| | median (ms) | **2.9** | 6.1 | 83.5 | 6.6 |
+| | slowest 1% (ms) | **85** | 92 | 732 | 646 |
+| | memory (KB) | **545** | 578 | 808 | 1,549 |
+| JSON | requests per second | **4,133** | 2,151 | 882 | 2,112 |
+| | median (ms) | **3.1** | 6.7 | 47.5 | 6.9 |
+| | slowest 1% (ms) | **86** | 92 | 158 | 708 |
+| | memory (KB) | **492** | 585 | 774 | 1,549 |
+| Database query | requests per second | **2,051** | 1,072 | 466 | 1,250 |
+| | median (ms) | **7.9** | 13.0 | 90.2 | 13.3 |
+| | slowest 1% (ms) | **76** | 95 | 188 | 192 |
+| | memory (KB) | **570** | 772 | 1,005 | 1,597 |
+| HTML page | requests per second | **2,887** | 1,789 | 324 | 1,350 |
+| | median (ms) | **4.6** | 7.8 | 87.5 | 14.4 |
+| | slowest 1% (ms) | **88** | 95 | 1,550 | 233 |
 | | memory (KB) | **579** | 608 | 821 | 1,964 |
 
 Memory is PHP's peak memory for one request.

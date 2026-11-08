@@ -3,269 +3,670 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-**Build once, experience everywhere** is what Caligrafy is for. Write a feature once and use it everywhere: from your Pug pages, your Vue apps, a REST API and AI agents. In Caligrafy a feature written this way is a **capability**: a small PHP class (a **service**) that validates its inputs, checks who is asking, does the work and returns data. Every way of reaching your application is a **channel** that calls the same capability, so a rule you write once behaves the same for a person, a phone or an agent.
+**Build once, experience everywhere** is what Caligrafy is for. A feature is written once, as a **capability**: a small
+PHP class (a **service**) that declares its inputs, checks who is asking, does the work and returns data. Every way of
+reaching your application is a **channel** that calls the same capability: your Pug pages (`Route::page`,
+`Route::form`), a REST API, the JavaScript client of your Vue apps, and AI agents over MCP. A rule written once
+behaves the same for a person, a phone, a program and an agent.
 
 ## How it fits together
 
 | Channel | How it calls a capability | Who is calling |
 | --- | --- | --- |
-| Pug pages | `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`; form posts with `Route::form('/books', 'create_book')` (2.19.0), or `$this->call('create_book')` in a controller action | the signed-in user |
-| Vue apps and the Vite SPA | the generated JS client (`php caligrafer.php client`) | the signed-in user (session cookie + CSRF token) |
-| REST | `Route::capability('POST', '/books', 'create_book')` | a personal access token, or the signed-in user |
-| AI agents | MCP: `Route::mcp('/mcp')` over HTTP, or `php caligrafer.php mcp` over stdio | a personal access token |
-| Scripts | `Caligrafy\Capabilities::call('create_book', $input, Context::cli())` | the command line |
+| Pug pages | `Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']])`; forms with `Route::form('/books', 'create_book', [...])` | the person who opens the page (signed in, or a visitor) |
+| REST | `Route::capability('POST', '/api/books', 'create_book')`, or every capability under `Route::capabilities('/capabilities')` | a personal access token, or the signed-in user |
+| Vue apps, the Vite SPA, Node | the generated JS client (`php caligrafer.php client`), on `Route::capabilities('/capabilities')` | the signed-in user (session and CSRF token), or a token |
+| AI agents | MCP: `Route::mcp('/mcp')` over HTTP, or `php caligrafer.php mcp` over stdio | a personal access token (stdio: also your own full access) |
+| The command line, scripts, jobs | `php caligrafer.php call create_book ...`, `Capabilities::call()`, the queue and the scheduler | full access, or a token |
 
 Every call goes through the same steps, in this order:
+
 1. **Find** the capability (`not_found`, 404).
-2. **Check who calls**: public, or signed in or a token (`unauthenticated`, 401), with the right scope and level (`forbidden`, 403).
+2. **Check who calls**: public, or signed in or a token (`unauthenticated`, 401), with the right scope and level
+   (`forbidden`, 403).
 3. **Keep, filter and validate** the declared inputs (`invalid`, 422, with a message per field).
-4. **Run** the service.
+4. **Run** `handle()`.
 5. **Audit**: every refusal, and every success of a capability that changes data, is written to the audit log.
 
-**Only capabilities touch models**: pages, controllers, REST and agents all go through them, so the rules exist once. Your existing controllers, models and routes keep working: capabilities are added beside them, one at a time.
+**Only capabilities touch models**: pages, REST, agents and the rare controller all go through them, so the rules
+exist once.
 
-## Set up a project
+## With Claude
 
-1. Create the framework tables (personal access tokens, the audit log, job runs, notifications, background jobs, the cache, migrations). It is safe to run again:
+Ask for the feature with the `new-capability` skill of the Claude Code plugin: its name, its scope, and what it does.
+
+```text
+/caligrafy-quill:new-capability create_book books:write: add a book (title, published year, summary, author) and return it
+/caligrafy-quill:new-capability delete_book books:write destructive: only administrators (level 1)
+```
+
+Claude:
++ runs `php caligrafer.php service <Folder>/<Name> --scope <scope>` and fills
+  `application/services/<Folder>/<Name>.php`: a `description` written for an AI agent, `$rules` for every input,
+  `handle()` with the query builder, `ServiceError` refusals, `readOnly` / `destructive` / `level` / `public`;
++ adds the channels you need to `application/config/routing/web.php` (`Route::page`, `Route::form`,
+  `Route::capability`, `Route::capabilities`, `Route::mcp`) and runs `php caligrafer.php client` for a Vue app;
++ creates a token only when an agent or a program needs one, shows it once, and never writes it in a file;
++ checks every channel (`capabilities`, `call`, REST with `curl`, MCP `tools/list` and `tools/call`, `audit`), and
+  writes a test in `tests/` (`php caligrafer.php test`).
+
+**Check** before you say OK:
++ `php caligrafer.php capabilities` lists it with the scope and the flag you expect (`read`, `writes`, `destroys`);
++ the description says what it does and what it returns;
++ an invalid input gives a message per field, on the command line, over REST and over MCP alike;
++ a token without the scope gets `403` over REST, and does not see the tool in MCP `tools/list`;
++ `php caligrafer.php audit --capability <name>` shows the calls.
+
+## By hand
+
+This builds the Bookshelf capabilities and serves them on every channel. It starts from the tables and models of
+[Models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models), `get_book` of
+[Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships) and `list_books` of
+[Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries#capability). The server is the Docker server of the
+[Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart), at `http://localhost:8080`; run each
+`php caligrafer.php` command in its container, as written (without Docker, drop `docker compose exec dev-box` and use
+your own address).
+
+### 1. The framework tables
+
+Run:
+```bash
+docker compose exec dev-box php caligrafer.php platform install
+```
+```text
+ Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, the notifications tables, caligrafy_jobs, caligrafy_cache and caligrafy_migrations
+```
+It is safe to run again. `docker compose exec dev-box php caligrafer.php doctor --only database` then shows
+`OK    Framework tables: tokens, audit log, job runs, jobs, cache and migrations installed`.
+
+### 2. Write the capabilities
+
+1. Run:
     ```bash
-    php caligrafer.php platform install
+    docker compose exec dev-box php caligrafer.php service Bookshelf/CreateBook --scope books:write
     ```
-    With Docker, run it in the container: `docker compose exec dev-box php caligrafer.php platform install`.
-2. Add the channels you want to `application/config/routing/web.php`, before `Route::run()`:
+    ```text
+     Created application/services/Bookshelf/CreateBook.php: capability 'create_book' (scope books:write)
+    ```
+2. Make `application/services/Bookshelf/CreateBook.php` read:
     ```php
-    Route::capabilities('/capabilities');   // GET lists, POST /capabilities/{name} calls (the JS client uses it)
-    Route::mcp('/mcp');                     // AI agents (MCP over HTTP)
+    <?php
+
+    use Caligrafy\Capability;
+    use Caligrafy\Context;
+    use Caligrafy\Service;
+
+    #[Capability(
+        name: 'create_book',
+        description: 'Adds a book to the Bookshelf catalog and returns it with its id and its author. The author must already exist: use list_authors to find author_id.',
+        scope: 'books:write'
+    )]
+    class CreateBook extends Service
+    {
+        public $rules = array(
+            'title' => 'required|max_len,200',
+            'published_year' => 'required|integer|min_numeric,1450|max_numeric,current_year',
+            'summary' => 'max_len,2000',
+            'author_id' => 'required|integer|exists,authors.id'
+        );
+
+        public $filters = array(
+            'title' => 'trim',
+            'summary' => 'trim'
+        );
+
+        public $descriptions = array(
+            'title' => 'The title of the book',
+            'published_year' => 'The year it was first published, for example 1969 (not after this year)',
+            'summary' => 'Optional: one or two sentences about the book',
+            'author_id' => 'The id of its author (list_authors)'
+        );
+
+        public function handle(array $input, Context $context)
+        {
+            $id = Book::insert($input);   // one INSERT, every value bound; returns the id of the new book
+            return Book::with('author')->find($id);
+        }
+    }
     ```
-3. Check: `php caligrafer.php doctor` reports `Framework tables: tokens, audit log, job runs, jobs, cache and migrations installed` (2.18.2+).
+3. Run `docker compose exec dev-box php caligrafer.php service Bookshelf/DeleteBook --scope books:write`, then make
+   `application/services/Bookshelf/DeleteBook.php` read:
+    ```php
+    <?php
 
-## Write a capability
+    use Caligrafy\Capability;
+    use Caligrafy\Context;
+    use Caligrafy\Service;
+    use Caligrafy\ServiceError;
 
-Create it with Caligrafer:
-```bash
-php caligrafer.php service Books/CreateBook --scope books:write
-```
-This writes `application/services/Books/CreateBook.php`. Fill in its inputs and its work:
-```php
-<?php
-
-use Caligrafy\Capability;
-use Caligrafy\Context;
-use Caligrafy\Service;
-use Caligrafy\ServiceError;
-
-#[Capability(
-    name: 'create_book',
-    description: 'Adds a book to the catalog and returns it with its id.',
-    scope: 'books:write'
-)]
-class CreateBook extends Service
-{
-    public $rules = array('title' => 'required|max_len,255', 'author' => 'required|max_len,255', 'publisher_id' => 'required|integer');
-    public $filters = array('title' => 'trim', 'author' => 'trim');
-    public $descriptions = array('title' => 'The title', 'author' => 'The author', 'publisher_id' => 'The id of the publisher');
-
-    public function handle(array $input, Context $context)
+    #[Capability(
+        name: 'delete_book',
+        description: 'Deletes a book of the catalog for good, with its loans and its tags. Returns the id of the deleted book.',
+        scope: 'books:write',
+        level: 1,
+        destructive: true
+    )]
+    class DeleteBook extends Service
     {
-        if (!(new Publisher('publishers'))->find($input['publisher_id'])) {
-            throw ServiceError::invalid(array('publisher_id' => 'There is no such publisher'));
-        }
-        return (new Book('books'))->create($input);
-    }
-}
-```
+        public $rules = array('id' => 'required|integer');
 
-+ **`#[Capability]`** declares it:
+        public $descriptions = array('id' => 'The id of the book to delete');
 
-    | Argument | Meaning |
-    | --- | --- |
-    | `name` | snake_case, unique in the application: how every channel calls it |
-    | `description` | one or two sentences: what it does and what it returns. AI agents read it to choose the tool: write it for them |
-    | `scope` | the scope a token needs, `resource:action` (`books:write`). Empty: any token |
-    | `level` | the minimum value of the `permissions` column of the user (0: any signed-in user) |
-    | `readOnly` | `true` when it changes nothing: not audited when it succeeds, and agents may call it freely |
-    | `destructive` | `true` when it deletes or overwrites data: agents ask the user before calling it |
-    | `public` | `true` when anyone may call it, without signing in or a token |
-
-+ **`$rules`** are [GUMP validation rules](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation). Only the inputs listed there reach `handle()`; use `''` for an input that has no rule. They also give the JSON Schema that clients and agents see: `required`, `integer`, `numeric`, `boolean`, `valid_email`, `max_len`, `min_len`, `min_numeric`, `max_numeric`, `contains_list` and `date` are translated. A file input takes the rule `file` (2.19.0): `'cover' => 'required|file|extension,png;jpg|max_size,2mb'`. Web pages and REST save the uploaded file and give `handle()` its public URL; agents and the command line send a URL or a path ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)).
-+ **`$filters`** are GUMP filters applied before validation, **`$descriptions`** describe each input in the schema.
-+ **`handle()`** returns data: an array, a model, a list of models or a value (models are returned with their columns only). To refuse, throw a `ServiceError`:
-
-    | Error | Status | When |
-    | --- | --- | --- |
-    | `ServiceError::invalid(['field' => 'message'])` | 422 | an input is wrong |
-    | `ServiceError::notFound('No book #12')` | 404 | the thing does not exist |
-    | `ServiceError::forbidden()` | 403 | this caller may not do it (beyond the scope and level checks) |
-    | `ServiceError::conflict('That title is taken')` | 409 | it clashes with the current state |
-    | `ServiceError::unauthenticated()` | 401 | nobody is signed in |
-
-+ **A service never renders a view, redirects, prints or reads the request or the session.** The channel does that. The `Context` tells it who calls: `$context->user` (the signed-in user or the owner of the token), `$context->token`, `$context->channel` (`web`, `rest`, `mcp`, `cli`) and `$context->allows('books:write', 1)`.
-
-The commands used on this page (`service`, `capabilities`, `client`, `call`, `token`, `mcp`, `audit`, `platform install`, `test`) are all described on the [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) page.
-
-List what the application offers:
-```bash
-php caligrafer.php capabilities              # a table
-php caligrafer.php capabilities --markdown   # for your documentation
-php caligrafer.php capabilities --json       # with the input schemas
-```
-
-## From a Pug page
-
-A page shows data with `Route::page`: its read-only capabilities run as the person who opens the page, with the query string and the route variables as inputs, the route variables winning (since 2.5.0):
-```php
-Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);
-Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);   // {id} is the input id
-```
-The view gets `$books` or `$book` (plain arrays), plus `$authorized` and `$user`, never the query string. A refusal sends a visitor to sign in, or answers 403 or 404 (or shows the page's `notFound` view). See [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
-
-A form post needs no controller since 2.19.0: `Route::form` calls the capability as the signed-in user and redirects. On invalid input it goes back, and the view shows `errors('title')`, `old('title')` and `flash('error')`:
-```php
-Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Added {title}']);
-```
-`Route::download` serves a read-only capability as a CSV or JSON file, `Route::webhook` lets another service (Stripe) call one, and `Route::auth()` declares the sign-in pages: see [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes).
-
-A controller action can still call the capability as the signed-in user and render the result. The inputs default to the posted fields and the route variables:
-```php
-use Caligrafy\Controller;
-use Caligrafy\ServiceError;
-
-class BookController extends Controller
-{
-    public function store()
-    {
-        try {
-            $book = $this->call('create_book');
-            redirect('/books/' . $book['id']);
-        } catch (ServiceError $e) {
-            return view('Books/form', array('errors' => $e->fields, 'message' => $e->getMessage()));
+        public function handle(array $input, Context $context)
+        {
+            if (Book::where('id', $input['id'])->delete() === 0) {
+                throw ServiceError::notFound('There is no book #' . $input['id']);
+            }
+            return array('deleted' => (int) $input['id']);
         }
     }
-}
-```
-The form still sends `csrf()` as usual.
-
-## REST
-
-Map routes to capabilities in `web.php`. Route variables become inputs:
-```php
-Route::capability('GET', '/v2/books', 'list_books');
-Route::capability('GET', '/v2/books/{id}', 'get_book');
-Route::capability('POST', '/v2/books', 'create_book');
-Route::capability('PUT', '/v2/books/{id}', 'update_book');
-Route::capability('DELETE', '/v2/books/{id}', 'delete_book');
-```
-`Route::capabilities('/capabilities')` adds two more: `GET /capabilities` lists what the caller may call (with the input schemas, and the session's CSRF token in `csrf`), and `POST /capabilities/{name}` calls any capability by name.
-
-+ **Requests**: send `Accept: application/json` and a JSON body (or form fields; the query string for `GET`).
-+ **Responses**: `200` with `{"data": ...}`, `201` when a `POST` creates, or an error:
+    ```
+    `level: 1`: a signed-in person needs `permissions` 1 or more in the `users` table (an administrator).
+    `destructive: true`: agents ask the user before they call it.
+4. Run `docker compose exec dev-box php caligrafer.php capabilities`. Among the framework's own capabilities
+   (users, notifications, the queue), it lists:
+    ```text
+     create_book                  books:write    writes    Adds a book to the Bookshelf catalog and returns it with its id and its author. The author must already exist: use list_authors to find author_id.
+     delete_book                  books:write    destroys  Deletes a book of the catalog for good, with its loans and its tags. Returns the id of the deleted book.
+     get_book                     public         read      Returns one book by its id, with its author, its tags and its loans.
+     list_books                   public         read      Lists the books of the Bookshelf catalog, sorted by title, 20 per page, ... (cut here)
+    ```
+5. Call it from the command line (full access, with the checks and the audit):
+    ```bash
+    docker compose exec dev-box php caligrafer.php call create_book '{"title": "The Dispossessed", "published_year": 1974, "author_id": 1}'
+    ```
     ```json
-    {"error": {"code": "invalid", "message": "Some of the inputs are invalid", "fields": {"title": "The Title field is required"}}}
+    {
+        "data": {
+            "id": 6,
+            "title": "The Dispossessed",
+            "published_year": 1974,
+            "summary": null,
+            "author_id": 1,
+            "created_at": "2026-11-07 23:17:13",
+            "modified_at": "2026-11-07 23:17:13",
+            "author": {
+                "id": 1,
+                "name": "Ursula K. Le Guin",
+                "bio": "American author of science fiction and fantasy, known for the Earthsea books.",
+                "created_at": "2026-11-07 23:16:40",
+                "modified_at": "2026-11-07 23:16:40"
+            }
+        }
+    }
     ```
-+ **Who calls**: `Authorization: Bearer <personal access token>` (programs and agents), the session of a signed-in user (pages), or the legacy API key (old programs only; off on Caligrafy Cloud). A call made with the session that changes data needs the CSRF token in an `X-CSRF-Token` header (the JS client does it). Without any of these: `401` with `WWW-Authenticate: Bearer`.
+    `call create_book title=Dune` answers the field messages:
+    ```json
+    {
+        "error": {
+            "code": "invalid",
+            "message": "Some of the inputs are invalid",
+            "fields": {
+                "published_year": "The Published Year field is required",
+                "author_id": "The Author Id field is required"
+            }
+        }
+    }
+    ```
+    `call create_book title=Dune --guest` (as a visitor) answers `"code": "unauthenticated"`.
 
+### 3. Pages
+
+In `application/config/routing/web.php`, inside the `try` block and before `Route::run();`, add:
+```php
+    // BOOKSHELF: the pages
+    Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books']]);
+    Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book'], 'notFound' => 'Bookshelf/notfound']);
+```
+Write the three views. `application/views/Bookshelf/books.pug`:
+```pug
+extends ../default/master/site
+
+block title
+  | Books · Bookshelf
+
+block content
+  section.cq-hero.cq-hero--page
+    h1.cq-display Books
+    p.cq-lead= $books['total'] . ' books in the catalog'
+
+  section.cq-band
+    .cq-inner
+      if flash('success')
+        .cq-alert.cq-alert--success= flash('success')
+      if $books['data']
+        ul.cq-rows
+          each $book in $books['data']
+            li.cq-row
+              a(href=$home . 'books/' . $book['id'])= $book['title']
+              span.cq-muted= ' by ' . $book['author']['name']
+      else
+        .cq-empty-state No books yet.
+```
+`application/views/Bookshelf/book.pug`:
+```pug
+extends ../default/master/site
+
+block title
+  | #{$book['title']} · Bookshelf
+
+block content
+  section.cq-hero.cq-hero--page
+    h1.cq-display= $book['title']
+    p.cq-lead= $book['author']['name'] . ', ' . $book['published_year']
+
+  section.cq-band
+    .cq-inner
+      if flash('success')
+        .cq-alert.cq-alert--success= flash('success')
+      p= $book['summary']
+      p= 'Tags: ' . implode(', ', array_column($book['tags'], 'name'))
+```
+`application/views/Bookshelf/notfound.pug`, the page of a book that does not exist (`$message` is the refusal of
+`get_book`):
+```pug
+extends ../default/master/site
+
+block title
+  | Not found · Bookshelf
+
+block content
+  section.cq-hero
+    h1.cq-display Not found
+    p.cq-lead= $message
+    .cq-cta
+      a.btn.btn-primary(href=$home . 'books') All books
+```
+Open `http://localhost:8080/books`: the books, each with its author. `http://localhost:8080/books/3` shows *Kindred*,
+*Octavia E. Butler, 1979*; `/books/99` shows *Not found*, *There is no book #99*, with status 404.
+
++ A page's `data` capabilities must be read-only. They run as the person who opens the page, with the route
+  variables (`{id}`) and the query string as inputs, the route variables winning. The view gets plain arrays
+  (`$book['title']`), plus `$authorized` and `$user`; never the query string.
++ A capability that refuses a visitor sends them to sign in (with the authentication module), or answers 403 or 404.
++ A form posts to a capability with no controller:
+  `Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Added {title}'])`. It calls the
+  capability as the signed-in person; on invalid input it goes back, and the view shows `errors('title')`,
+  `old('title')` and `flash('error')`. Sign-in pages come from `Route::auth()`. Both are on
+  [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form) and
+  [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#routeauth).
+
+### 4. A personal access token
+
+A program or an agent proves who it is with a **personal access token**: it has a name, **scopes** (what it may do)
+and, optionally, an owner and an expiry, and it can be revoked on its own. Run:
 ```bash
-curl -H "Accept: application/json" -H "Authorization: Bearer $TOKEN" http://localhost:8080/v2/books
-curl -X POST -H "Accept: application/json" -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
-     -d '{"title": "Dune", "author": "Frank Herbert", "publisher_id": 1}' http://localhost:8080/v2/books
+docker compose exec dev-box php caligrafer.php token create "Bookshelf agent" --scopes books:read,books:write
+```
+```text
+ Token #1 "Bookshelf agent" created with books:read books:write
+
+ cq_1_<40 hexadecimal characters>
+
+ It is shown only now: store it as a secret (Authorization: Bearer <token>).
+```
+Keep it in your terminal for the next steps: `TOKEN=cq_1_...` (the whole token). Make a second one that can only read,
+to see the refusals: `token create "Reader" --scopes books:read --expires 90` (it prints `..., expires <date in 90 days>`).
+
+`docker compose exec dev-box php caligrafer.php token list` shows them, never their secret:
+```text
+ #2    active   Reader                         books:read  never used
+ #1    active   Bookshelf agent                books:read books:write  never used
 ```
 
-## Personal access tokens
+### 5. REST
 
-A token gives a program or an agent exactly the rights it needs, and can be revoked on its own.
+In `web.php`, before `Route::run();`, add:
+```php
+    // BOOKSHELF: REST
+    Route::capability('GET', '/api/books', 'list_books');
+    Route::capability('GET', '/api/books/{id}', 'get_book');
+    Route::capability('POST', '/api/books', 'create_book');
+    Route::capability('DELETE', '/api/books/{id}', 'delete_book');
+```
+The route variables (`{id}`) become inputs. Then run (a `POST` with neither a token nor `Accept: application/json`
+is taken for a form and answers `403` `[ERROR 3000]`):
 ```bash
-php caligrafer.php token create "Claude Code on my laptop" --scopes books:read,books:write
-php caligrafer.php token create "Reporting job" --scopes books:read --expires 90
-php caligrafer.php token create "Alice's agent" --scopes "books:*" --user 7
-php caligrafer.php token list
-php caligrafer.php token revoke 3
-```
-+ The token (`cq_<id>_<secret>`) is shown **only once**: store it as a secret. Only its SHA-256 hash is kept, in `caligrafy_tokens`, with its name, scopes, owner, expiry, last use and revocation date.
-+ **Scopes** are `resource:action`: `books:read`, `books:write`, `books:*` (every action on books) or `*` (everything).
-+ **`--user`**: the token acts for that user, so the `level` of a capability applies to that user too. Without `--user` it is an application token: only its scopes count.
-+ Controller routes of `web.php` (the REST API of [9. Helpers, Forms & REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API)) accept tokens with the scope `*`, like the old key.
+curl -s http://localhost:8080/api/books/3
+# {"data":{"id":3,"title":"Kindred","published_year":1979,...}}            200: get_book is public
 
-**The legacy API key.** Keys made with `generatekeys` and `generateapikey` all encrypt the same `APP_KEY`: each one gives full access, and none can be revoked without changing `APP_KEY`. They keep working so that existing clients do not break. Once your clients use tokens, turn them off in `.env`:
-```
-LEGACY_API_KEY=false
-```
-`doctor` reminds you while they are allowed. Never put a token or a key in a page or a Vue bundle: browser clients use the session (next section). Since 2.7.0 this also holds for the controller routes of `web.php`: a page calls them with `{ headers: apiHeaders() }` (the session and its `X-CSRF-Token`), and a page that still sends `'Bearer ' + apiKey` gets `[ERROR 1004] Access Denied: ...` once the key is off.
+curl -s -X POST -H "Content-Type: application/json" -H "Accept: application/json" -d '{"title": "Dune"}' http://localhost:8080/api/books
+# {"error":{"code":"unauthenticated","message":"Sign in or send a personal access token"}}   401
 
-## Vue apps and the Vite SPA: the JS client
+curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+     -d '{"title": "The Lathe of Heaven", "published_year": 1971, "author_id": 1}' http://localhost:8080/api/books
+# {"data":{"id":7,"title":"The Lathe of Heaven","published_year":1971,"summary":null,"author_id":1,...,"author":{"id":1,"name":"Ursula K. Le Guin",...}}}   201
 
-Generate a JavaScript module with one function per capability:
+curl -s -X POST -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+     -d '{"title": "X", "published_year": 1971, "author_id": 42}' http://localhost:8080/api/books
+# {"error":{"code":"invalid","message":"Some of the inputs are invalid","fields":{"author_id":"There is no such author"}}}   422
+```
+With the Reader token, the same `POST` answers
+`{"error":{"code":"forbidden","message":"This needs the scope books:write"}}` (403).
+
++ **Requests**: a JSON body, form fields, or the query string for `GET`. Then the route variables, which win.
++ **Responses**: `200` with `{"data": ...}`, `201` when a `POST` changes data, or `{"error": {"code", "message",
+  "fields"}}` with 401 (and `WWW-Authenticate: Bearer`), 403, 404, 409 or 422.
++ **Who calls**: `Authorization: Bearer <token>`, or the session of a signed-in person. A call made with the session
+  that changes data needs the session's CSRF token in an `X-CSRF-Token` header (403 `Missing or invalid CSRF token:
+  send the X-CSRF-Token header` otherwise); the JS client sends it.
+
+### 6. AI agents: MCP
+
+[MCP](https://modelcontextprotocol.io) (the Model Context Protocol) is how AI agents such as Claude use tools. With
+`Route::mcp('/mcp')` every capability is a tool: its name, its description, its input schema, and hints that say
+whether it only reads (`readOnlyHint`) or destroys data (`destructiveHint`). An agent sees only the tools its token
+allows, and its calls go through the same checks, validation and audit as everyone else's.
+
+In `web.php`, before `Route::run();`, add:
+```php
+    Route::mcp('/mcp');   // AI agents: personal access tokens only
+```
+Without a token it answers `401` and a JSON-RPC error (2.19.1):
 ```bash
-php caligrafer.php client public/<app>/src/capabilities.js     # Vite SPA
-php caligrafer.php client public/js/capabilities.js            # Vue as a library (the default path)
+curl -s -i -H "Content-Type: application/json" -d '{"jsonrpc":"2.0","id":1,"method":"tools/list"}' http://localhost:8080/mcp
 ```
+```text
+HTTP/1.1 401 Unauthorized
+WWW-Authenticate: Bearer error="invalid_token", error_description="Send a personal access token: php caligrafer.php token create"
+Content-Type: application/json
+
+{"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Unauthorized: send Authorization: Bearer <personal access token>"}}
+```
+Talk to it as an agent does, with `curl` and the token. Each request is one JSON-RPC message:
+```bash
+curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+     -d '{"jsonrpc":"2.0","id":1,"method":"initialize","params":{"protocolVersion":"2025-06-18","capabilities":{},"clientInfo":{"name":"curl","version":"1"}}}' \
+     http://localhost:8080/mcp
+```
+```json
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"caligrafy-app","title":"caligrafy-app","version":"2.19.1"},"instructions":"Tools are the capabilities of this application that your token allows. Tools marked destructive delete or overwrite data: confirm with the user first."}}
+```
+(`serverInfo.name` is your `APP_NAME`.) Then the tools:
+```bash
+curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+     -d '{"jsonrpc":"2.0","id":2,"method":"tools/list"}' http://localhost:8080/mcp
+```
+The list has `create_book`, `delete_book` (`"destructiveHint": true`), `get_book` and `list_books`
+(`"readOnlyHint": true`), and the framework's public `register_user` (which refuses every channel but web pages and
+the command line). Each tool looks like this one:
+```json
+{"name": "create_book", "title": "Create book", "description": "Adds a book to the Bookshelf catalog and returns it with its id and its author. The author must already exist: use list_authors to find author_id.",
+ "inputSchema": {"type": "object", "properties": {
+    "title": {"type": "string", "maxLength": 200, "description": "The title of the book"},
+    "published_year": {"type": "integer", "minimum": 1450, "maximum": 2026, "description": "The year it was first published, for example 1969 (not after this year)"},
+    "summary": {"type": "string", "maxLength": 2000, "description": "Optional: one or two sentences about the book"},
+    "author_id": {"type": "integer", "description": "The id of its author (list_authors)"}},
+  "additionalProperties": false, "required": ["title", "published_year", "author_id"]},
+ "annotations": {"readOnlyHint": false, "destructiveHint": false, "openWorldHint": false}}
+```
+With the Reader token, `create_book` and `delete_book` are not in the list. Call a tool:
+```bash
+curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
+     -d '{"jsonrpc":"2.0","id":3,"method":"tools/call","params":{"name":"create_book","arguments":{"title":"Dune"}}}' \
+     http://localhost:8080/mcp
+```
+```json
+{"jsonrpc":"2.0","id":3,"result":{"content":[{"type":"text","text":"{\"error\":{\"code\":\"invalid\",\"message\":\"Some of the inputs are invalid\",\"fields\":{\"published_year\":\"The Published Year field is required\",\"author_id\":\"The Author Id field is required\"}}}"}],"isError":true}}
+```
+A refused call is a tool result with `"isError": true` and the same fields as REST, so the agent can correct itself.
+A successful one has `"isError": false`, the data as JSON in `content[0].text`, and the object in `structuredContent`.
+
+**Connect Claude Code** to the server:
+```bash
+claude mcp add --transport http bookshelf http://localhost:8080/mcp --header "Authorization: Bearer cq_..."
+```
+**Over stdio**, a local agent starts the server itself, in the project folder:
+```bash
+claude mcp add bookshelf -- docker compose exec -T dev-box php caligrafer.php mcp
+```
+Without a token, stdio has full access, like any command you run yourself (it says so on stderr:
+`caligrafer mcp: no token, full local access (set CALIGRAFY_TOKEN to limit it)`). With `CALIGRAFY_TOKEN=cq_...` (or
+`--token cq_...`) it has the rights of that token.
+
+### 7. Vue apps and the Vite SPA: the JS client
+
+In `web.php`, before `Route::run();`, add:
+```php
+    Route::capabilities('/capabilities');   // GET lists, POST /capabilities/{name} calls: the JS client uses it
+```
+Generate the client: one JavaScript function per capability. Run:
+```bash
+docker compose exec dev-box php caligrafer.php client public/js/capabilities.js
+```
+```text
+ public/js/capabilities.js written: 17 capabilities, calls /capabilities (Route::capabilities('/capabilities') in web.php)
+ import { createBook, CapabilityError } from './capabilities.js'
+```
+(For a Vite SPA, write it in `public/<app>/src/capabilities.js`.) Use it in your app:
 ```js
 import { createBook, listBooks, CapabilityError } from './capabilities.js'
 
 try {
-  const book = await createBook({ title: this.title, author: this.author, publisher_id: 1 })
-  this.books = await listBooks()
+  const book = await createBook({ title: this.title, published_year: this.year, author_id: this.authorId })
+  this.books = (await listBooks({ author_id: book.author_id })).data
 } catch (e) {
-  if (e instanceof CapabilityError && e.code === 'invalid') this.errors = e.fields   // { title: '...' }
+  if (e instanceof CapabilityError && e.code === 'invalid') this.errors = e.fields   // { published_year: '...' }
   else throw e
 }
 ```
-+ In a page of the application it uses the **session**: the cookie and the CSRF token, which it reads once from `GET /capabilities`. No key is ever in the bundle.
-+ From Node or another origin, give it a token: `configure({ baseUrl: 'https://app.example.com', token: process.env.CALIGRAFY_TOKEN })`.
-+ Run the command again after you add or change a capability. It needs `Route::capabilities('/capabilities')` (or `--prefix` with your own uri).
++ In a page of the application it uses the **session**: the cookie, and the CSRF token it reads once from
+  `GET /capabilities`. No key is ever in the bundle.
++ From Node or another site, give it a token: `configure({ baseUrl: 'http://localhost:8080', token: process.env.CALIGRAFY_TOKEN })`.
++ Run `client` again after you add or change a capability.
 
-## AI agents: MCP
+`GET /capabilities` answers what the caller may call: `{"data": [{"name", "description", "scope", "level", "readOnly",
+"destructive", "public", "input"}, ...], "csrf": "<the session's CSRF token>"}`. `POST /capabilities/get_book` with
+`{"id": 3}` calls `get_book`.
 
-[MCP](https://modelcontextprotocol.io) (the Model Context Protocol) is how AI agents such as Claude use tools. With `Route::mcp('/mcp')` every capability becomes a tool: its name, its description, its input schema, and hints that tell the agent whether it only reads (`readOnlyHint`) or destroys data (`destructiveHint`). An agent sees only the tools its token allows, and its calls go through the same checks, validation and audit as everyone else's. A refused call comes back as a tool error with the reason and the field messages, so the agent can correct itself.
+### 8. The audit log
 
-**Over HTTP** (a deployed application): create a token, then add the server to the agent. For Claude Code:
+Run:
 ```bash
-php caligrafer.php token create "Claude Code" --scopes books:read,books:write
-claude mcp add --transport http myapp http://localhost:8080/mcp --header "Authorization: Bearer cq_..."
+docker compose exec dev-box php caligrafer.php audit --capability create_book --limit 5
 ```
-+ Answers JSON-RPC 2.0 `POST` requests with JSON (`initialize`, `ping`, `tools/list`, `tools/call`); `GET` answers `405`.
-+ Only personal access tokens are accepted (not the legacy key): `401` otherwise.
-+ A browser request from another site is refused (`403`). To allow a browser-based client such as an inspector, list its origin in `.env`: `MCP_ALLOWED_ORIGINS=https://inspector.example`.
-
-**Over stdio** (a local agent on your machine, in the project folder):
-```bash
-claude mcp add myapp -- php caligrafer.php mcp
-claude mcp add myapp -- docker compose exec -T dev-box php caligrafer.php mcp    # with the Docker server
-CALIGRAFY_TOKEN=cq_... php caligrafer.php mcp      # limited to a token's scopes
+```text
+ 2026-11-07 23:18:39  mcp   token  1            create_book                  invalid  Some of the inputs are invalid
+ 2026-11-07 23:18:25  rest  token  1            create_book                  invalid  Some of the inputs are invalid
+ 2026-11-07 23:18:25  rest  token  1            create_book                  ok
+ 2026-11-07 23:18:25  rest  token  2            create_book                  forbidden  This needs the scope books:write
+ 2026-11-07 23:18:25  rest  guest  -            create_book                  unauthenticated  Sign in or send a personal access token
 ```
-Without a token, stdio has full access, like any script you run yourself.
+Each row: when, the channel (`web`, `rest`, `mcp`, `cli`), who (`user`, `token`, `key`, `cli`, `guest`, or `schedule`
+and `queue` for jobs) and its id, the capability, the outcome and a short note. Inputs are never stored. A read-only
+capability is written only when it is refused.
 
-## The audit log
-
-```bash
-php caligrafer.php audit                              # the latest 50 calls
-php caligrafer.php audit --capability delete_book --limit 200
-```
-Each row says when, who (`user`, `token`, `key`, `cli` or `guest` and its id), through which channel (`web`, `rest`, `mcp`, `cli`), which capability and the outcome (`ok`, `invalid`, `forbidden`...). Inputs are never stored. Read-only capabilities are only logged when they are refused.
+**Check** the whole chapter:
++ `capabilities` lists your four capabilities with the right flags;
++ the same invalid `create_book` gives the same `fields` from `call`, REST and MCP;
++ the Reader token gets 403 from REST and does not see `create_book` in `tools/list`;
++ `audit` shows the calls of every channel.
 
 ## One look on every device
 
-`public/css/tokens.css` defines the Caligrafy look as CSS custom properties (`--cq-color-ink`, `--cq-space-3`, `--cq-touch-target`...), from `public/css/tokens.json`, so that Pug pages, Vue apps and the SPA share it. It is included by the default layout, the Vue app template and the SPA template, and it adds:
-+ larger touch targets on touch screens (`pointer: coarse`),
-+ safe-area padding when the app is installed to the home screen,
-+ `.cq-split`: one column on phones, a list and its detail side by side from tablets up.
-
-Build each screen from the [page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents) (`main.cq-page > .cq-card`, `.cq-form`, `.cq-tabs`, `.cq-list`), the same on every experience. Combine it with [install to home screen](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#install) for a mobile app that uses the same capabilities as the web.
+`public/css/tokens.css` defines the Caligrafy look as CSS custom properties (`--cq-color-ink`, `--cq-space-3`,
+`--cq-touch-target`...), from `public/css/tokens.json`, so Pug pages, Vue apps and the SPA share it. The default
+layout, the Vue app template and the SPA template include it. It gives larger touch targets on touch screens
+(`pointer: coarse`), safe-area padding when the app is installed to the home screen, and `.cq-split` (one column on
+phones, a list and its detail side by side from tablets up). Build each screen from the
+[page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents), and combine it with
+[install to home screen](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#install) for a mobile app on the
+same capabilities.
 
 ## Testing a capability
 
-Your app's tests call capabilities with `Caligrafy\Testing\TestCase` and run with `php caligrafer.php test` (2.18.0): [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App). A capability can ask for what it uses in its constructor ([Dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection)), and run later as a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs).
-
-From the command line, with the checks and the audit, before any route (since 2.3.0):
-```bash
-php caligrafer.php call create_book '{"title": "Dune", "author": "Frank Herbert", "publisher_id": 1}'
-php caligrafer.php call create_book title=Dune --guest     # as a visitor: refused unless public
-```
-It prints `{"data": ...}` or the `{"error": ...}` of the REST API ([Caligrafer: call](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#call)).
-
-In a test, `$this->call('create_book', $input, $this->user(7))` ([Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App)). In a script, the container builds the service with what its constructor asks for (2.18.0+):
+Your tests call capabilities the way the channels do, with the checks, the validation and the audit, in a
+transaction that is rolled back:
 ```php
-$book = Caligrafy\Container::make(CreateBook::class)->run(array('title' => 'Dune', 'author' => 'Frank Herbert', 'publisher_id' => 1));   // no checks, no audit
-$book = Caligrafy\Capabilities::call('create_book', $input, Caligrafy\Context::cli());   // with the checks and the audit
+$book = $this->call('create_book', ['title' => 'Tehanu', 'published_year' => 1990, 'author_id' => $authorId], $this->user(7));
+$this->assertCapabilityFails('unauthenticated', 'create_book', ['title' => 'Tehanu'], 'guest');
 ```
-The Caligrafy QA suite proves the model end to end with the Bookshelf capabilities: a book created on a web page is the same through REST, MCP and the JS client, and invalid input, a missing scope or a too-low level are refused the same way everywhere ([Testing Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Caligrafy)).
+Run them with `php caligrafer.php test`: [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App).
+A capability asks for what it uses in its constructor ([Dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection)),
+and can run later as a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs) or on a
+[schedule](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs).
+
+## Reference
+
+### `#[Capability(...)]`
+
+| Argument | Default | Meaning |
+| --- | --- | --- |
+| `name` | (required) | snake_case, letters, digits and `_`, starting with a letter, at most 64 characters; unique in the application. How every channel calls it |
+| `description` | `''` | one or two sentences: what it does and what it returns. Agents read it to choose the tool |
+| `scope` | `''` | the scope a token needs, `resource:action` (`books:write`). `''`: any token |
+| `level` | `0` | the minimum `permissions` of the user (signed in, or the owner of the token). `0`: anyone signed in |
+| `readOnly` | `false` | it changes nothing: not audited when it succeeds; can be page data and a download; `readOnlyHint` for agents |
+| `destructive` | `false` | it deletes or overwrites data: `destructiveHint`, agents ask the user first |
+| `public` | `false` | anyone may call it, without signing in or a token |
+| `mcp` | `true` | `false` keeps it out of MCP (a capability only a browser can use) |
+
+`php caligrafer.php service <Folder>/<Name> [--scope <scope>] [--read-only]` writes the class in
+`application/services/<Folder>/<Name>.php`, the name in snake_case (`CreateBook` -> `create_book`). Without
+`--scope` it writes `scope: ''` (G76). There is no `--destructive`: write `destructive: true` yourself.
+
+### The class
+
+| Part | Meaning |
+| --- | --- |
+| `public $rules` | input => [validation rules](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation). **Only these inputs reach `handle()`**: an input with no rule is listed with `''` |
+| `public $filters` | input => filters applied before validation (`trim`) |
+| `public $descriptions` | input => what it is, for the schema agents and clients see |
+| `handle(array $input, Context $context)` | does the work and returns data: an array, a model, a list of models, a value (models become arrays of their columns) |
+| `__construct(...)` | what it uses, given by the [container](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection) |
+
+A service never renders a view, redirects, prints, or reads the request or the session: the channel does that.
+
+**From the rules to the input schema** (what MCP and `GET /capabilities` show):
+
+| Rule | Schema |
+| --- | --- |
+| `required` | listed in `required` |
+| `integer` / `numeric`, `float` / `boolean` | `"type": "integer"` / `"number"` / `"boolean"` (otherwise `"string"`) |
+| `valid_email`, `valid_url`, `uuid`, `date` | `"format": "email"`, `"uri"`, `"uuid"`, `"date"` |
+| `max_len,N`, `min_len,N`, `exact_len,N` | `maxLength`, `minLength` |
+| `min_numeric,N`, `max_numeric,N` | `minimum`, `maximum` (`current_year` is this year) |
+| `contains_list,a;b` | `"enum": ["a", "b"]` |
+| `file` | `"description": "The URL or the path of a file"` (web pages and REST upload the file: [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#files)) |
+
+### Refusals: `ServiceError`
+
+| Throw | Code | Status | When |
+| --- | --- | --- | --- |
+| `ServiceError::invalid(['field' => 'message'])` | `invalid` | 422 | an input is wrong |
+| `ServiceError::unauthenticated()` | `unauthenticated` | 401 | nobody is signed in |
+| `ServiceError::forbidden()` | `forbidden` | 403 | this caller may not do it (beyond the scope and level checks) |
+| `ServiceError::notFound('There is no book #12')` | `not_found` | 404 | the thing does not exist |
+| `ServiceError::conflict('This book is already lent to Ana')` | `conflict` | 409 | it clashes with the current state |
+
+`$e->kind`, `$e->fields`, `$e->status()`, `$e->toArray()` (`{"error": {"code", "message", "fields"}}`).
+
+### `Context`: who calls
+
+| Member | Meaning |
+| --- | --- |
+| `$context->user` | the signed-in user, or the owner of the token (`null` otherwise) |
+| `$context->token` | the token row (`id`, `name`, `scopes`, `user_id`...), or `null` |
+| `$context->channel` | `web`, `rest`, `mcp` or `cli` |
+| `$context->allows('books:write', 1)` | whether this caller has that scope and level |
+| `$context->userId()`, `$context->level()` | the user's id, and `permissions` (0 without a user) |
+| `$context->authenticated()` | anyone but a guest |
+
+**Scopes and levels** (`allows()`): the command line and the legacy key pass everything. A signed-in person needs
+`permissions >= level` (no scopes). A token needs the scope (exact, `books:*` or `*`); when it has an owner
+(`--user <id>`), the owner needs the level too. A token **without an owner** is limited by its scopes only: the level
+does not apply to it, so give it destructive scopes with care (G53).
+
+### Tokens
+
+| Command | What it does |
+| --- | --- |
+| `php caligrafer.php token create "<name>" --scopes a:read,b:write [--user <id>] [--expires <days>]` | creates it and prints it once (`cq_<id>_<40 hex>`); only its SHA-256 hash is kept, in `caligrafy_tokens` |
+| `php caligrafer.php token list` | `#<id> active/revoked/expired <name> <scopes> [user <id>] last used <when>/never used` |
+| `php caligrafer.php token revoke <id>` | `Token #2 revoked`; the number alone (`revoke #2` revokes nothing, G77) |
+
+A revoked, expired or unknown token is a visitor: `401`. From PHP: `Caligrafy\Tokens::create($name, $scopes, $userId,
+time() + 86400 * 90)` returns `['id', 'token']`. An application online has no shell: give signed-in people a page
+that creates their token (G79).
+
+### MCP over HTTP
+
++ `POST` only, one JSON-RPC 2.0 message per request (no batches), answered in JSON: `initialize`, `ping`,
+  `tools/list`, `tools/call`. A notification (no `id`) gets `202` and no body. `GET` and `DELETE` answer `405`.
++ Protocol versions `2025-11-25`, `2025-06-18`, `2025-03-26`, `2024-11-05` (another request gets the first).
++ Personal access tokens only: without one, `401` with `WWW-Authenticate: Bearer error="invalid_token"` and the
+  JSON-RPC body `{"jsonrpc":"2.0","id":null,"error":{"code":-32600,"message":"Unauthorized: send Authorization: Bearer
+  <personal access token>"}}`, whatever the headers (2.19.1: before, a post with no token and no
+  `Accept: application/json` was taken for a form and answered `403` `[ERROR 3000]`). The session is never used there.
++ A browser request from another site (`Origin` header) is refused with `403 Origin not allowed`. To allow a
+  browser-based client, list its origin in `.env`: `MCP_ALLOWED_ORIGINS=https://inspector.example`.
++ A tool the token cannot see, or one that does not exist, answers `{"error": {"code": -32602, "message": "Unknown tool: create_book"}}`.
+
+### Commands
+
+| Command | What it does |
+| --- | --- |
+| `php caligrafer.php platform install` | the framework tables (tokens, audit, jobs, cache, migrations, notifications) |
+| `php caligrafer.php capabilities [--json \| --markdown]` | the capabilities: a table, with the input schemas, or Markdown for your documentation |
+| `php caligrafer.php call <name> ['{"key": "value"}' \| key=value ...] [--token <token>] [--guest]` | calls one, prints `{"data"}` or `{"error"}` (exit 1) |
+| `php caligrafer.php client [<file>] [--prefix /capabilities]` | the JS client (default `public/js/capabilities.js`) |
+| `php caligrafer.php mcp [--token <token>]` | MCP over stdio |
+| `php caligrafer.php audit [--capability <name>] [--limit <n>]` | the latest calls, 50 by default |
+
+All of them are on [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#service).
+
+## Other ways
+
++ **A controller** [`Route::form`, `Route::page`, the declarative routes]: only for HTTP none of the routes covers
+  (several capabilities with conditions, custom headers). It stays thin and calls the capability as the signed-in
+  person, the inputs being the posted fields and the route variables:
+    ```php
+    use Caligrafy\Controller;
+    use Caligrafy\ServiceError;
+
+    class BookController extends Controller
+    {
+        public function store()
+        {
+            try {
+                $book = $this->call('create_book');
+                redirect('/books/' . $book['id']);
+            } catch (ServiceError $e) {
+                return view('Bookshelf/books', array('errors' => $e->fields, 'message' => $e->getMessage()));
+            }
+        }
+    }
+    ```
+    See [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers).
++ **A script** [`php caligrafer.php call`]: `Caligrafy\Capabilities::call('get_book', ['id' => 3], Caligrafy\Context::cli())`
+  (with the checks and the audit), or `Caligrafy\Container::make(GetBook::class)->run(['id' => 3])` (validation only:
+  no checks, no audit; it returns the model).
++ **The legacy API key** [tokens]: keys made with `generatekeys` and `generateapikey` all encrypt the same `APP_KEY`:
+  each one gives full access, and none can be revoked without changing `APP_KEY`. They keep working for old programs
+  (`Authorization: Bearer <key>` on REST, never on MCP). Once your programs use tokens, set `LEGACY_API_KEY=false` in
+  `.env`; `doctor` reminds you while they are allowed. Controller routes of `web.php` accept tokens with the scope
+  `*`. Never put a token or a key in a page or a Vue bundle: browser code uses the session.
+
+## Common mistakes
+
++ **An input with no rule** (G52): it never reaches `handle()`. List it in `$rules`, with `''` when it has no rule.
++ **`service` without `--scope`** (G76): `scope: ''` lets any token call it.
++ **A write over the session without `X-CSRF-Token`** (G54): 403. Use the JS client, or send the `csrf` of `GET /capabilities`.
++ **A capability that is not read-only as page data** (G83): refused. Pages show read-only capabilities; forms use `Route::form`.
++ **Sending the legacy key to MCP** (G56): 401. MCP takes tokens only.
++ **Trusting the level with an application token** (G53): a token without `--user` passes any level. Create agent
+  tokens with `--user <id>` when the level matters.
++ **Using `register_user` over REST or MCP** (G81): refused; sign-up is the sign-up page.
++ **Forgetting `php caligrafer.php client` after a change**: the Vue app calls the old functions.
+
+## Related pages
+
++ [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability): the short tour
++ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): `Route::form`, `Route::auth`, `Route::download`, `Route::webhook`
++ [Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) and [Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships): reading data in `handle()`
++ [Validation](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation): the rules of `$rules`
++ [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication): users, levels, tokens for agents
++ [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App), [Dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection), [Caching](https://github.com/caligrafy/caligrafy-quill/wiki/Caching)
++ [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer): every command
 
 >[Next Section: Claude Code Plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin)

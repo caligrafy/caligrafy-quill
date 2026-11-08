@@ -6,6 +6,40 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.1] - 2026-11-08
+
+### Security
+- Client app pages no longer put the request's Cookie (the session id, which defeated HttpOnly) or Authorization
+  header in `env.request`: `views/Client/app.pug` passes `request()->forClient()` (method, host, uri, fullUri,
+  uriComponents, uriParameters, parameters, parsedURI, currentRoute, fetch, acceptLanguage; the query string only,
+  never a POST body or `_token`). `php caligrafer.php update` gives existing projects the new view.
+- The root `.htaccess` refuses `backups/` (the copies made by `caligrafer update` and `upgrade`) like the other
+  server folders.
+- The Vue SPA template (`caligrafer create`) no longer builds `'Bearer ' + VITE_API_KEY` into its public bundle:
+  `src/common/app.js` calls the application with the session and an `X-CSRF-Token` header (`apiHeaders()`, the token
+  read once from `GET /capabilities`), as client apps do. `initialize` writes no key into the template's `.env`.
+- `.gitignore` ignores every `.env.*` file of the project (`.env.testing`, `.env.production`...) except `.env.example`.
+
+### Fixed
+- The sign-out form of `Route::auth` (POST `/logout` with the page's `_token`) answered `[ERROR 3000]` after signing
+  out; it signs out and redirects.
+- `required_file` (and `required|file`) in a capability's rules makes the file input required on every channel: no
+  file (web, REST) or no URL/path (MCP, command line) is an `invalid` error, "The <Field> field needs a file"; the
+  JSON Schema of the capability lists the field as required, with the file description.
+- `POST /mcp` without a token answered the session CSRF check (403, plain text) instead of the JSON-RPC 401 with
+  `WWW-Authenticate: Bearer`: MCP posts skip the session check (they authenticate with personal access tokens only
+  and never act as the session's user).
+- `php caligrafer.php migrate --env <file>` printed the usage: `--env` works anywhere (`migrate --env X`,
+  `migrate status --env X`, `migrate "" --env X`).
+- The Vue SPA template builds to files that work from `public/<name>/dist/`: hash history (`createWebHashHistory`),
+  `base: './'` in `vite.config.js`, no nested `#app` in `App.vue`, and `dist/` is no longer git-ignored (the
+  production image does not run npm).
+
+### Documentation
+- The README, the wiki and the course are rewritten for 2.19, each topic both with Claude and by hand (one
+  prescriptive way, every example run). Plugin 1.31.1: gotchas G136-G141, the AI recipes as capabilities, the
+  webhook capability guard.
+
 ## [2.19.0] - 2026-11-08
 
 ### Performance

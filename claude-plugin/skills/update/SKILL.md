@@ -77,6 +77,15 @@ php caligrafer.php platform install # the framework tables of the new release (2
   after each `.env` change. Escape hatches, to name only when something breaks: `SESSION_LAZY=false`,
   `VIEW_OPTIMIZER=false`. Moving controllers to `Route::form` / `Route::auth` / `Route::webhook` is optional: offer
   it, never do it unasked.
++ 2.19.1+: `upgrade --apply` must replace `application/views/Client/app.pug` (its `env.request` no longer carries the
+  session cookie or the `Authorization` header, G136); a customized copy gets `app.pug.caligrafy-new`: merge its
+  `'request' => request()->forClient()` line. Check that the root `.htaccess` denies `backups` and `.gitignore` has
+  `/.env.*` + `!/.env.example` (G34; `update` adds the new `.gitignore` lines). Vite SPAs made with `caligrafer create`
+  before 2.19.1 are the project's code (`update` never touches `public/<name>/`): offer, never do unasked, to move
+  them to the 2.19.1 template's session calls (`src/common/app.js` `apiHeaders()`, no `VITE_API_KEY`),
+  `createWebHashHistory()`, `base: './'` and a committed `dist/` (G22, G50). A `Route::webhook` capability without
+  the `actorType()` guard (G137), `select()` lists without `->arrays()` (G138), `word_count,min,...` rules (G139) and
+  validators added in `config.php` (G141) are worth a look with the `caligrafy-reviewer` agent.
 + The release notes of every version passed (`https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-<version>`):
   do what they ask of projects (for example 2.7.0: client apps call their routes with `apiHeaders()`; `doctor` lists
   the scripts that still send the key).

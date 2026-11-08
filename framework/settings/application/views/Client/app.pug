@@ -1,7 +1,8 @@
 - $variables = get_defined_vars()?? array();
 //- apiKey: the legacy key, only while it is on (null with LEGACY_API_KEY=false). Pages call JSON routes with the
 //- session and csrf in an X-CSRF-Token header instead (apiHeaders() of public/js/services/app.js)
-- $globals = array('app_root' => APP_CLIENT, 'service_root' => APP_SERVICE_ROOT, 'app_resources' => APP_RESOURCES, 'request' => request(), 'apiKey' => Caligrafy\Request::legacyKeysDisabled()? null : API_KEY);
+//- request: request()->forClient(), never the Cookie (session id) or Authorization headers (2.19.1)
+- $globals = array('app_root' => APP_CLIENT, 'service_root' => APP_SERVICE_ROOT, 'app_resources' => APP_RESOURCES, 'request' => request()->forClient(), 'apiKey' => Caligrafy\Request::legacyKeysDisabled()? null : API_KEY);
 - $token = array('token'=> session('token'), 'csrf' => session('token'));
 - $home = array('home' => session('home'));
 - $keywords = array('keywords' => keywords());

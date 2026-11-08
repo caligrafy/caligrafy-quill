@@ -15,7 +15,7 @@
 
     RewriteCond %{REQUEST_FILENAME} -f [OR]
     RewriteCond %{REQUEST_FILENAME} -d
-    RewriteRule ^(application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules)(/|$) - [NC,F,L]
+    RewriteRule ^(application|framework|vendor|tests|qa|docker|claude-plugin|archives|backups|node_modules)(/|$) - [NC,F,L]
 
     RewriteCond %{REQUEST_FILENAME} -f
     RewriteRule ^(caligrafer\.php|composer\.(json|lock)|docker-compose\.ya?ml|package(-lock)?\.json)$ - [NC,F,L]

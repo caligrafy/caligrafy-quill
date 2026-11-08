@@ -41,7 +41,7 @@ Proof: `framework/core/Model.php`, `framework/settings/application/models/Auth/U
 
 **G29. PUT with multipart/form-data does not populate `$_POST`.** For file uploads send a POST with `_method=PUT`; otherwise send JSON with the JSON Accept header.
 
-**G34. Server files and uploads.** The root `.htaccess` denies (403) existing dotfiles (`.env`, `.git`, `.claude`), the folders `application|framework|vendor|tests|qa|docker|claude-plugin|archives|node_modules`, `caligrafer.php`, `composer.*`, `docker-compose.yaml` and `.sql|.log|.bak|.ini|.sh|.env` files; non-existing paths still reach the router. `public/uploads/.htaccess` denies scripts. Both files only use mod_rewrite with `[NC]` (case-insensitive, for macOS/Windows file systems): hosts need `AllowOverride FileInfo` (no `Require`/`php_flag`, which need AuthConfig/Options and caused 500s). `uploadFile($file, $allowedExtensions = null)` only accepts `DEFAULT_UPLOAD_EXTENSIONS` (or the given list) and always refuses php-like, html, js and svg files; `isAllowedUpload($name, $list)` checks a name. nginx ignores `.htaccess`: copy the rules from the wiki (1. Getting Started > Protecting your server files). Verify with `curl -I <host>/.env` (403/404). **Fixed** (before: `.env` was downloadable and an uploaded `.php` ran). Proof: `.htaccess`, `public/uploads/.htaccess`, `corehelpers.php` (`uploadFile`, `isAllowedUpload`).
+**G34. Server files and uploads.** The root `.htaccess` denies (403) existing dotfiles (`.env`, `.git`, `.claude`), the folders `application|framework|vendor|tests|qa|docker|claude-plugin|archives|backups|node_modules` (`backups/` since 2.19.1: before, the copies of the files `update`/`upgrade` replace, `.env` included (`Updater::env()` backs it up before adding new settings), could be downloaded from a host that serves the project folder; projects get the line with `update`, or add `backups` to the rule by hand), `caligrafer.php`, `composer.*`, `docker-compose.yaml` and `.sql|.log|.bak|.ini|.sh|.env` files; non-existing paths still reach the router. `public/uploads/.htaccess` denies scripts. Both files only use mod_rewrite with `[NC]` (case-insensitive, for macOS/Windows file systems): hosts need `AllowOverride FileInfo` (no `Require`/`php_flag`, which need AuthConfig/Options and caused 500s). `uploadFile($file, $allowedExtensions = null)` only accepts `DEFAULT_UPLOAD_EXTENSIONS` (or the given list) and always refuses php-like, html, js and svg files; `isAllowedUpload($name, $list)` checks a name. nginx ignores `.htaccess`: copy the rules from the wiki (1. Getting Started > Protecting your server files). Verify with `curl -I <host>/.env` (403/404). **Fixed** (before: `.env` was downloadable and an uploaded `.php` ran). Proof: `.htaccess`, `public/uploads/.htaccess`, `corehelpers.php` (`uploadFile`, `isAllowedUpload`).
 
 **G35. Client app template.** `views/Client/app.pug` only includes `public/<appName>/<app>.php` when both names match `[A-Za-z0-9_-]+` and the real path stays in the app folder (no sub-folders, no symlinks leaving the app), and escapes `$env` for the JS template literal (JSON_HEX_TAG + `\`, backtick, `${`). **Fixed** (before: `?app=../../x` included any PHP file and `?x=${...}` executed script). Projects initialized earlier must copy the new `app.pug` and `ClientController.php` (G39). Proof: `views/Client/app.pug`, `controllers/core/AI/ClientController.php`.
 
@@ -100,7 +100,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G21. `view()` and `api()` end the request.** For JSON requests (and always for `api()` / `view(null, ...)`), the View echoes JSON and calls `exit`. Set status codes first: `http_response_code(422); return api([...]);` (axios then rejects: payload in `error.response.data`).
 
-**G22. Vue SPA template (`caligrafer create`).** Vite 8, Vue 3.5, Vue Router 5, Pinia (store `src/common/store.js` with `defineStore`, no Vuex), axios 1.20, ESLint 10 flat config (`eslint.config.js`); needs Node 20.19+/22.12+. `src/common/app.js` uses `import axios from 'axios'` and `import.meta.env.VITE_API_KEY` (**Fixed**: it had Vue-CLI `require()`/`process.env.VUE_APP_*`). In Vite always use `import.meta.env.VITE_*`.
+**G22. Vue SPA template (`caligrafer create`).** Vite 8, Vue 3.5, Vue Router 5, Pinia (store `src/common/store.js` with `defineStore`, no Vuex), axios 1.20, ESLint 10 flat config (`eslint.config.js`); needs Node 20.19+/22.12+. In Vite always use `import.meta.env.VITE_*` (**Fixed**: the template had Vue-CLI `require()`/`process.env.VUE_APP_*`). Since 2.19.1 the template calls the application with the session, never a key: `src/common/app.js` exports `config` (`apiRoute` = `VITE_API_ROUTE` or `''` for the same origin, `capabilities` = `VITE_CAPABILITIES_ROUTE` or `/capabilities`), `csrfToken()` (read once from `GET {apiRoute}/capabilities`, so web.php needs `Route::capabilities('/capabilities')`), `apiHeaders(extra)` (async: `Accept: application/json` + `X-CSRF-Token`) and `apiConfig` (`withCredentials: true`, no `Authorization`); `main.js` puts them on `globalProperties` (`this.config`, `this.apiConfig`, `this.apiHeaders`). Writes: `axios.post(config.apiRoute + 'books', book, { headers: await apiHeaders(), withCredentials: true })`; better, the generated JS client (`php caligrafer.php client public/<name>/src/capabilities.js`). `src/router/index.js` uses `createWebHashHistory()` and `vite.config.js` `base: './'`, so `dist/` works from `public/<name>/dist/` with no server fallback; `App.vue` has no `#app` wrapper (the page's `#app` is the mount point). `dist/` is no longer git-ignored: commit it, the production image runs no npm. Apps created before 2.19.1 keep `VITE_API_KEY` in `src/common/app.js` and `main.js` (`Authorization: Bearer`): replace those with the session calls above (G50), set `base: './'` and the hash history, and remove `dist` from the app's `.gitignore`. Proof: `framework/librairies/app/`.
 
 **G26. Session setters and falsy values.** **Fixed:** `session('x', 0|false|'')`, `scripts()`, `keywords('')`, `copyright('')`, `metadata(['k' => ''])` store the value (only `null` means "read"). Use `clearFromSession('x')` to remove. Older versions ignored falsy values.
 
@@ -164,7 +164,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 ## Build once: services, capabilities, tokens and MCP (Quill 2.1)
 
-**G50. The legacy API key is public.** `views/Client/app.pug` passes `API_KEY` to every client page and the Vite SPA builds `VITE_API_KEY` into its bundle (`framework/librairies/app/src/main.js`), while JSON requests skip the CSRF check (`Request::checkCSRF()`): anyone who opens an app page can read the key and call every JSON controller route, writes included, from anywhere. Every key from `generatekeys`/`generateapikey` encrypts the same `APP_KEY` (`Request::isLegacyApiKey()`), so none can be revoked alone. For browser clients use the session (the generated JS client, G54; `apiHeaders()` for controller routes since 2.7.0, G87); for programs and agents use personal access tokens (`php caligrafer.php token create`, `Caligrafy\Tokens`); then set `LEGACY_API_KEY=false` (doctor reports the setting).
+**G50. The legacy API key is public.** `views/Client/app.pug` passes `API_KEY` to every client page while it is on and Vite SPAs created before 2.19.1 build `VITE_API_KEY` into their bundle (`src/main.js`, `src/common/app.js`; the 2.19.1 template uses the session and `X-CSRF-Token` instead, G22), while JSON requests skip the CSRF check (`Request::checkCSRF()`): anyone who opens an app page can read the key and call every JSON controller route, writes included, from anywhere. Every key from `generatekeys`/`generateapikey` encrypts the same `APP_KEY` (`Request::isLegacyApiKey()`), so none can be revoked alone. For browser clients use the session (the generated JS client, G54; `apiHeaders()` for controller routes since 2.7.0, G87); for programs and agents use personal access tokens (`php caligrafer.php token create`, `Caligrafy\Tokens`); then set `LEGACY_API_KEY=false` (doctor reports the setting).
 
 **G51. Closure routes are not protected for JSON.** `Route::execute()` checks the API key only for `'Controller@action'` routes, and `Request` skips CSRF for JSON: `Route::post('/x', function () {...})` accepts a JSON post with no key and no token. Put anything sensitive behind a controller route or a capability (`Route::capability()` checks the context itself).
 
@@ -176,7 +176,7 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G55. `Auth::authorized()` compares the whole user row.** The session stores an encrypted copy of the user; `authorized()` reloads the row and compares every column (`$user == $sessionAuthUser`). Any change to the row signs the user out, including `modified_at` (`ON UPDATE now()` in the Auth `create_db.sql`) after an admin changes `permissions`. Sign in again after updating your own row, or update rows of other users only.
 
-**G56. MCP.** `Route::mcp('/mcp')` (`Caligrafy\Mcp\Http`): POST only (GET/DELETE 405), one JSON-RPC message per request (no batches), JSON answers (no SSE), personal access tokens only (the legacy key gets 401), a foreign browser `Origin` gets 403 unless listed in `MCP_ALLOWED_ORIGINS`. Tools = `Capabilities::available($context)`; a tool the token cannot see answers like an unknown one (-32602). Refusals are tool results with `isError: true` and the `ServiceError` JSON in the text. `php caligrafer.php mcp` (stdio) without `CALIGRAFY_TOKEN`/`--token` has full access (`Context::local()`). The capability `description` is the tool description: write it for an agent; mark deletes `destructive: true`.
+**G56. MCP.** `Route::mcp('/mcp')` (`Caligrafy\Mcp\Http`): POST only (GET/DELETE 405), one JSON-RPC message per request (no batches), JSON answers (no SSE), personal access tokens only (the legacy key gets 401), a foreign browser `Origin` gets 403 unless listed in `MCP_ALLOWED_ORIGINS`. Without a valid token: 401 with `WWW-Authenticate: Bearer error="invalid_token"` (what MCP clients read to ask for a token). Since 2.19.1 `Request::checkCSRF()` skips POSTs to a `Route::mcp` address (`Route::isMcp()`): before, a client that did not send `Accept: application/json` got the `[ERROR 3000]` page instead of the 401. Tools = `Capabilities::available($context)`; a tool the token cannot see answers like an unknown one (-32602). Refusals are tool results with `isError: true` and the `ServiceError` JSON in the text. `php caligrafer.php mcp` (stdio) without `CALIGRAFY_TOKEN`/`--token` has full access (`Context::local()`). The capability `description` is the tool description: write it for an agent; mark deletes `destructive: true`.
 
 **G57. `Database::execute()` connects on first use.** Before 2.1 only `Controller`'s constructor connected, so a closure route that used a model threw `[ERROR 2003]`. Now `execute()` calls `Database::connect()` when there is no connection yet (and `DB_ACTIVATE=true`).
 
@@ -669,7 +669,9 @@ that comes with the session cookie and no `X-CSRF-Token` (403). `'Controller@act
 `'cover' => 'required|file|extension,png;jpg|max_size,2mb'` the web and REST channels save `$_FILES['cover']` (after
 the access check, under a random name, executable types always refused) and give `handle()` its URL; a string posted in
 that field is dropped. MCP and the CLI send a URL or a path whose extension is checked: never `fopen()` or `include` it
-without checking where it points. The file is deleted when the call fails, not when a later step of your own fails.
+without checking where it points. `required_file` (or `required|file`) refuses a call without a file, URL or path
+("The Cover field needs a file"); before 2.19.1 `required_file` was ignored on every channel and missing from the
+schema's `required`: use `required|file` on older versions. The file is deleted when the call fails, not when a later step of your own fails.
 Proof: `framework/core/Uploads.php`.
 
 **G132. A webhook has no session and no CSRF token: its signature is the only proof (2.19.0+).** `Route::webhook`
@@ -701,3 +703,78 @@ append `date('Y')` to the rules in `validate()` (the rules are class defaults, r
 agents see, `current_year` is this year's number and a missing or non-numeric argument (`max_numeric,`, `max_len,x`)
 is left out instead of crashing `Capabilities::schemaFromRules()` with a TypeError; GUMP still fails such a rule at
 validation. Proof: `Capabilities::bound()`, `Validator::normalize()`.
+
+## 2.19.1 fixes and pitfalls
+
+**G136. Client app pages printed the session cookie into their JavaScript (fixed in 2.19.1).** `views/Client/app.pug`
+gave `env.request` the whole `request()`, so every client app page (`ClientController`, `/apps/{appName}`, bots, ML)
+wrote the `Cookie` header (the session id) and the `Authorization` header into the page, where any script on it could
+read them. Since 2.19.1 it gives `request()->forClient()`: method, host, uri, route, route variables and the query
+string, never a header that carries a credential nor the POST body. The view is a template of `application/`: a project
+created earlier keeps the old one until `php caligrafer.php upgrade --apply` (or `update`) replaces
+`application/views/Client/app.pug` (a copy you changed is kept and the new one written next to it as
+`app.pug.caligrafy-new`: merge its `'request' => request()->forClient()` line, or `upgrade --force
+application/views/Client/app.pug`). Code that read `env.request.cookie` or `env.request.authorization` must stop:
+the browser has the cookie, and a token never belongs in a page. Proof: `Request::forClient()`,
+`framework/settings/application/views/Client/app.pug`, `qa/unit/RequestTest.php`.
+
+**G137. A webhook's capability is also served to REST, the JS client and MCP: guard it with `actorType()`.**
+`Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe'])` checks the signature, but
+`record_payment` is a capability like any other: `Route::capabilities()` (`POST /capabilities/record_payment`),
+`Route::mcp()` and `php caligrafer.php call` serve it to any signed-in user whose level passes, or any token with its
+scope, with an `event` they made up. The webhook calls it as `Context::system('webhook', $path)`, whose `actorType()`
+is `'webhook'` (and `actorId()` the path), so start `handle()` with:
+```php
+if ($context->actorType() !== 'webhook') {
+    throw ServiceError::forbidden('Only the Stripe webhook records payments');
+}
+```
+and add `mcp: false` to the attribute so agents do not even see it. The same holds for work only the system starts:
+the scheduler calls with `Context::system('schedule', <job>)` (`actorType()` `schedule`), `Queue` jobs with
+`Context::system('queue', '<capability> #<id>')` (`queue`); refuse other actors the same way (allow `cli` too if you
+want `php caligrafer.php call` to run it by hand: the CLI context is `cli`). A scope alone is not a guard: a token
+with `*` has every scope. Proof: `framework/core/{Webhook,Scheduler,Queue,Context}.php`.
+
+**G138. `Book::query()->select('id', 'title')->get()` returns whole `Book` models.** Each row is hydrated with
+`arrayToModel()`: the selected columns are set and every other public property of the class stays `null`, and
+REST, MCP, `Route::download` (CSV columns) and `json_encode` show them all (`{"id": 1, "title": "Dune", "author_id":
+null, "price": null}`): an API that looks like it lost data, or a CSV full of empty columns. For only the selected
+columns use `Book::query()->select('id', 'title')->arrays()->get()` or `Database::table('books')->select('id',
+'title')->get()` (arrays). Proof: `Query::get()`, `Model::arrayToModel()`, `Capabilities::plain()`.
+
+**G139. GUMP's `word_count,min,10,max,500` never fails.** GUMP's `parse_rule()` splits a rule at the first `,` only
+(`list($rule, $param) = explode(',', $rule)`), so the parameters are `['min']` and `validate_word_count()` checks
+nothing. Its parameters are separated with `;`: `'body' => 'required|word_count,min;10;max;500'`. The same goes for
+every GUMP rule with several parameters (`between_len,3;10`, `contains,a;b`); the framework only rewrites the extra
+`,` of `unique` and `exists` (G134). Verified: `GUMP::validate(['t' => 'one two'], ['t' => 'word_count,min,10,max,500'])`
+is `true`, with `min;10;max;500` it fails. Proof: `vendor/wixel/gump/gump.class.php` (`parse_rule`,
+`validate_word_count`).
+
+**G140. A wrong `Bearer cq_...` token is a visitor, and an application token passes any `level`.**
+`Context::fromRequest()` turns a bearer that looks like a token but does not verify (unknown, revoked, expired, a typo)
+into a guest, not a refusal: `public: true` capabilities still answer 200, the others 401 (MCP: 401 for any missing or
+bad token). A client that sends a revoked token to a public capability gets no hint that the token is dead: check
+`GET /capabilities` (the listing shows what the caller may use). A token created without `--user` has no owner, and
+`Context::allows()` lets it through any `level` once it has the scope (`$this->user === null` and an empty `user_id`):
+the level is a check on people. For capabilities that only administrators may use, check the person in `handle()`
+(`$context->user` and `$context->level()`, as `CaligrafyUsers::requireAdmin()` does, G85) or keep their scope off
+application tokens. Proof: `framework/core/Context.php` (`fromRequest`, `allows`).
+
+**G141. `php caligrafer.php call` (and the scheduler, the queue worker, `mcp`) never loads
+`application/config/config.php`.** The CLI loader (`Caligrafer::run()`) loads the constants, the helpers and the class
+map, not `config.php` (only `Framework::run()`, the web, includes it). A custom rule added there with
+`GUMP::add_validator()` exists on web pages and REST but not on the command line, the scheduler or a queue job:
+`call` answers an error for the unknown rule. Put each custom rule in its own file of `application/`, outside
+`config/` and `views/`, for example `application/rules/isbn.php`:
+```php
+<?php
+// loaded at start by the web and by the CLI: a file with top-level code is "eager" in the class map
+GUMP::add_validator('isbn', function ($field, $input, $param = null, $value = null) {
+    return (bool) preg_match('/^(97[89])?\d{9}[\dX]$/', str_replace('-', '', (string) $value));
+}, 'The {field} field is not an ISBN');
+```
+The class map (2.18.0) requires every file of `application/` that has top-level code when it registers, in the web and
+in the CLI (`ClassMap::register()`, `ClassMap::declarations()` marks it `eager`); with `CLASS_MAP=false`,
+`Capabilities::all()` requires every PHP file of `application/` except `config/` and `views/` before any capability
+runs. Register a rule once: GUMP throws when the same name is added twice, so never also add it in `config.php`.
+Proof: `framework/core/Caligrafer.php`, `framework/core/ClassMap.php`, `framework/core/Framework.php`.

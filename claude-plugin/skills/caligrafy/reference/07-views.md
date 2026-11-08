@@ -3,312 +3,551 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-> **Where this fits.** Views are the web experience of your application. New pages extend the master `default/master/site` and are built with [Caligrafy's look](#pagecomponents) (a top bar, a title band, forms, rows, tiles: no CSS to write, responsive at every size) and get their data from your capabilities, through a route (`Route::page`; a form posts to `Route::form`), a controller (`$this->call()`) or the JS client.
+A **view** is the HTML page a person sees. In Caligrafy a view is a [Pug](https://pugjs.org) file in `application/views/`, rendered on the server by Phug (Pug for PHP). A page route names the view and the capabilities that give it its data (`Route::page`); a form posts to a capability (`Route::form`) and comes back to the page with its errors. Every page is built from Caligrafy's [page components](#pagecomponents): a top bar, a title band, forms, rows and tiles, with no CSS to write, at every screen size.
 
-Views are the front-end layer of your application. This is what gets displayed on the screen for your users.
-In an MVC structure, the `View` interfaces with the `Controller` and the `Controller` determines what gets displayed to the `View`.
+## With Claude
 
-## Introduction to `Phug`
-This framework integrates tightly with PHP Pug (Phug). `Phug` is a pug template engine for PHP. It offers you a clean and easy way to write HTML templates.
+With the [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin), ask for the page together with the feature it shows:
 
-Instead of writing verbose tag syntax, `Phug` is based on the indentation like Python for example.
-```pug
-body
-    h1 Hello
-
-```
-The same code in HTML would look like this:
-```html
-<body>
-    <h1>Hello</h1>
-</body>
+```text
+/caligrafy-quill:new-capability books: a list of the books (title, author), a page for one book, and a form to add one
 ```
 
-### The two masters
-Since 2.11.0, Caligrafy's own pages (sign-in, account, admin, welcome, the Tasks example, payment) extend **`default/master/site`**: a light top bar with the Caligrafy mark, then the page, then a footer, with [Caligrafy's look](#pagecomponents) (`public/css/layout.css` and `public/css/look.css`). Its blocks are `title`, `brand` (the name after the mark), `nav_links` (the links on the right; on phones a Menu button opens them; Sign in or Sign out follow the session, even on a page whose controller does not pass `$authorized`, since 2.12.4), `content`, `footer`, `additional_css` and `additional_scripts`. Build new pages on it. Its stylesheet links carry their modification time (`?v=...`), so browsers get every change; do the same for your own scripts. Since 2.16.2 its footer always starts one screen down: on a short page it waits just below the screen (a short scroll), on a long one it follows the content, so it never jumps with the length of the page; keep a page's own footer a `footer.cq-footer` placed directly in `body`. Every page also prints the app's [social card](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards).
+Claude writes the capabilities in `application/services/Bookshelf/`, the page routes and the form route in `application/config/routing/web.php` (`Route::page` with `data`, `Route::form`), and the views in `application/views/Bookshelf/`, built on the master `default/master/site` with the page components of [ui-guidelines](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin/skills/caligrafy/reference/ui-guidelines.md). To change only how pages look, use [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles) (`/caligrafy-quill:design`).
 
-The older master `default/master/layoutblocks` keeps working for existing pages (it loads `look.css` too). The rest of this section describes it.
+**Check** before you say OK:
++ Open the list page and one item's page in the browser, at desktop and phone width.
++ Send the form empty: each field shows its own message under it, and what you typed is still there.
++ Send it filled: you land on the new item's page with the success message, once.
++ The views extend `../default/master/site`, join strings with `.` (never `+`), and every `form` has `method='POST'` and `=csrf()`.
++ `web.php` has no closure that returns a view, and no controller that only passes data to a view.
 
-### Default layout and Bootstrap 5
-The views provided in `/application/views/default` before 2.11.0 extend the layout `default/master/layoutblocks`, which loads Bootstrap 5.3 (`scripts('bootstrap_css')` and `scripts('bootstrap_script')`) and Caligrafy's styles. jQuery is not loaded: use Bootstrap 5 classes (`mb-3`, `w-100`, `d-none d-md-block`, `badge bg-success`, `row`/`col-*`) and plain JavaScript in your views. `public/css/theme.css` keeps the Caligrafy black and white look on top of Bootstrap 5: 14px body text, Caligrafy cards, black `btn-primary`, white `btn-secondary` with black text, black focus rings. Buttons inside forms are at most 150px wide (`form .btn` in `styles.css`): keep their labels short.
+## By hand
 
-`theme.css` also keeps the Bootstrap 3 layout of the Caligrafy pages: the page `.container` stays full width, headings of the Pug layout keep their Bootstrap 3 margins (they center the header title), and a `.row` inside a Caligrafy `.wrapper` or `.bounded*` block keeps the wrapper centered (15px columns, no negative margins). The signed-in header keeps its Bootstrap 3 columns too (15px padding, title next to the menu icon on phones). Bootstrap 5 breakpoints are one step lower than Bootstrap 3's: a Bootstrap 3 `col-sm-*` (768px and up) is a Bootstrap 5 `col-md-*`, `col-md-*` is `col-lg-*`, `col-lg-*` is `col-xl-*`, `hidden-xs` is `d-none d-md-block` and `hidden-sm hidden-xs` is `d-none d-lg-block`. Put the columns in a `.row`:
+You build the Bookshelf pages: the catalog with an add form at `/books`, and one page per book at `/books/<id>`. Commands run in the project folder with the Docker server of the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart); addresses start with `http://localhost:8080/`. If you followed the [course](https://github.com/caligrafy/caligrafy-quill-course/wiki) or [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability), the files of steps 1 to 3 are already there: check that they match and go to step 4.
 
-```pug
-.wrapper.bounded-large
-    .row
-        .col-md-6.col-lg-4
-            .card.color0 ...
+**1. The tables.** Write `application/models/Bookshelf/create_db.sql` (the same file as [Routing, step 1](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#definingroutes)):
+```sql
+/* Bookshelf: the first version of its tables, and sample books.
+ * Run it with: docker compose exec dev-box php caligrafer.php sql application/models/Bookshelf/create_db.sql
+ * Safe to run again: CREATE TABLE IF NOT EXISTS skips a table that exists, INSERT IGNORE a row whose id exists.
+ */
+
+CREATE TABLE IF NOT EXISTS authors (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    name VARCHAR(150) NOT NULL,
+    bio TEXT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    modified_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+CREATE TABLE IF NOT EXISTS books (
+    id INT UNSIGNED NOT NULL AUTO_INCREMENT,
+    title VARCHAR(200) NOT NULL,
+    published_year SMALLINT UNSIGNED NOT NULL,
+    summary TEXT NULL,
+    author_id INT UNSIGNED NOT NULL,
+    created_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+    modified_at DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+    PRIMARY KEY (id),
+    KEY idx_books_author_id (author_id),
+    CONSTRAINT fk_books_author_id FOREIGN KEY (author_id) REFERENCES authors (id)
+        ON UPDATE CASCADE ON DELETE RESTRICT
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- Sample data, with fixed ids so that book 3 is Kindred everywhere
+INSERT IGNORE INTO authors (id, name, bio) VALUES
+    (1, 'Ursula K. Le Guin', 'American author of science fiction and fantasy, known for the Earthsea books.'),
+    (2, 'Octavia E. Butler', 'American science fiction author, the first to receive a MacArthur fellowship.'),
+    (3, 'Italo Calvino', 'Italian writer of playful, inventive novels and short stories.');
+
+INSERT IGNORE INTO books (id, title, published_year, summary, author_id) VALUES
+    (1, 'A Wizard of Earthsea', 1968, 'A gifted boy learns magic and must face the shadow he set loose.', 1),
+    (2, 'The Left Hand of Darkness', 1969, 'An envoy visits a planet whose people have no fixed sex.', 1),
+    (3, 'Kindred', 1979, 'A young woman is pulled back in time to a plantation in Maryland.', 2),
+    (4, 'Parable of the Sower', 1993, 'In a collapsing California, a teenager starts a new belief system.', 2),
+    (5, 'Invisible Cities', 1972, 'Marco Polo describes imaginary cities to the emperor Kublai Khan.', 3);
 ```
+Then give `books` its `isbn` column with a [migration](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) (a table that holds rows is never changed in `create_db.sql`). Run `docker compose exec dev-box php caligrafer.php migrate make add_books_isbn`; it prints ` application/migrations/<number>_add_books_isbn.sql written: add its SQL, then php caligrafer.php migrate`. Make that file read:
+```sql
+-- add_books_isbn
+-- Runs once (php caligrafer.php migrate, and at every deploy). Never edit it after it ran: write a new one.
+-- One statement: the column and its unique index are added together, or not at all.
 
-The layout body carries the class `caligrafy-layout` (`body(id='gesturize' class='caligrafy-layout')` in `default/master/layout.pug`): it scopes the Bootstrap 3 heading margins of `theme.css`. Layouts copied before this class existed keep working through the `gesturize` id; if you write your own layout, put `class='caligrafy-layout'` on its body. `theme.css` must load after Bootstrap (as in `layoutblocks.pug`).
-
-Client apps that reuse the Caligrafy header outside the Pug layout (for example a PHP page in `public/<app>`) add the class `caligrafy-header` to the header, which gives the title the margins that center it, with no custom CSS:
-
-```html
-<header class="color0 caligrafy-header">
-    <nav class="horizontal">
-        <h1 class="large-text horizontal-center"><span class="semibold">Cali</span>grafy</h1>
-    </nav>
-</header>
+ALTER TABLE books
+    ADD COLUMN isbn VARCHAR(20) NULL AFTER summary,
+    ADD UNIQUE KEY uq_books_isbn (isbn);
 ```
-
-Put `class="caligrafy-layout"` on the client app body instead to give all its headings the layout margins. Single page apps (Vue template) load `styles.css` after Bootstrap and keep the styles.css heading margin 0, as they did with Bootstrap 3: do not add these classes there.
-
-> Projects created before Caligrafy moved to Bootstrap 5 keep their own copies of the views in `/application/views`: see [Upgrading an existing project](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
-
-## `Pug` Templates
-Every framework has a template system. Templates help separate the concerns in a an elegant way between logic and presentation. Such a mentality makes the code more maintainable and most importantly, more flexible for making more frequent user interface changes. 
-
-`Phug` is a PHP library that uses the `Pug` language.
-Make yourself familiar with its syntax. There is a slight learning curve in the beginning but once you get the hang of it, you will appreciate using it. 
-
-> Learn Pug and Phug [here](https://www.phug-lang.com/#language-reference)
-
-### Compiled views are kept (2.17.0+)
-Phug turns each `.pug` view into PHP before running it. Since 2.17.0 Caligrafy keeps that PHP between requests, so a view is compiled once, and again only when it, or a file it `include`s or `extends`, is saved. Pages come out the same, about 3 to 8 times faster. Nothing to set up: edit a view and reload the page, as before.
-
-+ The compiled views live in a private folder of the system's temporary directory (`caligrafy-views-<project>-<user>`, readable by the web server's user only). A new container starts with an empty one.
-+ `VIEW_CACHE=false` in `.env` compiles every view on every request, as before 2.17.0.
-+ A project that already sets Phug's `cache_dir` (`Phug::setOption('cache_dir', ...)`) keeps its own folder.
-+ Copying files to a server with tools that keep their old modification times (`rsync -a`, `cp -p`, an unzipped archive) can leave a cached view newer than the file you copied: run `php caligrafer.php cache clear` as the web server's user after such a copy (each system user has its own compiled views), or restart the container. Deploys from the production image are not concerned.
-
-### Debug mode and the Optimizer (2.19.0+)
-+ **Phug's debug mode only with `APP_DEBUG=true`.** It gives the line of the `.pug` file in an error, and made every page about three times slower. With `APP_DEBUG=false` (production) pages are rendered without it; set `APP_DEBUG=true` while you develop to keep the Pug line numbers.
-+ **Cached views skip the compiler.** A view already compiled and up to date runs through Phug's Optimizer, which includes the compiled PHP without loading Phug's compiler. A view to compile goes through Phug as before. `VIEW_OPTIMIZER=false` in `.env` turns the Optimizer off. A project that customizes Phug at run time (its renderer already built) is not concerned.
-+ Views compiled in debug mode are kept apart (`caligrafy-views-debug-<project>-<user>`), so switching `APP_DEBUG` never serves a view compiled the other way. `php caligrafer.php cache clear` empties both folders.
-
-## Structure and Format
-+ All the views that you create should be located in the `/application/views` folder. In that folder, you can create the structure that is the most convenient for you by creating subfolders at will. That folder should not contain any client-side scripts and sheets. Remember that this folder is not public and any client-side scripts that you link will not be read by the browser.
-
-+ All the view files need to have a `.pug` extension. Remember, `Pug` is the language that `Phug` uses. `Pug` is a language that is very similar to HTML and that ends up rendering an HTML/CSS page. `Pug` files should be a replacement to the HTML pages you usually create.
-
-+ Javascript files, script files, images and stylesheets that you would want to link to from your `Pug` view file must be in the `/public` folder. You could organize the `/public` folder to your convenience.  
-
-## Getting Started with Views
-
-Using templates can be overwhelming at first. We recommend that you first start creating `pug` pages individually and not worry about templates just yet. While you are developing your pages, you will notice blocks of code that start repeating. This should be a trigger for you to consider separating these blocks out in a separate `pug` file
-
-Let's start with a basic "Hello World" example:
-+ Create a new file called `helloworld.pug` in `/application/views`
-```pug
-head
-    title Hello World Application
-body
-    h1 Hello World
-    p This is our first view using pug
+Run:
+```bash
+docker compose exec dev-box php caligrafer.php sql application/models/Bookshelf/create_db.sql
+docker compose exec dev-box php caligrafer.php migrate
 ```
-Now that we have a view created, we still need to define when to display it to the users. This view can be called from a `Controller` or directly from the `Route` if there is no extensive logic needed. 
-We will show you how this can be done in the next sections.
+Expected: ` application/models/Bookshelf/create_db.sql run on caligrafy`, then ` OK   <number>_add_books_isbn.sql` and ` 1 migration(s) run on caligrafy`.
 
-## Simple `View`
-Usually in web applications, the most common use case is to have a `Controller` for every presentation page. It is assumed that there is always a need to interface with the database and have a some sort of a logic that justifies the need to have a `Controller`. 
-
-However, there are cases, especially for public pages, where they are just for presentations and no extensive logic nor database extensions are needed.
-
-### `View` from `Route`
-Since 2.5.0 the way to show a page is `Route::page`:
+**2. The models.** Write `application/models/Bookshelf/Author.php`:
 ```php
-Route::page('/hello', 'helloworld');
-// Note that you only enter the name of the template without the `.pug` extension
-```
-It goes through the framework's page controller, which gives every page `$authorized`, `$user` (`id`, `username`, `permissions`) and its route variables, and optionally access rules and data from capabilities: see [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
+<?php
 
-A closure that returns a view also works, but the view then gets only what the closure passes: no `$authorized`, so the header shows every visitor as signed out.
-```php
-Route::get('hello', function() { return view('helloworld'); });
-```
-### `View` from `Controller`
-When the view is called from a `Controller`:
-```php
-use Caligrafy\Controller;
+use Caligrafy\Model;
 
-class HelloController extends Controller {
-   public function display()
-   {
-       return $this->view('helloworld');
+// One Author = one row of the authors table (Author::query() reads authors: the class name in lower case, plus s)
+class Author extends Model {
 
-       // Alternatively
-       return view('helloworld');
-   }
+    // one public property per column of the table
+    public $id;
+    public $name;
+    public $bio;
+    public $created_at;
+    public $modified_at;
 }
 ```
-
-## `View` with parameters
-Most of the time, you are going to need to send the data to be displayed to the `View`. This is the cornerstone of the separation of concerns. In an MVC architecture, the `Controller` is the interface that gets the data from the 'Model', validates it, filters it, formats it and then sends it to the `View`. 
-
-The `view` method takes 2 arguments
-
-`view($viewName, $viewData = array())` (the `view()` helper and the `$this->view()` method of a controller have the same arguments)
-
-The `templateName` is the name of the `pug` template (path from `/application/views`, without the `.pug` extension). When the request is an API call (`Accept: application/json`) or when the template name is `null`, the `view` method returns the `parameters` as JSON instead and ends the request: set any HTTP status code with `http_response_code()` before calling it. The `parameters` is a key/value pair array of the `template variable name` and the `value` that needs to be sent to the view.
-
-Let's take the "Hello World" example from before and let's assume that we want the sentence in the body to change dynamically. In this example, we need to have a key/value pair that holds the name of the variable that will be used in the view and the value of it is the sentence that we want to display. 
-
-We will illustrate how it could be done from both the `Route` and the `Controller`.
-
-### Template with parameters
-The first thing that needs to be done is prepare the template in the `View` to receive a variable `sentence`
-```pug
-head
-    title Hello World Application
-body
-    h1 Hello World
-    p= $sentence
-```
-### From the `Route`
-We now need to make sure that when the view method is called to assign a value to the `sentence` variable that will be read by the template.
+Write `application/models/Bookshelf/Book.php`:
 ```php
-Route::page('/hello', 'helloworld', ['with' => ['sentence' => 'This is our first view using a route']]);
-```
-Data from your database comes from a capability instead: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);`.
+<?php
 
-### From the `Controller`
-Similarly, the `Controller` will need to assign a value to the `sentence` variable.
-```php
-use Caligrafy\Controller;
+use Caligrafy\Model;
 
-class HelloController extends Controller {
-   public function display()
-   {
-       return $this->view('helloworld', array('sentence' => 'This is our first view using a controller') );
+// One Book = one row of the books table. Book::with('author') adds the row of authors whose id is author_id
+class Book extends Model {
 
-       // Alternatively
-       // return view('helloworld', array('sentence' => 'This is our first view using a controller'));
-   }
+    // one public property per column of the table
+    public $id;
+    public $title;
+    public $published_year;
+    public $summary;
+    public $isbn;
+    public $author_id;
+    public $created_at;
+    public $modified_at;
 }
 ```
-## Forms: `errors()`, `old()` and `flash()` (2.19.0+)
-A form that posts to [`Route::form`](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form) comes back to the page with what the next page needs:
-```pug
-if flash('success')
-  .cq-alert= flash('success')
-if flash('error')
-  .cq-alert.cq-alert--error(role='alert')= flash('error')
-form(method='POST', action="{$home}books")
-  =csrf()
-  .cq-field
-    label(for='title') Title
-    input#title.form-control(type='text', name='title', value=old('title'))
-    if errors('title')
-      p.cq-field-error= errors('title')
-  button.btn.btn-primary(type='submit') Add book
-```
-+ `errors('title')`: the message of one field, or `null`; `errors()`: all of them.
-+ `old('title', $default)`: what the field held when the form was refused (never a password, a card number or a token).
-+ `flash('success')`, `flash('error')`: the messages of the previous request. `flash('saved', 'Your changes are saved')` keeps one for the next request.
+The models need no relationship methods: `Book::with('author')` reads the author from `author_id` ([Relationships](https://github.com/caligrafy/caligrafy-quill/wiki/5.-Relationships)).
 
-They last one request: the first page after the post reads them.
-
-## Mobile: install to home screen
-Browsers can install a Caligrafy application on a phone, a tablet or a computer: it opens from its own icon, full screen, without the browser bar. The default layout (`default/master/layoutblocks.pug`) links the web app manifest `public/manifest.webmanifest`, which gives browsers the name, the black and white colors and the icons of the app (`public/images/resources/icon-192x192.png`, `icon-512x512.png` and the Apple touch icons). Its `start_url` and `scope` are `../`, relative to the manifest: they always point to the root of your application, whatever `APP_ROOT` is. Change `name`, `short_name` and the icons in that file to brand your app (keep a 192x192 and a 512x512 PNG: Chrome needs both). New apps start with Caligrafy's black logo (since 2.16.2) in `favicon.ico`, the Apple touch icons and these two; replace the files with your own, keeping their names: the pages link them with their modification time, so browsers fetch a replaced icon again. Installation needs HTTPS (or `localhost`).
-
-> This replaces the add-to-homescreen library of older versions (the `add_to_home` scripts keys and the old `default/modules/install.pug`), see [Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
-
-### Install button and iOS hint
-Send `install` to the views where you want to invite visitors to install the app:
+**3. The capabilities.** The pages never read the tables themselves: capabilities do, and the same ones serve REST, the JS client and AI agents. Create each file with `docker compose exec dev-box php caligrafer.php service Bookshelf/<Name> --scope books:read --read-only` (`--scope books:write` without `--read-only` for `CreateBook`), then make it read as below. `application/services/Bookshelf/ListBooks.php`:
 ```php
-return view('default/index', array('install' => true));
+<?php
+
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Service;
+
+// list_books: the catalog, sorted by title, 20 books per page, each with its author. Anyone may read it
+#[Capability(
+    name: 'list_books',
+    description: 'Lists the books of the Bookshelf catalog, sorted by title, 20 per page, each with its author (id, name, bio). Give author_id to list only the books of one author, and page for the next pages. Returns data (the books), total, page, per_page and pages.',
+    scope: 'books:read',
+    readOnly: true,
+    public: true
+)]
+class ListBooks extends Service
+{
+    public $rules = array('author_id' => 'integer', 'page' => 'integer');
+    public $descriptions = array(
+        'author_id' => 'Optional: only the books of this author',
+        'page' => 'Optional: the page, 1 by default (20 books per page)'
+    );
+
+    public function handle(array $input, Context $context)
+    {
+        // two queries for the page (the count, then the books) and one for all their authors
+        $query = Book::with('author')->orderBy('title');
+        if (!empty($input['author_id'])) {
+            $query->where('author_id', $input['author_id']);   // the value is bound, never pasted into the SQL
+        }
+        return $query->paginate(20, $input['page'] ?? 1);
+    }
+}
 ```
-The layout then includes `default/modules/install.pug`, in plain JavaScript:
-+ On Chrome, Edge and Android, an **Install** button (`btn-primary`) appears when the browser fires `beforeinstallprompt`, and opens the browser's own install prompt. **Not now** (`btn-secondary`) hides it.
-+ On iOS and iPadOS Safari, which have no install prompt, a short hint says to tap Share, then Add to Home Screen. **Got it** hides it.
-+ Nothing is shown once the app is installed (standalone mode) or after the visitor dismissed it: the choice is kept in `localStorage` (`caligrafy-install-dismissed`).
+`application/services/Bookshelf/GetBook.php`:
+```php
+<?php
 
-The box is a white card fixed at the bottom of the screen with the Caligrafy black and white buttons. Its styles are scoped to `.caligrafy-install` in the module, so you can restyle it in your own CSS.
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Service;
+use Caligrafy\ServiceError;
 
-### Offline page (optional service worker)
-Add `PWA_SERVICE_WORKER=true` to the `.env` to register the service worker `public/sw.js` (it is off by default). It does one thing: when a page cannot be loaded because the device is offline, it shows `public/offline.html` instead of the browser error. It never caches pages, API routes, POST requests or signed-in pages: they always go to the network, so users never see stale or private data. Edit `offline.html` to change the message (it must stay self-contained, without external files) and change `CACHE` in `sw.js` when you do, so installed apps get the new copy. Setting `PWA_SERVICE_WORKER` back to `false` unregisters it on the next visit.
+// get_book: one book with its author, or "not found"
+#[Capability(
+    name: 'get_book',
+    description: 'Returns one book of the catalog with its author (id, name, bio), by the id of the book.',
+    scope: 'books:read',
+    readOnly: true,
+    public: true
+)]
+class GetBook extends Service
+{
+    public $rules = array('id' => 'required|integer');
+    public $descriptions = array('id' => 'The id of the book');
 
-The service worker lives in `public/` but controls the whole application: the root `.htaccess` sends `Service-Worker-Allowed` for `public/sw.js` and the `application/manifest+json` type for `.webmanifest` files (both work with `AllowOverride FileInfo`). `php caligrafer.php doctor` checks that the manifest is valid and that its icons exist, and, when the service worker is on, that its files exist and production uses HTTPS.
-
-### Client apps in `public/<app>`
-Client apps that do not use the Pug layout link the manifest themselves in their `<head>`:
-```html
-<link rel="manifest" href="<?php echo session('public').'manifest.webmanifest'; ?>">
-<meta name="theme-color" content="#ffffff">
+    public function handle(array $input, Context $context)
+    {
+        $book = Book::with('author')->find($input['id']);
+        if (!$book) {
+            throw ServiceError::notFound("There is no book #{$input['id']}");
+        }
+        return $book;
+    }
+}
 ```
-This installs the whole application (it opens on its home page). To install a client app on its own, copy `public/manifest.webmanifest` into `public/<app>/manifest.webmanifest`, set `"start_url": "./"`, `"scope": "./"`, `"id": "./"` and its own `name`, prefix the icons with `../` (`"../images/resources/icon-192x192.png"`) and link that copy instead. For a Vue single page app, put the copy and its icons in the app's own `public/` folder, with icon paths relative to the manifest (Vite copies them to `dist/`), and link it from `index.html` with `<link rel="manifest" href="manifest.webmanifest">`.
+`application/services/Bookshelf/CreateBook.php`:
+```php
+<?php
 
-> The use of the `View` in this framework is very straightforward. Most of the effort should be in understanding the syntax of the `Pug` language.It is a simple language to pick up especially if you are familiar with HTML. 
-> Learn Pug and Phug [here](https://www.phug-lang.com/#language-reference)
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Service;
 
-## One look on every device
+// create_book: adds a book, with the same rules whoever calls it
+#[Capability(
+    name: 'create_book',
+    description: 'Adds a book to the Bookshelf catalog and returns it with its id and its author. The author must already exist: use list_authors to find author_id. The ISBN is optional and unique.',
+    scope: 'books:write',
+    public: true   // for now: lesson 11 closes it
+)]
+class CreateBook extends Service
+{
+    public $rules = array(
+        'title' => 'required|max_len,200',
+        'published_year' => 'required|integer|min_numeric,1450|max_numeric,current_year',
+        'summary' => 'max_len,2000',
+        'isbn' => 'alpha_numeric_dash|max_len,20|unique,books.isbn',
+        'author_id' => 'required|integer|exists,authors.id'
+    );
+    public $filters = array('title' => 'trim', 'summary' => 'trim', 'isbn' => 'trim');
+    public $descriptions = array(
+        'title' => 'The title of the book',
+        'published_year' => 'The year it was first published, for example 1969 (not after this year)',
+        'summary' => 'Optional: one or two sentences about the book',
+        'isbn' => 'Optional: its ISBN, digits and dashes, for example 978-0-441-47812-5; two books never share one',
+        'author_id' => 'The id of its author (list_authors)'
+    );
 
-Experiences differ in layout (a dense page on a desktop, touch-first on a tablet, one column on a phone) but share one look. `public/css/tokens.css` defines the Caligrafy look as CSS custom properties, from `public/css/tokens.json`: colors (`--cq-color-ink`, `--cq-color-paper`...), type, spacing (`--cq-space-1` to `--cq-space-5`), radius and breakpoints. The default layout, the Vue app template and the Vite SPA template include it, and it adds:
-+ touch targets of at least `--cq-touch-target` (44px) on touch screens,
-+ safe-area padding when the application is installed to the home screen,
-+ `.cq-split`: one column on phones, a list and its detail side by side from tablets up (since 2.12.0, on pages of the master `site.pug`: `.cq-split > section.cq-split-main + aside.cq-split-detail`, see [side by side](#sidebyside)).
-
-```pug
-.cq-split
-  section.cq-split-main
-    ul.cq-rows
-      each $book in $books
-        li.cq-row
-          .cq-row-main
-            p.cq-row-title
-              a(href=$home . 'books/' . $book['id'])= $book['title']
-  aside.cq-split-detail
-    block detail
+    public function handle(array $input, Context $context)
+    {
+        // an empty ISBN is no ISBN: NULL, which the unique index allows on many books
+        $input['isbn'] = ($input['isbn'] ?? '') === '' ? null : $input['isbn'];
+        $id = Book::insert($input);   // one INSERT, every value bound; returns the id of the new book
+        return Book::with('author')->find($id);
+    }
+}
 ```
-Use the tokens in your own styles (`color: var(--cq-color-text)`) so that every experience of the application stays the same. Learn more [here](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#experiences).
+`application/services/Bookshelf/ListAuthors.php`:
+```php
+<?php
 
-## Caligrafy's look: every page looks the same
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Service;
 
-Since 2.11.0 every page of Caligrafy shares one look: **a white canvas, a light top bar with the Caligrafy mark, one message per screen, full-width bands, narrow columns for forms, rows for lists, large tiles for links, Caligrafy black for the main action, Inter type, no cards and no shadows**. It works at every size: phones, tablets and desktops. Three stylesheets give it, and the master `site.pug`, the Vue app template and the single page application template link them for you:
+// list_authors: every author, sorted by name. Anyone may read it
+#[Capability(
+    name: 'list_authors',
+    description: 'Lists the authors of the Bookshelf catalog, sorted by name: id, name and bio.',
+    scope: 'books:read',
+    readOnly: true,
+    public: true
+)]
+class ListAuthors extends Service
+{
+    public function handle(array $input, Context $context)
+    {
+        return Author::query()->orderBy('name')->get();
+    }
+}
+```
+Run `docker compose exec dev-box php caligrafer.php capabilities`: the list shows `create_book`, `get_book`, `list_authors` and `list_books`. (`public: true` opens them to every visitor while you try them; [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#secure) shows how to close them.)
 
-| Stylesheet | What it holds |
-| --- | --- |
-| `public/css/layout.css` | the structure: top bar, title bands, bands, forms, rows, tiles, an account area, the footer |
-| `public/css/look.css` | the look: its tokens (`--design-*`, feeding the `--cq-*` tokens), Inter, black buttons, fields, the mark |
-| `public/css/camera.css` | full-screen camera pages: face detection, machine learning, face sign-in |
+**4. The routes.** In `application/config/routing/web.php`, above `Route::run();`, write:
+```php
+    // BOOKSHELF PAGES: rendered on the server with the data of the capabilities; the form calls one capability
+    Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books', 'authors' => 'list_authors']]);
+    Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);
+    Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book'], 'notFound' => 'Bookshelf/notfound']);
+    Route::download('/authors.csv', 'list_authors', ['filename' => 'authors.csv']);   // the same capability, as a file
+```
++ `/books` gives its view `$books`, the page of books of `list_books` (`?page=2` and `?author_id=2` reach it as its inputs), and `$authors`, the answer of `list_authors`.
++ `/books/3` calls `get_book` with `id = 3` and gives the view `$book`, with its `author`; a missing book renders `Bookshelf/notfound` with status `404`.
++ A `POST /books` calls `create_book` with the form's fields, then goes to the new book's page (`{id}` is the id of the book it returns).
++ `/authors.csv` is the list of authors as a spreadsheet ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#download)).
 
-A page is a title band and bands, made of these parts:
-
+**5. The catalog page.** Write `application/views/Bookshelf/books.pug`:
 ```pug
 extends ../default/master/site
 
+//- The catalog: Route::page gives it $books (list_books: a page of books) and $authors (list_authors).
+//- The form posts to Route::form('/books', 'create_book'): a refusal comes back here with errors(), old() and flash('error')
+
 block title
-  | Tasks · My app
+    | Bookshelf
 
 block content
-  section.cq-hero.cq-hero--page
-    h1.cq-display Tasks
-    p.cq-lead Everything that has to be done.
+    section.cq-hero.cq-hero--page
+        h1.cq-display Bookshelf
+        p.cq-lead The books we love. The same catalog that the REST API and AI agents use.
 
-  section.cq-band.cq-band--tight
-    .cq-inner.cq-inner--narrow
-      form#new-task(method='POST', novalidate)
-        .cq-form-grid
-          .cq-field
-            label(for='task-title') Task
-            input#task-title.form-control(type='text', name='title', placeholder='What has to be done?')
-          .cq-field
-            label(for='task-notes') Notes
-            input#task-notes.form-control(type='text', name='notes', placeholder='Optional')
-          .cq-field
-            label.cq-hidden-label(for='add-task') &nbsp;
-            button#add-task.btn.btn-primary.cq-btn-block(type='submit') Add task
-      p#error.cq-field-error(role='alert')
+    section.cq-band.cq-band--tight
+        .cq-inner.cq-inner--narrow
+            if flash('success')
+                p.cq-alert(role='status')= flash('success')
 
-      .cq-segments(role='tablist')
-        button.active(type='button', role='tab', aria-selected='true') All
-          span.cq-count 2
-        button(type='button', role='tab', aria-selected='false') Open
-          span.cq-count 1
+            form(method='POST', action="{$home}books", novalidate)
+                =csrf()
+                .cq-form-grid.cq-form-grid--2
+                    .cq-field
+                        label(for='title') * Title
+                        input#title.form-control(type='text', name='title', value=old('title'), maxlength='200')
+                        if errors('title')
+                            p.cq-field-error= errors('title')
+                    .cq-field
+                        label(for='author_id') * Author
+                        select#author_id.form-select(name='author_id')
+                            each $a in $authors
+                                option(value=$a['id'], selected=$a['id'] == old('author_id'))= $a['name']
+                        if errors('author_id')
+                            p.cq-field-error= errors('author_id')
+                    .cq-field
+                        label(for='published_year') * Year
+                        input#published_year.form-control(type='number', name='published_year', value=old('published_year'), placeholder='1969')
+                        if errors('published_year')
+                            p.cq-field-error= errors('published_year')
+                    .cq-field
+                        label(for='isbn') ISBN
+                        input#isbn.form-control(type='text', name='isbn', value=old('isbn'), placeholder='Optional', maxlength='20')
+                        if errors('isbn')
+                            p.cq-field-error= errors('isbn')
+                .cq-field
+                    label(for='summary') Summary
+                    input#summary.form-control(type='text', name='summary', value=old('summary'), placeholder='Optional', maxlength='2000')
+                button.btn.btn-primary(type='submit') Add book
+            if flash('error')
+                p.cq-field-error(role='alert')= flash('error')
 
-      ul.cq-rows
-        li.cq-row
-          input.form-check-input.cq-row-check(type='checkbox')
-          .cq-row-main
-            p.cq-row-title Buy milk
-            p.cq-row-meta 2 liters
-          .cq-row-actions
-            button.btn.btn-secondary(type='button') Edit
-            button.btn.btn-secondary(type='button') Delete
-      p.cq-empty-state(hidden) No tasks yet: add the first one above.
+    section.cq-band.cq-band--tight
+        .cq-inner.cq-inner--narrow
+            h2.cq-heading Books
+            if $books['total'] == 0
+                p.cq-empty-state No books here yet: add the first one above.
+            else
+                ul.cq-rows
+                    each $b in $books['data']
+                        li.cq-row
+                            .cq-row-main
+                                p.cq-row-title
+                                    a(href="{$home}books/{$b['id']}")= $b['title']
+                                p.cq-row-meta
+                                    a(href="{$home}books?author_id={$b['author_id']}")= $b['author']['name']
+                                    | , #{$b['published_year']}
+                //- the next and previous pages keep the author of the address (?author_id=2)
+                - $filter = isset($_GET['author_id']) ? '&author_id=' . (int) $_GET['author_id'] : '';
+                p.cq-auth-note
+                    | Page #{$books['page']} of #{$books['pages']}, #{$books['total']} books
+                    if $books['page'] > 1
+                        |  · 
+                        a(href="{$home}books?page=" . ($books['page'] - 1) . $filter) Previous
+                    if $books['page'] < $books['pages']
+                        |  · 
+                        a(href="{$home}books?page=" . ($books['page'] + 1) . $filter) Next
+            p.cq-auth-note
+                a(href="{$home}books") All books
+                |  · 
+                a(href="{$home}authors.csv") The authors as a spreadsheet (CSV)
 ```
+`$home` is the address of the application (set by the master, ending with `/`), `csrf()` writes the hidden `_token` field every form needs, and a capability's answer reaches the view as plain arrays (`$b['author']['name']`). `#{...}` prints a PHP value inside text.
+
+**6. The page of one book.** Write `application/views/Bookshelf/book.pug`:
+```pug
+extends ../default/master/site
+
+//- One book: Route::page gives it $book (get_book: the book with its author).
+//- Declarative routes adds its edit and delete forms (update_book, delete_book)
+
+block title
+    = $book['title'] . ' · Bookshelf'
+
+block content
+    section.cq-hero.cq-hero--page
+        h1.cq-display= $book['title']
+        p.cq-lead
+            | by #{$book['author']['name']}, #{$book['published_year']}
+
+    section.cq-band.cq-band--tight
+        .cq-inner.cq-inner--narrow
+            if flash('success')
+                p.cq-alert(role='status')= flash('success')
+            p= $book['summary'] ?: 'No summary yet.'
+            if $book['isbn']
+                p.cq-row-meta ISBN #{$book['isbn']}
+            p.cq-auth-note
+                a(href="{$home}books") All books
+```
+Write `application/views/Bookshelf/notfound.pug`:
+```pug
+extends ../default/master/site
+
+//- The notFound view of Route::page: $message is the message of the capability that refused (get_book)
+
+block title
+    | Not found · Bookshelf
+
+block content
+    section.cq-hero
+        h1.cq-display Not found
+        p.cq-lead= $message
+        .cq-cta
+            a.btn.btn-primary(href="{$home}books") All books
+```
+
+**7. Try it.** Open `http://localhost:8080/books`:
++ Each row shows a title, its author and its year, sorted by title, and `Page 1 of 1, 5 books` under them.
++ Type `Dawn`, choose Octavia E. Butler, leave the year empty, press **Add book**: the page comes back with `The Published Year field is required` under the year, `Some of the inputs are invalid` under the form, `Dawn` still in the title and Octavia E. Butler still chosen.
++ Type `1987` as the year and press **Add book**: you land on `/books/6`, which shows `Book added` and `by Octavia E. Butler, 1987`. Reload it: the message is gone (it lasts one request).
++ Click *Octavia E. Butler* under a book: `/books?author_id=2` lists her three books.
++ Open `http://localhost:8080/books/999`: *Not found*, `There is no book #999`, status `404`.
+
+**Check**
++ `/books` and `/books/6` look like Caligrafy's own pages (top bar, title band, rows) at desktop and phone width.
++ The form is refused without its `_token` field: `curl -X POST -d "title=x&author_id=1&published_year=2000" http://localhost:8080/books` answers `403`.
++ No controller and no SQL in a view: the routes name capabilities, and the views only print what they get.
+
+## Reference
+
+### Where the files go
+
+| What | Where |
+| --- | --- |
+| Views (`.pug`), in any sub-folders | `application/views/`, for example `application/views/Bookshelf/books.pug` |
+| Caligrafy's masters and modules | `application/views/default/master/` (`site.pug`, `layoutblocks.pug`), `application/views/default/modules/` |
+| Stylesheets, scripts, images, fonts | `public/` (`public/css/`, `public/js/`, `public/images/`): `application/` is never served to browsers |
+
+A view is named by its path from `application/views/`, without `.pug`: `'Bookshelf/books'`.
+
+### A page without data
+
+```php
+Route::page('/about', 'about');
+Route::page('/about', 'about', ['with' => ['sentence' => 'Built with Caligrafy']]);   // fixed values: $sentence
+```
+
+### A page with data: `Route::page`
+
+`Route::page($route, $view, $options)` renders the view through the framework's page controller (`framework/core/PageController.php`):
+
+| Option | Default | What it does |
+| --- | --- | --- |
+| `data` | none | `['books' => 'list_books']`: calls each capability and gives its answer to the view under that name. The capability must exist and be `readOnly`, otherwise every visit answers `500` (`LogicException`). Its inputs are the query string and the route variables, the route variables winning (`/books/3?id=9` gives `id = 3`); only the inputs in its `$rules` reach it. Fixed inputs: `['book' => ['get_book', ['id' => 3]]]` |
+| `with` | none | fixed values for the view: `['with' => ['install' => true]]` |
+| `signedIn` | `false` | `true` sends visitors to `/login` (needs `Auth::authentication(...)` in `web.php`) |
+| `level` | `0` | sends people whose `permissions` are below it to `/notAuthorized` |
+| `notFound` | none | a view shown with status `404` when a capability answers `not_found`, `invalid` or `conflict`; it gets the route variables, `with`, `$message`, `$authorized` and `$user` |
+
+Every view rendered by `Route::page` gets:
+
+| Variable | Value |
+| --- | --- |
+| the route variables | `$id` for `/books/{id}` |
+| the `with` values and the `data` answers | `$books`, `$book`... (plain arrays) |
+| `$authorized` | `true` when someone is signed in |
+| `$user` | `['id', 'username', 'permissions']` of who is signed in, or `null` |
+
+The view never gets the query string: read it through a capability input. The names `authorized` and `user` are reserved (`LogicException`). When a capability refuses: a visitor (`unauthenticated`) is sent to `/login` when authentication is on; `forbidden` answers `[ERROR 1006]` (403); `not_found`, `invalid` and `conflict` answer `[ERROR 1005]` (404), or the `notFound` view.
+
+### Forms: `errors()`, `old()` and `flash()`
+
+A form that posts to [`Route::form`](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form) comes back to the page with what the page needs to show:
+
+| Helper | Returns |
+| --- | --- |
+| `errors('title')` | the message of one field, or `null` |
+| `errors()` | every field's message, as an array |
+| `old('title', $default = '')` | what the field held when the form was refused; never a field whose name matches `pass`, `secret`, `token`, `card`, `cvc`, `cvv` or `iban`, and never a file |
+| `flash('success')` | the `flash` message of the `Route::form` that succeeded |
+| `flash('error')` | the message of a refused form (`Some of the inputs are invalid` by default, or the route's `error` option) |
+| `flash('saved', 'Your changes are saved')` | keeps a message for the next request |
+| `csrf()` | the hidden `_token` field: write `= csrf()` in every form |
+| `methodField('PUT')` | the hidden `_method` field, for a `Route::form` with `'method' => 'PUT'` or `'DELETE'` |
+
+They last **one request**: the first page after the post reads them, then they are gone. Point `success` and `back` of `Route::form` at the page that shows them.
+
+### Masters, blocks and Pug in Caligrafy
+
+New pages extend the master **`default/master/site`** (`application/views/default/master/site.pug`): a light top bar with the Caligrafy mark, the page, a footer. Its blocks:
+
+| Block | What goes in it |
+| --- | --- |
+| `title` | the text of the browser tab (default `Caligrafy`) |
+| `brand` | the name after the mark in the top bar |
+| `nav_links` | the links on the right of the top bar; on phones a **Menu** button opens them. By default *Sign in* / *Create account*, or *Sign out* when someone is signed in |
+| `content` | the page |
+| `footer` | the footer (default: the copyright of `copyright()`) |
+| `additional_css` | more `link` tags, loaded after Caligrafy's stylesheets and before a design style |
+| `additional_scripts` | more scripts, at the end of the page |
+
+The master also links the web app manifest, the icons and the page's [social card](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards), sets `$home` (the application's address, ending with `/`), and links its stylesheets with their modification time (`?v=...`) so browsers fetch every change. Link your own files the same way: `script(src=$home . 'public/js/books.js?v=' . @filemtime(PUBLIC_PATH . 'js/books.js'))`.
+
+**Pug in Caligrafy.** Pug writes HTML by indentation: `p.cq-lead Hello` is `<p class="cq-lead">Hello</p>`. Caligrafy runs Pug with **PHP expressions** ([Phug](https://phug-lang.com)):
+
+| Write | Not |
+| --- | --- |
+| `'by ' . $author['name']` (PHP joins strings with `.`) | `'by ' + $author['name']` (an error: "Unsupported operand types") |
+| `p= $book['title']` (escaped), `p!= $html` (not escaped: only for HTML you made) | `p= $book.title` |
+| `if $book` / `each $book in $books['data']` with the lines under it | `- if ($book) echo 'x'` on one line (does not compile) |
+| `p From &#36;40 a month` | `p From $40 a month` (`$40` is read as a variable and vanishes) |
+| `- $position = sprintf('%d of %d', $i + 1, count($books))` then `figure(aria-label=$position)` | an attribute value with parentheses and `.` (`aria-label=($i + 1) . ' of ' . count($books)`): a parse error |
+
+`php caligrafer.php doctor` points to the `$` before digits and the one-line `- if` it finds in `application/views`.
+
+### Compiled views, debug mode and the Optimizer
+
+Phug turns each `.pug` view into PHP. Caligrafy keeps that PHP between requests (`framework/core/View.php`):
+
+| Setting in `.env` | Effect |
+| --- | --- |
+| (default) | a view is compiled once, then again only when it, or a file it `extends` or `include`s, is saved with a newer modification time. Edit a view, reload the page: you see the change |
+| `APP_DEBUG=true` | Phug's debug mode: an error names the `.pug` file and its line, in a page with the source. It makes every page about three times slower. Views compiled this way are kept in their own folder |
+| `APP_DEBUG=false` (production) | no debug mode: an error in a view answers `[ERROR 500] Internal Server Error`. An up-to-date compiled view runs through Phug's Optimizer, which includes the compiled PHP without loading Phug's compiler |
+| `VIEW_OPTIMIZER=false` | no Optimizer: every view goes through Phug's renderer (still cached) |
+| `VIEW_CACHE=false` | no cache: every view is compiled on every request |
+
+The compiled views live in the system's temporary folder, one folder per project and per system user, readable by that user only: `caligrafy-views-<project>-<user>` and, in debug mode, `caligrafy-views-debug-<project>-<user>`. A project that sets Phug's `cache_dir` itself keeps its folder. A new container starts with empty folders.
+
+**When to clear them.** Copying files with tools that keep the old modification times (`rsync -a`, `cp -p`, an unzipped archive) can leave a compiled view newer than the file you copied, so the old page keeps showing. Run, as the system user of the web server (each user has its own folders):
+```bash
+docker compose exec dev-box php caligrafer.php cache clear
+```
+Expected: `Cache (<store>) emptied; <n> compiled view and class map file(s) removed`. It empties both view folders, the class map and the [cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching). Restarting the container does the same for a Docker server. Deploys from the production image and Caligrafy Cloud are not concerned.
+
+### Mobile: install to home screen
+
+Browsers can install a Caligrafy application on a phone, a tablet or a computer: it opens from its own icon, full screen, without the browser bar. Installation needs HTTPS (or `localhost`).
+
++ **The manifest.** Both masters link `public/manifest.webmanifest`: the name, the white colors and the icons of the app (`public/images/resources/icon-192x192.png` and `icon-512x512.png`, plus the Apple touch icons). Its `start_url` and `scope` are `../`, relative to the manifest: they point to the root of the application, whatever `APP_ROOT` is. Change `name`, `short_name` and the icons to brand your app; keep a 192x192 and a 512x512 PNG (Chrome needs both). New apps start with Caligrafy's black logo in `favicon.ico`, the Apple touch icons and these two: replace the files with your own, keeping their names (the pages link them with their modification time, so browsers fetch them again).
++ **The install button.** Give the page `install`: `Route::page('/', 'default/index', ['with' => ['install' => true]]);`. The master then includes `default/modules/install.pug`: on Chrome, Edge and Android an **Install** button (`btn-primary`) appears when the browser offers it, and **Not now** (`btn-secondary`) hides it; on iPhone and iPad Safari a short hint says to tap Share, then Add to Home Screen, and **Got it** hides it. Nothing shows once the app is installed or after the visitor dismissed it (`localStorage` key `caligrafy-install-dismissed`). The box is styled inside the module (`.caligrafy-install`): restyle it in your own CSS.
++ **The offline page.** `PWA_SERVICE_WORKER=true` in `.env` registers `public/sw.js` (off by default). It does one thing: when a page cannot load because the device is offline, it shows `public/offline.html`. It never caches pages, API routes, `POST` requests or signed-in pages. Edit `offline.html` (self-contained: no external files) and change `CACHE` in `sw.js` when you do. Setting it back to `false` unregisters it on the next visit. The root `.htaccess` sends `Service-Worker-Allowed` for `public/sw.js` and the `application/manifest+json` type for `.webmanifest` files. `php caligrafer.php doctor` checks the manifest and its icons, and, with the service worker on, its files and HTTPS in production.
++ **Client apps** of `public/<app>` link the manifest themselves in their `<head>`: `<link rel="manifest" href="<?php echo session('public').'manifest.webmanifest'; ?>">` and `<meta name="theme-color" content="#ffffff">` install the whole application. To install one app on its own, copy `public/manifest.webmanifest` to `public/<app>/manifest.webmanifest`, set `"start_url": "./"`, `"scope": "./"`, `"id": "./"` and its `name`, prefix the icons with `../` (`"../images/resources/icon-192x192.png"`) and link that copy. A Vite single page app puts the copy and its icons in its own `public/` folder and links it from `index.html` (`<link rel="manifest" href="manifest.webmanifest">`).
+
+### One look on every device: the design tokens
+
+`public/css/tokens.css` defines Caligrafy's look as CSS custom properties, generated from `public/css/tokens.json` (the two must match): colors (`--cq-color-ink`, `--cq-color-paper`, `--cq-color-text`, `--cq-color-text-muted`, `--cq-color-border`...), type (`--cq-font-size`, `--cq-font-line-height`), spacing (`--cq-space-1` to `--cq-space-5`, `--cq-space-gutter`), radius (`--cq-radius-control`) and breakpoints (`--cq-breakpoint-phone`, `-tablet`, `-desktop`, `-wide`). It also gives:
++ touch targets of at least `--cq-touch-target` (44px) on touch screens (`pointer: coarse`),
++ safe-area padding when the app is installed to the home screen (`display-mode: standalone`),
++ `.cq-split`: one column on phones, a list and its detail side by side from tablets up ([below](#sidebyside)).
+
+`look.css` sets its own `--design-*` tokens (`--design-canvas`, `--design-ink`, `--design-primary`, `--design-font`...) and feeds the `--cq-*` ones from them. Use the tokens in your own styles (`color: var(--cq-color-text)`) so every experience of the application keeps one look: see [experiences](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#experiences).
+
+### Caligrafy's look: the page components
+
+Every page of Caligrafy shares one look: **a white canvas, a light top bar with the Caligrafy mark, one message per screen, full-width bands, narrow columns for forms, rows for lists, large tiles for links, black for the main action, Inter type, no cards and no shadows**, at every size. Three stylesheets give it; the master `site.pug`, the Vue app template and the single page app template link them:
+
+| Stylesheet | What it holds |
+| --- | --- |
+| `public/css/layout.css` | the structure: top bar, title bands, bands, forms, rows, tiles, account area, footer |
+| `public/css/look.css` | the look: its `--design-*` tokens, Inter, black buttons, fields, the mark |
+| `public/css/camera.css` | full-screen camera pages: face detection, machine learning, face sign-in |
+
+A page is a title band, then bands. The parts:
 
 | Part | Classes |
 | --- | --- |
@@ -316,23 +555,21 @@ block content
 | Title band | `section.cq-hero.cq-hero--page`, same children: the title of an ordinary page |
 | Band | `section.cq-band > .cq-inner > h2.cq-heading + p.cq-lead + ...`; `.cq-band--surface` (ash), `.cq-band--tight`, `.cq-inner--narrow` (720px), `.cq-center` |
 | Sign-in style form | `main.cq-auth > h1 + form > .cq-field (label + .form-control) + .btn`; `.cq-auth--wide`, `.cq-or`, `p.cq-auth-note` |
-| Form on a page | `.cq-form-grid(.cq-form-grid--2) > .cq-field`: fields side by side from tablets up |
-| Messages | `.cq-alert` (`.cq-alert--error`) above a form (`include ../default/modules/notice` shows `$error` and `$message`), `p.cq-field-error` under it, `p.cq-empty-state` for empty lists |
+| Form on a page | `.cq-form-grid(.cq-form-grid--2) > .cq-field`: fields side by side from tablets up; `.cq-btn-block`, `label.cq-hidden-label` |
+| Messages | `.cq-alert` (`.cq-alert--error`) above a form (`include ../default/modules/notice` shows `$error` and `$message`), `p.cq-field-error` under a field, `p.cq-empty-state` for an empty list |
 | Choices | `.cq-segments > button` (`.active`) with `span.cq-count` |
 | List | `ul.cq-rows > li.cq-row` (`.is-done` greys it) with `.cq-row-check`, `.cq-row-main` (`.cq-row-title`, `.cq-row-meta`), `.cq-row-actions` |
 | Links | `.cq-tiles > a.cq-tile > h3 + p + span.cq-tile-link`: one, two or three columns by width |
-| Side by side | `.cq-split > section.cq-split-main + aside.cq-split-detail`: a list and the item opened, or a list and its form (2.12.0+, [below](#sidebyside)) |
+| Side by side | `.cq-split > section.cq-split-main + aside.cq-split-detail` ([below](#sidebyside)) |
 | Figures | `.cq-stats > .cq-stat > .cq-stat-value + .cq-stat-label`, `span.cq-badge` |
 | Account area | `.cq-account > nav.cq-account-nav > a(href='#section')` + `.cq-account-main > section(id)`: a side menu on desktops that marks the section on screen |
 | Text and code | `.cq-doc` (long text), `.cq-code`, `pre.cq-pre` |
 
-The same classes work in Vue apps and the single page application. Keep to black and white (`btn-primary` is black, `btn-secondary` ash): no Bootstrap color classes. The [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) builds every new page with this look.
-
-Two things to know when writing these views: Caligrafy renders Pug with PHP expressions, so join strings with `.` (`'Hello ' . $name`), never `+`; and the top bar has its own button (Menu), so scripts find their elements by id, never with `document.querySelector('button')`.
+The same classes work in Vue apps and single page apps. Keep to black and white (`btn-primary` is black, `btn-secondary` ash): no Bootstrap color classes. The top bar has its own button (Menu): scripts find their elements by id, never with `document.querySelector('button')`. In `site.pug`, `body` is a flex column (the footer waits one screen down): put content in a block (`section.cq-band`), never a bare `a` or `span` directly in `body`, and keep a page's own footer a `footer.cq-footer` directly in `body`.
 
 ### A list and its detail, side by side
 
-Since 2.12.0, a page that shows a list and the item opened (a finder, a catalog and its add form) puts them side by side, right after its title band: the list on the left, the item in an ash panel on the right that stays in view while the list scrolls. On phones the panel comes after the list.
+A page that shows a list and the item opened (a finder, a catalog and its add form) puts them side by side right after its title band: the list on the left, the item in an ash panel on the right that stays in view while the list scrolls. On phones the panel comes after the list. A form in the panel takes one field a line.
 
 ```pug
 section.cq-hero.cq-hero--page
@@ -348,19 +585,44 @@ section.cq-hero.cq-hero--page
   aside#book.cq-split-detail(aria-live='polite')
     p.cq-empty-state Open a book to read about it.
 ```
+The course's [finder and single page application](https://github.com/caligrafy/caligrafy-quill-course/wiki) are built this way.
 
-A form in the panel takes one field a line. Vue templates use the same classes; the course's [finder and single page application](https://github.com/caligrafy/caligrafy-quill-course/wiki) are built this way.
+**Camera pages.** Face detection, machine learning and face sign-in fill the screen with the camera (`camera.css`, `.cq-camera`): the title and the status float at the top, the actions at the bottom, an oval guides the face, a sheet holds a form over the camera. See [Face Detection](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition) and [Machine Learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning).
 
-### Camera pages
+### Another look: design styles
 
-Face detection, machine learning and face sign-in fill the screen with the camera (`camera.css`): the title and the status float at the top, the actions at the bottom (the main one white over the camera), an oval guides the face, and a sheet holds a form over the camera. See [Face Detection](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition) and [Machine Learning](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.3-Machine-Learning).
+Caligrafy's look is the default. To give the whole application another one, pick a [design style](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles) (`php caligrafer.php design use <name>`, `DESIGN_STYLE` in `.env`) and write its stylesheet (`/caligrafy-quill:design` in Claude Code). The masters load `public/css/designs/<name>.css` last, so the same markup takes the new look and your views do not change. An empty `DESIGN_STYLE` is the Caligrafy look again.
 
-### Older pages: the card components
+## Other ways and under the hood
 
-Pages built on `layoutblocks.pug` before 2.11.0 keep their card components (`public/css/tokens.css`, since 2.1.3): `main.cq-page > .cq-card` with `.cq-card-head` (`h2.cq-title + p.cq-note`), `form.cq-form > .cq-fields`, `button.btn.btn-primary.cq-submit`, `p.cq-error`, `.cq-tabs`, `ul.cq-list > li.cq-item` with `.cq-actions`, `p.cq-empty`, `.cq-foot`, `.cq-section` and `.cq-split`. They take the new look from `look.css` too. A project made before 2.11.0 gets the new stylesheets with `php caligrafer.php update` and the new templates with `php caligrafer.php upgrade --apply`.
+These still work in 2.19. `Route::page` with `data` replaces them for pages, and `Route::form` for forms.
 
-## Another look: design styles
++ **`view()` from a controller.** `return view('Bookshelf/books', ['books' => $this->call('list_books'), 'authors' => $this->call('list_authors')]);` in a controller extending `Caligrafy\Controller` (`$this->view()` is the same). Use a controller only for custom HTTP: it must pass `$authorized` itself, or the top bar's signed-in parts follow only the session.
++ **A closure that returns a view.** `Route::get('/hello', function () { return view('hello'); });` gets only what the closure passes: no `$authorized`, no `$user`.
++ **`view()` answers JSON too.** `view($name, $data)` prints `$data` as JSON and ends the request when the request sends `Accept: application/json` (and not `text/html`), or when `$name` is `null`; `api($data)` is `view(null, $data)`. Set the status first: `http_response_code(422); return api([...]);`. Nothing runs after `view()` or `api()`.
++ **Hand-written forms** posted to a controller: `= csrf()` in the form, `= methodField('PUT')` for `PUT` and `DELETE`, and the controller validates with `$this->check()`. See [Helpers, Forms and REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#forms).
 
-Caligrafy's look is the default. To give the whole application another one, pick a [design style](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles) (`php caligrafer.php design use <name>`, `DESIGN_STYLE` in `.env`) and let Claude write its stylesheet (`/caligrafy-quill:design`): the masters load `public/css/designs/<name>.css` last, after `look.css`, so the same markup takes the new look and your views do not change. An empty `DESIGN_STYLE` is the Caligrafy look again.
+### The older master: `layoutblocks` and Bootstrap 5
+
+Pages written before 2.11.0 extend `default/master/layoutblocks`. It keeps working and takes the new look from `look.css`. It loads Bootstrap 5.3 (`scripts('bootstrap_css')`, `scripts('bootstrap_script')`, no jQuery) and `public/css/theme.css`, which keeps the Caligrafy black and white on top of Bootstrap: black `btn-primary`, white `btn-secondary`, black focus rings, buttons in forms at most 150px wide. Its header is fixed (60px): content starts under it. Its body carries `class='caligrafy-layout'`, which scopes the Bootstrap 3 heading margins `theme.css` keeps; `theme.css` must load after Bootstrap. Bootstrap 5 breakpoints are one step lower than Bootstrap 3's: a Bootstrap 3 `col-sm-*` is a Bootstrap 5 `col-md-*`, `col-md-*` is `col-lg-*`, `hidden-xs` is `d-none d-md-block`. Its card components (`main.cq-page > .cq-card`, `form.cq-form > .cq-fields`, `ul.cq-list > li.cq-item`, `.cq-tabs`, `p.cq-error`, `p.cq-empty`) live in `tokens.css`. A project made before 2.11.0 gets `site.pug` with `php caligrafer.php upgrade --apply` and the stylesheets with `php caligrafer.php update`: see [Upgrading](https://github.com/caligrafy/caligrafy-quill/wiki/9.5-Security-and-Upgrading#upgrading).
+
+## Common mistakes
+
++ **`+` to join strings in a view**: the page becomes a template error. Use `.`.
++ **A `data` capability that writes**: `Route::page` accepts only `readOnly` capabilities; every visit answers `500`.
++ **Reading `$_GET` in a view**: the view never gets the query string. Add the input to the capability's `$rules`.
++ **A `success` page that redirects again**: the flash messages and errors are read by the first page after the post, then gone.
++ **A `form` without `method='POST'`**: when its script does not run, the browser sends the fields in the address. Give every form `method='POST'`.
++ **A changed view that does not show after a copy**: `php caligrafer.php cache clear` as the web server's user.
++ **`document.querySelector('button')`** finds the top bar's Menu button: use ids.
+
+## Related pages
+
++ [Declarative routes: `Route::form`, `Route::auth`, `Route::download`](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)
++ [Routing: page routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing)
++ [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability)
++ [Queries: the query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries)
++ [Design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
++ [Vue apps: the flow of information](https://github.com/caligrafy/caligrafy-quill/wiki/9.7-Understanding-the-flow-of-information)
 
 >[Next Section: Learn about Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers)

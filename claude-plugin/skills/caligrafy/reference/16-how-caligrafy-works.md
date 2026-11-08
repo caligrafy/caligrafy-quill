@@ -3,107 +3,124 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-With Caligrafy you **describe** your idea, **approve** the plan and **ship** a complete app: Claude does the work, you keep the final say. What makes the app complete is one idea: **build once, experience everywhere**. A feature is written once, as a capability, and every experience of your application (web pages, Vue apps, a REST API, AI agents) uses that same capability. From the first command to a public address, it is one project. This page explains the few ideas behind it. To try it first, follow the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
+Caligrafy is a PHP framework built on one idea: **build once, experience everywhere**. You write each feature of your application once, as a **capability**, and every way people and programs reach the application (web pages, Vue apps, a REST API, AI agents) calls that same capability. This page explains the few ideas behind it in about 5 minutes. To try it first, follow the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart).
+
+You can build with Claude Code, which follows these ideas for you (`/caligrafy-quill:idea`, see the [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude)), or by hand, following [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability). Both produce the same project.
 
 ## A capability is a feature, written once
 
-A **capability** is one thing your application can do: list the tasks, add a book, place an order. It is a small PHP class in `application/services/` that says four things:
+A **capability** is one thing your application can do: list the books, add a book, lend a book. It is a small PHP class in `application/services/` that says four things:
 
 | What | Where in the class | Example |
 | --- | --- | --- |
-| its name and what it does | the `#[Capability]` line | `name: 'create_task'`, `description: 'Adds a task...'` |
-| the inputs it accepts and their rules | `$rules` | `'title' => 'required|max_len,200'` |
-| who may use it | the `#[Capability]` line | `scope: 'tasks:write'`, `level: 1`, or `public: true` |
-| what it does | `handle()` | save the task, return it |
+| its name and what it does | the `#[Capability]` attribute | `name: 'create_book'`, `description: 'Adds a book...'` |
+| the inputs it accepts and their rules | `$rules` | `'title' => 'required\|max_len,200'` |
+| who may use it | the `#[Capability]` attribute | `scope: 'books:write'`, `level: 1`, or `public: true` |
+| the work | `handle()` | save the book, return it |
 
 ```php
-#[Capability(name: 'create_task', description: 'Adds a task and returns it with its id.', scope: 'tasks:write')]
-class CreateTask extends Service
+<?php
+
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Service;
+
+#[Capability(
+    name: 'create_book',
+    description: 'Adds a book to the Bookshelf catalog and returns it with its id and its author.',
+    scope: 'books:write'
+)]
+class CreateBook extends Service
 {
-    public $rules = array('title' => 'required|max_len,200', 'notes' => 'max_len,1000');
+    public $rules = array(
+        'title' => 'required|max_len,200',
+        'published_year' => 'required|integer|min_numeric,1450|max_numeric,current_year',
+        'author_id' => 'required|integer|exists,authors.id'
+    );
 
     public function handle(array $input, Context $context)
     {
-        return (new Task('tasks'))->create($input);
+        $id = Book::insert($input);   // one INSERT, every value bound
+        return Book::with('author')->find($id);
     }
 }
 ```
 
-A capability only returns data or refuses (`ServiceError`): it never draws a page or answers HTTP itself. That is what lets every experience use it.
+A capability only returns data, or refuses with a `ServiceError` (`invalid`, `unauthenticated`, `forbidden`, `not_found`, `conflict`). It never draws a page, redirects or answers HTTP itself. That is what lets every experience use it. Inside it, the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) reads the data: `Book::with('author')->where('author_id', 2)->paginate(20, $input['page'] ?? 1)`.
 
-## Experiences use the capabilities
+## Experiences call the capabilities
 
-An **experience** is a way to reach your application. Each one is shaped for its audience, and each one calls the same capabilities:
+An **experience** is a way to reach your application. Each one is shaped for its audience, and each one calls the same capabilities. One line of `application/config/routing/web.php` connects each:
 
-| Experience | Who uses it | How it calls `create_task` |
+| Experience | Who uses it | How it reaches `create_book` |
 | --- | --- | --- |
-| Web pages (Pug) | people in a browser | a page script calls the JS client, the page gets its data from its route (`Route::page('/tasks/{id}', 'Tasks/show', ['data' => ['task' => 'get_task']])`), and its form posts to `Route::form('/tasks', 'create_task')` |
-| Vue apps and the single page application | people on desktop, tablet and phone | `await createTask({ title })` from the generated client (`php caligrafer.php client`) |
-| REST API | other applications | `POST /api/tasks` (`Route::capability('POST', '/api/tasks', 'create_task')`) |
-| AI agents (MCP) | Claude, Cursor and other agents | the `create_task` tool (`Route::mcp('/mcp')`) |
-| Scripts | you, from the command line | `Capabilities::call('create_task', $input, Context::cli())` |
+| Web pages (Pug) | people in a browser | the page gets its data from a read-only capability (`Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']])`), and its form posts to `Route::form('/books', 'create_book', ['success' => '/books/{id}'])` |
+| Vue apps and page scripts | people on desktop, tablet and phone | `await createBook({ title, published_year, author_id })` from the generated JavaScript client (`php caligrafer.php client`, served by `Route::capabilities('/capabilities')`) |
+| REST API | other programs | `POST /api/books` (`Route::capability('POST', '/api/books', 'create_book')`), or `POST /capabilities/create_book` |
+| AI agents (MCP) | Claude, Cursor and other agents | the `create_book` tool (`Route::mcp('/mcp')`) |
+| The command line and tests | you | `php caligrafer.php call create_book title=Kindred published_year=1979 author_id=2`, `$this->call('create_book', [...])` in a test |
 
-You decide how each experience looks (a dense page on a desktop, a touch-first app on a phone, a tool for an agent); you never re-write the rules.
-
-The web's other needs are one line of `web.php` each, all calling capabilities (2.19.0+, [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)): `Route::auth()` for sign-in, `Route::webhook()` for the events Stripe posts, `Route::download()` for a CSV export. Inside a capability, the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) reads the data: `Task::where('done', 0)->with('owner')->paginate(20)`.
+The other needs of a web application are one line each, and call capabilities too ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)): `Route::auth()` for sign-in, sign-out and sign-up, `Route::webhook()` for the events a payment provider posts, `Route::download()` for a CSV export, `Route::redirect()` for an address that moved. Work that runs later or on a timer is a capability too, pushed as a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs) or named in a [schedule](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs).
 
 ## Who is calling
 
-Every call knows who is making it:
+Every call knows who makes it, in its `Context`:
 
-+ **People** sign in (password, passkey or face login). A capability can ask for a minimum permission level: `level: 1`.
-+ **Programs and AI agents** use a **personal access token** (`php caligrafer.php token create "my agent" --scopes tasks:read,tasks:write`). A token only reaches the capabilities its scopes allow, can expire, and can be revoked on its own.
++ **People** sign in (password, passkey). A capability can ask for a minimum permission level, `level: 1`, read from the `permissions` column of `users`.
++ **Programs and AI agents** use a **personal access token** (`php caligrafer.php token create "my agent" --scopes books:read,books:write`). A token reaches only the capabilities its scopes allow, can expire, and can be revoked on its own.
 + **Public** capabilities (`public: true`) need neither: use it for data anyone may read.
 
 ## What happens on every call
 
-Whatever the experience, every call goes through the same five steps:
+Whatever the experience, every call goes through the same steps:
 
 1. **Find** the capability (unknown: `404`).
-2. **Check who calls**: signed in or a token (`401`), with the right scope and level (`403`).
+2. **Check who calls**: signed in or a token (`401`), with the scope and the level (`403`), unless the capability is public.
 3. **Check the inputs** against `$rules`, keeping only the declared inputs (`422`, with a message per field).
 4. **Run** `handle()`.
-5. **Record** it in the audit log: every change and every refusal (`php caligrafer.php audit`).
+5. **Record** it in the audit log: every change and every refusal (`php caligrafer.php audit`). Reads that succeed are not recorded.
 
-So an invalid title gets the same message on the web page, over REST and for an agent, and a token without the scope is refused everywhere.
+So a book without an author gets `The Author Id field is required` on the web page, over REST and for an agent, and a token without `books:write` is refused everywhere.
 
 ## From your computer to the internet
 
-Build once does not end on your computer. The project you build is the project you put online, unchanged:
+The project you build is the project you put online, unchanged:
 
-+ a production `Dockerfile` at its root builds it as it is (PHP, Apache, your libraries, no development tools);
-+ when it starts, `php caligrafer.php deploy` creates and updates the tables from your `create_db.sql` scripts, then runs the [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) that never ran;
++ a production `Dockerfile` at its root builds it (PHP, Apache, your libraries, no development tools);
++ when the container starts, `php caligrafer.php deploy` creates the framework tables, runs every new or changed `create_db.sql`, then the [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations) that never ran, and Apache starts;
 + `php caligrafer.php cloud deploy <name>` puts it at `https://<name>.caligrafy.com` with [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#cloud), or you run the same image on [your own server](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#ownserver).
 
-Online, every experience still calls the same capabilities: the pages, the apps, the REST API and the AI agents of the public address follow the same rules as on your computer. From the first command to that address, the steps are the same three, whether Claude does them or you do: **describe it** (start, your data, build once), **approve it** (experience everywhere, people and trust, the checks) and **ship it** (online).
+Online, every experience calls the same capabilities with the same rules. With Claude, the whole path is three steps: **describe it** (the idea becomes a plan), **approve it** (your OK; Claude builds once and checks every experience) and **ship it** (GitHub and Caligrafy Cloud).
 
 ## Where things live
 
-```
+```text
 application/
-├── services/      capabilities: each feature, once (Users/: the people who sign in)
-├── models/        the data: one class per table, and its create_db.sql
-├── migrations/    changes to tables that have data: numbered SQL files, each run once (php caligrafer.php migrate)
-├── views/         the web pages (Pug), on the master default/master/site with Caligrafy's look
-├── controllers/   only for HTTP that no route covers (custom headers, several capabilities with conditions): they call capabilities
-└── config/        routing/web.php: the routes (Route::page, Route::form, Route::auth, Route::webhook, Route::download,
-                   Route::capability, Route::capabilities, Route::mcp);
-                   schedule.php: scheduled jobs; container.php: what capabilities' constructors get (optional)
-tests/                       your tests (php caligrafer.php test)
-Dockerfile                   the production image (php caligrafer.php deploy runs when it starts)
+├── services/      the capabilities: each feature, once (Users/: the people who sign in)
+├── models/        one class per table, with the create_db.sql that creates it
+├── migrations/    changes to tables that hold data: numbered SQL files, each run once (php caligrafer.php migrate)
+├── views/         the web pages (Pug), on the layout default/master/site
+├── controllers/   only for HTTP that no route covers; a controller calls capabilities ($this->call())
+└── config/        routing/web.php: the routes; config.php: the site's settings;
+                   schedule.php (scheduled jobs) and container.php (constructor bindings) when you add them
+tests/             your tests (php caligrafer.php test)
+Dockerfile         the production image (php caligrafer.php deploy runs when it starts)
 public/
-├── js/capabilities.js       the generated JS client
-├── css/layout.css, look.css  Caligrafy's look (tokens.css: the design tokens; camera.css: camera apps)
-└── <app>/                   Vue apps and the single page application
+├── js/capabilities.js       the generated JavaScript client
+├── css/                     Caligrafy's look: tokens.css (design tokens), layout.css, look.css, camera.css
+└── <app>/                   Vue apps and single page applications
 ```
 
-**One rule keeps every experience the same: only capabilities touch models.** Pages get their data from capabilities (`Route::page` with `data`, or the JS client in the browser), forms post to capabilities (`Route::form`), controllers call capabilities (`$this->call()`), REST and AI agents call capabilities. Every page goes through `Route::page`, which also gives it who is signed in; see [Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes).
+**One rule keeps every experience the same: only capabilities touch models.** Pages get their data from capabilities (`Route::page` with `data`, or the JavaScript client), forms post to capabilities (`Route::form`), controllers call capabilities (`$this->call()`), REST and AI agents call capabilities. `Route::page` also gives every view who is signed in (`$authorized`, `$user`).
 
-Caligrafy is also a classic MVC framework (routes, controllers, models, views), documented in the rest of this wiki. Start with capabilities and the declarative routes; reach for a controller only when the HTTP is truly custom, and let it call capabilities.
+Caligrafy is also a classic MVC framework (routes, controllers, models, views). Those parts are documented in the rest of this wiki, and existing controllers keep working. For new code, start with capabilities and the declarative routes; write a controller only when the HTTP is truly custom (several capabilities with conditions, custom headers, streaming), and let it call capabilities.
 
-## Next
+## Related pages
 
-+ [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude): your idea, built and online, or the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): a working application in 5 minutes.
-+ [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability): build a complete feature, page included.
-+ [Build Once: Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): every option, in depth.
-+ [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): from your computer to a public address.
++ [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart) and [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude)
++ [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability): a complete feature, by hand
++ [Build Once: Services, Capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP): every option
++ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes) and [Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries)
++ [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online)
+
+>[Next: Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability)

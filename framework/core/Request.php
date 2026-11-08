@@ -274,6 +274,33 @@ class Request extends \stdClass {
 
 
     /**
+     * What a client app page may see of the request (env.request of the Client/app view, 2.19.1): the address,
+     * the method, the route and its bound values, and the query string. Never the Cookie (the session id) nor the
+     * Authorization header, nor any other header that can carry a credential. A POST body is left out too: only the
+     * query string of the address is given
+     * @return array
+     */
+    public function forClient()
+    {
+        $query = $this->method === 'GET' ? (array) $this->uriParameters : (array) ($_GET ?? array());
+        unset($query['_token']);
+        $queryString = http_build_query($query);
+        return array(
+            'method' => $this->method,
+            'host' => $this->host,
+            'uri' => $this->uri,
+            'fullUri' => urldecode($this->uri . '?' . $queryString),
+            'uriComponents' => $this->uriComponents,
+            'uriParameters' => $query,
+            'parameters' => empty($query) ? (array) $this->currentBind : $query,
+            'parsedURI' => $this->parsedURI,
+            'currentRoute' => $this->currentRoute,
+            'fetch' => (object) ((array) $this->currentBind),
+            'acceptLanguage' => $this->acceptLanguage,
+        );
+    }
+
+    /**
      * Fetches the full uri a request
      */
     public function fullUri() {
@@ -356,6 +383,13 @@ class Request extends \stdClass {
         // a Route::webhook address (2.19.0): another service posts it with no session; Webhook::verify() checks its
         // signature before the capability runs
         if ($this->method === 'POST' && Route::isWebhook((string) ($_REQUEST['uri'] ?? ''))) {
+            return;
+        }
+
+        // the MCP endpoint (Route::mcp, 2.19.1): agents post it with a personal access token, never a session. Mcp\Http
+        // answers 401 with WWW-Authenticate without a token and never acts as the session's user, so a browser post
+        // that carries only the session cookie can do nothing there
+        if ($this->method === 'POST' && Route::isMcp((string) ($_REQUEST['uri'] ?? ''))) {
             return;
         }
 

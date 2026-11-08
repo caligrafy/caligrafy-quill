@@ -299,4 +299,38 @@ final class AuthRoutesTest extends TestCase
         $this->assertSame('dee@example.com', $json['json']['data']['email']);
         $this->assertArrayHasKey('__authorization', $_SESSION);
     }
+
+    // the sign-out form posts the page's _token: signOut() gives a new CSRF token, and the request must not be checked
+    // again against it ([ERROR 3000] after signing out, 2.19.0)
+    public function testTheSignOutFormSignsOutWithoutACsrfError(): void
+    {
+        if (!function_exists('getallheaders')) {
+            function getallheaders() { return array(); }
+        }
+        $server = $_SERVER;
+        $post = $_POST;
+        $request = $_REQUEST;
+        try {
+            Auth::authentication('QaAuthUser', 'users');
+            Route::auth();
+            $this->assertTrue(AuthRoutes::signIn($this->finder()('ann')));
+            $this->assertArrayHasKey('__authorization', $_SESSION);
+            $token = $_SESSION['token'];
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $_POST = array('_token' => $token);
+            $_REQUEST = array('_token' => $token, 'uri' => 'logout');
+            ob_start();
+            try {
+                Route::handler('POST', '/logout')();
+            } finally {
+                ob_end_clean();
+            }
+            $this->assertNotSame($token, $_SESSION['token'], 'signed out: a new CSRF token');
+            $this->assertArrayNotHasKey('__authorization', $_SESSION);
+        } finally {
+            $_SERVER = $server;
+            $_POST = $post;
+            $_REQUEST = $request;
+        }
+    }
 }

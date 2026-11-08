@@ -85,4 +85,52 @@ final class McpServerTest extends TestCase
             putenv('MCP_ALLOWED_ORIGINS');
         }
     }
+
+    // 2.19.1: a POST without a token got the session CSRF check ([ERROR 3000]) before the JSON-RPC 401
+    public function testAPostWithoutATokenGetsTheJsonRpc401NotTheCsrfError(): void
+    {
+        if (!function_exists('getallheaders')) {
+            function getallheaders() { return array(); }
+        }
+        $server = $_SERVER;
+        $request = $_REQUEST;
+        $post = $_POST;
+        $session = $_SESSION ?? null;
+        try {
+            \Caligrafy\Route::reset();
+            \Caligrafy\Route::mcp('/mcp');
+            $this->assertTrue(\Caligrafy\Route::isMcp('mcp'));
+            $this->assertTrue(\Caligrafy\Route::isMcp('/mcp/'));
+            $this->assertFalse(\Caligrafy\Route::isMcp('/books'));
+            $_SERVER['REQUEST_METHOD'] = 'POST';
+            $_POST = array();
+            $_SESSION = array('token' => str_repeat('a', 64));
+            $_REQUEST = array('uri' => 'mcp');
+            unset($_SERVER['HTTP_ORIGIN']);
+            ob_start();
+            try {
+                Http::respond();
+            } finally {
+                $out = ob_get_clean();
+            }
+            $json = json_decode($out, true);
+            $this->assertSame(Server::INVALID_REQUEST, $json['error']['code'] ?? null, $out);
+            $this->assertStringContainsString('Unauthorized', $json['error']['message']);
+
+            // any other form post is still checked
+            $_REQUEST = array('uri' => 'books');
+            try {
+                new \Caligrafy\Request();
+                $this->fail('the CSRF check of a form post');
+            } catch (\Exception $e) {
+                $this->assertSame(3000, $e->getCode());
+            }
+        } finally {
+            \Caligrafy\Route::reset();
+            $_SERVER = $server;
+            $_REQUEST = $request;
+            $_POST = $post;
+            if ($session === null) unset($_SESSION); else $_SESSION = $session;
+        }
+    }
 }

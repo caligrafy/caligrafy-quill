@@ -104,4 +104,49 @@ final class RequestTest extends TestCase
             putenv('LEGACY_API_KEY');
         }
     }
+
+    public function testForClientLeavesOutTheCookieAndTheAuthorization(): void
+    {
+        $request = $this->request([
+            'method' => 'GET', 'host' => 'example.test', 'uri' => 'books/3', 'uriComponents' => ['books', '3'],
+            'uriParameters' => ['page' => '2', '_token' => 'secret-form-token'], 'parsedURI' => [], 'currentRoute' => 'books/{id}',
+            'currentBind' => ['id' => '3'], 'acceptLanguage' => 'en',
+            'cookie' => 'PHPSESSID=session-id-value', 'authorization' => 'Bearer cq_1_secret',
+            'userAgent' => 'agent', 'cache' => 'no-cache', 'accept' => 'text/html', 'acceptEncoding' => 'gzip',
+        ]);
+        $client = $request->forClient();
+        $json = json_encode($client);
+        $this->assertStringNotContainsString('session-id-value', $json);
+        $this->assertStringNotContainsString('cq_1_secret', $json);
+        $this->assertStringNotContainsString('secret-form-token', $json);
+        foreach (['cookie', 'authorization', 'token', 'cache', 'userAgent', 'accept', 'acceptEncoding'] as $left) {
+            $this->assertArrayNotHasKey($left, $client);
+        }
+        $this->assertSame('books/3', $client['uri']);
+        $this->assertSame('books/3?page=2', $client['fullUri']);
+        $this->assertSame(['page' => '2'], $client['uriParameters']);
+        $this->assertSame('3', $client['fetch']->id);
+        $this->assertSame('example.test', $client['host']);
+    }
+
+    public function testForClientNeverGivesAPostBody(): void
+    {
+        $saved = $_GET;
+        $_GET = ['step' => '1'];
+        try {
+            $client = $this->request(['method' => 'POST', 'uri' => 'signin', 'uriParameters' => ['password' => 'hunter2'],
+                'currentBind' => [], 'uriComponents' => ['signin']])->forClient();
+            $this->assertStringNotContainsString('hunter2', json_encode($client));
+            $this->assertSame(['step' => '1'], $client['parameters']);
+        } finally {
+            $_GET = $saved;
+        }
+    }
+
+    public function testTheClientViewUsesForClient(): void
+    {
+        $view = file_get_contents(dirname(__DIR__, 2) . '/framework/settings/application/views/Client/app.pug');
+        $this->assertStringContainsString("'request' => request()->forClient()", $view);
+        $this->assertStringNotContainsString("'request' => request(),", $view);
+    }
 }

@@ -9,7 +9,7 @@ lerna-debug.log*
 
 node_modules
 .DS_Store
-dist
+# dist/ is committed: the production image (Dockerfile) does not run npm, it serves the built app
 dist-ssr
 coverage
 *.local

@@ -162,6 +162,42 @@ doctor: $DOC"
 fi
 cd "$ROOT"
 
+# --- migrate takes --env anywhere (2.19.1: migrate --env .env.testing printed the usage) --------------------------
+mkdir -p "$TMP/migrate" && cd "$TMP/migrate"
+cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads application/migrations
+cp framework/settings/.env.example .env && php caligrafer.php initialize off >/dev/null 2>&1
+sed -e 's/^DB_ACTIVATE=.*/DB_ACTIVATE=true/' -e 's/^DB_HOST=.*/DB_HOST=127.0.0.1/' -e "s/^DB_PORT=.*/DB_PORT=${QA_DB_PORT:-3316}/" \
+    -e 's/^DB_DATABASE=.*/DB_DATABASE=quillqa/' -e 's/^DB_USERNAME=.*/DB_USERNAME=root/' -e 's/^DB_PASSWORD=.*/DB_PASSWORD=root/' .env > .env.testing
+BOGUS=$(php caligrafer.php migrate --bogus --env .env.testing 2>&1); BOGUSCODE=$?
+if [ -n "${QA_DB_PORT:-}" ]; then
+    printf 'CREATE TABLE qa_migrate_env (id INT PRIMARY KEY);\n' > application/migrations/001_qa_migrate_env.sql
+    RUN=$(php caligrafer.php migrate --env .env.testing 2>&1); RUNCODE=$?
+    STATUS=$(php caligrafer.php migrate status --env .env.testing 2>&1)
+    EMPTY=$(php caligrafer.php migrate "" --env .env.testing 2>&1)
+    php -r '$p = new PDO("mysql:host=127.0.0.1;port=" . getenv("QA_DB_PORT") . ";dbname=quillqa", "root", "root"); $p->exec("DELETE FROM caligrafy_migrations WHERE name = \"001_qa_migrate_env.sql\""); $p->exec("DROP TABLE IF EXISTS qa_migrate_env");' >/dev/null 2>&1
+    if [ $RUNCODE = 0 ] && echo "$RUN" | grep -q '001_qa_migrate_env.sql' && echo "$STATUS" | grep -q 'ran .*001_qa_migrate_env.sql' \
+        && echo "$EMPTY" | grep -q 'Nothing to migrate' && [ $BOGUSCODE = 1 ] && echo "$BOGUS" | grep -q 'Usage: php caligrafer.php migrate'; then
+        ok "migrate --env <file>, migrate status --env <file> and migrate \"\" --env <file> use that file; another option shows the usage"
+    else
+        ko "migrate --env" "run ($RUNCODE): $RUN
+status: $STATUS
+empty: $EMPTY
+bogus ($BOGUSCODE): $BOGUS"
+    fi
+else
+    [ $BOGUSCODE = 1 ] && echo "$BOGUS" | grep -q 'Usage' && ok "migrate --bogus --env <file> shows the usage (no QA database: the --env run is skipped)" || ko "migrate usage" "$BOGUS"
+fi
+cd "$ROOT"
+
+# --- .gitignore keeps every .env file of the project out of git but .env.example (2.19.1: .env.testing was not ignored)
+IGN=$(cd "$ROOT" && git check-ignore --no-index .env .env.testing .env.production .env.php 2>/dev/null | wc -l | tr -d ' ')
+KEPT=$(cd "$ROOT" && git check-ignore --no-index .env.example framework/settings/.env.example framework/settings/.env.docker framework/settings/.env.vue 2>&1)
+if [ "$IGN" = 4 ] && [ -z "$KEPT" ]; then
+    ok ".gitignore ignores .env, .env.testing, .env.production, .env.php and keeps .env.example and framework/settings/.env.*"
+else
+    ko ".gitignore and the .env files" "ignored: $IGN of 4; ignored but kept in git: $KEPT"
+fi
+
 # --- initialize keeps a .git folder unless --yes (it used to delete it without asking) ---------------------------
 mkdir -p "$TMP/initgit" && cd "$TMP/initgit"
 cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads .git
@@ -174,6 +210,11 @@ if [ "$KEPT" = yes ] && [ ! -d .git ] && [ -d application ]; then
     ok "caligrafer initialize keeps .git without --yes, and deletes it with --yes"
 else
     ko "caligrafer initialize and .git" "kept without --yes: $KEPT; after --yes: $([ -d .git ] && echo still there || echo deleted)"
+fi
+if [ -f framework/librairies/app/.env ] && ! grep -qE 'VITE_(API|APP)_KEY|KEY=.+' framework/librairies/app/.env; then
+    ok "caligrafer initialize writes no key in the Vue SPA template's .env (its build is public, 2.19.1)"
+else
+    ko "initialize and the SPA template .env" "$(sed 's/=.*/=.../' framework/librairies/app/.env 2>/dev/null || echo missing)"
 fi
 SOURCE=$(sed -n 's/^ *"name": *"\([^"]*\)".*/\1/p' .claude-plugin/marketplace.json | head -1)
 if echo "$SOURCE" | grep -qE '^caligrafy-initgit-[0-9a-f]{4}$' && grep -q "\"caligrafy-quill@$SOURCE\": true" .claude/settings.json \
@@ -375,16 +416,27 @@ if [ "${QA_SKIP_SPA:-0}" = 1 ]; then
     echo "  SKIP Vue SPA build (QA_SKIP_SPA=1)"
 else
     rm -rf public/qaspa && cp -r framework/librairies/app public/qaspa && cd public/qaspa
+    # an older project .env still holds VITE_API_KEY: the bundle must never contain it (2.19.1; initialize writes no key)
     printf 'VITE_APP_KEY=qa\nVITE_API_KEY=qa-api-key\n' > .env
-    printf "import { config as qaConfig, apiConfig as qaApiConfig, callApi } from './common/app.js'\nconsole.log('QA-CONFIG', qaConfig.apiKey, qaApiConfig.headers.Authorization, typeof callApi)\n" >> src/main.js
+    printf "import { config as qaConfig, apiConfig as qaApiConfig, apiHeaders as qaApiHeaders, callApi } from './common/app.js'\nconsole.log('QA-CONFIG', qaConfig.capabilities, qaApiConfig.withCredentials, typeof qaApiHeaders, typeof callApi)\n" >> src/main.js
     if npm install --no-audit --no-fund --loglevel=error >"$TMP/npm.log" 2>&1 && npx vite build >"$TMP/build.log" 2>&1; then
         # common/app.js must not keep Vue CLI code (require(), process.env.VUE_APP_*) that breaks at runtime in Vite
         if grep -rqE "VUE_APP_API_KEY|require\(['\"]axios['\"]\)" dist/assets/*.js; then
             ko "Vue SPA bundle still contains Vue CLI code from common/app.js (require/process.env)"
-        elif grep -rq 'qa-api-key' dist/assets/*.js; then ok "Vue SPA template builds with Vite and common/app.js reads VITE_API_KEY"
+        elif grep -rqE 'qa-api-key|Bearer ' dist/assets/*.js; then
+            ko "Vue SPA bundle contains the API key or a Bearer header (public): use the session and X-CSRF-Token"
+        elif ! grep -q 'QA-CONFIG' dist/assets/*.js || ! grep -q 'X-CSRF-Token' dist/assets/*.js; then
+            ko "Vue SPA bundle misses common/app.js (apiHeaders with X-CSRF-Token)"
+        elif ! grep -qE '(src|href)="\./assets/' dist/index.html || grep -qE '(src|href)="/assets/' dist/index.html; then
+            ko "Vue SPA dist/index.html does not use relative paths (base: './' in vite.config.js)" "$(cat dist/index.html)"
+        elif [ "$(grep -o 'id="app"' dist/index.html | wc -l | tr -d ' ')" != 1 ] || grep -q "id='app'" src/App.vue; then
+            ko "Vue SPA mounts a nested #app (App.vue must not repeat <div id='app'>)"
+        else ok "Vue SPA template builds with Vite, relative paths, hash history, no API key in the bundle"
+            grep -q 'createWebHashHistory()' src/router/index.js && ok "Vue SPA router uses hash history" || ko "Vue SPA router does not use createWebHashHistory"
+            (git -C "$ROOT" check-ignore -q framework/librairies/app/dist/index.html) && ko "Vue SPA template ignores dist/ (the production image does not run npm)" || ok "Vue SPA template keeps dist/ in git"
             OUT=$(npx eslint . 2>&1) && ok "Vue SPA template passes ESLint (flat config)" || ko "Vue SPA ESLint" "$OUT"
             OUT=$(npm audit --omit=dev 2>&1) && ok "Vue SPA template has no known vulnerabilities" || ko "npm audit" "$(echo "$OUT" | tail -5)"
-        else ko "Vue SPA build does not inline VITE_API_KEY"; fi
+        fi
     else
         ko "Vue SPA build failed" "$(tail -20 "$TMP/build.log" 2>/dev/null; tail -5 "$TMP/npm.log")"
     fi

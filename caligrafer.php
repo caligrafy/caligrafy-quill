@@ -56,7 +56,7 @@ $defaultMsg = "\n Available Functions:
 				\n - design <list [--json] | show <name> | use <name> | off | status>: picks a design style (DESIGN_STYLE in .env) (framework/design, application/design); empty = Caligrafy's own look
 				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
 				\n - sql <file.sql>: runs a SQL script on the database of .env
-				\n - migrate [status | make <name>]: runs the migrations of application/migrations (numbered SQL files, each run once, in order); make writes a new one
+				\n - migrate [status | make <name>] [--env <file>]: runs the migrations of application/migrations (numbered SQL files, each run once, in order); make writes a new one
 				\n - queue <work [--for <seconds>] [--once] | status | list | failed | retry <id | all>>: background jobs pushed with Caligrafy\Queue::push (a capability run later, with retries)
 				\n - env <cache | clear>: compiles .env to .env.php, which pages read without parsing .env (the deploy step does it in production)
 				\n - cache clear: empties the cache (Caligrafy\Cache, CACHE_STORE), the compiled views and the class map
@@ -165,7 +165,9 @@ switch(strtolower($argv[1])) {
 		   }
 		   // APP_ROOT always reflects the current folder (or the root-install argument)
 		   $input = "APP_ROOT=".$appRoot."\n".preg_replace('/^APP_ROOT=.*\R?/m', '', $input);
-		   $vueInput = "VITE_APP_KEY=".$appKey."\n"."VITE_API_KEY=".$apiKey."\n";
+		   // the Vue SPA template's settings: no key (2.19.1: its build is public and committed; it calls the application
+		   // with the session and an X-CSRF-Token header), only where the application answers (empty = same site)
+		   $vueInput = "# Vite settings of the single page application template (everything here ends up in the public build: never a key)\nVITE_API_ROUTE=\n";
 		   file_put_contents($file, $input);
 		   file_put_contents(LIB_PATH . 'app/' . $file, $vueInput);
 		   if (!is_dir("./application")) {
@@ -445,15 +447,21 @@ switch(strtolower($argv[1])) {
 	case 'migrate':
 		// Migrations (framework/core/Migrations.php): numbered SQL files of application/migrations, each run once, in order
 		$migrations = new Caligrafy\Migrations('.');
-		$sub = strtolower($argv[2] ?? '');
+		// the words after migrate, without the options (--env <file> anywhere: migrate --env .env.testing, migrate status --env X)
+		$words = array();
+		for ($i = 2; $i < count($argv); $i++) {
+			if ($argv[$i] === '--env') { $i++; continue; }   // another option is a word: the usage
+			$words[] = $argv[$i];
+		}
+		$sub = strtolower($words[0] ?? '');
 		try {
 			if ($sub === 'make') {
-				$path = $migrations->make($argv[3] ?? '');
+				$path = $migrations->make($words[1] ?? '');
 				print("\n $path written: add its SQL, then php caligrafer.php migrate\n\n");
 				exit(0);
 			}
 			if ($sub !== '' && $sub !== 'status') {
-				print("\n Usage: php caligrafer.php migrate [status | make <name>]\n Runs the migrations of " . Caligrafy\Migrations::FOLDER . " that never ran on this database\n\n");
+				print("\n Usage: php caligrafer.php migrate [status | make <name>] [--env <file>]\n Runs the migrations of " . Caligrafy\Migrations::FOLDER . " that never ran on this database\n\n");
 				exit(1);
 			}
 			caligrafyConnect();

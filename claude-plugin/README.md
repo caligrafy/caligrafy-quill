@@ -50,6 +50,11 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.31.1** - Caligrafy Quill 2.19.1: gotchas G136-G141 (the client page's session cookie, the webhook
+  capability guard, `select()` on models, GUMP's `;` parameters, tokens and `level`, custom validators outside
+  `config.php`), the 2.19.1 fixes in the API reference, the AI recipes and the new-app AI chat as capabilities, the Vue
+  SPA template without a key, the `db` and `server` skills corrected, the reviewer's 2.19.1 checks, and the wiki
+  rewritten for 2.19 mirrored in the reference.
 - **1.31.0** - Caligrafy Quill 2.19.0: skills build with declarative routes (`Route::form`, `auth`, `webhook`, `download`) and the
   query builder instead of controllers; the reviewer checks them; G122-G135.
 - **1.30.2** - Caligrafy Quill 2.18.2: every skill, the reviewer agent and the references read again against 2.17 and 2.18:

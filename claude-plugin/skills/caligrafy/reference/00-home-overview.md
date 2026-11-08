@@ -55,42 +55,31 @@ write a feature twice, and the experiences never drift apart.
 
 ## By hand: the same three steps
 
-Everything Claude does is plain Caligrafy you can do yourself, with one command line, in one project:
+Everything Claude does is plain Caligrafy you can write yourself, with the same files Claude writes:
 
 | Step | What you do | With |
 | --- | --- | --- |
-| **1. Describe it** | a running application, then your tables and each feature, written once with its rules | `.bin/caligrafer quickstart`, `create_db.sql` and models, a capability (`php caligrafer.php service`) |
-| **2. Approve it** | every experience and every permission, checked: web pages, a Vue app, a phone and tablet app, a REST API, AI agents, sign-in and tokens; tests, a review, a health check | Caligrafy's look, the JS client, `Route::capability`, `Route::mcp`, `scope` and `level`, PHPUnit, the reviewer, `php caligrafer.php doctor` |
+| **1. Describe it** | a running project, your tables, and each feature written once with its rules | `.bin/caligrafer quickstart`, `create_db.sql` and a model, a capability (`php caligrafer.php service`) |
+| **2. Approve it** | every experience and every permission, checked | `Route::page`, `Route::form`, `Route::auth`, `Route::capabilities`, `Route::mcp`, `scope` and `level`, tests, the reviewer, `php caligrafer.php doctor` |
 | **3. Ship it** | your application at a public address | the production `Dockerfile`, `php caligrafer.php cloud deploy` |
 
-The plugin that ships in every project helps at each step (`/caligrafy-quill:new-capability`,
-`/caligrafy-quill:ship`...). The [course](https://github.com/caligrafy/caligrafy-quill-course) follows these three
-steps from an empty folder to an application on the internet, so you know what you approve.
+The [course](https://github.com/caligrafy/caligrafy-quill-course) teaches both ways: with Claude, and by hand, every
+file typed by you.
 
 ## Quickstart by hand: 5 minutes
 
 You need [Git](https://git-scm.com/) and [Docker Desktop](https://www.docker.com/products/docker-desktop/)
-(running). Nothing else: PHP, MySQL and Composer run in Docker.
+(running). PHP, MySQL and Composer run in Docker.
 
 ```bash
 git clone https://github.com/caligrafy/caligrafy-quill.git myapp
 cd myapp
-.bin/caligrafer quickstart --example
+.bin/caligrafer quickstart --docker --example
 ```
 `quickstart` installs the libraries, starts the server, creates the database and the framework tables, and adds a
 **Tasks** example (the first start builds the PHP image: a few minutes). When it asks to delete the `.git` folder,
-answer `y`: your project starts its own history.
-
-**With Composer, on MAMP, XAMPP, LAMP or Docker.** If you have PHP 8.3+ and [Composer](https://getcomposer.org):
-```bash
-composer create-project caligrafy/caligrafy-quill myapp
-cd myapp
-.bin/caligrafer quickstart --example
-```
-`quickstart` uses your local Apache and MySQL when they are running (create the project in their web folder: it reads
-MAMP's own settings, and asks for your MySQL settings with their defaults), Docker otherwise; `--local` or `--docker`
-chooses. On Windows: `php caligrafer.php quickstart --example`. See
-[Quickstart with Composer](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart#composer).
+answer `y`: your project starts its own history. To use your own Apache and MySQL (MAMP, XAMPP, LAMP) instead, see
+[Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart#composer).
 
 **1. Use it on the web.** Open **http://localhost:8080/tasks**, add a task, tick it, rename it.
 
@@ -104,7 +93,7 @@ curl -H "Accept: application/json" http://localhost:8080/api/tasks
 docker compose exec dev-box php caligrafer.php token create "my agent" --scopes "*"
 claude mcp add --transport http myapp http://localhost:8080/mcp --header "Authorization: Bearer <the token>"
 ```
-Ask Claude "add a task to buy milk": it calls `create_task`, and the task appears on the web page within seconds.
+Ask Claude "add a task to buy milk": it calls `create_task`, and the task appears on the web page.
 In Cursor, add to `.cursor/mcp.json`:
 ```json
 { "mcpServers": { "myapp": { "url": "http://localhost:8080/mcp", "headers": { "Authorization": "Bearer <the token>" } } } }
@@ -117,43 +106,47 @@ docker compose exec dev-box php caligrafer.php cloud create myapp --repo https:/
 docker compose exec dev-box php caligrafer.php cloud deploy myapp          # https://myapp.caligrafy.com
 ```
 `cloud login` opens [deploy.caligrafy.com](https://deploy.caligrafy.com), where you sign in (or sign up) and approve.
-Every new app is free for its first 30 minutes online. With Claude Code, `/caligrafy-quill:ship myapp` does all of
-this for you, the GitHub repository included. The Tasks example is open to everyone, online too: see
+Every new app is free for its first 30 minutes online. The Tasks example is open to everyone, online too: see
 [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online) before you share the address.
-
-That is the whole idea: the Tasks feature lives in five small files in `application/services/Tasks/`, and every
-experience above uses them.
 
 ## Your first capability
 
-```bash
-docker compose exec dev-box php caligrafer.php service Books/CreateBook --scope books:write
-```
-This creates `application/services/Books/CreateBook.php`. Fill in its inputs and its work:
+A feature, by hand, is a table, a model, a capability and its routes. The list of a book catalog:
+
+**`application/services/Bookshelf/ListBooks.php`** (created by
+`docker compose exec dev-box php caligrafer.php service Bookshelf/ListBooks --scope books:read`)
 ```php
-#[Capability(name: 'create_book', description: 'Adds a book to the catalog and returns it.', scope: 'books:write')]
-class CreateBook extends Service
+#[Capability(name: 'list_books', description: 'Lists the books, 20 per page, each with its author.', scope: 'books:read', readOnly: true)]
+class ListBooks extends Service
 {
-    public $rules = array('title' => 'required|max_len,255', 'author' => 'required|max_len,255');
+    public $rules = array('author_id' => 'integer', 'page' => 'integer');
 
     public function handle(array $input, Context $context)
     {
-        return (new Book('books'))->create($input);
+        $query = Book::with('author')->orderBy('title');
+        if (!empty($input['author_id'])) {
+            $query->where('author_id', $input['author_id']);
+        }
+        return $query->paginate(20, $input['page'] ?? 1);
     }
 }
 ```
-AI agents see it at once as the `create_book` tool. Give it a REST route in
-`application/config/routing/web.php` with `Route::capability('POST', '/books', 'create_book');`, and a JavaScript
-function for your pages with `php caligrafer.php client`. The tutorial
+**`application/config/routing/web.php`**
+```php
+Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books']]);   // a web page
+Route::capabilities();                                                               // REST: POST /capabilities/list_books
+Route::mcp();                                                                        // AI agents: the list_books tool
+```
+The same capability is also a function of the generated JavaScript client (`php caligrafer.php client`). The tutorial
 [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) builds a complete
-feature step by step, page included.
+feature step by step: the table, the model, the page, a form and sign-in.
 
 ## What comes in the box
 
 + **Every experience:** server-rendered pages (Pug), Vue apps and a Vite single page application, installable mobile
   web apps, REST, and an MCP server for AI agents.
 + **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
-  (`Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
+  (`Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
   never follow different rules. Forms, sign-in, webhooks and downloads are one line each too
   ([declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): `Route::form`,
   `Route::auth`, `Route::webhook`, `Route::download`): no controller to write.
@@ -167,7 +160,7 @@ feature step by step, page included.
   [tests for your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App), [dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection), scheduled jobs and notifications.
 + **Fast:** in the same benchmark, Caligrafy 2.19 beats Symfony and Laravel on all 16 measures (requests per second,
   median and slowest response, memory, for plain text, JSON, a database query and an HTML page): an HTML page at
-  3,142 requests per second, against 1,921 for Symfony and 269 for Laravel
+  2,887 requests per second, against 1,789 for Symfony and 324 for Laravel
   ([release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0)).
 + **Batteries included:** card, ACH and crypto payments, OpenAI and open-model AI (Llama on Groq, OpenRouter,
   Ollama...), chatbots, face detection and machine learning in the browser, search and social metadata.

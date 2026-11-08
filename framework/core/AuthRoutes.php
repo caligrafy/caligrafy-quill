@@ -285,8 +285,11 @@ class AuthRoutes
 
     private static function logout(array $o)
     {
+        // JSON or not is read before signing out: a new Request after signOut() would check the posted _token against
+        // the new CSRF token of the session and answer [ERROR 3000] (2.19.1)
+        $json = request()->wantsJson();
         self::signOut();
-        if (request()->wantsJson()) {
+        if ($json) {
             return self::json(200, array('data' => array('signedOut' => true)));
         }
         redirect($o['logout']);

@@ -6,6 +6,8 @@ import vueDevTools from 'vite-plugin-vue-devtools'
 
 // https://vite.dev/config/
 export default defineConfig({
+  // relative asset paths: dist/ can be served from any folder, such as public/<name>/dist/
+  base: './',
   plugins: [
     vue(),
     vueDevTools(),

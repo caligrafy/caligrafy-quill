@@ -11,7 +11,7 @@ Arguments: `$ARGUMENTS` (entity name, then optional `field:type` pairs; `name:fk
 If fields are missing, infer sensible ones from the conversation or ask once.
 
 Read first: the `caligrafy` skill's [api-reference.md](../caligrafy/reference/api-reference.md) (Model, Route, Build once, Queries, Declarative routes)
-and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G23, G52, G76, G83, G122-G130.
+and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G23, G52, G76, G83, G122-G131, G138, G139.
 
 **Only capabilities touch models**: the model is read and written by the capabilities of this resource, never by a
 controller or a page. Pages get their data with `Route::page`, forms post with `Route::form` (2.19.0+), exports use `Route::download`:
@@ -102,11 +102,18 @@ class GetBook extends Service
     }
 }
 ```
-`create_book`: `(new Book('books'))->create($input)`; `update_book`: refuse a missing id with `notFound`, then
-`(new Book('books'))->update($changes, $input['id'])` with only the inputs given; `list_books` (2.19.0+): `$rules = ['search' => '', 'page' => 'integer']`,
+Writes go through the query builder too (2.19.0+): `create_book`: `$id = Book::insert($input); return Book::find($id);`
+(the inputs are the `$rules` keys, so only columns: never pass a key that is not one); `update_book`: refuse a missing
+id with `notFound` (`Book::where('id', $input['id'])->exists()`), then `Book::where('id', $input['id'])->update($changes)`
+with only the inputs given (`array_filter($input, fn ($v, $k) => $k !== 'id' && $v !== null && $v !== '', ARRAY_FILTER_USE_BOTH)`)
+and return `Book::find($input['id'])`; before 2.19.0 `(new Book('books'))->create($input)` / `->update($changes, $id)`; `list_books` (2.19.0+): `$rules = ['search' => '', 'page' => 'integer']`,
 `$q = Book::query()->latest(); if (!empty($input['search'])) $q->search(['title', 'author'], $input['search']); return $q->paginate(20, $input['page'] ?? 1);`
 (a page: `data`, `total`, `page`, `pages`; for a CSV export a second read-only capability returns `->get()`), before
-2.19.0 `->all(['order' => 'ORDER BY created_at DESC'])` (values in `'bindings'`, G8); `delete_book`: `(new Book('books'))->delete($input['id'])`, return `['deleted' => (int) $input['id']]`.
+2.19.0 `->all(['order' => 'ORDER BY created_at DESC'])` (values in `'bindings'`, G8); `delete_book`: `Book::where('id', $input['id'])->delete()` (0 rows -> `notFound`; before 2.19.0 `(new Book('books'))->delete($input['id'])`), return `['deleted' => (int) $input['id']]`.
+A list of a few columns is `Book::query()->select('id', 'title')->arrays()->paginate(...)` (or `Database::table('books')`):
+without `arrays()` the rows are `Book` models whose other columns show as `null` in REST and CSV (G138). Several
+writes that belong together: `Database::transaction(fn () => ...)` (G128). GUMP rules with several parameters take `;`
+(`word_count,min;10;max;500`, G139); custom rules go in `application/rules/<name>.php`, never `config.php` (G141).
 
 ### 4. Routes in `application/config/routing/web.php`
 Insert inside the `try` block, after the existing `/` route and before `Route::run();`, with a comment header:
@@ -131,7 +138,7 @@ answers 404/403 (G83); add `'notFound' => 'Books/missing'` to show your own 404 
 be page data, and the view never gets the query string.
 
 ### 5. Views (only if the user wants HTML pages)
-`application/views/Books/index.pug` and `show.pug`, built with Caligrafy's look of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (a title band `section.cq-hero.cq-hero--page`, then `section.cq-band > .cq-inner`: a `.cq-form-grid` of labeled `.cq-field`s and `btn btn-primary`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`; follow its checklist), `extends ../default/master/site`, `block title`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, `Route::form` (2.19.0+, routes above): the form has `method='POST'`, `action="{$home}books"`, `=csrf()` (and `=methodField('PUT')` / `'DELETE'`), each input `value=old('title')` with `p.cq-field-error= errors('title')` under it, and the page shows `flash('success')` / `flash('error')` in a `.cq-alert` (G129). A `file` input: the `file` rule in `$rules` and `enctype='multipart/form-data'` (G131). Only on a framework before 2.19.0, a thin controller:
+`application/views/Books/index.pug` and `show.pug`, built with Caligrafy's look of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (a title band `section.cq-hero.cq-hero--page`, then `section.cq-band > .cq-inner`: a `.cq-form-grid` of labeled `.cq-field`s and `btn btn-primary`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`; follow its checklist), `extends ../default/master/site`, `block title`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, `Route::form` (2.19.0+, routes above): the form has `method='POST'`, `action="{$home}books"`, `=csrf()` (and `=methodField('PUT')` / `'DELETE'`), each input `value=old('title')` with `p.cq-field-error= errors('title')` under it, and the page shows `flash('success')` / `flash('error')` in a `.cq-alert` (G129). A `file` input: the `file` rule in `$rules` (`required|file|extension,png;jpg|max_size,2mb` when it must be sent: `required_file` is only enforced since 2.19.1) and `enctype='multipart/form-data'` (G131). Only on a framework before 2.19.0, a thin controller:
 ```php
 use Caligrafy\Controller;
 use Caligrafy\ServiceError;
@@ -153,9 +160,10 @@ with `Route::post('/books', 'BookFormController@store');` and `=csrf()` in the f
 
 ## Finish
 1. `php -l` every new PHP file (the plugin hook also does it on save).
-2. Offer to run the SQL with `/caligrafy-quill:db application/models/<Entity>/create_db.sql`. When the table already
-   exists with data (a project online), a change to it goes in a migration instead (2.18.0+:
-   `php caligrafer.php migrate make add_<entity>_<column>`, then `php caligrafer.php migrate`; G120).
+2. Offer to run the SQL with `/caligrafy-quill:db application/models/<Entity>/create_db.sql`. `create_db.sql` holds
+   the first version of the table only; once the table exists (with data, or online), every change to it is a
+   migration, never an edit of `create_db.sql` (2.18.0+: `php caligrafer.php migrate make add_<entity>_<column>`, then
+   `php caligrafer.php migrate`, `--env <file>` for another database; G120).
 3. Check every capability: `php caligrafer.php capabilities`, then `php caligrafer.php call list_books` and `php caligrafer.php call create_book title=...` (an invalid input gives the field messages). Show REST calls with a token: `php caligrafer.php token create "test" --scopes books:read,books:write`, then `curl -H "Accept: application/json" -H "Authorization: Bearer <token>" <base>/api/books` (base: `http://localhost:8080` under Docker, else `http://localhost/<APP_ROOT>`); revoke it after (`token revoke <number>`, G77).
 4. Tests (2.18.0+): `php caligrafer.php test make <Entity>`, one call per capability as a user and the refusals as a
    guest, then `php caligrafer.php test <Entity>`.

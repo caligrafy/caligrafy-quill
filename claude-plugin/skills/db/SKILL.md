@@ -12,7 +12,7 @@ Arguments: `$ARGUMENTS`. Read [gotchas.md](../caligrafy/reference/gotchas.md) G3
 **A table that already has data, or a project that is online (2.18.0+):** a change to it (a column, an index, data
 to fix) is a migration, not an edit of `create_db.sql`: `php caligrafer.php migrate make <name>` writes
 `application/migrations/<YmdHis>_<name>.sql`; put the SQL in it, then `php caligrafer.php migrate` (in Docker:
-`docker compose exec dev-box php caligrafer.php migrate`) and `migrate status` (all `ran`). Never edit a migration that
+`docker compose exec dev-box php caligrafer.php migrate`) and `migrate status` (all `ran`). Another env file: `migrate --env .env.testing` (2.19.1: `--env <file>` anywhere, `migrate status --env <file>` too). Never edit a migration that
 ran (it shows `changed` and never runs again, G120): write a new one. The deploy step runs pending migrations online.
 One change per file, or statements safe to run twice. `create_db.sql` stays for creating the tables of a new database.
 
@@ -20,13 +20,13 @@ One change per file, or statements safe to run twice. `create_db.sql` stays for 
 Read `.env`: `DB_ACTIVATE`, `DB_HOST`, `DB_DATABASE`, `DB_USERNAME`; use `DB_PASSWORD` only inside commands. If `DB_ACTIVATE` is not `true`, the app will not connect (G20 - tell the user). For connection errors, `php caligrafer.php doctor --only db` reports the exact cause without printing the password.
 
 ## 2. Pick the target
-- **Docker** (default when `DB_HOST=mysql` or this project's `mysql` service is running): find it with `docker-compose ps mysql` (or `docker compose ps mysql`). If it is not running, offer `/caligrafy-quill:server start`. Use
+- **Docker** (default when `DB_HOST=mysql` or this project's `mysql` service is running): find it with `docker compose ps mysql` (or the legacy `docker-compose ps mysql`). If it is not running, offer `/caligrafy-quill:server start`. Use
   ```bash
-  docker-compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS \`<DB_DATABASE>\` DEFAULT CHARACTER SET utf8mb4;"
-  docker-compose exec -T mysql mysql -uroot -proot <DB_DATABASE> < <script.sql>
+  docker compose exec -T mysql mysql -uroot -proot -e "CREATE DATABASE IF NOT EXISTS \`<DB_DATABASE>\` DEFAULT CHARACTER SET utf8mb4;"
+  docker compose exec -T mysql mysql -uroot -proot <DB_DATABASE> < <script.sql>
   ```
   (credentials: `root`/`root` from docker-compose.yaml unless the user changed them; prefer `.env` values when they differ.)
-- **Local MySQL / MAMP**: `mysql -h <DB_HOST> -u <DB_USERNAME> -p<DB_PASSWORD> <DB_DATABASE> < <script.sql>` (`DB_PORT` is ignored by the framework, G3; pass `-P` to the CLI if needed).
+- **Local MySQL / MAMP**: `mysql -h <DB_HOST> -u <DB_USERNAME> -p<DB_PASSWORD> <DB_DATABASE> < <script.sql>` (add `-P <DB_PORT>` when `DB_PORT` is set: the framework connects on `DB_PORT` too (`Database::dsn()`, G3), and with `DB_HOST=localhost` both PDO and the `mysql` CLI use the Unix socket and ignore the port, so use `127.0.0.1` to reach a MySQL on another port).
 
 ## 3. Before running a script
 1. Read it. If it contains `DROP TABLE`, `DROP DATABASE`, `TRUNCATE` or `DELETE` (for example `application/models/Auth/create_db.sql` of projects created before the security release drops `users`, G13), list the tables it would drop, check whether they contain rows (`SELECT COUNT(*) FROM <table>`), and get explicit confirmation before running it.

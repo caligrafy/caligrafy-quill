@@ -238,6 +238,20 @@ foreach (['/.env', '/.git/HEAD', '/composer.json', '/composer.lock', '/caligrafe
     });
 }
 
+// backups/ holds the copies made by caligrafer update and upgrade (2.19.1): denied like the other server folders
+qa_test('GET /backups/<file> is denied', function () use ($guest, $ROOT) {
+    @mkdir("$ROOT/backups", 0777, true);
+    $file = "$ROOT/backups/qa-backup-probe.txt";
+    file_put_contents($file, 'QA-BACKUP-MARKER');
+    try {
+        $r = $guest->get('/backups/qa-backup-probe.txt');
+        qa_equals(403, $r['status'], $r['body']);
+        qa_not_contains('QA-BACKUP-MARKER', $r['body']);
+    } finally {
+        @unlink($file);
+    }
+});
+
 qa_test('PHP files dropped in public/uploads are not executed', function () use ($guest, $ROOT) {
     file_put_contents("$ROOT/public/uploads/qa_probe.php", '<?php echo "EXEC" . "UTED";');
     $r = $guest->get('/public/uploads/qa_probe.php');
@@ -1069,6 +1083,28 @@ qa_test('MCP over HTTP: initialize, notifications, a foreign Origin, GET', funct
     qa_equals(405, (new QaBrowser())->get('/mcp', ['headers' => ['Accept: application/json']])['status']);
 });
 
+// 2.19.1: an MCP post without a token got the session CSRF check (403 [ERROR 3000] in plain text) before the 401
+qa_test('MCP without a token: 401 with WWW-Authenticate whatever the Accept header, and the session never acts', function () {
+    $body = json_encode(['jsonrpc' => '2.0', 'id' => 1, 'method' => 'tools/list', 'params' => (object) []]);
+    foreach ([['Content-Type: application/json'], ['Accept: */*', 'Content-Type: application/json'], ['Accept: text/html', 'Content-Type: application/json']] as $headers) {
+        $r = (new QaBrowser())->request('POST', '/mcp', ['headers' => $headers, 'form' => $body]);
+        qa_equals(401, $r['status'], implode(', ', $headers) . ': ' . $r['body']);
+        qa_contains('WWW-Authenticate: Bearer', $r['headers']);
+        qa_not_contains('[ERROR 3000]', $r['body']);
+        qa_equals(-32600, json_decode($r['body'], true)['error']['code'] ?? null, $r['body']);
+    }
+    // a signed-in browser (session cookie, even with its CSRF token) is not an MCP client: no token, no tools
+    $b = qa_auth_user('mcpsessionqa');
+    $token = $b->token('/qa/forms/new');
+    foreach ([['Accept: text/html', 'Content-Type: application/json'], ['Accept: application/json', 'Content-Type: application/json', "X-CSRF-Token: $token"]] as $headers) {
+        $r = $b->request('POST', '/mcp', ['headers' => $headers, 'form' => $body]);
+        qa_equals(401, $r['status'], $r['body']);
+        qa_not_contains('"tools"', $r['body']);
+    }
+    $r = $b->post('/mcp', ['_token' => $token, 'jsonrpc' => '2.0', 'method' => 'tools/list']);
+    qa_equals(401, $r['status'], $r['body']);
+});
+
 qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per message with the token', function () use ($READER) {
     $in = json_encode(['jsonrpc' => '2.0', 'id' => 1, 'method' => 'initialize', 'params' => ['protocolVersion' => '2025-06-18']]) . "\n"
         . json_encode(['jsonrpc' => '2.0', 'method' => 'notifications/initialized']) . "\n"
@@ -1316,6 +1352,20 @@ qa_test('Route::auth: signing in gives a new session id and a new CSRF token; si
     qa_contains('/qa/bare', $r['location']);
     qa_assert(qa_session_cookie($r) && qa_session_cookie($r) !== $after, 'the session id changes at sign-out');
     qa_contains('/login', $b->get('/qa/members')['location'], 'signed out');
+});
+
+qa_test('Route::auth: the sign-out form (POST /logout with the page token) signs out and redirects', function () {
+    $b = qa_auth_user('logoutpostqa');
+    $r = $b->post('/qa/auth/logout', ['_token' => $b->token('/qa/forms/new')]);
+    qa_equals(302, $r['status'], substr(strip_tags($r['body']), 0, 300));
+    qa_contains('/qa/bare', $r['location']);
+    qa_not_contains('[ERROR 3000]', $r['body']);
+    qa_contains('/login', $b->get('/qa/members')['location'], 'signed out');
+    // a JSON sign-out answers JSON
+    $b = qa_auth_user('logoutjsonqa');
+    $r = $b->request('POST', '/qa/auth/logout', ['form' => '{}', 'headers' => ['Accept: application/json', 'Content-Type: application/json', 'X-CSRF-Token: ' . $b->token('/qa/forms/new')]]);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_contains('signedOut', $r['body']);
 });
 
 qa_test('Route::auth: a wrong password fails, and 3 failures lock that username from that address', function () {

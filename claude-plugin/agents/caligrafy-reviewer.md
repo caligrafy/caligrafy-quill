@@ -22,7 +22,7 @@ Check for, citing the gotcha id:
 6. Models: properties not matching columns; relationships with wrong FK direction (`belongsTo` misuse G9); code that relies on `save()` dropping falsy values, or that sets 0/''/false via `save()` on an older framework (G7, G39); duplicate global class names (G19).
 7. SQL scripts: `DROP TABLE` in scripts meant to be re-run (G13); FK constraint names reused (`fk1`) or signedness mismatch (G10); primary key not `id`; FK not `<model>_id`.
 8. Config: `.env` keys used as constants but absent (G20); `DB_HOST`/`APP_ROOT` wrong for Docker (G11); secrets committed or echoed.
-9. Vue clients: `FaceDetector` not wrapped in `Vue.markRaw` (G16); URLs not built from `env.home`; Vite SPA using `process.env`/`require` (G22); `?app=` values or app folder names outside `[A-Za-z0-9_-]` (G35).
+9. Vue clients: `FaceDetector` not wrapped in `Vue.markRaw` (G16); URLs not built from `env.home`; Vite SPA using `process.env`/`require` or an API key in its bundle (G22, G50); `?app=` values or app folder names outside `[A-Za-z0-9_-]` (G35).
 10. Auth: passwords stored with `encryptDecrypt` instead of `password_hash` (G14); `guard()`/`authorized()` missing on admin actions or guarding at level 0; users looked up with `search()` (LIKE wildcards) instead of an exact bound query; `application/` copies of the auth module, `views/Client/app.pug`, `ClientController` or `AIController` older than `framework/settings/application` (G35, G39).
 11. Uploads and files: `uploadFile()` results not checked for `''`, `move_uploaded_file()` with the client file name, files stored outside `public/uploads`, root or `public/uploads/.htaccess` removed, nginx deployments without the deny rules (G34).
 12. Dynamic constants: `constant()` (or `define`-based lookups) fed with request data - use allow-lists such as `OpenAI::command()`/`OpenAI::type()` (G31); paid AI routes (`/ai`) left open.
@@ -57,5 +57,19 @@ Check for, citing the gotcha id:
     session and no `X-CSRF-Token` (G130); a `file` input value `fopen()`ed or included without checking where it points
     (G131); a webhook capability that is not idempotent, trusts amounts from the event, or a `Route::webhook` without
     `STRIPE_WEBHOOK_SECRET` set (G132); code reading `$_SESSION['token']` on a GET instead of `session('token')`.
+23. 2.19.1 (G133-G141): a capability behind `Route::webhook` whose `handle()` does not start with
+    `if ($context->actorType() !== 'webhook') throw ServiceError::forbidden(...)` (`/capabilities`, `/mcp` and `call`
+    serve it to any signed-in user or token with its scope, with a made-up event, G137), and the same for capabilities
+    only the scheduler (`schedule`) or the queue (`queue`) should run; `Book::query()->select(...)` results returned to
+    REST, MCP or `Route::download` without `->arrays()` (the other columns show as `null`, G138); GUMP rules with
+    several `,` parameters (`word_count,min,10,max,500`, `between_len,3,10`: they never fail, use `;`, G139);
+    `GUMP::add_validator()` in `application/config/config.php` for a rule a capability uses (missing on the CLI, the
+    scheduler and the queue: `application/rules/<name>.php`, G141); a check that a level limits an application token, or
+    that a bad bearer is refused on a public capability (G140); `application/views/Client/app.pug` still passing
+    `'request' => request()` instead of `request()->forClient()`, or page code reading `env.request.cookie` /
+    `env.request.authorization` (G136); a Vite SPA (`public/<name>/src/`) sending `'Bearer ' + import.meta.env.VITE_API_KEY`,
+    `createWebHistory` with `dist/` served from a folder, or `dist` git-ignored while the app ships through the
+    production image (G22, G50); `required_file` relied on before 2.19.1 (ignored: `required|file`, G131); a root
+    `.htaccess` without `backups` in its deny list (G34) or a `.gitignore` that lets `.env.testing`/`.env.production` in.
 
 Report: a short verdict, then findings ordered by severity, each with `file:line`, the problem, the concrete failure, the gotcha id, and a minimal fix snippet. Say explicitly when you found nothing in a category that applied. Do not report style nits.

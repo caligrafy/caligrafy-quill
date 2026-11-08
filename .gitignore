@@ -1,6 +1,9 @@
 .env
 .env.php
 .env.BKP
+# every other .env file of the project (.env.testing, .env.production...) holds secrets too; .env.example is the template
+/.env.*
+!/.env.example
 .DS_Store
 .DS_Store?
 /vendor/

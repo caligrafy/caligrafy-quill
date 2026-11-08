@@ -54,6 +54,9 @@ class Route extends \stdClass
      */
     private static $_webhooks = array();
 
+    // the MCP endpoints (Route::mcp): they authenticate with a bearer token only, never the session (2.19.1)
+    private static $_mcp = array();
+
     /**
      * @var int $_currentRouteKey defines the currently run route key
      * @property int $_currentRouteKey defines the currently run route key
@@ -381,6 +384,7 @@ class Route extends \stdClass
     */
     public static function mcp($route = '/mcp')
     {
+        self::$_mcp[] = parsePath(sanitizePath($route));
         self::post($route, function () { Mcp\Http::respond(); });
         self::get($route, function () { Mcp\Http::methodNotAllowed(); });
         self::delete($route, function () { Mcp\Http::methodNotAllowed(); });
@@ -499,6 +503,21 @@ class Route extends \stdClass
     }
 
     /**
+     * Whether a uri is an MCP endpoint (Route::mcp): Request skips the session CSRF check for its POST, since
+     * Mcp\Http answers 401 to a request without a personal access token and never uses the session (2.19.1)
+     */
+    public static function isMcp($uri)
+    {
+        $components = parsePath(sanitizePath((string) $uri));
+        foreach (self::$_mcp as $mcp) {
+            if (self::pathMatches($mcp, $components)) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    /**
      * The routes declared so far: [['method' => 'GET', 'route' => 'books/{id}'], ...]
      */
     public static function routes()
@@ -515,7 +534,7 @@ class Route extends \stdClass
      */
     public static function reset()
     {
-        self::$_httpMethods = self::$_routes = self::$_routesComponents = self::$_methods = self::$_webhooks = array();
+        self::$_httpMethods = self::$_routes = self::$_routesComponents = self::$_methods = self::$_webhooks = self::$_mcp = array();
     }
 
     /**

@@ -3,269 +3,271 @@
 > Source: Caligrafy Quill wiki - https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers
 > Bundled with the caligrafy-quill Claude plugin. Content preserved from the wiki; formatting cleaned.
 
-> **Where this fits.** In Caligrafy, the rules of a feature live in a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service), and a controller is the web experience of it: it calls the capability (`$this->call('create_book')`, see [Calling a capability](#callcapability)) and chooses the view. Since 2.19.0 most web needs are one line of `web.php` ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)): write a controller only for HTTP that none of them covers.
+# Controllers
 
-## When to write a controller (since 2.5.0)
+A controller is a PHP class whose actions answer routes. In 2.19 it is the exception: the rules of a feature live in a
+capability (`application/services/`), and one line of `web.php` serves it to the web (`Route::page`, `Route::form`,
+`Route::auth`, `Route::webhook`, `Route::download`, `Route::redirect`, `Route::capability`). Write a controller only
+for **custom HTTP**: an answer that none of those lines gives. It stays thin: it calls capabilities with
+`$this->call()` and decides what to send back.
 
-**Only capabilities touch models.** A capability reads and writes the data, with its rules; pages, controllers, the REST API and AI agents call capabilities. So most pages need no controller at all:
+## When a controller is still the right tool
 
-| You need | Use |
-| --- | --- |
-| A page, with or without data | `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);` ([Page Routes](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes)) |
-| A page that only signed-in people or administrators may open (its data capabilities must be read-only) | `Route::page(..., ['signedIn' => true])` or `['level' => 1]` |
-| A form post (create, update, delete), back to the form with its errors | `Route::form('/books', 'create_book', ['success' => '/books/{id}']);` ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form), 2.19.0) |
-| Sign-in, sign-out, sign-up | `Route::auth(['home' => '/books']);` ([Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#routeauth), 2.19.0) |
-| Events another service posts (Stripe) | `Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe']);` (2.19.0) |
-| A CSV or JSON file to download | `Route::download('/books.csv', 'list_books');` (2.19.0) |
-| Several capabilities with conditions, a choice between views, custom headers or streaming, password reset, face sign-in | a thin controller whose actions call capabilities with `$this->call()` ([below](#callcapability)) |
+| You need | Write | Not a controller because |
+| --- | --- | --- |
+| A page, with or without data | `Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']]);` | the page controller does it |
+| A page only signed-in people or administrators open | `Route::page(..., ['signedIn' => true])` or `['level' => 1]` | the same |
+| A form that creates, changes or deletes, back to the form with its errors | `Route::form('/books', 'create_book', ['success' => '/books/{id}']);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form) |
+| Sign-in, sign-out, sign-up | `Route::auth(['home' => '/books']);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#auth) |
+| Events Stripe or another service posts | `Route::webhook('/stripe/events', 'record_event', ['verify' => 'stripe']);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#webhook) |
+| A CSV or JSON file to download | `Route::download('/books.csv', 'list_books');` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#download) |
+| An address that moved | `Route::redirect('/old/books/{id}', '/books/{id}', 301);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#redirect) |
+| A JSON API | `Route::capability('GET', '/api/books', 'list_books');` | [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#capabilityroutes) |
+| An action that calls several capabilities with conditions, or chooses between a redirect and a view | **a controller** | no route expresses the condition |
+| Custom headers, streaming, a response that is neither a page, a redirect, JSON nor a file | **a controller** | |
+| Password reset, face sign-in, an OAuth callback | **a controller** | not in `Route::auth` |
 
-A controller that calls `new Book(...)`, `associate()`, `save()` or `all()` keeps its rules for the web only: REST and AI agents would follow other rules. The controller methods below remain for existing projects and for learning how Caligrafy works underneath.
+A controller that calls `new Book()`, `associate()`, `save()` or `all()` keeps its rules for the web only: the REST
+API and AI agents would follow other rules. Those methods are under [Other ways](#controllercontext).
 
-## Getting Started with Controllers
-A `Controller` is a key entity in an MVC architecture. It is the layer that is responsible for interfacing with both the `Model` and the `View`. It takes its input from a `View`, interfaces with the `Model` to either get information or add to the information, it calls upon any other logic that needs to be applied to the information and finally sends it back to the `View` to be displayed. 
+## With Claude
 
-> #### (video) [CRUD operations on a database](https://www.youtube.com/watch?v=kNdoaSi6pcE&list=PLsJG81fLk3_UNfTuqjCbcz1S_xbram35e)
->
-> In this video, we will learn how to create a database model, how to link it to Caligrafy and how to perform CRUD operations using Controllers.
+```text
+"Add GET /authors/{author_id}/books: when the author has exactly one book, go straight to that book's page;
+otherwise show the list."
+```
 
-Most of the concepts that we covered thus far - `Routing`, `Request`, `Models`, `Relationships`, `Validation`, `Views` - come into play together in the context of a `Controller`.
-### Creating a Controller
-+ All the controllers that you create should be in the `/application/controllers` folder. In this folder, you can organize the controllers to your convenience. If you prefer to have your controllers in a different folder, you can always do that for as long as it is within the `/application` folder (not `config/` or `views/`, which the class map leaves out).
+The `caligrafy` skill writes a controller only when no declarative route fits; here the action chooses between a
+redirect and a view. Claude writes `application/controllers/BookController.php` (an action that calls `list_books`
+with `$this->call()`) and one `Route::get` line in `application/config/routing/web.php`. Ask the `caligrafy-reviewer`
+agent to review it: it flags controllers where a declarative route fits.
 
-+ There is no formal naming convention for a controller. We do recommend that you remain consistent.
-> Learn more about naming conventions [here](https://github.com/caligrafy/caligrafy-quill/wiki/1.-Getting-Started#fundamentals)
+**Check**
 
-+ Every class of `/application` is found by Caligrafy without a `require` (since 2.18.0 it is loaded the first time it is used), so two classes with the same fully qualified name are an error. The example controllers that come with Caligrafy (`application/controllers/core/`: `AIController`, `AdminController`, `AuthController`, `ClientController`, `WatsonController`) live in the `Caligrafy\Controllers` namespace, so you can give one of your controllers the same short name without a collision.
+- [ ] The action calls capabilities with `$this->call()` and never touches a model (`new Book`, `associate()`, `save()`).
+- [ ] It catches `ServiceError` and answers with its status (`$e->status()`).
+- [ ] After `redirect()`, it returns.
+- [ ] No form post, sign-in, export or webhook went into a controller.
 
-+ Controllers can be namespaced. Declare the namespace at the top of the file and use the fully qualified name in the routes (see [Namespaced controllers](#namespacedcontrollers)):
+## By hand
+
+Before you start: the Bookshelf tables, the `Book` model, `list_books`, `get_book` and the views of
+[Routing, steps 1 to 5](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#definingroutes).
+
+1. **Write the controller.** `application/controllers/BookController.php`:
+
+   ```php
+   <?php
+
+   use Caligrafy\Controller;
+   use Caligrafy\ServiceError;
+
+   class BookController extends Controller
+   {
+       // GET /authors/{author_id}/books: one book goes straight to its page, otherwise the list
+       public function byAuthor()
+       {
+           try {
+               $books = $this->call('list_books', array('author_id' => $this->request->fetch('author_id')));
+           } catch (ServiceError $e) {
+               http_response_code($e->status());
+               return view('Bookshelf/notfound', array('message' => $e->getMessage()));
+           }
+           // list_books answers a page: data (the books), total, page, per_page, pages
+           if ($books['total'] == 1) {
+               redirect('/books/' . $books['data'][0]['id']);
+               return null;
+           }
+           return view('Bookshelf/books', array('books' => $books));
+       }
+   }
+   ```
+
+   Every class under `application/` (except `config/` and `views/`) is found without a `require`.
+
+2. **Route it.** In `application/config/routing/web.php`, before `Route::run();`:
+
+   ```php
+       Route::get('/authors/{author_id}/books', 'BookController@byAuthor');
+   ```
+
+3. **Try it.** Run:
+
+   ```bash
+   curl -s -i http://localhost:8080/authors/3/books | grep -iE "^HTTP|^Location"
+   curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/authors/9/books
+   curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/authors/abc/books
+   ```
+
+   They print `HTTP/1.1 302 Found` with `Location: http://localhost:8080/books/5` (Italo Calvino has one book,
+   *Invisible Cities*), `200` (the list page with "No books yet.": nobody has the id 9) and `422` (the "Not found"
+   page with "Some of the inputs are invalid": `author_id` must be an integer). `/authors/2/books` shows the list
+   page with Octavia E. Butler's two books.
+
+   A JSON call to a controller route needs the page's `X-CSRF-Token` header or a personal access token that grants
+   `*`:
+
+   ```bash
+   curl -s -H "Accept: application/json" http://localhost:8080/authors/3/books
+   ```
+
+   prints `{"error":{"code":1004,"message":"Access Denied: send the page's CSRF token in an X-CSRF-Token header (pages,
+   with the session cookie) or Authorization: Bearer <personal access token> (programs and agents)"}}` with `401`.
+
+**Check**
+
+- [ ] `/authors/3/books` redirects to `/books/5`.
+- [ ] `/authors/abc/books` answers `422`, not `500`.
+- [ ] The controller has no `use` of a model and no SQL.
+
+## Calling a capability: `$this->call()`
+
+```php
+$book = $this->call('create_book');                                  // inputs: the route variables and the request's fields
+$books = $this->call('list_books', array('author_id' => 2));         // inputs you give
+```
+
+`$this->call($name, $input = null)` runs the capability as the person who sent the request (the signed-in user, a
+token, or a visitor), with its validation, its permissions and its audit, exactly as REST and AI agents call it. It
+returns plain data (arrays: `$book['id']`) or throws `Caligrafy\ServiceError`:
+
+| `$e->kind` | `$e->status()` | When |
+| --- | --- | --- |
+| `invalid` | `422` | an input breaks a rule; `$e->fields` is `['title' => 'The Title field is required', ...]` |
+| `unauthenticated` | `401` | the capability needs someone and nobody is signed in |
+| `forbidden` | `403` | the person lacks the level, or the token the scope |
+| `not_found` | `404` | the capability found nothing |
+| `conflict` | `409` | a duplicate |
+
+Without `$input`, the inputs are the route variables and the request's parameters (the form fields, the JSON body or,
+for a `GET`, the query string); only the inputs the capability declares in `$rules` reach it. `$this->call()` does not
+take uploaded files: a form with a file input posts to `Route::form` or a capability route. The framework's own user
+administration works this way: `AdminController` calls `list_users`, `get_user`, `update_user` and `delete_user`
+([Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#usercapabilities)).
+
+## Namespaced controllers
+
+A controller can live in a namespace. Declare it at the top of the file and use the full name in the route:
+
 ```php
 <?php
-// application/controllers/Shop/OrderController.php
+// application/controllers/Shop/ReportController.php
 namespace Shop;
 
 use Caligrafy\Controller;
 
-class OrderController extends Controller {
+class ReportController extends Controller
+{
     public function show()
     {
-       // your code goes here
+        header('Content-Type: text/plain; charset=utf-8');
+        echo 'Report ' . $this->request->fetch('id');
     }
 }
 ```
 
-+ All the controllers that you create should extend the `Controller` class
 ```php
-
-use Caligrafy\Controller;
-
-class BookController extends Controller {
-    // your code goes here
-}
+Route::get('/reports/{id}', 'Shop\ReportController@show');
 ```
 
-+ The `index` method gets called by default when no method is specified in the `Route`. The base `Controller` has an empty `index()`: override it in your controller.
-```php
-
-use Caligrafy\Controller;
-
-class BookController extends Controller {
-    // index method
-    public function index()
-    {
-       // your code goes here
-    }
-}
-```
-+ Controllers usually cover all the actions that can be taken on the `Model` that it controls. It is therefore common to have several other methods within a controller.
-```php
-
-use Caligrafy\Controller;
-
-class BookController extends Controller {
-    // index method
-    public function index()
-    {
-       // your code goes here
-    }
-    public function read()
-    {
-       // your code goes here
-
-    }
-}
-```
-
-### Routing to the Controller
-In the `Routing` section, we covered the basics of how to route a request to a `Controller` or to a specific method within the controller. We will summarize them herewith.
-
-The following route will redirect all calls to `http://your-app/books` to the `index` method in the `BookController`:
-```php
-Route::get('books', 'BookController');
-```
-
-The following route will redirect all calls to `http://your-app/books` to the `read` method in `BookController`:
-```php
-Route::get('books', 'BookController@read');
-```
-
-### Namespaced controllers
-A route can name a controller by its fully qualified class name, with or without a leading backslash. In a PHP single-quoted string, write the backslash once or twice (`'Shop\OrderController'` and `'Shop\\OrderController'` are the same string):
-```php
-Route::get('/orders/{id}', 'Shop\OrderController@show');
-Route::get('/orders', '\Shop\OrderController');
-```
+`curl -s -i http://localhost:8080/reports/7` answers `200` with `Content-Type: text/plain; charset=utf-8` and
+`Report 7`.
 
 How the router finds the class of `'Name@action'`:
-1. a declared class named `Name` (global or fully qualified) is used: your own `AIController` wins over the example one;
-2. otherwise, a short name (no backslash) falls back to the example controllers namespace, `Caligrafy\Controllers\Name`. Routes written before the example controllers were namespaced, such as `'AuthController@login'` or `'ClientController'`, keep working;
-3. otherwise the request ends with a `404` ([ERROR 1001] Invalid Controller or Action), as for a missing action.
 
-The routes that come with a new project use the full names (`'Caligrafy\Controllers\ClientController'`), which keep pointing to the examples even if you declare a controller with the same short name.
+1. a declared class named `Name` (global or fully qualified, with or without a leading `\`) is used: your own
+   `AIController` wins over the example one;
+2. otherwise, a short name (no backslash) falls back to the example controllers of `Caligrafy\Controllers`
+   (`application/controllers/core/`: `AIController`, `AdminController`, `AuthController`, `ClientController`,
+   `WatsonController`), so routes such as `'ClientController'` keep working;
+3. otherwise the request answers `404` `[ERROR 1001] Invalid Controller or Action`, as for a missing action.
 
-> The models given to `associate()`, `Auth::authentication()` and the relationships (`hasOne`, `hasMany`, `belongsTo`, `belongsToMany`) can be namespaced too (`'Shop\Order'`). The default foreign keys use the short name in lower case (`order_id`).
+In a PHP single-quoted string `'Shop\ReportController'` and `'Shop\\ReportController'` are the same. The routes of a
+new project use the full names (`'Caligrafy\\Controllers\\ClientController'`). Two classes with the same fully
+qualified name in `application/` are an error.
 
-### Controller Context
-Frameworks are meant to help organize and structure code. Some frameworks impose that a `Controller` be tied to a `Model` and imposes a naming convention that forces developers to have a single controller for a model.
+## Reference
 
-Our framework provides the flexibility to create a controller that is independent of a model and it allows changing its context at any point using the `associate` method that takes a `Model` and a database `table name` arguments and returns a `Controller`:
+A controller extends `Caligrafy\Controller`. Without an action in the route (`'BookController'`), `index()` runs; the
+base `index()` does nothing. Do not give your own methods the names below.
 
-`public function associate($modelName, $tablename);` (the model is given by its class name, for example `'Book'`, or as a `Model` object)
+| Property | What it is |
+| --- | --- |
+| `$this->request` | the [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request) |
+| `$this->validator` | a `Caligrafy\Validator` (GUMP with the framework's rules) |
+| `$this->model` | the model set by `associate()` (an empty `Model` otherwise) |
+| `$this->connection` | the database connection (PDO), or `null` |
+| `$this->payment` | the Stripe module after `activatePayment()`, else `null` |
+| `$this->loader` | `Caligrafy\Loader`: `library($name)`, `helper($name)` include a file of `framework/librairies` or `framework/helpers` |
 
-Let's consider the books example again. Assume you have a `Book` and a `Publisher` models in an online library system. In a model-constrained framework, if you need to allow the users to make changes to the `Publisher` model, you will need to have a dedicated `PublisherController`. 
+| Method | What it does |
+| --- | --- |
+| `call($name, $input = null)` | runs a capability as the person who sent the request ([above](#callcapability)) |
+| `view($viewName, $viewData = [])` | renders a Pug view; a request that asks for JSON gets `$viewData` as JSON |
+| `api($viewData = [])` | answers `$viewData` as JSON |
+| `check($data, $rules = [], $filters = [])`, `validate($data, $rules)`, `filter($data, $filters)` | GUMP validation and filtering ([Validation](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation#validationandfiltering)) |
+| `activatePayment()` | sets `$this->payment` to a new `Caligrafy\Payment` |
+| `associate($modelName, $table)`, `all()`, `find()`, `save()`, `delete()`, `search()`, `table()` | the classic model methods ([Other ways](#controllercontext)) |
 
-In this framework, you could change the context in methods or even within the same method: 
+`redirect('/path')` only sends a `Location` header: `return` right after it. Set a status with
+`http_response_code($code)` before `view()` or `api()`.
+
+## Other ways: controllers that read and write models
+
+Before capabilities, a controller read and wrote its model itself. These methods still work in 2.19, for existing
+projects; a new feature is a capability with `Route::form` or `Route::capability` instead, so the web, REST and agents
+follow the same rules.
+
 ```php
+<?php
 
 use Caligrafy\Controller;
 
-class MyController extends Controller {
-
-    public function readBook()
+class LegacyBookController extends Controller
+{
+    public function show()
     {
-       // associate the controller with the Book model and the books table
-       $this->associate('Book', 'books'); 
-
-       // all controller methods executed below will be in the context of Book
-     }
-     public function addPublisher()
-     {
-       // associate the controller with the Publisher model and the publishers table
-       $this->associate('Publisher', 'publishers'); 
-
-       // all controller methods executed below will be in the context of Publisher
-
-     }
-}
-```
-
-### Calling a capability
-
-When a feature is also needed by a Vue app, an API or an AI agent, write it once as a [capability](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service) and let the controller be the web experience of it: `$this->call()` runs the capability as the signed-in user, with its validation and permissions, and the action only decides what to show.
-```php
-use Caligrafy\Controller;
-use Caligrafy\ServiceError;
-
-class BookController extends Controller {
-
-    public function store()
-    {
-        try {
-            $book = $this->call('create_book');   // inputs: the posted fields and the route variables
-            redirect('/books/' . $book['id']);
-        } catch (ServiceError $e) {
-            return view('Books/form', array('errors' => $e->fields, 'message' => $e->getMessage()));
-        }
+        $this->associate('Book', 'books');   // the model class (or a Model object) and its table
+        return api($this->find());           // the id comes from the {id} route variable
     }
 }
 ```
-The same `create_book` then answers `POST /books` over REST, `createBook()` in a Vue app and the `create_book` tool of an AI agent, with the same rules.
 
-Route the form to it, and show the form and the book with `Route::page`:
-```php
-Route::page('/books/new', 'Books/form', ['signedIn' => true]);
-Route::post('/books', 'BookController@store');
-Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
-```
-Since 2.19.0 this controller is one line: `Route::form('/books', 'create_book', ['success' => '/books/{id}']);` does the same, and keeps the fields for `old()` and the messages for `errors()` ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form)). Keep the controller when the action does more than call one capability and redirect.
-The framework's own user administration works this way since 2.5.0: `AdminController` calls `list_users`, `get_user`, `update_user` and `delete_user` (see [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#usercapabilities)).
+| Method | What it does |
+| --- | --- |
+| `associate($modelName, $table)` | sets `$this->model`; call it again to work on another model in the same controller |
+| `all($args = [])` | every row; `$args` adds `condition`, `order`, `limit` (raw SQL) and `bindings` |
+| `find($id = null)` | one row; without `$id`, the `{id}` route variable |
+| `save($inputs, $id = null)` | updates the row `$id` (or the `{id}` route variable), else creates one |
+| `delete($id = null)` | deletes the row `$id` (or the `{id}` route variable) |
+| `search($scope = null, $keywords = null)` | rows whose columns `$scope` (comma separated) match `$keywords` (bound; `%` and `_` are wildcards) |
+| `table()` | the table of `$this->model` |
 
-## Controller Methods & Properties
++ **`{id}` routes**: `find()`, `save()` and `delete()` take the `{id}` route variable when no id is given. On
+  `POST /books/{id}/reviews`, `$this->save($review)` **updates** the review whose id is the book's id. Name the
+  variable `{book_id}` or pass the id.
++ **`all($args)` clauses are SQL**: never put input in them; use `?` and `bindings`.
++ The replacement: a capability that uses the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries),
+  served with `Route::page`, `Route::form` and `Route::capability`.
 
-+ Methods can be created as needed in a controller provided they don't override the built-in `Controller` methods. From the moment you override these methods, the framework could behave abnormally.
+## Common mistakes
 
-+ Despite the fact that there is no prescriptive way on how to organize the logic within a method, we recommend the following logical structure:
-```php
++ **A controller for a form post**: `Route::form` does it in one line, with `errors()`, `old()` and `flash()`.
++ **Code after `redirect()`** keeps running: `return` after it.
++ **A JSON call from a page without `X-CSRF-Token`** answers `401` `[ERROR 1004]`: send `apiHeaders()` (Vue apps)
+  or the token in the header.
++ **A scoped token on a controller route** is refused: controller routes need a token that grants `*`. Give programs
+  capability routes with scoped tokens instead.
++ **A short controller name that collides with an example controller** (`AuthController`): yours wins when it is
+  declared; otherwise the example one answers.
++ **Overriding a base method** (`find`, `save`, `view`, `call`...) breaks the controller.
 
-use Caligrafy\Controller;
+## Related pages
 
-class MyController extends Controller {
-
-    public function myMethod()
-    {
-       // Context: set the context of the controller by association with model and table 
-
-       // Retrieve & Validate: fetch any parameters needed from the request when applicable and validate it
-
-       // Model: Create a model when applicable based on the retrieved data or the data to be changed
-
-       // Act: perform the action on the model
-
-       // View: return a view with the output of the action
-    }
-
-}
-
-```
-
-> **Be careful with `{id}` routes:** `find()`, `save()` and `delete()` take the id from the `{id}` route variable when no id is passed. On a route such as `POST /books/{id}/reviews`, `$this->save($review)` would **update** the review whose id is the book id. Name the variable differently (`{book_id}`) or pass the id explicitly.
-
-> **Redirects:** `redirect('/path')` only sends a `Location` header. Add `exit;` (or `return`) right after it when code follows.
-
-+ From the moment a `Controller` is a created as previously described, powerful built-in methods and properties are provided out of the box.
-
-```php
-
-protected $request; // retrieves the Request
-
-protected $model; // retrieves the Model
-
-protected $connection; // retrieves the database connection
-
-protected $validator; // The GUMP validator can immediately be used from the controller
-
-protected $payment; // The Stripe payment module can immediately be used from the controller once activated
-
-public function associate($modelname, $table); // allows the model to switch context: associate('Book', 'books')
-
-public function activatePayment(); // Activates the Stripe Payment module
-
-public function all($args = array()); // Returns all entries of a model unless an array of condition, order, limit and bindings is specified to complete the query (see Models)
-
-public function find($id = null); // returns a specific entry. When id is not provided it is fetched from the request URI
-
-public function save($inputs, $id = null); // saves an input Array or Model to the database. It updates when an id is given OR when the route has an {id} variable, otherwise it creates
-
-public function delete($id = null); // delete a specific entry. When id is not provided it is fetched from the requested URI
-
-public function search($scope = null, $keywords = null); // defaults to the scope and keywords of the request
-/* returns all entries in a Model with an attribute that matches the keyword search
- * $scope lists the columns, separated by commas. The keywords are bound, never inserted in the SQL
- * There are two wildcards that can be passed on with keywords:
- * The percent sign (%) represents zero, one, or multiple characters
- * The underscore sign (_) represents one, single character
-*/
-
-public function table(); // returns the database table that the model is associated to at any point in time
-
-public function check($data, $rules = array(), $filters = array()); // calls the GUMP validator for validation and /or filtering (see Validation for the return values)
-
-public function validate($data, $rules); // calls the GUMP validation method
-
-public function filter($data, $filters); // calls the GUMP filtering method
-
-public function view($viewName, $viewData = array()); // returns a view that renders a Pug template with the data provided
-
-public function api($viewData = array()); // returns a view for api rendering
-```
++ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): what replaces most controllers
++ [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#controllerroute): controller and closure routes
++ [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request): `$this->request`
++ [Build once: services, capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service)
++ [Validation](https://github.com/caligrafy/caligrafy-quill/wiki/6.-Validation)
 
 >[Next Section: Learn about Helpers, Forms & REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API)

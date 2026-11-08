@@ -32,13 +32,17 @@ the declarative routes, G134-G135 for the rules `exists`, `unique` and `current_
 2. **Fill the service** (`application/services/<Folder>/<Name>.php`):
    - `description`: what it does and returns, written for an AI agent choosing a tool (one or two sentences).
    - `$rules` for EVERY input `handle()` reads (`''` when there is no rule, G52), `$filters` (trim), `$descriptions`.
+     Several parameters of a GUMP rule are separated with `;` (`word_count,min;10;max;500`; with `,` it never fails,
+     G139); a custom `GUMP::add_validator()` rule goes in `application/rules/<name>.php`, not `config.php` (G141).
    - `handle()`: the query builder for reads (2.19.0+, [53-queries.md](../caligrafy/reference/53-queries.md)): lists,
      filters, sorting, paging and related rows are `Book::where(...)->orderBy(...)->with('author')->paginate(20, $input['page'] ?? 1)`
      (`'page' => 'integer'` in `$rules`; `paginate()` alone reads `$_GET`, which REST, MCP and the CLI do not have),
      never a `where` string built from input and never a loop that queries per row (`with()` instead, G124);
      several writes that belong together in `Database::transaction(fn () => ...)`; `update()`/`delete()` of a query
-     need a `where` (G125). Model calls (`create`, `update`, `find`) stay fine. Return data (selected columns: never password hashes or
-     secrets), refuse with `ServiceError::invalid([...])`, `notFound()`, `forbidden()`, `conflict()`.
+     need a `where` (G125). Writes with the builder too: `$id = Book::insert($row); return Book::find($id);`,
+     `Book::where('id', $input['id'])->update($changes)` (the older model calls `create`, `update`, `find` still work).
+     Return data (selected columns: never password hashes or secrets; `select(...)` on `Book::query()` still gives models
+     with the other columns `null`: add `->arrays()`, G138), refuse with `ServiceError::invalid([...])`, `notFound()`, `forbidden()`, `conflict()`.
      No `view()`, `api()`, `redirect()`, `echo`, `$_SESSION` or request access (G52); use `$context->user`.
    - Flags: `readOnly: true` for reads; `destructive: true` for deletes and overwrites; `level: N` when only users
      with `permissions >= N` may call it; `public: true` only for data anyone may read.
@@ -57,7 +61,11 @@ the declarative routes, G134-G135 for the rules `exists`, `unique` and `current_
    - A CSV or JSON export: `Route::download('/books.csv', '<read-only capability>', ['filename' => 'books.csv']);`
      (the capability returns a list of rows).
    - Events another service posts: `Route::webhook('/stripe/events', '<capability>', ['verify' => 'stripe']);` with
-     `$rules = ['event' => 'required']`, idempotent, and `STRIPE_WEBHOOK_SECRET` (G132).
+     `$rules = ['event' => 'required']`, idempotent, and `STRIPE_WEBHOOK_SECRET` (G132). Generate the guard as the
+     first line of its `handle()`: `if ($context->actorType() !== 'webhook') { throw ServiceError::forbidden('Only the
+     webhook calls this'); }`, and `mcp: false` in its attribute: the capability is also served by `/capabilities`,
+     `/mcp` and `call` to anyone its scope and level allow (G137). A capability only the scheduler or the queue runs
+     checks `schedule` / `queue` the same way.
    - Sign-in pages: `Route::auth([...])` after `Auth::authentication('User', 'users')`, not a controller (no password
      reset or face sign-in there: those keep their controllers).
    - A file input: the `file` rule, `'cover' => 'required|file|extension,png;jpg|max_size,2mb'`; `handle()` gets its URL (G131).

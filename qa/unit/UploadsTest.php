@@ -146,4 +146,41 @@ final class UploadsTest extends TestCase
         // the schema says what agents send
         $this->assertSame(array('type' => 'string', 'description' => 'The URL or the path of a file'), Capabilities::schema('qa_save_book')['properties']['cover']);
     }
+
+    // required_file (and required|file): a missing file is invalid on every channel (2.19.1: required_file was ignored)
+    public function testARequiredFileMustBeSent(): void
+    {
+        $service = new class extends \Caligrafy\Service {
+            public $rules = array('title' => 'max_len,20', 'poster' => 'required_file|extension,png', 'scan' => 'required|file');
+            public function handle(array $input, Context $context) { return $input; }
+        };
+        $this->assertTrue(Uploads::required('required_file|extension,png'));
+        $this->assertTrue(Uploads::required('required|file'));
+        $this->assertFalse(Uploads::required('file|extension,png'));
+        $this->assertFalse(Uploads::required('required|max_len,5'));
+
+        // web and REST: no file in $_FILES (or UPLOAD_ERR_NO_FILE)
+        $uploads = new Uploads(array('scan' => array('name' => '', 'tmp_name' => '', 'error' => UPLOAD_ERR_NO_FILE)), function () { return 'http://localhost/public/uploads/x.png'; });
+        $e = $this->refusal(fn () => $service->validate($uploads->apply(array('title' => 'Dune', 'poster' => 'sent as text'), $service->rules)));
+        $this->assertSame('invalid', $e->kind);
+        $this->assertSame(array('The Poster field needs a file', 'The Scan field needs a file'), array($e->fields['poster'], $e->fields['scan']));
+
+        // with the files: accepted
+        $uploads = new Uploads(array('poster' => $this->upload('p.png'), 'scan' => $this->upload('s.png')), function ($file) { return 'http://localhost/public/uploads/' . $file['name']; });
+        $clean = $service->validate($uploads->apply(array('title' => 'Dune'), $service->rules));
+        $this->assertSame('http://localhost/public/uploads/p.png', $clean['poster']);
+
+        // MCP and the command line: a string
+        $e = $this->refusal(fn () => $service->validate(array('title' => 'Dune', 'scan' => '/public/uploads/s.png')));
+        $this->assertSame(array('poster'), array_keys($e->fields));
+        $e = $this->refusal(fn () => $service->validate(array('poster' => '', 'scan' => '/public/uploads/s.png')));
+        $this->assertSame(array('poster'), array_keys($e->fields));
+        $this->assertSame('https://cdn.example/a.png', $service->validate(array('poster' => 'https://cdn.example/a.png', 'scan' => 's.png'))['poster']);
+
+        // the schema: required, with the file description
+        $schema = Capabilities::schemaFromRules($service->rules);
+        $this->assertSame(array('poster', 'scan'), $schema['required']);
+        $this->assertSame(array('type' => 'string', 'description' => 'The URL or the path of a file'), $schema['properties']['poster']);
+        $this->assertSame(array('type' => 'string', 'description' => 'The URL or the path of a file'), $schema['properties']['scan']);
+    }
 }

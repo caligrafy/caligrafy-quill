@@ -7,6 +7,7 @@ import { createPinia } from 'pinia'
 
 // import axios
 import axios from "axios"
+import { config, apiConfig, apiHeaders } from './common/app.js'
 
 import '../../css/styles.css'
 import '../../css/theme.css'
@@ -28,23 +29,10 @@ app.config.productionTip = false
 app.config.globalProperties.http = axios
 app.config.globalProperties.axios = axios /* for backward compatibility also can use axios */
 
-// app api configuration
-app.config.globalProperties.config = {
-	apiKey: import.meta.env.VITE_API_KEY,
-	apiRoute: '' /* specify api route here or in env file */
-};
-
-app.config.globalProperties.apiConfig = {
-	
-	async: true,
-	crossDomain: true,
-	headers: {
-		"Authorization": "Bearer " + app.config.globalProperties.config.apiKey,
-		'Accept': 'application/json',
-		'Content-Type': 'application/json'
-	}
-	
-};
+// app api configuration: the session (cookie + X-CSRF-Token), never an API key in the bundle (src/common/app.js)
+app.config.globalProperties.config = config;
+app.config.globalProperties.apiConfig = apiConfig;
+app.config.globalProperties.apiHeaders = apiHeaders;
 
 app.use(router)
 app.use(createPinia())

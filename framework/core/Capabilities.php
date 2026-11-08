@@ -187,6 +187,7 @@ class Capabilities
                     case 'contains_list': $property['enum'] = array_values(array_filter(array_map('trim', explode(';', (string) $argument)), 'strlen')); break;
                     // a file input (Uploads): agents send the URL or the path of the file
                     case 'file': $property['description'] = 'The URL or the path of a file'; break;
+                    case 'required_file': $required[] = $field; $property['description'] = 'The URL or the path of a file'; break;
                 }
             }
             if ($type !== 'string') {

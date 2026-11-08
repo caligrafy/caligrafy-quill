@@ -66,6 +66,9 @@ abstract class Service
         foreach ($files as $field => $spec) {
             if (isset($data[$field]) && $data[$field] !== '' && ($problem = Uploads::checkString($data[$field], $spec)) !== null) {
                 $fileErrors[$field] = $problem;
+            } elseif ((!isset($data[$field]) || $data[$field] === '') && Uploads::required($this->rules[$field])) {
+                // required_file (or required|file) with no file, URL or path (2.19.1: required_file was ignored)
+                $fileErrors[$field] = 'The ' . ucwords(str_replace(array('_', '-'), ' ', (string) $field)) . ' field needs a file';
             }
         }
         $rules = array_filter($files ? Uploads::strip($this->rules) : $this->rules, function ($rule) { return is_string($rule) && trim($rule) !== ''; });

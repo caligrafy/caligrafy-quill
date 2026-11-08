@@ -22,6 +22,7 @@ namespace Caligrafy;
  * - MCP and the command line cannot send files: the field is a URL or a path string; its extension is checked against
  *   the allow-list.
  * The file rules (file, extension, max_size, required_file) are never given to GUMP: Service::validate() strips them.
+ * A field with required_file (or required) and no file is invalid: 'The <Field> field needs a file' (2.19.1).
  * Without `extension` the allow-list is DEFAULT_UPLOAD_EXTENSIONS.
  */
 class Uploads
@@ -86,6 +87,22 @@ class Uploads
             }
         }
         return $file ? $spec : null;
+    }
+
+    /**
+     * Whether a file input must be sent: its rule has required_file, or required (2.19.1)
+     */
+    public static function required($rule)
+    {
+        if (!is_string($rule) || self::parse($rule) === null) {
+            return false;
+        }
+        foreach (explode('|', $rule) as $part) {
+            if (in_array(strtolower(trim(explode(',', $part, 2)[0])), array('required', 'required_file'), true)) {
+                return true;
+            }
+        }
+        return false;
     }
 
     /**
@@ -184,7 +201,7 @@ class Uploads
             unset($input[$field]);   // a string sent in a file field is not a file
             $file = $this->files[$field] ?? null;
             if ($file === null || (is_array($file) && (int) ($file['error'] ?? 0) === UPLOAD_ERR_NO_FILE)) {
-                continue;            // no file: `required` reports it
+                continue;            // no file: Service::validate() reports it for required_file and required
             }
             $problem = self::check($file, $spec);
             if ($problem !== null) {
