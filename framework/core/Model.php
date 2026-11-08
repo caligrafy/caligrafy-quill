@@ -99,14 +99,71 @@ class Model extends \stdClass {
         return $result;
     }
     
-    // FIND
-    public function find($id)
+    // FIND: $book->find($id) (the instance form, as before) and Book::find($id) (the query builder) both work, so
+    // find() is not declared: __call() runs findRecord(), __callStatic() runs query()->find()
+    private function findRecord($id)
     { 
         // Create query
          $result = Database::execute('SELECT * FROM ' . $this->table . " WHERE id = ?", [$id]);
          $result = Database::toArray($result);
          
         return !empty($result[0])? $this->arrayToModel($result[0]) : null;
+    }
+
+    /**
+     * Query builder methods a model forwards, statically (Book::where(...)) or on an instance ($book->where(...)):
+     * the query is on the model's table and returns models of its class
+     */
+    private static $queryMethods = array(
+        'query' => 1, 'select' => 1, 'where' => 1, 'orwhere' => 1, 'wherein' => 1, 'wherenotin' => 1, 'wherenull' => 1,
+        'wherenotnull' => 1, 'wherebetween' => 1, 'orderby' => 1, 'latest' => 1, 'oldest' => 1, 'limit' => 1,
+        'offset' => 1, 'with' => 1, 'withcount' => 1, 'first' => 1, 'value' => 1, 'pluck' => 1, 'count' => 1,
+        'exists' => 1, 'paginate' => 1, 'chunk' => 1, 'get' => 1, 'insert' => 1, 'input' => 1, 'arrays' => 1
+    );
+    private static $queryTables = array();
+
+    /**
+     * $book->find($id) (instance: SELECT * FROM <its table> WHERE id = ?, as before) and $book->where(...) etc.
+     */
+    public function __call($method, $args)
+    {
+        $name = strtolower($method);
+        if ($name === 'find') {
+            return $this->findRecord(...$args);
+        }
+        if (isset(self::$queryMethods[$name])) {
+            $query = (new Query($this->table ?: self::queryTable(static::class)))->models(static::class);
+            return $name === 'query' ? $query : $query->$method(...$args);
+        }
+        throw new \Error('Call to undefined method ' . static::class . '::' . $method . '()');
+    }
+
+    /**
+     * Book::query(), Book::find($id), Book::where(...), Book::with(...), Book::paginate(20)...
+     */
+    public static function __callStatic($method, $args)
+    {
+        $name = strtolower($method);
+        if ($name === 'find' || isset(self::$queryMethods[$name])) {
+            $query = (new Query(self::queryTable(static::class)))->models(static::class);
+            return $name === 'query' ? $query : $query->$method(...$args);
+        }
+        throw new \Error('Call to undefined method ' . static::class . '::' . $method . '()');
+    }
+
+    /**
+     * The table of Book::query(): a static $tableName of the class, else the default of its $table property, else
+     * its short name in lower case + s (Book -> books, Category -> categories). Read once per class.
+     */
+    private static function queryTable($class)
+    {
+        if (!isset(self::$queryTables[$class])) {
+            $vars = get_class_vars($class);
+            $table = $vars['tableName'] ?? null;
+            $table = $table ?: ($vars['table'] ?? null);
+            self::$queryTables[$class] = $table ?: Query::plural(self::shortName($class));
+        }
+        return self::$queryTables[$class];
     }
     
     // ALL

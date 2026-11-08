@@ -26,6 +26,9 @@ class Database extends \stdClass {
     private static $password = DB_PASSWORD;
     private static $connection;
     private static $renderJson = false;
+    private static $rowCount = 0;
+    private static $depth = 0;
+    private static $development = null;
 
     /**
      * Connects to the database
@@ -100,7 +103,12 @@ class Database extends \stdClass {
             if(!$stmt || !is_array($args)) {
                 throw new Exception(Errors::get('2003'), 2003);
             }
+            // development only: counts the SELECT shapes (N+1 warning); in production one check, Query never loaded
+            if ((self::$development ?? self::development()) && (Query::$watching ?? Query::watching())) {
+                Query::observe($query);
+            }
             $stmt->execute($args);
+            self::$rowCount = $stmt->rowCount();
             return self::render($stmt);
     }
 
@@ -163,6 +171,75 @@ class Database extends \stdClass {
             self::connect();
         }
         return self::$connection;
+    }
+
+    /**
+     * Whether APP_ENV is other than production (read once per process)
+     */
+    private static function development()
+    {
+        $env = getenv('APP_ENV');
+        if ($env === false && defined('APP_ENV')) {
+            $env = APP_ENV;
+        }
+        return self::$development = strtolower(trim((string) $env)) !== 'production';
+    }
+
+    /**
+     * Uses this PDO connection (a test's in-memory SQLite, a worker's own connection); null connects again on next use
+     */
+    public static function useConnection($connection = null)
+    {
+        self::$connection = $connection;
+        self::$depth = 0;
+    }
+
+    /**
+     * A query builder on a table: Database::table('books')->where('price', '<', 20)->get()
+     * @param string $table the table (letters, digits, _)
+     * @return Query
+     */
+    public static function table($table)
+    {
+        return new Query($table);
+    }
+
+    /**
+     * Runs $callback in a transaction: committed when it returns, rolled back when it throws (the exception is
+     * thrown again). A transaction inside another one (or inside a test's transaction) just runs in the outer one.
+     * @return mixed what $callback returns
+     */
+    public static function transaction(callable $callback)
+    {
+        $pdo = self::connection();
+        if (!$pdo) {
+            throw new Exception(Errors::get('2003'), 2003);
+        }
+        if (self::$depth > 0 || $pdo->inTransaction()) {
+            return $callback();
+        }
+        $pdo->beginTransaction();
+        self::$depth++;
+        try {
+            $result = $callback();
+            $pdo->commit();
+        } catch (\Throwable $e) {
+            if ($pdo->inTransaction()) {
+                $pdo->rollBack();
+            }
+            throw $e;
+        } finally {
+            self::$depth--;
+        }
+        return $result;
+    }
+
+    /**
+     * The number of rows the last INSERT, UPDATE or DELETE changed
+     */
+    public static function rowCount()
+    {
+        return self::$rowCount;
     }
 
     /**
