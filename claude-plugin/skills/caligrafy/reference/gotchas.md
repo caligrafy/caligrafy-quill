@@ -790,3 +790,5 @@ the element's attributes or `offsetWidth`, and give it the video's `object-fit`.
 `public/<app>/index.php`: add the `?v=` to its `detect.js` script so browsers fetch the new file.
 
 **G143 (2.21.0). A `webOnly` capability answers "There is no capability" everywhere but `Route::action`.** REST, MCP, the JS client, `php caligrafer.php call`, `Route::page`, `Route::form` and `$this->call()` all get `not_found`: that is what lets it read the session, sign people in and change data on a GET. Keep plain capabilities for anything several channels share, and call them from it with `$this->capability($name, $input, $context)`. In tests use `$this->action()`, not `$this->call()`.
+
+**G144 (2.21.0). `$context` does not change when a web-only capability signs someone in.** It was built from the request, before `AuthRoutes::signIn()`. To call a capability as the person just signed in, build a new one: `Context::fromRequest(request(), 'web')`, and set `viaAction = true` if that capability is webOnly too.

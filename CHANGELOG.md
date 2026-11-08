@@ -6,6 +6,12 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.1] - 2026-11-08
+
+### Security
+- A JSON call to `Route::action` needs the page's CSRF token or an API token, signed in or not, as on a controller
+  route (`[ERROR 1004]`, 401). In 2.21.0 only signed-in, non-GET calls were checked.
+
 ## [2.21.0] - 2026-11-08
 
 ### Added

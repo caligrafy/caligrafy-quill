@@ -1213,6 +1213,9 @@ qa_test('Route::action 2.21.0: a view, a redirect, text, data, refusals; never o
     $r = qa_json('POST', '/capabilities/qa_action', [], null, $page, ['X-CSRF-Token: ' . qa_csrf($page)]);
     qa_equals(404, $r['status']);
     qa_contains('show fallback', $guest->get('/qa/client/any')['body']);
+    qa_equals(401, $guest->get('/qa/action?kind=data', ['headers' => ['Accept: application/json']])['status']);
+    $withToken = new QaBrowser();
+    qa_equals(200, qa_json('GET', '/qa/action?kind=data', null, null, $withToken, ['X-CSRF-Token: ' . qa_csrf($withToken)])['status']);
 });
 
 // ---- the user capabilities: the administration pages, REST and AI agents follow the same rules (2.5.0) ----

@@ -16,6 +16,7 @@ namespace Caligrafy;
  * 2. the capability is called with the query string or the form, and the route variables (which win), as the person
  *    who sent it, with its rules, permissions and audit log like any capability
  * 3. its answer goes to the browser: a Caligrafy\Web (a view, a redirect, JSON, text), or JSON of the plain data
+ *    A JSON call needs the page's X-CSRF-Token or an API token, signed in or not ([ERROR 1004], 401)
  * 4. a refusal it does not answer itself is treated as in Route::form: invalid input or a conflict goes back with
  *    errors(), old() and flash('error'); a visitor goes to sign in; forbidden is 403, anything else 404. JSON requests
  *    get the REST error.
@@ -42,10 +43,11 @@ class Action
         $context->viaAction = true;
         $json = $request->wantsJson();
         $input = Rest::input($request);
+        // a JSON call needs the page's CSRF token or an API token, signed in or not, as on a controller route (2.21.1)
+        if ($json && !$request->authorizeSessionRequest() && (!Auth::api() || !$request->authorizeApiRequest())) {
+            throw Errors::raise(1004, $request->apiRefusal());
+        }
         try {
-            if ($json && strtoupper((string) $request->method) !== 'GET' && $request->bearer() === null && $context->authenticated() && !$request->authorizeSessionRequest()) {
-                throw new ServiceError('forbidden', 'Missing or invalid CSRF token: send the X-CSRF-Token header');
-            }
             $answer = Capabilities::call($capability, $input, $context, new Uploads($_FILES ?? array()));
         } catch (ServiceError $e) {
             if (!empty($options['comeBack'])) {
