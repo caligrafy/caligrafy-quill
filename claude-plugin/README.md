@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.33.9** - Caligrafy Quill 2.21.9: `cloud create` finds the repository in Docker, `cloud extend` is right on an account with no limit, `running` in job history, and the secret check of `ship` and `deploy` prints nothing on a clean project.
 - **1.33.8** - Caligrafy Quill 2.21.8: what the course walk found: quickstart stops when it fails, `app` and `create` refuse a folder that exists, number fields refuse lists and booleans.
 - **1.33.7** - Caligrafy Quill 2.21.7: a full read of the wiki and the references against the code; route variables in `Route`; `signsInWith`; no key in the SPA template.
 - **1.33.6** - Caligrafy Quill 2.21.6: new client apps load `app.js` with a version too.

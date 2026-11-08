@@ -177,6 +177,51 @@ final class CloudClientTest extends TestCase
         $this->assertSame("ssh-ed25519 AAAA caligrafy-cloud-shop\n", file_get_contents($this->root . '/.caligrafy/shop-deploy-key.pub'));
     }
 
+    private function signedIn(): void
+    {
+        @mkdir($this->root . '/.caligrafy');
+        file_put_contents($this->root . '/.caligrafy/cloud.json', json_encode(['url' => 'https://cloud.test', 'token' => 'cq_7_abc']));
+    }
+
+    public function testCreateReadsTheRemoteFromGitConfigWithoutGit(): void
+    {
+        $this->signedIn();
+        mkdir($this->root . '/.git');
+        file_put_contents($this->root . '/.git/config', "[core]\n\tbare = false\n[remote \"upstream\"]\n\turl = git@github.com:other/wrong.git\n[remote \"origin\"]\n\turl = git@github.com:me/shelf.git\n\tfetch = +refs/heads/*:refs/remotes/origin/*\n");
+        [$code, $out] = $this->exec($this->client(['create_app' => [200, '{"data":{"url":"https://shelf.caligrafy.com","repo_url":"https://github.com/me/shelf","branch":"main"}}']]), ['create', 'shelf']);
+        $this->assertSame(0, $code, $out);
+        $this->assertSame('https://github.com/me/shelf', $this->calls[0][1]['repo_url']);
+    }
+
+    public function testCreateWithoutARepositorySaysWhatIsMissing(): void
+    {
+        $this->signedIn();
+        [$code, $out] = $this->exec($this->client([]), ['create', 'shelf']);
+        $this->assertSame(1, $code);
+        $this->assertStringContainsString('no GitHub remote named origin', $out);
+        $this->assertStringContainsString('cloud create shelf --repo https://github.com/', $out);
+        $this->assertSame([], $this->calls);
+    }
+
+    public function testExtendOnAnUnlimitedAccountSaysSo(): void
+    {
+        $this->signedIn();
+        [$code, $out] = $this->exec($this->client(['extend_app' => [200, '{"data":{"url":"https://shelf.caligrafy.com","online_until":null,"credits_left":null,"restarted":false}}']]), ['extend', 'shelf', 'month']);
+        $this->assertSame(0, $code, $out);
+        $this->assertStringContainsString('stays online, with no end date. No credit was spent.', $out);
+        $this->assertStringNotContainsString('1970', $out);
+        $this->assertStringNotContainsString('1969', $out);
+    }
+
+    public function testExtendShowsTheEndAndTheCredits(): void
+    {
+        $this->signedIn();
+        [$code, $out] = $this->exec($this->client(['extend_app' => [200, '{"data":{"url":"https://shelf.caligrafy.com","online_until":"2027-01-02T03:04:05+00:00","credits_left":3,"restarted":true}}']]), ['extend', 'shelf', 'month']);
+        $this->assertSame(0, $code, $out);
+        $this->assertStringContainsString('is online until 2027-01-0', $out);
+        $this->assertStringContainsString('Credits left: 3. It is starting again.', $out);
+    }
+
     public function testSubmitSendsTheMarketplaceFileThenDeploys(): void
     {
         putenv('CALIGRAFY_CLOUD_TOKEN=cq_7_abc123');

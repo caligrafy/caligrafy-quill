@@ -39,7 +39,7 @@ prints.
 ```bash
 docker compose exec dev-box php caligrafer.php version                        # 2.4.0 or later
 ls Dockerfile Dockerfile.dockerignore composer.lock
-git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'   # must print nothing
+git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$' | grep -v '^framework/settings/'   # must print nothing
 docker compose exec dev-box php caligrafer.php doctor --only project          # no FAIL
 ```
 
@@ -187,7 +187,7 @@ database, its keys and an address: `https://<name>.caligrafy.com`.
 | `cloud apps`, `cloud status <name>`, `cloud logs <name> [--jobs]` | your apps, one app's state and time left, its logs |
 | `cloud jobs <name> [run <job> \| history <job>]` | its scheduled jobs, one run now, a job's runs |
 | `cloud secret set <name> KEY=value`, `secret list <name>`, `secret delete <name> KEY` | a setting of its `.env`, applied at the next deploy; stored encrypted, never shown again |
-| `cloud extend <name> week\|month\|year` | 2, 5 or 50 credits |
+| `cloud extend <name> week\|month\|year` | 2, 5 or 50 credits (an account with no limit spends none and its apps have no end date) |
 | `cloud credits 5\|10\|25\|50` | buy credits on Stripe |
 | `cloud submit <name> [--no-deploy]` | sends the marketplace listing, then deploys |
 | `cloud delete <name> --yes` | the app, its database and files, for good |

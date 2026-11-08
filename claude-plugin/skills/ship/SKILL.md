@@ -32,7 +32,7 @@ Two places run commands:
 ```bash
 caligrafer version                                     # 2.7.0+ for the browser sign-in (older: upgrade, or the deploy skill)
 ls Dockerfile Dockerfile.dockerignore composer.lock    # 2.4.0 projects have them
-git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'   # must print nothing (.env.php included, 2.19.0+)
+git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$' | grep -v '^framework/settings/'   # must print nothing (.env.php included, 2.19.0+)
 caligrafer doctor --only project                       # a WARN "Pages and the API key" must be fixed first (G87)
 ```
 + Every `application/models/*/create_db.sql` runs again online: `CREATE TABLE IF NOT EXISTS`, no `DROP`/`DELETE` (G68).
@@ -134,5 +134,6 @@ Report, with the real addresses: the site, the repository, the time left (`cloud
 approved in the browser. After a change later: commit, `github.sh push`, `caligrafer cloud deploy <name>`.
 When the project has scheduled jobs (`php caligrafer.php schedule list` lists some), check them once it is online:
 `caligrafer cloud jobs <name>` lists them (an error says why they do not run), `cloud jobs <name> run <job>` then
-`cloud jobs <name> history <job>` must show `ok`. With background jobs, the `queue` job (on `queue_work`) must show `ok`
-in `cloud jobs <name> history queue`.
+`cloud jobs <name> history <job>` must show `ok` (`running` means the run is still going: look again in a minute; a
+`skipped` beside it means the same job was already running when that one started, which is normal for a long job).
+With background jobs, the `queue` job (on `queue_work`) must show `ok` in `cloud jobs <name> history queue`.

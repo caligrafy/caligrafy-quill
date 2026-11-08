@@ -6,6 +6,16 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.9] - 2026-11-08
+
+### Fixed
+- `cloud create` without `--repo` reads the `origin` remote from `.git/config` when there is no `git` command, as in the Docker `dev-box`, and says what is missing when there is no GitHub remote: it printed only `Usage:`.
+- `cloud extend` on an account with no limit says the app has no end date and no credit was spent: it printed a date in 1969 and an empty credit count.
+- The secret check of the `ship` and `deploy` skills and the docs leaves out `framework/settings/`, whose two templates hold no secret: documented as "must print nothing", it always printed them.
+
+### Documentation
+- `cloud jobs <name> history` documents `running` (a run that has not ended) and `skipped` (the same job was still going). Caligrafy Cloud now shows `running` instead of `error` for a run in progress.
+
 ## [2.21.8] - 2026-11-08
 
 ### Fixed

@@ -141,7 +141,7 @@ The Docker server is `dev-box` (PHP 8.5 and Apache, your folder mounted in it), 
 php caligrafer.php version        # also --version and -v
 ```
 ```text
-Caligrafy Quill 2.21.8
+Caligrafy Quill 2.21.9
 ```
 It works before `composer install` and never creates `.env`. In code: `Caligrafy\Framework::VERSION`. The changes of every version are in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
 
@@ -417,7 +417,7 @@ php caligrafer.php doctor --env .env.production    # another environment file
 php caligrafer.php doctor --json                   # for scripts
 ```
 ```text
-Caligrafy doctor (read-only): Caligrafy Quill 2.21.8
+Caligrafy doctor (read-only): Caligrafy Quill 2.21.9
 
  Database
   OK    Database: connected to mysql://mysql:3306/caligrafy (server 8.4.13)
@@ -448,7 +448,7 @@ php caligrafer.php update --check      # what it would change, nothing written
 php caligrafer.php update              # to the latest release
 php caligrafer.php update 2.21.6       # to one release
 ```
-On the latest release: `Caligrafy Quill 2.21.8 is the latest: nothing to update. php caligrafer.php upgrade checks application/.` It downloads the project's release and the target from GitHub, then:
+On the latest release: `Caligrafy Quill 2.21.9 is the latest: nothing to update. php caligrafer.php upgrade checks application/.` It downloads the project's release and the target from GitHub, then:
 
 1. replaces `framework/` and `claude-plugin/` whole (keeping `framework/librairies/app/.env`);
 2. compares every other file of the release (`caligrafer.php`, `.bin/`, `Dockerfile`, `docker-compose.yaml`, `index.php`, `public/css`, `public/js`...) with the project's release: a file you never changed is replaced, a missing one is added, a file you changed is kept with the new version next to it as `<file>.caligrafy-new`. Your documents (`README.md`...) are left alone; `application/`, `tests/`, `qa/`, `public/uploads/` and `composer.lock` are never touched here;
@@ -535,7 +535,7 @@ The `caligrafy-schedule` line is the list of scheduled jobs, for Caligrafy Cloud
 ```
 `php caligrafer.php cloud` (or `cloud help`) prints this list. Each app is built from its GitHub repository with its `Dockerfile`, with its own MySQL database, at `https://<name>.caligrafy.com`.
 + `login` prints a code and an address; open it, approve the code, and the token is saved in `.caligrafy/cloud.json` (ignored by git). In Docker it does not open the browser itself. `CALIGRAFY_CLOUD_TOKEN` and `CALIGRAFY_CLOUD_URL` override the file.
-+ `create` takes the repository from `git remote get-url origin` when `--repo` is missing. For a private repository it saves the read-only deploy key in `.caligrafy/<name>-deploy-key.pub`.
++ `create` takes the repository from the project's `origin` remote when `--repo` is missing (also in the Docker `dev-box`, which has no `git`: it reads `.git/config`), and says so when there is none. For a private repository it saves the read-only deploy key in `.caligrafy/<name>-deploy-key.pub`.
 + `deploy` follows the build (up to 15 minutes) unless `--no-wait`.
 + `secret set` adds a setting to the app's `.env`, applied at the next deploy.
 + `submit` sends the listing the `/caligrafy-quill:marketplace` skill wrote, then deploys.

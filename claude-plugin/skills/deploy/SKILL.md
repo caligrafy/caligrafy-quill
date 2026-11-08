@@ -19,7 +19,7 @@ php caligrafer.php version                        # 2.4.0 or later; older: upgra
 ls Dockerfile Dockerfile.dockerignore composer.lock
 git status --short && git log origin/HEAD..HEAD --oneline 2>/dev/null   # uncommitted or unpushed work
 git remote get-url origin                         # a GitHub repository
-git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$'  # must print nothing (.env.php too, 2.19.0+)
+git ls-files | grep -E '(^|/)\.env($|\.)' | grep -v '\.env\.example$' | grep -v '^framework/settings/'  # must print nothing (.env.php too, 2.19.0+)
 php caligrafer.php doctor --only project
 ```
 

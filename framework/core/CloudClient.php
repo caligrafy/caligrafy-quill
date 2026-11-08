@@ -64,8 +64,12 @@ class CloudClient
                     foreach ($apps as $app) $this->out(sprintf(" %-24s %-10s %s", $app['name'], $app['status'], $app['url'] . $this->left($app) . $this->locked($app)));
                     return 0;
                 case 'create':
+                    if (!$name) return $this->usage('create <name> [--repo https://github.com/<owner>/<repo>] [--branch <branch>]');
                     $repo = $this->option($args, '--repo') ?: $this->originRepo();
-                    if (!$name || !$repo) return $this->usage('create <name> [--repo https://github.com/<owner>/<repo>] [--branch <branch>]');
+                    if (!$repo) {
+                        $this->out(" This project has no GitHub remote named origin, so Cloud does not know what to build. Say it:\n php caligrafer.php cloud create $name --repo https://github.com/<owner>/<repo>");
+                        return 1;
+                    }
                     $input = array('name' => $name, 'repo_url' => $repo);
                     if ($branch = $this->option($args, '--branch')) $input['branch'] = $branch;
                     $app = $this->call('create_app', $input);
@@ -111,7 +115,10 @@ class CloudClient
                     $period = strtolower($args[2] ?? '');
                     if (!$name || !in_array($period, self::PERIODS, true)) return $this->usage('extend <name> week|month|year   (2, 5 or 50 credits)');
                     $app = $this->call('extend_app', array('name' => $name, 'period' => $period));
-                    $this->out(" {$app['url']} is online until " . date('Y-m-d H:i T', strtotime($app['online_until'])) . ". Credits left: {$app['credits_left']}." . ($app['restarted'] ? ' It is starting again.' : ''));
+                    // an unlimited account spends nothing and its apps have no end date: Cloud sends null for both
+                    $until = empty($app['online_until']) ? 'stays online, with no end date' : 'is online until ' . date('Y-m-d H:i T', strtotime($app['online_until']));
+                    $credits = isset($app['credits_left']) ? " Credits left: {$app['credits_left']}." : ' No credit was spent.';
+                    $this->out(" {$app['url']} $until.$credits" . (!empty($app['restarted']) ? ' It is starting again.' : ''));
                     return 0;
                 case 'credits':
                     if (!in_array((int) $name, array(5, 10, 25, 50), true)) return $this->usage('credits 5|10|25|50   (1 credit = 1 USD)');
@@ -396,6 +403,10 @@ class CloudClient
     private function originRepo()
     {
         $remote = trim((string) @shell_exec('git -C ' . escapeshellarg($this->root) . ' remote get-url origin 2>/dev/null'));
+        // the Docker dev-box has the project's .git but no git command: read the remote from the file
+        if ($remote === '' && preg_match('/\[remote "origin"\][^\[]*?^\s*url\s*=\s*(\S+)/m', (string) @file_get_contents($this->root . '/.git/config'), $m)) {
+            $remote = $m[1];
+        }
         if (preg_match('#github\.com[:/]([A-Za-z0-9_.-]+)/([A-Za-z0-9_.-]+?)(\.git)?$#', $remote, $m)) {
             return "https://github.com/$m[1]/$m[2]";
         }

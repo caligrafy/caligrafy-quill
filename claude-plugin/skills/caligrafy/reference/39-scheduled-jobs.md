@@ -198,7 +198,7 @@ container on its rhythm, with the app's code, settings and database.
 |---|---|
 | **See them** | `php caligrafer.php cloud jobs <app>` (each job, its last run and its next one), or **Jobs** on the app's page |
 | **Run one now** | `php caligrafer.php cloud jobs <app> run <job>` (within the minute), or **Run now** |
-| **Their runs** | `php caligrafer.php cloud jobs <app> history <job>` (7 days, with their output), `cloud logs <app> --jobs` |
+| **Their runs** | `php caligrafer.php cloud jobs <app> history <job>` (7 days, with their output), `cloud logs <app> --jobs`. A run that has not ended shows `running`, with no duration |
 | **Limits** | 20 jobs per app, once a minute at most, 300 seconds per run; included in the app's time, no extra credits |
 | **Paused** | A paused app runs no jobs, and missed runs are not caught up |
 | **Failing** | After 10 failed runs in a row of one job, Cloud emails you once; it never turns a job off |
