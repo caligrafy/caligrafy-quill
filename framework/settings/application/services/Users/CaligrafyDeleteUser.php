@@ -22,7 +22,7 @@ class CaligrafyDeleteUser extends Service
     public function handle(array $input, Context $context)
     {
         CaligrafyUsers::requireAdmin($context);
-        $user = (new User('users'))->find($input['id']);
+        $user = User::find($input['id']);
         if (!$user) {
             throw ServiceError::notFound("No user #{$input['id']}");
         }
@@ -32,10 +32,10 @@ class CaligrafyDeleteUser extends Service
         if (!CaligrafyUsers::mayManage($context, $user->permissions ?? 0)) {
             throw ServiceError::forbidden('You cannot delete someone above your own level');
         }
-        (new User('users'))->delete($user->id);
+        User::where('id', $user->id)->delete();
         if (Tokens::installed()) {
             // their tokens stop working with the account
-            Database::execute('UPDATE ' . Tokens::TABLE . ' SET revoked_at = ? WHERE user_id = ? AND revoked_at IS NULL', array(date('Y-m-d H:i:s'), $user->id));
+            Database::table(Tokens::TABLE)->where('user_id', $user->id)->whereNull('revoked_at')->update(array('revoked_at' => date('Y-m-d H:i:s')));
         }
         return array('id' => (int) $user->id, 'deleted' => true);
     }

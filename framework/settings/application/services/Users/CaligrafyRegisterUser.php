@@ -2,12 +2,11 @@
 
 use Caligrafy\Capability;
 use Caligrafy\Context;
-use Caligrafy\Database;
 use Caligrafy\Service;
 use Caligrafy\ServiceError;
 
-// Sign-up: the sign-up page (AuthController@register) calls it, then sends the person to sign in. Signing in itself
-// stays in the controller: it is the web session, which capabilities never touch.
+// Sign-up: the sign-up page of Route::auth (or AuthController@register) calls it, then the person signs in, or is signed
+// in at once with Route::auth's signInAfterRegister. Signing in itself is the web session's, which capabilities never touch.
 // Web pages and the command line only: over REST or MCP anyone could create accounts in bulk.
 #[Capability(
     name: 'register_user',
@@ -25,12 +24,11 @@ class CaligrafyRegisterUser extends Service
         if (!in_array($context->channel, array('web', 'cli'), true)) {
             throw ServiceError::forbidden('Sign up on the sign-up page');
         }
-        if (Database::toArray(Database::execute('SELECT id FROM users WHERE username = ?', array($input['username'])))) {
+        if (User::where('username', $input['username'])->exists()) {
             throw ServiceError::conflict('The username already exists in the system');
         }
-        $users = new User('users');
         try {
-            $user = $users->create(array('username' => $input['username'], 'passcode' => User::hashPassword($input['passcode']), 'permissions' => 0));
+            $user = User::find(User::insert(array('username' => $input['username'], 'passcode' => User::hashPassword($input['passcode']), 'permissions' => 0)));
         } catch (\Throwable $e) {
             if (CaligrafyUsers::isDuplicate($e)) {
                 throw ServiceError::conflict('The username already exists in the system');

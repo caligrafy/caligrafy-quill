@@ -28,7 +28,9 @@ namespace Caligrafy;
  * (900) that username is refused from that address (429) until the window ends.
  * Options: prefix (''), home ('/'), logout ('/'), register (true, or the name of the capability), attempts, lock,
  * views (['login' => 'Auth/login', 'register' => 'Auth/register']), passkeys (false), identifier ('username': the
- * users column people sign in with and the name of its field, 'email' for instance), signInAfterRegister (false).
+ * users column people sign in with and the name of its field, 'email' for instance), signInAfterRegister (false),
+ * messages (2.19.3: what a failed sign-in says, ['invalid' => ..., 'locked' => ...]; {minutes} in 'locked' is the wait).
+ * A failed sign-in shows the page again with what the person typed in the identifier field (never the password).
  * A JSON request (Accept: application/json) gets JSON answers and needs the X-CSRF-Token header.
  * Not provided by the framework, so refused with a LogicException: 'face' (the face login recipe has its own
  * controller and tables) and 'reset' (password reset: the users table has no email address).
@@ -37,6 +39,12 @@ class AuthRoutes
 {
     // what a check against a password that does not exist costs: response times do not tell which usernames exist
     const DUMMY_HASH = '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG';
+
+    // what a failed sign-in says (2.19.3: human words; the 'messages' option replaces them)
+    const MESSAGES = array(
+        'invalid' => "We couldn't sign you in with those details. Check them and try again.",
+        'locked' => 'Too many tries in a row. For your security, wait {minutes} minutes, then try again.',
+    );
 
     /** @var callable|null replaces session_regenerate_id(true) (tests) */
     public static $regenerate = null;
@@ -53,7 +61,8 @@ class AuthRoutes
             throw new \LogicException("Route::auth: password reset is not built in: the users table of the authentication module has no email address");
         }
         $o = array_merge(array('prefix' => '', 'home' => '/', 'logout' => '/', 'register' => true, 'attempts' => 5, 'lock' => 900,
-            'views' => array(), 'passkeys' => false, 'identifier' => 'username', 'signInAfterRegister' => false), $options);
+            'views' => array(), 'passkeys' => false, 'identifier' => 'username', 'signInAfterRegister' => false, 'messages' => array()), $options);
+        $o['messages'] = array_merge(self::MESSAGES, array_map('strval', array_intersect_key((array) $o['messages'], self::MESSAGES)));
         $o['identifier'] = (string) $o['identifier'];
         if (!preg_match(Query::NAME, $o['identifier']) || preg_match('/pass|secret|token/i', $o['identifier'])) {
             throw new \InvalidArgumentException("Route::auth: 'identifier' is a column of the users table that people sign in with ('username', 'email'), not '" . substr($o['identifier'], 0, 60) . "'");
@@ -266,14 +275,17 @@ class AuthRoutes
             self::finder($model, $o['identifier']));
         if ($result['status'] !== 'ok') {
             $locked = $result['status'] === 'locked';
-            $message = $locked ? 'Too many failed attempts: try again in ' . max(1, (int) ceil($o['lock'] / 60)) . ' minutes' : 'Invalid credentials';
+            $message = $locked ? str_replace('{minutes}', (string) max(1, (int) ceil($o['lock'] / 60)), $o['messages']['locked']) : $o['messages']['invalid'];
             if ($json) {
                 return self::json($locked ? 429 : 401, array('error' => array('code' => $locked ? 'locked' : 'unauthenticated', 'message' => $message)));
             }
             if ($locked) {
                 http_response_code(429);
             }
-            return view($o['views']['login'], array('identifier' => $o['identifier'], 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => $message));
+            // the page again, with what the person typed in the identifier field (so they only fix what is wrong)
+            $typed = mb_substr(trim($text($p[$o['identifier']] ?? '')), 0, 254);
+            return view($o['views']['login'], array('identifier' => $o['identifier'], 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => $message,
+                'user' => (object) array($o['identifier'] => $typed)));
         }
         $user = self::upgrade($model, $result['user'], $password);
         self::signIn($user);

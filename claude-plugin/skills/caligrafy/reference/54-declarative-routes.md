@@ -571,6 +571,7 @@ views of the authentication module (`application/views/Auth/login.pug`, `registe
 | `register` | `true` | `true`: `/register` with the `register_user` capability; `false`: no sign-up; a capability name: yours |
 | `identifier` | `'username'` | the `users` column people sign in with, and the name of the sign-in field (`'email'`) |
 | `signInAfterRegister` | `false` | `true`: a new account is signed in and goes to `home` instead of the sign-in page |
+| `messages` | human words | what a failed sign-in says (2.19.3): `['invalid' => "We couldn't sign you in...", 'locked' => 'Too many tries... {minutes} minutes...']` |
 | `attempts`, `lock` | `5`, `900` | failed sign-ins per username and address before a `429`, and the window in seconds |
 | `views` | `['login' => 'Auth/login', 'register' => 'Auth/register']` | your own views |
 | `prefix` | `''` | `'/account'` gives `/account/login`... (the shipped views post to `/login`: write your own) |
@@ -578,7 +579,7 @@ views of the authentication module (`application/views/Auth/login.pug`, `registe
 
 + Signing in and signing out give the person a new session id and a new CSRF token.
 + The fifth failed sign-in for a username from one address within 15 minutes, and every one after it until the 15
-  minutes end, answers `429` "Too many failed attempts: try again in 15 minutes".
+  minutes end, answers `429` "Too many tries in a row. For your security, wait 15 minutes, then try again." (2.19.3; the `messages` option sets your own words).
 + A JSON request with `X-CSRF-Token` gets `200` `{"data":{"user":{"id":1,"username":"ada","permissions":0}}}`, `401`
   or `429` in JSON: a Vue app signs in with the same routes.
 + Sign-up sends the register capability every input its `$rules` declare; nothing else of the form reaches it.

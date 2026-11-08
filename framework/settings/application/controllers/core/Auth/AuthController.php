@@ -94,7 +94,9 @@ class AuthController extends Controller {
             redirect('/home');
             exit;
         } 
-        return view('/Auth/login', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => 'Invalid credentials' ));
+        // the same words as Route::auth, with the username typed kept in its field (2.19.3)
+        return view('/Auth/login', array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => \Caligrafy\AuthRoutes::MESSAGES['invalid'],
+            'user' => (Object) array('username' => mb_substr(trim((string) ($parameters['username'] ?? '')), 0, 254))));
     }
     
     /*

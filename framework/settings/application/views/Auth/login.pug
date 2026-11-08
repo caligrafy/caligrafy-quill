@@ -22,7 +22,8 @@ block content
         - $isEmail = $field === 'email'
         .cq-field
           label(for=$field)= $isEmail ? 'Email' : ucfirst(str_replace('_', ' ', $field))
-          input.form-control(id=$field, type=$isEmail ? 'email' : 'text', name=$field, required, autocomplete=$isEmail ? 'email' : 'username', autocapitalize='none', maxlength='190')
+          //- after a failed sign-in, what the person typed is kept (Route::auth gives it in $user, 2.19.3)
+          input.form-control(id=$field, type=$isEmail ? 'email' : 'text', name=$field, value=isset($user) && is_object($user) ? ($user->$field ?? '') : '', required, autocomplete=$isEmail ? 'email' : 'username', autocapitalize='none', maxlength='190')
         .cq-field
           label(for='passcode') Password
           input#passcode.form-control(type='password', name='passcode', required, autocomplete='current-password', maxlength='72')

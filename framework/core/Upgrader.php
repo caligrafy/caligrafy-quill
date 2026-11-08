@@ -116,7 +116,23 @@ class Upgrader
             else $status = 'customized';
             $plan[$path] = ['status' => $status, 'template' => $hash, 'current' => $current];
         }
-        return $this->holdUserCapabilities($plan);
+        return $this->holdSignInController($this->holdUserCapabilities($plan));
+    }
+
+    /**
+     * A project that signs people in with Route::auth (2.19) and removed the AuthController template does not get it back:
+     * its routes no longer call it (2.19.3). --force adds it anyway.
+     */
+    private function holdSignInController(array $plan)
+    {
+        if (($plan[self::AUTH_CONTROLLER]['status'] ?? '') !== 'missing') return $plan;
+        $routes = @file_get_contents($this->root . '/application/config/routing/web.php');
+        // Route::auth( in code, not in a comment: a line that does not start with // or *
+        if ($routes !== false && preg_match('#^(?!\s*(//|\*|/\*)).*Route::auth\s*\(#m', $routes)) {
+            $plan[self::AUTH_CONTROLLER]['status'] = 'held';
+            $plan[self::AUTH_CONTROLLER]['reason'] = 'your routes sign people in with Route::auth: AuthController is not needed (add it with --force)';
+        }
+        return $plan;
     }
 
     /**

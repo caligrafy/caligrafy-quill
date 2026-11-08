@@ -118,6 +118,19 @@ final class AuthRoutesTest extends TestCase
         $this->assertSame('invalid', AuthRoutes::attempt('', 'x', '10.0.0.1', $throttle, $this->finder())['status']);
     }
 
+    public function testAFailedSignInSaysSoInHumanWordsOrTheAppsOwn(): void
+    {
+        $o = AuthRoutes::options(array());
+        $this->assertSame(AuthRoutes::MESSAGES, $o['messages']);
+        $this->assertStringNotContainsString('Invalid credentials', $o['messages']['invalid']);
+        $this->assertStringContainsString('{minutes}', $o['messages']['locked']);
+        // an app's own words; unknown keys and the other message are left as they are (2.19.3)
+        $o = AuthRoutes::options(array('messages' => array('invalid' => 'That email and password do not match an account.', 'other' => 'x')));
+        $this->assertSame('That email and password do not match an account.', $o['messages']['invalid']);
+        $this->assertSame(AuthRoutes::MESSAGES['locked'], $o['messages']['locked']);
+        $this->assertArrayNotHasKey('other', $o['messages']);
+    }
+
     public function testASuccessForgetsTheFailures(): void
     {
         $throttle = $this->throttle(3);

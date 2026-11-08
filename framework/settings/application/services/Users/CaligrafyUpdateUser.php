@@ -2,7 +2,6 @@
 
 use Caligrafy\Capability;
 use Caligrafy\Context;
-use Caligrafy\Database;
 use Caligrafy\Service;
 use Caligrafy\ServiceError;
 
@@ -22,8 +21,7 @@ class CaligrafyUpdateUser extends Service
     public function handle(array $input, Context $context)
     {
         CaligrafyUsers::requireAdmin($context);
-        $users = new User('users');
-        $user = $users->find($input['id']);
+        $user = User::find($input['id']);
         if (!$user) {
             throw ServiceError::notFound("No user #{$input['id']}");
         }
@@ -32,8 +30,7 @@ class CaligrafyUpdateUser extends Service
         }
         $changes = array();
         if (isset($input['username']) && $input['username'] !== '' && $input['username'] !== $user->username) {
-            $taken = Database::toArray(Database::execute('SELECT id FROM users WHERE username = ? AND id <> ?', array($input['username'], $user->id)));
-            if ($taken) {
+            if (User::where('username', $input['username'])->where('id', '!=', $user->id)->exists()) {
                 throw ServiceError::invalid(array('username' => 'The username already exists in the system'));
             }
             $changes['username'] = $input['username'];
@@ -52,7 +49,8 @@ class CaligrafyUpdateUser extends Service
         }
         $changes['modified_at'] = date('Y-m-d H:i:s');
         try {
-            return CaligrafyUsers::profile($users->update($changes, $user->id));
+            User::where('id', $user->id)->update($changes);
+            return CaligrafyUsers::profile(User::find($user->id));
         } catch (\Throwable $e) {
             if (CaligrafyUsers::isDuplicate($e)) {
                 throw ServiceError::invalid(array('username' => 'The username already exists in the system'));

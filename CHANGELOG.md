@@ -6,6 +6,22 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.3] - 2026-11-08
+
+### Changed
+- A failed sign-in of `Route::auth` speaks plainly: "We couldn't sign you in with those details. Check them and try
+  again." and, after too many tries, "Too many tries in a row. For your security, wait 15 minutes, then try again."
+  (`AuthRoutes::MESSAGES`). The new `messages` option (`['invalid' => ..., 'locked' => ...]`, `{minutes}` is the wait)
+  sets an app's own words. The sign-in page shows again with what the person typed in the username (or identifier)
+  field, never the password: `Route::auth` gives it in `$user`, and the template `login.pug` and `AuthController` keep it.
+- The user capabilities of the template (`services/Users`: sign up, list, get, update and delete a user) use the query
+  builder (`User::find()`, `User::where()`, `User::insert()`, `User::query()`), with every value bound, as 2.19 teaches.
+- `upgrade` (and `update`) no longer add back `controllers/core/Auth/AuthController.php` to a project whose routes sign
+  people in with `Route::auth`: it is held, with the reason (`--force` adds it).
+
+### Documentation
+- Plugin 1.31.3; the wiki (Authentication, Declarative routes) and the course (lesson 11) quote the new words.
+
 ## [2.19.2] - 2026-11-08
 
 ### Fixed

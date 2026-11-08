@@ -560,7 +560,7 @@ qa_test('login with a wrong password fails', function () {
     $b = new QaBrowser();
     $r = $b->login('alice', 'nope12345');
     qa_equals(200, $r['status']);
-    qa_contains('Invalid credentials', $r['body']);
+    qa_contains('Check them and try again', $r['body']);
     // the message block of the sign-in page (modules/notice.pug) renders, not a template error
     qa_contains('cq-alert cq-alert--error', $r['body']);
     qa_not_contains('Unsupported operand', $r['body']);
@@ -1373,11 +1373,14 @@ qa_test('Route::auth: a wrong password fails, and 3 failures lock that username 
     $b = new QaBrowser();
     $r = $b->post('/qa/auth/login', ['_token' => $b->token('/qa/auth/login'), 'username' => 'lockqa', 'passcode' => 'wrong-1']);
     qa_equals(200, $r['status']);
-    qa_contains('Invalid credentials', $r['body']);
+    qa_contains('Check them and try again', $r['body']);
+    // the username typed stays in its field, the password never comes back (2.19.3)
+    qa_contains('value="lockqa"', $r['body']);
+    qa_not_contains('wrong-1', $r['body']);
     $b->post('/qa/auth/login', ['_token' => $b->token('/qa/auth/login'), 'username' => 'lockqa', 'passcode' => 'wrong-2']);
     $r = $b->post('/qa/auth/login', ['_token' => $b->token('/qa/auth/login'), 'username' => 'lockqa', 'passcode' => 'wrong-3']);
     qa_equals(429, $r['status']);
-    qa_contains('Too many failed attempts', $r['body']);
+    qa_contains('Too many tries in a row', $r['body']);
     // a new browser (no cookie) is still locked: the count is in the cache, not the session
     $c = new QaBrowser();
     $r = $c->post('/qa/auth/login', ['_token' => $c->token('/qa/auth/login'), 'username' => 'lockqa', 'passcode' => 'Passw0rdQa']);

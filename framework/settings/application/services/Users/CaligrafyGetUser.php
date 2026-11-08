@@ -20,7 +20,7 @@ class CaligrafyGetUser extends Service
     public function handle(array $input, Context $context)
     {
         CaligrafyUsers::requireAdmin($context);
-        $user = (new User('users'))->find($input['id']);
+        $user = User::find($input['id']);
         if (!$user) {
             throw ServiceError::notFound("No user #{$input['id']}");
         }
