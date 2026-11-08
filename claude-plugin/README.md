@@ -6,11 +6,11 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 78 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G121) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
-| Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` (no controller on the model) |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (all 78 pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G145) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` and forms with `Route::form` (no controller) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: describe it, approve it, ship it. Your idea turned into a complete app online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
-| Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel |
+| Skill | `/caligrafy-quill:new-capability <name> [scope]` | A capability written once (service + `#[Capability]`) and served to Pug pages, REST, the JS client and AI agents over MCP, with a token and a check of every channel; `Route::action` and a web-only capability for what only a browser can do |
 | Skill | `/caligrafy-quill:new-app <app\|create\|bot\|facedetect\|ml> <name>` | Scaffolds a client app with caligrafer and wires its page and data routes |
 | Skill | `/caligrafy-quill:design [style\|off]` | Restyles every page to match a design style: reads the selected `DESIGN.md` (`framework/design/`: 84 vendored styles from VoltAgent/awesome-design-md, local ones such as `interstellar`; or the project's own in `application/design/`), writes one override stylesheet `public/css/designs/<style>.css` loaded after the Caligrafy ones, sets `DESIGN_STYLE`, and checks the pages in a browser at desktop and phone width. `off` brings the Caligrafy look back. Worked light and dark examples in `examples/` |
 | Skill | `/caligrafy-quill:server <start\|stop\|status>` | Docker dev server via `.bin/caligrafer`, with port-clash and `.env` checks, and troubleshooting (port overrides, corporate TLS proxies) |
@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.33.2** - Caligrafy Quill 2.21.2: every skill, reference and the reviewer teach and generate the declared way (`Route::action`, no new controller); `client` leaves out web-only capabilities; G145.
 - **1.33.1** - Caligrafy Quill 2.21.1: a JSON call to `Route::action` needs the page's CSRF token or an API token, signed in or not. Gotcha G144.
 - **1.33.0** - Caligrafy Quill 2.21.0: `Route::action` and web-only capabilities (`webOnly: true`, `Caligrafy\Web`) for what a page or a form cannot say; `Route::bots`; `Route::page` `query` takes defaults. Gotcha G143.
 - **1.32.0** - Caligrafy Quill 2.20.0: `Route::page` has `visitorsOnly`, `comeBack` and `query`; `Route::form` has `visitorsOnly`, `same`, `accepted`, `inputs` and `signsIn`; `Route::redirect` has `keepQuery`; `Route::auth` honors `?return=`.

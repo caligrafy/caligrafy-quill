@@ -5,7 +5,7 @@
 
 Caligrafy Quill ships with its own **[Claude Code](https://code.claude.com) plugin**, `caligrafy-quill`, in the [`claude-plugin/`](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin) folder of every project. When you open a project in Claude Code, Claude knows the framework from its source: capabilities, the declarative routes, the query builder, models, Pug views, authentication, payments, Vue apps, bots, face detection, machine learning and the AI integrations. It builds the Caligrafy way, **build once, experience everywhere**: a feature becomes a capability, and every experience (pages, Vue apps, REST, AI agents) calls it. With `/caligrafy-quill:idea` it goes from your idea to an app online: **Describe it. Approve it. Ship it.**
 
-Current version: **1.33.1**, for Caligrafy Quill v2.21.1.
+Current version: **1.33.2**, for Caligrafy Quill v2.21.2.
 
 ## What the plugin gives Claude
 
@@ -89,7 +89,7 @@ Scaffolds the class with `php caligrafer.php service <Folder>/<Name> --scope <sc
 ```
 
 ### `/caligrafy-quill:new-resource <Entity> [field:type ...]`
-Capabilities first, no controller:
+Capabilities first, every request declared:
 + `application/models/<Entity>/create_db.sql`: the table, `CREATE TABLE IF NOT EXISTS`, an `id` primary key, `<model>_id` foreign keys with unique constraint names;
 + `application/models/<Entity>/<Entity>.php`: the model, one public property per column, its relationships;
 + `list_`, `get_`, `create_`, `update_` and `delete_` capabilities in `application/services/<Entities>/`, the only code that touches the model;
@@ -179,7 +179,7 @@ Review the Books capabilities with the caligrafy-reviewer agent
 ```
 `new-resource` writes one folder per entity (`application/models/Book/`, `application/services/Books/`, `application/views/Books/`). The by-hand pages and the [course](https://github.com/caligrafy/caligrafy-quill-course) keep the same Bookshelf in `application/models/Bookshelf/`, `application/services/Bookshelf/` and `application/views/Bookshelf/`: both work, the folders are only for you.
 
-**Check** what Claude wrote before you say OK: the capabilities in `php caligrafer.php capabilities` with the scopes you expect, no `public: true` on a capability that changes data unless you want it, `Route::form` rather than a controller for each form, and the page in your browser.
+**Check** what Claude wrote before you say OK: the capabilities in `php caligrafer.php capabilities` with the scopes you expect, no `public: true` on a capability that changes data unless you want it, `Route::form` for each form and `Route::action` for what a page or a form cannot say, no new controller, and the page in your browser.
 
 ## How the plugin's knowledge is maintained
 

@@ -10,48 +10,57 @@
 # Request
 
 `Caligrafy\Request` holds what a request brings: its method, its address, its route variables, its fields or JSON body,
-its files and its headers. In 2.19 you rarely read it yourself: a capability receives its inputs already collected and
-checked by its route (`Route::page`, `Route::form`, `Route::capability`...), and a `Context` that says who is calling.
-You read the request in a controller or a closure, for HTTP that no declarative route covers.
+its files and its headers. You rarely read it yourself: a capability receives its inputs already collected and checked
+by its route (`Route::page`, `Route::form`, `Route::action`, `Route::capability`...), and a `Context` that says who is
+calling. You read the request in a web-only capability, when the answer depends on something that is not an input (a
+header, how the call was made), and in the controllers you keep.
 
 ## With Claude
 
-Describe the behavior; the `caligrafy` skill knows the request API and uses it only where a controller is needed.
+Describe the behavior; the `caligrafy` skill knows the request API and reads it only where the inputs are not enough.
 
 ```text
 "Add GET /authors/{author_id}/books: when the author has one book, go straight to its page; otherwise list them."
 ```
 
-Claude writes a thin controller in `application/controllers/` that reads `$this->request->fetch('author_id')`, calls a
-capability with `$this->call()`, and one `Route::get` line in `application/config/routing/web.php`.
+Claude declares `author_id` in `$rules`, so the capability gets it as an input, and adds one `Route::action` line to
+`application/config/routing/web.php`.
 
 **Check**
 
-- [ ] The controller reads route variables with `$this->request->fetch()`, and passes them to a capability: it never
-      reads or writes a model itself.
-- [ ] Nothing reads `$_GET`, `$_POST` or `$_FILES` directly where `$this->request` gives the same value.
-- [ ] A capability's `handle()` never reads the request (its inputs come from the route).
+- [ ] What can be an input is declared in `$rules`: nothing reads `$_GET`, `$_POST` or `$_FILES` for it.
+- [ ] Only a capability with `webOnly: true` calls `request()`: a plain capability is also reached by REST, MCP, the command
+      line and jobs, which have no such request.
 
 ## By hand
 
-1. **Write a controller that shows what it reads.** `application/controllers/EchoController.php`:
+1. **Write a capability that shows what it reads.** Run
+   `docker compose exec dev-box php caligrafer.php service Demo/ShowRequest`, and replace the content of
+   `application/services/Demo/ShowRequest.php` with:
 
    ```php
    <?php
 
-   use Caligrafy\Controller;
+   use Caligrafy\Capability;
+   use Caligrafy\Context;
+   use Caligrafy\Service;
+   use Caligrafy\Web;
 
-   class EchoController extends Controller
+   // show_request: the inputs a capability gets, and what it can read of the request
+   #[Capability(name: 'show_request', description: 'Shows what the request carries.', public: true, webOnly: true)]
+   class ShowRequest extends Service
    {
-       public function show()
+       public $rules = array('id' => '', 'title' => '', 'sort' => '');
+
+       public function handle(array $input, Context $context)
        {
-           return api(array(
-               'method' => $this->request->method,
-               'uri' => $this->request->uri,
-               'id' => $this->request->fetch('id'),
-               'sort' => $this->request->fetch('sort'),
-               'parameters' => $this->request->parameters(),
-               'wantsJson' => $this->request->wantsJson(),
+           $request = request();
+           return Web::json(array(
+               'input' => $input,
+               'method' => $request->method,
+               'uri' => $request->uri,
+               'parameters' => $request->parameters(),
+               'wantsJson' => $request->wantsJson(),
            ));
        }
    }
@@ -60,8 +69,7 @@ capability with `$this->call()`, and one `Route::get` line in `application/confi
 2. **Route it.** In `application/config/routing/web.php`, before `Route::run();`:
 
    ```php
-       Route::get('/echo/{id}', 'EchoController@show');
-       Route::put('/echo/{id}', 'EchoController@show');
+       Route::action('/echo/{id}', 'show_request', ['method' => ['GET', 'PUT']]);
    ```
 
 3. **Call it.** Run:
@@ -73,12 +81,13 @@ capability with `$this->call()`, and one `Route::get` line in `application/confi
    It prints:
 
    ```json
-   {"method":"GET","uri":"echo/3","id":"3","sort":"title","parameters":{"uri":"echo/3","sort":"title"},"wantsJson":false}
+   {"input":{"sort":"title","id":"3"},"method":"GET","uri":"echo/3","parameters":{"sort":"title","uri":"echo/3"},"wantsJson":false}
    ```
 
-   `uri` is in the parameters of a `GET` because the server's rewrite rule passes the path as `?uri=` (`.htaccess`).
+   `uri` is in the parameters of a `GET` because the server's rewrite rule passes the path as `?uri=` (`.htaccess`). The
+   capability's inputs do not have it: only what `$rules` declares reaches `handle()`.
 
-4. **Send a JSON body.** A JSON call to a controller route needs a personal access token that grants everything
+4. **Send a JSON body.** A JSON call to `Route::action` needs a personal access token that grants everything
    (`php caligrafer.php token create "echo test" --scopes "*"` prints it once) or, from a page, the `X-CSRF-Token` header:
 
    ```bash
@@ -89,7 +98,7 @@ capability with `$this->call()`, and one `Route::get` line in `application/confi
    It prints:
 
    ```json
-   {"method":"PUT","uri":"echo/3","id":"3","sort":"","parameters":{"title":"Dune"},"wantsJson":true}
+   {"input":{"title":"Dune","id":"3"},"method":"PUT","uri":"echo/3","parameters":{"title":"Dune"},"wantsJson":true}
    ```
 
    Without the token it answers `401` with `{"error":{"code":1004,"message":"Access Denied: send the page's CSRF token in
@@ -98,16 +107,19 @@ capability with `$this->call()`, and one `Route::get` line in `application/confi
 
 **Check**
 
-- [ ] `fetch('id')` returns the route variable as a string (`"3"`), `fetch('sort')` the query string value, and `''`
-      for a name the request does not have.
+- [ ] `input` has the query string or the body and the route variable, as strings (`"3"`).
 - [ ] A form post's parameters include `_token` and `_method`; a JSON body's parameters are the decoded body.
 
 ## Getting the request
 
-+ In a controller: `$this->request`, built once when the controller is created.
-+ Anywhere else in `application/` (a closure route, a helper): `request()`, which builds a new `Request` each time.
-+ In a capability: never. Its inputs come from the route (the fields, the query string and the route variables, the
-  route variables winning), and `$context` says who calls (`$context->user`, `$context->userId()`).
++ In a web-only capability (`#[Capability(..., webOnly: true)]`, served by
+  [`Route::action`](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#webonly)), a closure route or a helper: `request()`, which builds a
+  new `Request` each time.
++ In a controller you keep: `$this->request`, built once when the controller is created.
++ In any other capability: never. Its inputs come from the route (the fields, the query string and the route variables),
+  and `$context` says who calls (`$context->user`, `$context->userId()`). On a `GET`, `Route::page` lets the route variables
+  win over the query string; `Route::action` and `Route::capability` let the query string win: `/echo/3?id=9` gives `id = 9`
+  there. Keep a route variable that decides what is reached safe by checking it against the person.
 
 ## Properties
 
@@ -140,7 +152,7 @@ capability with `$this->call()`, and one `Route::get` line in `application/confi
 | `bearer()` | the value after `Bearer ` in `Authorization`, else `null` |
 | `authorizeSessionRequest()` | `true` when the `X-CSRF-Token` header (or a `_token` field) equals the session's CSRF token: a page of this app |
 | `authorizeApiRequest($scope = '*')` | `true` for a personal access token that grants `$scope`, or the legacy API key while `LEGACY_API_KEY` is not `false` |
-| `apiRefusal()` | why a JSON call to a controller route was refused (the text after `Access Denied:`) |
+| `apiRefusal()` | why a JSON call to `Route::action` or a controller route was refused (the text after `Access Denied:`) |
 | `isLegacyApiKey($key)`, `Request::legacyKeysDisabled()` | whether a value is this app's legacy API key; whether `LEGACY_API_KEY=false` turned those keys off |
 | `forClient()` | what a client app's page may see of the request (2.19.1): `method`, `host`, `uri`, `fullUri`, `uriComponents`, `uriParameters` (the query string, without `_token`), `parameters`, `parsedURI`, `currentRoute`, `fetch` and `acceptLanguage`. Never the `Cookie` (the session id), the `Authorization` header or a `POST` body. The `Client/app` view gives it to the app's script as `env.request` |
 
@@ -161,13 +173,15 @@ with `WWW-Authenticate`, never as the session's user) or the notifications unsub
   from form fields. Send `Accept: application/json` and `X-CSRF-Token` (pages) or a bearer token (programs).
 + **`fetch()` from the browser sends `Accept: */*`**, which is not JSON: set `Accept: application/json` yourself.
   `axios` sends `application/json, text/plain, */*`, which is.
-+ **Reading the request in a capability**: it works for the web only. REST, MCP, the command line and jobs have no
-  such request; declare the input in `$rules` instead.
++ **Reading the request in a plain capability**: it works for the web only. REST, MCP, the command line and jobs have no
+  such request; declare the input in `$rules` instead, or give it from the route with the `inputs` option of `Route::form`.
+  A capability that truly needs the request is `webOnly: true`.
 
 ## Related pages
 
 + [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing): how a request finds its route
-+ [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers): `$this->request` and `$this->call()`
++ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#action): `Route::action` and web-only capabilities
++ [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers): `$this->request` in the controllers you keep
 + [Helpers, forms and REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API): `request()`, `csrf()`, `methodField()`
 + [Build once: services, capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#tokens): personal access tokens
 

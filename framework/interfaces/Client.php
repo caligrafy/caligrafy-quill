@@ -27,6 +27,9 @@ class Client
         $prefix = '/' . trim((string) $prefix, '/');
         $functions = array();
         foreach (Capabilities::all() as $name => $entry) {
+            if ($entry['capability']->webOnly) {
+                continue;   // Route::action only (2.21.0)
+            }
             $capability = $entry['capability'];
             $schema = Capabilities::schema($name);
             $fields = array();

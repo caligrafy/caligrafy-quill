@@ -183,7 +183,7 @@ final class ErrorsExampleTest extends TestCase
 | `echo.php` | Answers with the request it received (method, URI, body, `Authorization` header) to inspect outgoing calls such as `httpRequest()` |
 | `application/` | QA code copied into the generated `application`: `QaController` (errors, uploads, the install module), `BookController` and `Book` (the REST API example of the wiki), `BookPageController` (a page calling a capability), a project `AIController` (a name that collides with an example controller), `Shop/OrderController` (namespaced controller), the Bookshelf capabilities of `services/Books`, the jobs of `services/QaJobs`, the capabilities of the declarative routes in `services/QaRoutes`, and the `Qa` views |
 | `books.sql` | Tables of the REST API example |
-| `facelogin/` | The face login example of the recipe: `FaceLoginController`, `PasskeyController`, the tables (`create_db.sql`) and the client app |
+| `facelogin/` | The face login example of the recipe, with the controllers `FaceLoginController` and `PasskeyController` (the recipe itself now declares these addresses with `Route::action`), the tables (`create_db.sql`) and the client app |
 | `docs/` | The components example of the Vue pages of the wiki |
 | `outside/` | A file outside the plugin, for the `php -l` hook test |
 

@@ -442,6 +442,9 @@ Route::page('/about', 'about', ['with' => ['sentence' => 'Built with Caligrafy']
 | `signedIn` | `false` | `true` sends visitors to `/login` (needs `Auth::authentication(...)` in `web.php`) |
 | `level` | `0` | sends people whose `permissions` are below it to `/notAuthorized` |
 | `notFound` | none | a view shown with status `404` when a capability answers `not_found`, `invalid` or `conflict`; it gets the route variables, `with`, `$message`, `$authorized` and `$user` |
+| `comeBack` | `false` | `true`, with `signedIn` or `level`: visitors go to `/login?return=<this page>` and come back after signing in |
+| `visitorsOnly` | none | a path: people already signed in are sent there (a sign-up page) |
+| `query` | none | what the view gets of the query string: `['show']` gives `$show` (a string, `''` when absent), `['sort' => 'title']` a default |
 
 Every view rendered by `Route::page` gets:
 
@@ -450,9 +453,10 @@ Every view rendered by `Route::page` gets:
 | the route variables | `$id` for `/books/{id}` |
 | the `with` values and the `data` answers | `$books`, `$book`... (plain arrays) |
 | `$authorized` | `true` when someone is signed in |
+| the names of the `query` option | `$sort`, `$show`... as strings |
 | `$user` | `['id', 'username', 'permissions']` of who is signed in, or `null` |
 
-The view never gets the query string: read it through a capability input. The names `authorized` and `user` are reserved (`LogicException`). When a capability refuses: a visitor (`unauthenticated`) is sent to `/login` when authentication is on; `forbidden` answers `[ERROR 1006]` (403); `not_found`, `invalid` and `conflict` answer `[ERROR 1005]` (404), or the `notFound` view.
+The view gets the query string only through `query`; the `data` capabilities get all of it as inputs. The names `authorized` and `user` are reserved (`LogicException`). When a capability refuses: a visitor (`unauthenticated`) is sent to `/login` when authentication is on; `forbidden` answers `[ERROR 1006]` (403); `not_found`, `invalid` and `conflict` answer `[ERROR 1005]` (404), or the `notFound` view.
 
 ### Forms: `errors()`, `old()` and `flash()`
 
@@ -595,9 +599,9 @@ Caligrafy's look is the default. To give the whole application another one, pick
 
 ## Other ways and under the hood
 
-These still work in 2.19. `Route::page` with `data` replaces them for pages, and `Route::form` for forms.
+These still work. `Route::page` with `data` replaces them for pages, and `Route::form` for forms. A page that depends on more than one capability's answer (a redirect or a view, say) is a web-only capability that returns `Web::view()`: [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#action).
 
-+ **`view()` from a controller.** `return view('Bookshelf/books', ['books' => $this->call('list_books'), 'authors' => $this->call('list_authors')]);` in a controller extending `Caligrafy\Controller` (`$this->view()` is the same). Use a controller only for custom HTTP: it must pass `$authorized` itself, or the top bar's signed-in parts follow only the session.
++ **`view()` from a controller.** `return view('Bookshelf/books', ['books' => $this->call('list_books'), 'authors' => $this->call('list_authors')]);` in a controller extending `Caligrafy\Controller` (`$this->view()` is the same). In a controller you keep, it must pass `$authorized` itself, or the top bar's signed-in parts follow only the session.
 + **A closure that returns a view.** `Route::get('/hello', function () { return view('hello'); });` gets only what the closure passes: no `$authorized`, no `$user`.
 + **`view()` answers JSON too.** `view($name, $data)` prints `$data` as JSON and ends the request when the request sends `Accept: application/json` (and not `text/html`), or when `$name` is `null`; `api($data)` is `view(null, $data)`. Set the status first: `http_response_code(422); return api([...]);`. Nothing runs after `view()` or `api()`.
 + **Hand-written forms** posted to a controller: `= csrf()` in the form, `= methodField('PUT')` for `PUT` and `DELETE`, and the controller validates with `$this->check()`. See [Helpers, Forms and REST API](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API#forms).

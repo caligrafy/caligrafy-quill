@@ -1212,6 +1212,13 @@ qa_test('Route::action 2.21.0: a view, a redirect, text, data, refusals; never o
     $page = new QaBrowser();
     $r = qa_json('POST', '/capabilities/qa_action', [], null, $page, ['X-CSRF-Token: ' . qa_csrf($page)]);
     qa_equals(404, $r['status']);
+    $reader = new QaBrowser();
+    $reader->login('alice', 'Passw0rdQa');
+    $id = qa_sql("SELECT id FROM books ORDER BY id LIMIT 1");
+    if ($id !== '') {
+        $r = qa_json('GET', "/v2/books/$id?id=999999", null, null, $reader, ['X-CSRF-Token: ' . qa_csrf($reader)]);
+        qa_equals(200, $r['status']);
+    }
     qa_contains('show fallback', $guest->get('/qa/client/any')['body']);
     qa_equals(401, $guest->get('/qa/action?kind=data', ['headers' => ['Accept: application/json']])['status']);
     $withToken = new QaBrowser();

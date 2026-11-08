@@ -94,7 +94,7 @@ if ($valid !== true) { http_response_code(422); return api(['errors' => $valid])
 - view vars `appName` (folder in `public/`) and `app` (markup file without `.php`, default `index`, overridable with `?app=`) select the file; both must match `[A-Za-z0-9_-]+` (G35);
 - every other view var, plus `app_root`, `service_root`, `app_resources`, `request`, `apiKey`, `token`, `home`, `keywords`, `metadata`, `copyright`, is JSON-encoded into `$env`, which the markup passes to `loadEnvironment(\`<?php echo $env; ?>\`)`; JS then reads `env.home`, `env.token`, `env.appName`, global `apiKey`;
 - `loadVue({scripts: ['main']})` loads `public/<appName>/scripts/main.js`.
-A custom controller can do the same: `return view('Client/app', ['appName' => 'faceauth', 'app' => 'index', 'user' => $data]);`.
+`Route::page('/apps/{appName}', 'Client/app', ['query' => ['app' => 'index']])` does the same without the controller (2.21.0: `query` with a default); a fixed folder: `['with' => ['appName' => 'faceauth', 'app' => 'index']]`. A page that first decides what to show: `return Web::view('Client/app', ['appName' => 'faceauth', 'app' => 'index', 'shelf' => $data]);` in a web-only capability.
 
 **G16. FaceDetect (@vladmandic/face-api 1.7.15).** Wrap the detector in `Vue.markRaw`. `const detector = Vue.markRaw(new FaceDetector('detection'));` - otherwise Vue 3 proxies the detector, its canvases/streams and face-api objects. **Fixed** in the `facedetect` scaffold.
 
@@ -166,9 +166,9 @@ A custom controller can do the same: `return view('Client/app', ['appName' => 'f
 
 **G50. The legacy API key is public.** `views/Client/app.pug` passes `API_KEY` to every client page while it is on and Vite SPAs created before 2.19.1 build `VITE_API_KEY` into their bundle (`src/main.js`, `src/common/app.js`; the 2.19.1 template uses the session and `X-CSRF-Token` instead, G22), while JSON requests skip the CSRF check (`Request::checkCSRF()`): anyone who opens an app page can read the key and call every JSON controller route, writes included, from anywhere. Every key from `generatekeys`/`generateapikey` encrypts the same `APP_KEY` (`Request::isLegacyApiKey()`), so none can be revoked alone. For browser clients use the session (the generated JS client, G54; `apiHeaders()` for controller routes since 2.7.0, G87); for programs and agents use personal access tokens (`php caligrafer.php token create`, `Caligrafy\Tokens`); then set `LEGACY_API_KEY=false` (doctor reports the setting).
 
-**G51. Closure routes are not protected for JSON.** `Route::execute()` checks the API key only for `'Controller@action'` routes, and `Request` skips CSRF for JSON: `Route::post('/x', function () {...})` accepts a JSON post with no key and no token. Put anything sensitive behind a controller route or a capability (`Route::capability()` checks the context itself).
+**G51. Closure routes are not protected for JSON.** `Route::execute()` checks the API key only for `'Controller@action'` routes, and `Request` skips CSRF for JSON: `Route::post('/x', function () {...})` accepts a JSON post with no key and no token. Put anything sensitive behind a capability (`Route::capability()` and `Route::form` check the context themselves, `Route::action` the token, 2.21.1).
 
-**G52. Services return data; only declared inputs reach them.** A `Caligrafy\Service` must not call `view()`, `api()`, `redirect()`, `echo` or read `$_SESSION`/the request: the channel renders (`Controller::call()`, `Rest`, `Mcp\Server`) and `$context` says who calls. `validate()` keeps only the keys of `$rules` (`array_intersect_key`): an input without a rule must still be listed, with `''`, or it is dropped silently. `handle()` receives the filtered values (GUMP `run()`), so read `$input`, never the raw request.
+**G52. Services return data; only declared inputs reach them.** A plain `Caligrafy\Service` must not call `view()`, `api()`, `redirect()`, `echo` or read `$_SESSION`/the request: the channel renders (`PageController`, `Form`, `Rest`, `Mcp\Server`) and `$context` says who calls. The exception is a capability declared `webOnly: true` (2.21.0, G143): it may return a `Caligrafy\Web` and read the session and the request, and only `Route::action` reaches it. `validate()` keeps only the keys of `$rules` (`array_intersect_key`): an input without a rule must still be listed, with `''`, or it is dropped silently. `handle()` receives the filtered values (GUMP `run()`), so read `$input`, never the raw request.
 
 **G53. Scopes and levels.** `Context::allows($scope, $level)`: the CLI and the legacy key always pass; a signed-in user needs `permissions >= level` (no scopes); a token needs the scope (`books:write`, `books:*`, `*`), and when it has an owner (`token create --user <id>`) the owner needs the level too. An application token (no `--user`) is limited by its scopes only: give destructive scopes to application tokens with care. A capability with `scope: ''` is callable by any token; `public: true` by anyone.
 
@@ -273,18 +273,18 @@ a `Route::capability` route or an agent. Sign-up goes through the sign-up page (
 (G80): set `ADMIN_LEVEL` in the new `application/services/Users/CaligrafyUsers.php` to the project's administrator
 level, then add the files with `--force`. Otherwise the pages would guard with one level and REST and MCP with another.
 
-**G83. `Route::page` data: read-only capabilities, route variables win, the query string never reaches the view.**
+**G83. `Route::page` data: read-only capabilities, route variables win; of the query string the view gets only `query` (2.20.0).**
 `'data' => ['book' => 'get_book']` calls `get_book` as the person who opens the page with the query string plus the
 route pattern's variables, the route variables winning (`/books/3?id=9` gives `id = 3`); undeclared inputs are dropped.
 Fixed inputs: `['book' => ['get_book', ['id' => 3]]]`. Only existing `readOnly` capabilities: another one, or a
 `data`/`with` name `authorized` or `user`, throws `LogicException` (a 500 on every visit). A refusal ends the page: a
 visitor (`unauthenticated`) goes to `/login`; `forbidden` answers `[ERROR 1006]` (403); `not_found`, `invalid` and
 `conflict` answer `[ERROR 1005]` (404), or render the `notFound` view (option) with status 404, the route variables,
-the `with` values, `$message`, `$authorized` and `$user`. The view gets the route variables, `with`, the data, `authorized` and `user`:
-never the query string (read it through a capability input). Capability results are plain arrays (`$book['title']`).
+the `with` values, `$message`, `$authorized` and `$user`. The view gets the route variables, `with`, the data, `authorized` and `user`, and of the query
+string only the names of the `query` option (2.20.0; `name => default` 2.21.0; a capability input reads the rest). Capability results are plain arrays (`$book['title']`).
 Proof: `framework/core/PageController.php`.
 
-**G84. `Route::page` with `signedIn` or `level` needs the authentication module.** Without
+**G84. `Route::page` with `signedIn`, `level` or `visitorsOnly` needs the authentication module.** Without
 `Auth::authentication('User', 'users');` in `web.php`, such a page throws `LogicException("Route::page('...'):
 'signedIn' and 'level' need Auth::authentication(...)")` (a 500). Pages without those options work without it
 (`$authorized` is then false). `level` compares `Context::$levelAttribute` (`permissions` by default). Proof:
@@ -662,7 +662,7 @@ Proof: `framework/core/Flash.php`, `Form::oldInput()`.
 `fetch()` may set. `Route::form` (like `Rest`), `Route::auth` and the passkey endpoints therefore refuse a JSON write
 that comes with the session cookie and no `X-CSRF-Token` (403). `'Controller@action'` routes are already protected:
 `Route::execute()` refuses a JSON call without the session's token or an API token (1004). Closure routes are not
-(G28): never write data in a closure route; use a capability route or `Route::form`. Proof: `Form::outcome()`,
+(G28): never write data in a closure route; use a capability route, `Route::form` or `Route::action` (which requires the token of every JSON call, 2.21.1). Proof: `Form::outcome()`,
 `AuthRoutes::login()`, `Route.php` (`execute`).
 
 **G131. A file input is a URL, and only web pages and REST can send the file (2.19.0+).** With
@@ -789,6 +789,8 @@ resolution and copies the media's `object-fit`; `fetchImage` draws at the canvas
 the element's attributes or `offsetWidth`, and give it the video's `object-fit`. Old client apps keep their own
 `public/<app>/index.php`: add the `?v=` to its `detect.js` script so browsers fetch the new file.
 
-**G143 (2.21.0). A `webOnly` capability answers "There is no capability" everywhere but `Route::action`.** REST, MCP, the JS client, `php caligrafer.php call`, `Route::page`, `Route::form` and `$this->call()` all get `not_found`: that is what lets it read the session, sign people in and change data on a GET. Keep plain capabilities for anything several channels share, and call them from it with `$this->capability($name, $input, $context)`. In tests use `$this->action()`, not `$this->call()`.
+**G143 (2.21.0). A `webOnly` capability answers "There is no capability" everywhere but `Route::action`.** REST, MCP, the JS client, `php caligrafer.php call`, `Route::page`, `Route::form` and `$this->call()` all get `not_found`: that is what lets it read the session, sign people in and change data on a GET. It is left out of `GET /capabilities`, MCP and `php caligrafer.php capabilities`, and `php caligrafer.php client` leaves it out (2.21.2). `Route::action` on a capability without `webOnly: true` is a `LogicException` when the address is opened. Keep plain capabilities for anything several channels share, and call them from it with `$this->capability($name, $input, $context)`. In tests use `$this->action()`, not `$this->call()`. **Never write a controller where this fits.** Proof: `framework/core/{Action,Capabilities}.php`.
 
-**G144 (2.21.0). `$context` does not change when a web-only capability signs someone in.** It was built from the request, before `AuthRoutes::signIn()`. To call a capability as the person just signed in, build a new one: `Context::fromRequest(request(), 'web')`, and set `viaAction = true` if that capability is webOnly too.
+**G144 (2.21.0). `$context` does not change when a web-only capability signs someone in.** It was built from the request, before `AuthRoutes::signIn()`. To call a capability as the person just signed in, build a new one: `Context::fromRequest(request(), 'web')`, and set `viaAction = true` if that capability is webOnly too. `AuthRoutes::signIn()` also gives the session a **new CSRF token**: right before a redirect, but a page that stays open and keeps sending JSON then gets `[ERROR 1004]`. There, `session_regenerate_id(true); Auth::authorize($user);` (recipes-face-login.md).
+
+**G145 (fixed in 2.21.2). Before 2.21.2, on a `GET`, `Route::action` and `Route::capability` let the query string replace a route variable** (`/books/3?id=9` gave `id = 9`). `Rest::input()` now applies the route's own variables last. A route variable still says nothing about who may open the row: check it against `$context`.

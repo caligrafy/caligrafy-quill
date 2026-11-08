@@ -46,7 +46,7 @@ class CreateBook extends Service
 }
 ```
 
-A capability only returns data, or refuses with a `ServiceError` (`invalid`, `unauthenticated`, `forbidden`, `not_found`, `conflict`). It never draws a page, redirects or answers HTTP itself. That is what lets every experience use it. Inside it, the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) reads the data: `Book::with('author')->where('author_id', 2)->paginate(20, $input['page'] ?? 1)`.
+A capability returns data, or refuses with a `ServiceError` (`invalid`, `unauthenticated`, `forbidden`, `not_found`, `conflict`). It does not draw a page, redirect or answer HTTP itself. That is what lets every experience use it. (A few requests only make sense in a browser, such as a sign-in between two sites: those are [web-only capabilities](#webonly).) Inside it, the [query builder](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) reads the data: `Book::with('author')->where('author_id', 2)->paginate(20, $input['page'] ?? 1)`.
 
 ## Experiences call the capabilities
 
@@ -60,7 +60,27 @@ An **experience** is a way to reach your application. Each one is shaped for its
 | AI agents (MCP) | Claude, Cursor and other agents | the `create_book` tool (`Route::mcp('/mcp')`) |
 | The command line and tests | you | `php caligrafer.php call create_book title=Kindred published_year=1979 author_id=2`, `$this->call('create_book', [...])` in a test |
 
-The other needs of a web application are one line each, and call capabilities too ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)): `Route::auth()` for sign-in, sign-out and sign-up, `Route::webhook()` for the events a payment provider posts, `Route::download()` for a CSV export, `Route::redirect()` for an address that moved. Work that runs later or on a timer is a capability too, pushed as a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs) or named in a [schedule](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs).
+The other needs of a web application are one line each, and call capabilities too ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)): `Route::auth()` for sign-in, sign-out and sign-up, `Route::webhook()` for the events a payment provider posts, `Route::download()` for a CSV export, `Route::redirect()` for an address that moved, and `Route::action()` for whatever a page or a form cannot say. Every request of the application is declared this way: there is no controller to write. Work that runs later or on a timer is a capability too, pushed as a [background job](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs) or named in a [schedule](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs).
+
+### Web-only capabilities
+
+Most features belong on every experience. A few belong to the browser: a sign-in between two sites, a face sign-in, a page that chooses where to go, a gate, a page that creates a payment. They need the session, or they answer with a page or a redirect. Such a capability is declared `webOnly: true`, and returns a `Caligrafy\Web`:
+
+```php
+#[Capability(name: 'open_author_books', description: 'Opens the books of an author.', readOnly: true, public: true, webOnly: true)]
+class OpenAuthorBooks extends Service
+{
+    public $rules = array('author_id' => 'required|integer');
+
+    public function handle(array $input, Context $context)
+    {
+        $books = $this->capability('list_books', array('author_id' => $input['author_id']), $context);
+        return $books['total'] == 1 ? Web::redirect('/books/' . $books['data'][0]['id']) : Web::view('Bookshelf/books', array('books' => $books));
+    }
+}
+```
+
+`Route::action('/authors/{author_id}/books', 'open_author_books');` serves it, and **nothing else reaches it**: REST, MCP, the JavaScript client, the command line, `Route::page` and `Route::form` answer "There is no capability". It keeps the rules of every capability (who may call it, its inputs, its audit log). It may also read the session, sign people in, and change data on a `GET`, which is why it stays on the web. What other experiences need stays in plain capabilities, which it calls with `$this->capability()`.
 
 ## Who is calling
 
@@ -100,7 +120,7 @@ application/
 ├── models/        one class per table, with the create_db.sql that creates it
 ├── migrations/    changes to tables that hold data: numbered SQL files, each run once (php caligrafer.php migrate)
 ├── views/         the web pages (Pug), on the layout default/master/site
-├── controllers/   only for HTTP that no route covers; a controller calls capabilities ($this->call())
+├── controllers/   the example controllers of a new project (core/); a new request never needs one
 └── config/        routing/web.php: the routes; config.php: the site's settings;
                    schedule.php (scheduled jobs) and container.php (constructor bindings) when you add them
 tests/             your tests (php caligrafer.php test)
@@ -111,9 +131,9 @@ public/
 └── <app>/                   Vue apps and single page applications
 ```
 
-**One rule keeps every experience the same: only capabilities touch models.** Pages get their data from capabilities (`Route::page` with `data`, or the JavaScript client), forms post to capabilities (`Route::form`), controllers call capabilities (`$this->call()`), REST and AI agents call capabilities. `Route::page` also gives every view who is signed in (`$authorized`, `$user`).
+**One rule keeps every experience the same: only capabilities touch models.** Pages get their data from capabilities (`Route::page` with `data`, or the JavaScript client), forms post to capabilities (`Route::form`), custom requests are capabilities too (`Route::action`), REST and AI agents call capabilities. `Route::page` also gives every view who is signed in (`$authorized`, `$user`).
 
-Caligrafy is also a classic MVC framework (routes, controllers, models, views). Those parts are documented in the rest of this wiki, and existing controllers keep working. For new code, start with capabilities and the declarative routes; write a controller only when the HTTP is truly custom (several capabilities with conditions, custom headers, streaming), and let it call capabilities.
+Caligrafy is also a classic MVC framework (routes, controllers, models, views). Existing controllers keep working: they call capabilities with `$this->call()`, and the [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers) page shows how to move one. New code does not need them: start with capabilities and the declarative routes, and use `Route::action` for what a page or a form cannot say.
 
 ## Related pages
 

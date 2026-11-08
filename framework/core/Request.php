@@ -199,7 +199,7 @@ class Request extends \stdClass {
             return 'send the page\'s CSRF token in an X-CSRF-Token header (pages, with the session cookie) or Authorization: Bearer <personal access token> (programs and agents)';
         }
         if (Tokens::looksLikeToken($bearer)) {
-            return 'this personal access token is unknown, expired or revoked, or does not grant everything (*) as controller routes need: call capabilities with scoped tokens';
+            return 'this personal access token is unknown, expired or revoked, or does not grant everything (*) as this route needs: call capabilities with scoped tokens';
         }
         if (self::legacyKeysDisabled()) {
             return 'the legacy API key is turned off (LEGACY_API_KEY=false, the default on Caligrafy Cloud): pages send the X-CSRF-Token header with the session, programs and agents a personal access token';

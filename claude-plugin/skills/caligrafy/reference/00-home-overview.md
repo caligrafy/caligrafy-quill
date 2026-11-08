@@ -147,9 +147,9 @@ feature step by step: the table, the model, the page, a form and sign-in.
   web apps, REST, and an MCP server for AI agents.
 + **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
   (`Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
-  never follow different rules. Forms, sign-in, webhooks and downloads are one line each too
+  never follow different rules. Forms, sign-in, webhooks, downloads and anything else a browser asks are one line each too
   ([declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): `Route::form`,
-  `Route::auth`, `Route::webhook`, `Route::download`): no controller to write.
+  `Route::auth`, `Route::webhook`, `Route::download`, `Route::action`): an application needs no controller.
 + **One look, or yours:** Caligrafy's look on every page: a light top bar with the Caligrafy mark, title bands, forms,
   rows and tiles, Caligrafy black for the main action, full-screen camera apps, the same on every device. Or pick one of 85 [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
   (`DESIGN_STYLE` in `.env`, or your own `DESIGN.md`) and let `/caligrafy-quill:design` restyle every page.

@@ -1,6 +1,6 @@
 ---
 name: caligrafy
-description: Expert knowledge of the Caligrafy Quill PHP MVC framework (Caligrafy\Controller, Caligrafy\Model, Route, Request, Auth, Pug/Phug views, GUMP validation, caligrafer CLI, Docker dev server, Vue client apps, Stripe/Coinbase payments, OpenAI/Groq/Watson AI, open models (Llama) through Together, Fireworks, OpenRouter or Ollama, FaceDetect, ML, and the build-once layer: services and capabilities served to web pages, REST, the JS client and AI agents over MCP, with personal access tokens and an audit log, the query builder (Database::table, Book::where), the declarative routes (Route::form, Route::auth, Route::webhook, Route::download), and the page components every new UI is built with). Use whenever code touches a Caligrafy Quill project - application/config/routing/web.php, application/controllers, application/models, application/views/*.pug, public/<app>/, .env, caligrafer.php or .bin/caligrafer.
+description: Expert knowledge of the Caligrafy Quill PHP MVC framework (Caligrafy\Controller, Caligrafy\Model, Route, Request, Auth, Pug/Phug views, GUMP validation, caligrafer CLI, Docker dev server, Vue client apps, Stripe/Coinbase payments, OpenAI/Groq/Watson AI, open models (Llama) through Together, Fireworks, OpenRouter or Ollama, FaceDetect, ML, and the build-once layer: services and capabilities served to web pages, REST, the JS client and AI agents over MCP, with personal access tokens and an audit log, the query builder (Database::table, Book::where), the declarative routes (Route::form, Route::auth, Route::webhook, Route::download, Route::action with web-only capabilities and Caligrafy\Web), and the page components every new UI is built with). Use whenever code touches a Caligrafy Quill project - application/config/routing/web.php, application/controllers, application/models, application/views/*.pug, public/<app>/, .env, caligrafer.php or .bin/caligrafer.
 when_to_use: The working directory contains caligrafer.php, framework/core/Controller.php or application/config/routing/web.php; the user mentions Caligrafy, Quill, caligrafer, Phug/pug views, Caligrafy Vue apps, FaceDetect or MlCore; or asks to add routes, controllers, models, REST APIs, capabilities, MCP tools for agents, tokens, auth, payments, AI features, or to debug [ERROR 1001/1004/2003/3000] messages.
 ---
 
@@ -25,13 +25,13 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Verified pitfalls and wiki errata (G1-G144) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
-| Routes, params, controller routes, method spoofing | [02-routing.md](reference/02-routing.md) |
+| Routes, params, `Route::page` options, method spoofing | [02-routing.md](reference/02-routing.md) |
 | Request object | [03-request.md](reference/03-request.md) |
 | Database activation, SQL schemas, models, CRUD | [04-models.md](reference/04-models.md) |
 | hasOne / hasMany / belongsToMany, pivots | [05-relationships.md](reference/05-relationships.md) |
 | GUMP validators and filters, check/validate/filter | [06-validation.md](reference/06-validation.md) |
 | Pug views | [07-views.md](reference/07-views.md) |
-| Controllers, associate(), built-in CRUD | [08-controllers.md](reference/08-controllers.md) |
+| Existing controllers, moving one to `Route::action`, associate(), built-in CRUD | [08-controllers.md](reference/08-controllers.md) |
 | Helpers, HTML forms, CSRF, REST API + Postman | [09-helpers-forms-rest-api.md](reference/09-helpers-forms-rest-api.md) |
 | Authentication module | [09.1-authentication.md](reference/09.1-authentication.md) |
 | Production checklist, server-file protection, upgrading old projects, behavior changes | [09.5-security-and-upgrading.md](reference/09.5-security-and-upgrading.md) |
@@ -76,7 +76,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | **The cache** (2.18.0): `Caligrafy\Cache::remember/get/put/forget`, `CACHE_STORE` (database by default with a database, file, off), `cache clear` | [48-caching.md](reference/48-caching.md), [api-reference.md](reference/api-reference.md#cache), G119 |
 | **Testing an app** (2.18.0): `Caligrafy\Testing\TestCase` (`call`, `user`, `assertCapabilityFails`, `render`, `fake`, `assertQueued`), `php caligrafer.php test [make <Name>]`, rolled-back transactions, `DB_TEST_DATABASE` | [49-testing-your-app.md](reference/49-testing-your-app.md), [api-reference.md](reference/api-reference.md#testing), G121 |
 | **Queries** (2.19.0): `Database::table('books')` and `Book::query()` / `Book::where()` / `Book::find()`: bound values, validated names, `paginate`, `chunk`, `insert/update/delete`, eager loading `with('author', 'tags', 'author.country')` / `withCount`, `Database::transaction()`, the N+1 warning of development; when to keep SQL | [53-queries.md](reference/53-queries.md), [api-reference.md](reference/api-reference.md#queries), G122-G128 |
-| **Declarative routes** (2.19.0): `Route::form` (a form's POST calls a capability, redirects, `errors()`/`old()`/`flash()`), `Route::auth` (sign-in pages, throttled, passkeys; no password reset or face sign-in), `Route::webhook` (Stripe signature), `Route::download` (CSV/JSON), `Route::redirect`, the `file` rule of capabilities, the `exists`/`unique`/`current_year` rules; when a controller is still needed | [54-declarative-routes.md](reference/54-declarative-routes.md), [api-reference.md](reference/api-reference.md#declarative-routes), G129-G135 |
+| **Declarative routes** (2.19.0): `Route::form` (a form's POST calls a capability, redirects, `errors()`/`old()`/`flash()`), `Route::auth` (sign-in pages, throttled, passkeys), `Route::webhook` (Stripe signature), `Route::download` (CSV/JSON), `Route::redirect`, `Route::action` (web-only capabilities), the `file` rule of capabilities, the `exists`/`unique`/`current_year` rules; every request declared, no controller | [54-declarative-routes.md](reference/54-declarative-routes.md), [api-reference.md](reference/api-reference.md#declarative-routes), G129-G135 |
 | What 2.21.0 added: `Route::action` and web-only capabilities (`webOnly: true`, `Caligrafy\Web`) for what `Route::page` and `Route::form` cannot say, `Route::bots`: no application controller is needed any more | [57-release-notes-2.21.0.md](reference/57-release-notes-2.21.0.md), [54-declarative-routes.md](reference/54-declarative-routes.md) |
 | What 2.20.0 added: `Route::page` `visitorsOnly`, `comeBack`, `query`; `Route::form` `visitorsOnly`, `same`, `accepted`, `inputs`, `signsIn`; `Route::redirect` `keepQuery`; `Route::auth` `?return=` | [56-release-notes-2.20.0.md](reference/56-release-notes-2.20.0.md), [54-declarative-routes.md](reference/54-declarative-routes.md) |
 | What 2.19.0 changed: Phug debug only with `APP_DEBUG=true`, the Optimizer (`VIEW_OPTIMIZER=false`), no 1 MB output buffer, sessions only when used (`SESSION_LAZY=false`), rows fetched as arrays, `.env` compiled to `.env.php` (`env cache|clear`), `Model::find()` through `__call`/`__callStatic`, the benchmark (16/16 against Symfony and Laravel), what to check after updating | [55-release-notes-2.19.0.md](reference/55-release-notes-2.19.0.md), G122 |
@@ -85,7 +85,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | What 2.18.0 changed: the class map (classes load when used; eager files; `CLASS_MAP=false`), `tests/` no longer loaded, the five features above | [51-release-notes-2.18.0.md](reference/51-release-notes-2.18.0.md), [api-reference.md](reference/api-reference.md#classmap), G118 |
 | What 2.16.1 changed: worked examples of a job and a notification; the idea, design and deploy skills cover jobs, alerts and emails | [45-release-notes-2.16.1.md](reference/45-release-notes-2.16.1.md), G111 |
 | What 2.16.0 changed: an unknown address answers 404 (405 with `Allow` for a wrong method), not the first route | [44-release-notes-2.16.0.md](reference/44-release-notes-2.16.0.md), G4 |
-| **Pages and the rule "only capabilities touch models"** (2.5.0): `Route::page` (options, what the view gets, refusals), when to still write a controller, the user capabilities | [02-routing.md](reference/02-routing.md#pageroutes), [08-controllers.md](reference/08-controllers.md), [09.1-authentication.md](reference/09.1-authentication.md), [23-release-notes-2.5.0.md](reference/23-release-notes-2.5.0.md), G80-G85 |
+| **Pages and the rule "only capabilities touch models"** (2.5.0): `Route::page` (options, what the view gets, refusals), what replaces a controller, the user capabilities | [02-routing.md](reference/02-routing.md#pageroutes), [08-controllers.md](reference/08-controllers.md), [09.1-authentication.md](reference/09.1-authentication.md), [23-release-notes-2.5.0.md](reference/23-release-notes-2.5.0.md), G80-G85 |
 | **Another look for every page**: a design style (`DESIGN_STYLE`, `php caligrafer.php design`, a `DESIGN.md` of `framework/design/` (vendored VoltAgent/awesome-design-md, local styles) or `application/design/`), one override stylesheet `public/css/designs/<name>.css`; use the `design` skill | [26-design-styles.md](reference/26-design-styles.md), [ui-guidelines.md](reference/ui-guidelines.md#design-styles), G92-G93 |
 | **Any new page or client app UI**: Caligrafy's look (2.11.0+): `extends ../default/master/site`, the classes of `layout.css` (`.cq-hero`, `.cq-band`, `.cq-auth`, `.cq-form-grid`, `.cq-rows`, `.cq-split`, `.cq-tiles`, `.cq-account`...), `look.css`, full-screen camera pages (`camera.css`), a worked example, the checklist | [ui-guidelines.md](reference/ui-guidelines.md), G98-G101 |
 | Wiki table of contents | [wiki-sidebar.md](reference/wiki-sidebar.md) |
@@ -98,7 +98,7 @@ Online docs: https://github.com/caligrafy/caligrafy-quill/wiki
 application/                 # YOUR server code - every .php here is auto-required (global namespace, unique class names)
   config/config.php          # app-wide config (keywords(), copyright(), ...)
   config/routing/web.php     # ALL routes; ends with Route::run()
-  controllers/               # *Controller.php, any sub-folders (core/Auth, core/AI ship by default)
+  controllers/               # the example controllers (core/Auth, core/AI) and older code; a new request never needs one
   models/                    # Model classes + create_db.sql scripts (models/Auth/User.php, models/Auth/create_db.sql)
   services/                  # capabilities: Service classes with #[Capability] (php caligrafer.php service <Folder/Name>); Users/ ships the user capabilities (2.5.0)
   views/                     # .pug templates (default/, Auth/, AI/, Client/app.pug)
@@ -114,7 +114,7 @@ docker-compose.yaml, docker/ # dev server (8080), phpmyadmin (8077), mysql (3306
 
 - Every table has primary key `id`. Foreign keys are `<lowercase model name>_id` (model name, not table name).
 - One model class per entity, `use Caligrafy\Model;`, one `public $column;` per column, table given explicitly (`new Book('books')`, `associate()`); only the query builder (`Book::query()`, 2.19.0) guesses it: the class name lower-cased + plural, unless `protected static $tableName` (G123).
-- **Only capabilities touch models** (2.5.0): pages get their data with `Route::page(..., ['data' => [...]])`, controllers call `$this->call('<capability>')`. Since 2.19.0 form posts are `Route::form`, sign-in `Route::auth`, webhooks `Route::webhook`, exports `Route::download`; controllers (`use Caligrafy\Controller;`, must have `index()`) are only for HTTP none of them covers (several capabilities with conditions, custom headers, password reset, face sign-in); `associate()`/`save()`/`all()` in a controller is legacy MVC.
+- **Only capabilities touch models** (2.5.0): pages get their data with `Route::page(..., ['data' => [...]])`. Form posts are `Route::form`, sign-in `Route::auth`, webhooks `Route::webhook`, exports `Route::download`, and since 2.21.0 what a page or a form cannot say (a choice between a view and a redirect, the session, a sign-in of your own, a payment page) is `Route::action` on a capability declared `webOnly: true` that returns a `Caligrafy\Web`. Every request is declared: **never write a new controller**. A web-only capability is still a capability; it alone may read the session and the request, sign people in and change data on a GET, and nothing but `Route::action` reaches it (G143), so work other channels need stays in plain capabilities that it calls with `$this->capability($name, $input, $context)`. Existing controllers keep working: they call `$this->call('<capability>')`; `associate()`/`save()`/`all()` in one is legacy MVC.
 - Schema is written by hand in SQL: tables start in `application/models/<Entity>/create_db.sql`; a change to a table that has data goes in a migration (`application/migrations/<n>_<name>.sql`, `php caligrafer.php migrate make <name>`, then `migrate`; the deploy step runs them, G120). Many-to-many pivots are created by `belongsToMany()`.
 - Many-to-many pivots are created by `belongsToMany()` (typed like the referenced ids, unique constraint names - G10). Name your own FK constraints `fk_<table>_<column>`.
 - Model writes save `0`, `''` and `false`; only `null` is skipped (G7). `all()` clauses are raw SQL: use `'bindings'` for values (G8). Filters, sorting, paging and related rows: the query builder (`Book::where(...)->with('author')->paginate(20, $input['page'] ?? 1)`, 2.19.0, G122-G128), never a `where` string built from input or a query per row.
@@ -124,7 +124,7 @@ docker-compose.yaml, docker/ # dev server (8080), phpmyadmin (8077), mysql (3306
 
 ## Canonical recipes
 
-### CRUD resource (model + controller + routes)
+### CRUD resource (model + capabilities + routes)
 ```php
 // application/models/Book/Book.php
 use Caligrafy\Model;
@@ -158,14 +158,29 @@ Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
 Route::capabilities('/capabilities'); Route::mcp('/mcp');                          // JS client and AI agents
 ```
 ```php
-// forms of the pages (2.19.0): no controller
+// forms of the pages (2.19.0)
 Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);   // view: =csrf(), old('title'), errors('title'), flash('success')
 Route::form('/books/{id}', 'update_book', ['method' => 'PUT', 'success' => '/books/{id}']);
 Route::download('/books.csv', 'list_books_export');                                         // a read-only capability returning rows
 ```
-**Only capabilities touch models**: no controller reads or writes `Book`. Before 2.19.0, a thin controller for a
-classic form post, calling the capability (`$this->call('create_book')`, then redirect or re-render with `$e->fields`).
-Use the `/caligrafy-quill:new-resource` skill to scaffold this including the SQL script and the capabilities.
+**Only capabilities touch models**: no controller reads or writes `Book`, and no controller is written. Use the `/caligrafy-quill:new-resource` skill to scaffold this including the SQL script and the capabilities.
+
+### A request no page or form can say (2.21.0)
+```php
+// application/services/Books/OpenAuthorBooks.php
+use Caligrafy\Capability; use Caligrafy\Context; use Caligrafy\Service; use Caligrafy\Web;
+#[Capability(name: 'open_author_books', description: 'Opens the books of an author.', readOnly: true, public: true, webOnly: true)]
+class OpenAuthorBooks extends Service {
+    public $rules = ['author_id' => 'required|integer'];
+    public function handle(array $input, Context $context) {
+        $books = $this->capability('list_books', ['author_id' => $input['author_id']], $context);   // as the same person
+        return $books['total'] == 1 ? Web::redirect('/books/' . $books['data'][0]['id']) : Web::view('Books/index', ['books' => $books]);
+    }
+}
+// web.php: Route::action('/authors/{author_id}/books', 'open_author_books', ['back' => '/books']);   // 'method' => 'POST', 'signedIn', 'level', 'comeBack', 'visitorsOnly'
+// a test: $this->action('open_author_books', ['author_id' => 3])->describe()   // ['type' => 'redirect', 'target' => ..., 'status' => 302, ...]
+```
+`Web::view($view, $data, $status)`, `Web::redirect($to, $status)`, `Web::json($data, $status)`, `Web::text($body, $status)`, `->header($name, $value)`; plain data goes out as JSON. A `ServiceError` it throws is answered as in `Route::form`. A JSON call needs `X-CSRF-Token` or a token granting `*`, signed in or not. [54-declarative-routes.md](reference/54-declarative-routes.md#action), G143-G145.
 
 ### Calling the API
 ```bash
@@ -200,20 +215,16 @@ Pass `'authorized' => authorized()` to show the logged-in navigation, `'install'
 php caligrafer.php app shop          # or bot | facedetect | ml ; 'create' for a Vite SPA
 ```
 ```php
-Route::get('/shop', function() { return view('Client/app', ['appName' => 'shop', 'app' => 'index']); }); // path ends with the folder name
-Route::get('/shop/products', 'ProductController@all');   // data route used by axios
+Route::page('/shop', 'Client/app', ['with' => ['appName' => 'shop', 'app' => 'index'], 'data' => ['products' => 'list_products']]);   // path ends with the folder name; data in env
+Route::capabilities('/capabilities');   // the capabilities for the JS client (php caligrafer.php client)
 ```
-In `public/shop/scripts/main.js` send `{ headers: apiHeaders() }` (the session and its `X-CSRF-Token`, 2.7.0+; never the API key, which is off online, G87); read server data from `env` (`env.home`, `env.csrf`, your own view vars). See G15, G16, G27.
+In `public/shop/scripts/main.js` use the generated client; a call to a JSON `Route::action` sends `{ headers: apiHeaders() }` (the session and its `X-CSRF-Token`, 2.7.0+; never the API key, which is off online, G87); read server data from `env` (`env.home`, `env.csrf`, your own view vars). See G15, G16, G27.
 
 ### Authentication
-Uncomment `Auth::authentication('User', 'users');` and, 2.19.0+, add `Route::auth(['home' => '/books']);` below it (`/login`, `/logout`, `/register`, `/notAuthorized`, throttled, new session id at sign-in; `'passkeys' => true`; no password reset or face sign-in: those keep a controller), or before 2.19.0 uncomment the auth routes in web.php, create the `users` table from `application/models/Auth/create_db.sql` (safe to re-run in current templates; old copies start with `DROP TABLE` - G13), then use `authorized()`, `user()`, `guard('permissions', 1)`, `authorize($user)`, `logout('/')`. Passwords are `password_hash()`ed by `User::hashPassword()`; admin pages need `permissions >= 1` (promote in SQL). Read [09.1-authentication.md](reference/09.1-authentication.md) and G14.
+Uncomment `Auth::authentication('User', 'users');` and, 2.19.0+, add `Route::auth(['home' => '/books']);` below it (`/login`, `/logout`, `/register`, `/notAuthorized`, throttled, new session id at sign-in; `'passkeys' => true`; follows `/login?return=<a page of this site>`, which `Route::page` builds with `'comeBack' => true`). Not in it: password reset (`Route::page` and `Route::form` on two capabilities, [09.1-authentication.md](reference/09.1-authentication.md)) and face sign-in or a sign-in through another site (web-only capabilities with `Route::action`, [recipes-face-login.md](reference/recipes-face-login.md)). A sign-up form of your own: `Route::form` with `same`, `accepted`, `signsIn`, `visitorsOnly`. Or before 2.19.0 uncomment the auth routes in web.php, create the `users` table from `application/models/Auth/create_db.sql` (safe to re-run in current templates; old copies start with `DROP TABLE` - G13), then use `authorized()`, `user()`, `guard('permissions', 1)`, `authorize($user)`, `logout('/')`. Passwords are `password_hash()`ed by `User::hashPassword()`; admin pages need `permissions >= 1` (promote in SQL). Read [09.1-authentication.md](reference/09.1-authentication.md) and G14.
 
 ### File uploads
-In a capability (2.19.0): `'cover' => 'required|file|extension,png;jpg|max_size,2mb'` in `$rules`; web pages (`Route::form`) and REST save the file and `handle()` gets its URL; MCP/CLI send a URL or path (G131). In a controller:
-```php
-$valid = $this->check($_FILES, ['image' => 'required_file|extension,png;jpg']);
-if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png', 'jpg']); }   // '' when refused
-```
+In a capability (2.19.0): `'cover' => 'required|file|extension,png;jpg|max_size,2mb'` in `$rules`; web pages (`Route::form`) and REST save the file and `handle()` gets its URL; MCP/CLI send a URL or path (G131). `Route::action` passes files the same way.
 `uploadFile()` refuses scripts/html/svg whatever the list; `public/uploads/.htaccess` blocks script execution (G34).
 
 ## Workflow rules for Claude
@@ -224,7 +235,7 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 4. Read and write with the query builder (2.19.0: `Database::table()`, `Book::where()`, `with()`, `paginate()`) and keep bound `Database::execute()` queries for SQL it cannot write; never build SQL from user input (G2, G8). Filter then validate (G6).
 5. After editing PHP, `php -l <file>`; after changing routes, hit them with curl (JSON + Bearer) or the browser. When you change `framework/` or `framework/settings/application`, run `./qa/run.sh` (G38) and add a test for the change.
 6. In a project initialized with an older framework, run `php caligrafer.php upgrade` (dry run, safe) to see which `application/` copies are outdated or customized before assuming the current behavior; read its settings and Bootstrap 3 reports, propose `--keep` for any default page that is really the site's own (an old home page), and apply with `--apply` only when the user agrees (G39). To try a capability you wrote, use `php caligrafer.php call <name> key=value` (2.3.0+).
-7. A feature that more than one channel needs (pages and a Vue app, an API, an AI agent) is a capability: a `Service` in `application/services/` with `#[Capability]`, called by `$this->call()`, `Route::capability()`, the JS client and MCP (`/caligrafy-quill:new-capability`). Never put an API key or a token in a page or a bundle (G50): browser clients use the session through the generated client.
+7. A feature that more than one channel needs (pages and a Vue app, an API, an AI agent) is a capability: a `Service` in `application/services/` with `#[Capability]`, called by `Route::page`, `Route::form`, `Route::capability()`, the JS client and MCP (`/caligrafy-quill:new-capability`). Never put an API key or a token in a page or a bundle (G50): browser clients use the session through the generated client.
 8. Every page or client app UI you create follows [ui-guidelines.md](reference/ui-guidelines.md): `extends ../default/master/site` with the classes of `layout.css` (title band, bands, `.cq-field`, `.cq-rows`, `.cq-tiles`), labeled fields, black primary button, no cards, no Bootstrap colors, no page `style` block. Open it in a browser at desktop and phone width before calling it done.
 9. To know which framework version a project runs, use `php caligrafer.php version` (or `Caligrafy\Framework::VERSION`; releases are git tags `v<version>`, changes in `CHANGELOG.md`). Releases start at v2.0.0; a project with no `version` command predates it.
 10. When something fails at runtime (AI calls returning errors or null, database, payments, mail), run `php caligrafer.php doctor` (read-only; in the container with Docker) before reading code: it checks `.env`, keys (masked), models allowed for the key, retired Groq models, the Agent provider (Ollama reachable, models pulled), the database and the services, with a fix per line.
@@ -232,4 +243,4 @@ if ($valid === true) { $url = uploadFile($this->request->files('image'), ['png',
 12. Never print or commit the values of `APP_KEY`, `API_KEY` or other secrets from `.env`; refer to them by name.
 13. For a review of Caligrafy code, delegate to the `caligrafy-reviewer` agent.
 14. 2.18.0+: run `php caligrafer.php test` after changing capabilities (write tests with `test make <Name>`, `Caligrafy\Testing\TestCase`); a schema change after the first deploy is a migration (`migrate make <name>`), never an edit of a `create_db.sql` or of a migration that ran (G120); slow work (AI calls, emails to many, reports) goes through `Caligrafy\Queue::push()` with a `queue_work` job in `schedule.php` (G121); what a capability uses comes through its constructor (`Caligrafy\Container`); slow reads that change rarely use `Caligrafy\Cache::remember()` (database store by default, G119).
-15. 2.19.0+: generate `Route::page` for pages, `Route::form` for form posts, `Route::download` for exports, `Route::webhook` for a service's events, `Route::auth` for sign-in, and the query builder for lists, filters, paging and relations (`with()`, `paginate()`); write a controller only when the HTTP need is truly custom, and never data work in a closure route (G130). Read the CSRF token with `session('token')` (sessions start only when used). After updating a project to 2.19, check its sign-in flows and its forms from a fresh session; production compiles `.env` by itself (`env cache` in the deploy step).
+15. 2.19.0+: generate `Route::page` for pages, `Route::form` for form posts, `Route::download` for exports, `Route::webhook` for a service's events, `Route::auth` for sign-in, and the query builder for lists, filters, paging and relations (`with()`, `paginate()`); since 2.21.0, `Route::action` and a `webOnly: true` capability for the rest, **never a new controller**, and never data work in a closure route (G130). Use `comeBack`, `visitorsOnly`, `query`, `same`, `accepted`, `inputs`, `signsIn` and `keepQuery` where they say it (2.20.0); keep existing controllers unless the user asks to move them. Read the CSRF token with `session('token')` (sessions start only when used). After updating a project to 2.19, check its sign-in flows and its forms from a fresh session; production compiles `.env` by itself (`env cache` in the deploy step).

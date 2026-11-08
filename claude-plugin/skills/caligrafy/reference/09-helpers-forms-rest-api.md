@@ -107,7 +107,8 @@ Vue apps send it with `apiHeaders()`). A `public: true` capability answers anyon
 `php caligrafer.php token create <name> --scopes <scopes> [--user <id>] [--expires <days>]`, `token list`,
 `token revoke <id>` ([Personal access tokens](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#tokens)).
 
-**Inputs.** The JSON body (or the form fields, or the query string for a `GET`), then the route variables, which win.
+**Inputs.** The JSON body (or the form fields, or the query string for a `GET`), and the route variables. On a `POST`,
+`PUT` or `DELETE` the route variables win; on a `GET`, a query string value of the same name replaces them.
 Only the inputs the capability declares in `$rules` reach it. A `file` input takes a multipart upload
 (`curl -F "cover=@cover.png"`) ([File inputs](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#files)).
 
@@ -127,9 +128,9 @@ Only the inputs the capability declares in `$rules` reach it. A `file` input tak
 
 | Status | Error | When |
 | - | - | - |
-| `401` | `1004` Access Denied | a JSON call to a controller route without `X-CSRF-Token` (pages) or a token that grants `*`. The message ends with the reason |
+| `401` | `1004` Access Denied | a JSON call to `Route::action` or a controller route without `X-CSRF-Token` (pages) or a token that grants `*`. The message ends with the reason |
 | `403` | `3000` Cross Site Forgery | a form post without a valid `_token` |
-| `403` | `1006` Forbidden | a `Route::page`, `Route::form` or `Route::download` whose capability refuses the person |
+| `403` | `1006` Forbidden | a `Route::page`, `Route::form`, `Route::action` or `Route::download` whose capability refuses the person |
 | `404` | `1001` Invalid Controller or Action | a route names a controller or an action that does not exist |
 | `404` | `1005` Page Not Found | no route matches, or a page's capability finds nothing |
 | `405` | `1000` Invalid Http Request Method | the address exists with other methods (`Allow` header) |
@@ -196,12 +197,16 @@ checks every `POST`, `PUT` and `DELETE` that is not JSON: its `_token` must be t
 header instead. Read the token with `session('token')`, never `$_SESSION['token']`: since 2.19.0 a session starts
 only when it is needed.
 
+A form that does more than call one capability and redirect posts to a
+[`Route::action`](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#action) (`'method' => 'POST'`): same `=csrf()`, same `errors()`, `old()` and `flash()` after a
+refusal, and the capability chooses what comes next. In plain HTML the field is
+`<input type="hidden" name="_token" value="<?= session('token') ?>">`.
+
 ### Other ways: a hand-written form to a controller
 
-A form can still post to a controller route (`Route::post('/books', 'BookController@store')`) whose action calls
-`$this->call('create_book')` and renders the errors itself. Use it only when the action does more than call one
-capability and redirect ([Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)).
-The form still needs `=csrf()`; in plain HTML: `<input type="hidden" name="_token" value="<?= session('token') ?>">`.
+A form in older code posts to a controller route (`Route::post('/books', 'BookController@store')`) whose action calls
+`$this->call('create_book')` and renders the errors itself. It keeps working
+([Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)), and it needs `=csrf()` too.
 
 ## Helpers
 

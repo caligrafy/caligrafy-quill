@@ -2,8 +2,9 @@
 
 > Written from the framework source (`public/js/services/detect.js` `FaceDetector.liveness()`, `framework/core/FaceLogin.php`,
 > `framework/core/Passkey.php`, `public/js/services/passkey.js`, `framework/core/Auth.php`, `encryptDecrypt()`) and tested
-> end to end by the QA fixture `qa/fixtures/facelogin` (same controllers, tables and client as below).
-> Related gotchas: G16 (`Vue.markRaw`), G42 (face-api, liveness, face prints, passkeys), G47 (controller names), G48 (error status codes).
+> end to end: the capabilities below pass the face and passkey tests of `qa/tests/http_tests.php` (same addresses, tables and client as
+> `qa/fixtures/facelogin`, whose fixture still answers them with the controllers these capabilities replace).
+> Related gotchas: G16 (`Vue.markRaw`), G42 (face-api, liveness, face prints, passkeys), G48 (error status codes), G143, G144.
 
 **Security first - tell the user.**
 - Face login runs in the browser. The liveness check (head turns and a smile, in an order chosen by the server) stops
@@ -15,7 +16,7 @@
 - Recommended: face login as a convenience; accounts with a passkey confirm with it after the face (`step-up`,
   2 factors) or log in with the passkey alone. Sensitive accounts (admin, payments, health data): require a passkey.
 
-Policies (`FaceLoginController::PASSKEY_POLICY`, for accounts that registered a passkey):
+Policies (`FaceLoginAction::PASSKEY_POLICY`, for accounts that registered a passkey):
 
 | Policy | Face login | Passkey login | Use for |
 |---|---|---|---|
@@ -94,18 +95,22 @@ The MySQL container runs in UTC, so `CURRENT_TIMESTAMP` defaults are UTC: write 
 ```php
 // application/config/routing/web.php - Auth::authentication('User', 'users') enabled (user(), authorized())
 // the page: /apps/facelogin (generic route)
-Route::post('/facelogin/password', 'FaceLoginController@password');   // password sign-in from the page (before enrolment)
-Route::post('/facelogin/register', 'FaceLoginController@register');   // new account from the page
-Route::post('/facelogin/start', 'FaceLoginController@start');
-Route::post('/facelogin/enroll', 'FaceLoginController@enroll');
-Route::post('/facelogin/login', 'FaceLoginController@login');
-Route::get('/facelogin/me', 'FaceLoginController@me');
-Route::post('/facelogin/logout', 'FaceLoginController@signout');
-Route::post('/passkey/register/options', 'PasskeyController@registerOptions');
-Route::post('/passkey/register', 'PasskeyController@register');
-Route::post('/passkey/login/options', 'PasskeyController@loginOptions');
-Route::post('/passkey/login', 'PasskeyController@login');
+Route::action('/facelogin/password', 'facelogin_password', ['method' => 'POST']);   // password sign-in from the page (before enrolment)
+Route::action('/facelogin/register', 'facelogin_register', ['method' => 'POST']);   // new account from the page
+Route::action('/facelogin/start', 'facelogin_start', ['method' => 'POST']);
+Route::action('/facelogin/enroll', 'facelogin_enroll', ['method' => 'POST']);
+Route::action('/facelogin/login', 'facelogin_login', ['method' => 'POST']);
+Route::action('/facelogin/me', 'facelogin_me');
+Route::action('/facelogin/logout', 'facelogin_logout', ['method' => 'POST']);
+Route::action('/passkey/register/options', 'facepasskey_register_options', ['method' => 'POST']);
+Route::action('/passkey/register', 'facepasskey_register', ['method' => 'POST']);
+Route::action('/passkey/login/options', 'facepasskey_login_options', ['method' => 'POST']);
+Route::action('/passkey/login', 'facepasskey_login', ['method' => 'POST']);
 ```
+These are web-only capabilities (`#[Capability(..., webOnly: true)]`, G143): they keep a nonce in the session and sign people
+in, so nothing but `Route::action` reaches them. Every JSON call needs the page's `X-CSRF-Token` (`apiHeaders()`, 2.21.1).
+Do not add `Route::auth(['passkeys' => true])`: these passkey routes replace it.
+
 Passkeys: set `PASSKEY_RP_ID` (the domain, ex `example.com`) and `PASSKEY_ORIGIN` (ex `https://www.example.com`) in
 `.env` for production. Without them the request host is used (fine on `http://localhost`). Passkeys and the camera
 need https, except on localhost.
@@ -131,23 +136,28 @@ need https, except on localhost.
 4. Accounts with a passkey (`step-up`): the answer is `{ step: 'passkey', options }`; the browser calls
    `PasskeyClient.get(options)` and `POST /passkey/login`; only then is the user authorized (`factors: ['face', 'passkey']`).
 
-## 4. Controllers
+## 4. Capabilities
 
 ```php
-// application/controllers/FaceLogin/FaceLoginController.php
-use Caligrafy\Controller;
-use Caligrafy\Database;
+// application/services/FaceLogin/FaceLoginCapabilities.php
 use Caligrafy\Auth;
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Database;
 use Caligrafy\FaceLogin;
 use Caligrafy\FaceLoginException;
 use Caligrafy\Passkey;
+use Caligrafy\Service;
+use Caligrafy\Web;
 
 /**
- * Face login with a liveness check (FaceDetector.liveness() + Caligrafy\FaceLogin) for the users of the
- * authentication module. Enrolment: a password sign-in (or a new account) first, then a liveness check.
- * Login: a liveness check (the challenges chosen by start()), then the face is matched.
+ * Face login with a liveness check (FaceDetector.liveness() + Caligrafy\FaceLogin) for the users of the authentication
+ * module. Enrolment: a password sign-in (or a new account) first, then a liveness check. Login: a liveness check (the
+ * challenges chosen by facelogin_start), then the face is matched.
+ * Web-only capabilities: they keep a nonce in the session and sign people in, so only Route::action reaches them.
  */
-class FaceLoginController extends Controller {
+abstract class FaceLoginAction extends Service
+{
     const MAX_FAILURES = 5;
     const LOCK_SECONDS = 60;
     // what face login does for accounts that have a passkey:
@@ -157,10 +167,10 @@ class FaceLoginController extends Controller {
     const PASSKEY_POLICY = 'step-up';
     const PENDING = '__face_pending';      // face checked, passkey expected
 
-    private function fail($code, $message) { http_response_code($code); return api(['error' => $message]); }
+    protected function fail($code, $message) { return Web::json(['error' => $message], $code); }
 
     // lockout after MAX_FAILURES (kept outside users): [locked?, function($code, $message) recording a failure]
-    private function guard($key) {
+    protected function guard($key) {
         $now = gmdate('Y-m-d H:i:s');
         $attempt = Database::toArray(Database::execute('SELECT * FROM face_login_attempts WHERE attempt_key = ?', [$key]))[0] ?? null;
         $locked = $attempt && $attempt['locked_until'] && $attempt['locked_until'] > $now;
@@ -175,40 +185,52 @@ class FaceLoginController extends Controller {
         return [$locked, $failed];
     }
 
-    private function signIn($user, $factors) {
-        session_regenerate_id(true);                              // new session id on every login (fixation)
+    // a new session id on every sign-in (fixation). The page stays open, so its CSRF token stays: not AuthRoutes::signIn()
+    protected function signIn($user, $factors, $status = 200) {
+        session_regenerate_id(true);
         Auth::authorize($user);
-        return api(['user' => ['username' => $user->username], 'factors' => $factors, 'enrolled' => count($this->enrolled((int)$user->id)) > 0]);
+        return Web::json(['user' => ['username' => $user->username], 'factors' => $factors, 'enrolled' => count($this->enrolled((int)$user->id)) > 0], $status);
     }
 
-    private function username($p) {
-        $username = trim((string)($p['username'] ?? ''));
+    protected function username($input) {
+        $username = trim((string)($input['username'] ?? ''));
         return $username === '' || preg_match('/^[A-Za-z0-9._@-]{1,100}$/', $username) ? $username : null;
     }
 
-    private function enrolled($userId = null) {    // [['user' => id, 'descriptor' => [128]], ...]
+    protected function enrolled($userId = null) {    // [['user' => id, 'descriptor' => [128]], ...]
         $sql = 'SELECT user_id, descriptor FROM face_prints' . ($userId ? ' WHERE user_id = ?' : '');
         $rows = Database::toArray(Database::execute($sql, $userId ? [$userId] : [])) ?: [];
         return array_map(fn($r) => ['user' => (int)$r['user_id'], 'descriptor' => json_decode(encryptDecrypt('decrypt', $r['descriptor']), true)], $rows);
     }
+}
 
-    // POST /facelogin/start { username? } -> { nonce, challenges, expires_in }
-    public function start() {
-        $p = $this->request->parameters();
-        if (!empty($p['enroll'])) {                               // enrolment: the logged-in account
-            return authorized() ? api(FaceLogin::challenge(user()->username)) : $this->fail(401, 'Log in with your password first');
+// POST /facelogin/start { username?, enroll? } -> { nonce, challenges, expires_in }
+#[Capability(name: 'facelogin_start', description: 'Starts a face scan: a single-use nonce and the liveness challenges.', public: true, webOnly: true)]
+class FaceLoginStart extends FaceLoginAction
+{
+    public $rules = ['username' => '', 'enroll' => ''];
+
+    public function handle(array $input, Context $context) {
+        if (!empty($input['enroll'])) {                           // enrolment: the signed-in account
+            return authorized() ? Web::json(FaceLogin::challenge(user()->username)) : $this->fail(401, 'Log in with your password first');
         }
-        $username = $this->username($p);
+        $username = $this->username($input);
         if ($username === null) { return $this->fail(422, 'Invalid username'); }
-        return api(FaceLogin::challenge($username));
+        return Web::json(FaceLogin::challenge($username));
     }
+}
 
-    // POST /facelogin/enroll { nonce, liveness, prints } - logged-in users only
-    public function enroll() {
+// POST /facelogin/enroll { nonce, liveness, prints } - signed-in people only
+#[Capability(name: 'facelogin_enroll', description: 'Enrols the face of the signed-in person, after a liveness check.', public: true, webOnly: true)]
+class FaceLoginEnroll extends FaceLoginAction
+{
+    public $rules = ['nonce' => '', 'liveness' => '', 'prints' => ''];
+
+    public function handle(array $input, Context $context) {
         if (!authorized()) { return $this->fail(401, 'Log in with your password first'); }
         $user = user();
         try {
-            $prints = FaceLogin::verify($this->request->parameters(), $user->username);
+            $prints = FaceLogin::verify($input, $user->username);
         } catch (FaceLoginException $e) {
             return $this->fail($e->getCode(), $e->getMessage());
         }
@@ -219,14 +241,18 @@ class FaceLoginController extends Controller {
         foreach (array_slice($prints, 0, 5) as $print) {
             Database::execute('INSERT INTO face_prints (user_id, descriptor) VALUES (?, ?)', [$user->id, encryptDecrypt('encrypt', json_encode($print))]);
         }
-        http_response_code(201);
-        return api(['enrolled' => min(5, count($prints))]);
+        return Web::json(['enrolled' => min(5, count($prints))], 201);
     }
+}
 
-    // POST /facelogin/password { username, password } - password sign-in before enrolment
-    public function password() {
-        $p = $this->request->parameters();
-        $username = $this->username($p);
+// POST /facelogin/password { username, password } - password sign-in before enrolment
+#[Capability(name: 'facelogin_password', description: 'Signs in with a username and a password, before enrolling a face.', public: true, webOnly: true)]
+class FaceLoginPassword extends FaceLoginAction
+{
+    public $rules = ['username' => '', 'password' => ''];
+
+    public function handle(array $input, Context $context) {
+        $username = $this->username($input);
         if (!$username) { return $this->fail(422, 'Enter a valid username'); }
         $key = 'pw|' . ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . strtolower($username);
         [$locked, $failed] = $this->guard($key);
@@ -234,41 +260,50 @@ class FaceLoginController extends Controller {
         $user = (new User('users'))->findByUsername($username);
         if (!$user) {
             // same work as a real check so that response times do not reveal which usernames exist
-            password_verify((string)($p['password'] ?? ''), '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG');
+            password_verify((string)($input['password'] ?? ''), '$2y$10$B0NLUgDUK3CbImwrVfa/FuOtSOKrb7DZTGG3USPSF4Comn4cy5RtG');
         }
-        if (!$user || !$user->verifyPassword((string)($p['password'] ?? ''))) {
+        if (!$user || !$user->verifyPassword((string)($input['password'] ?? ''))) {
             return $failed(401, 'Invalid username or password');
         }
         Database::execute('DELETE FROM face_login_attempts WHERE attempt_key = ?', [$key]);
         return $this->signIn($user, ['password']);
     }
+}
 
-    // POST /facelogin/register { username, password } - creates the account and signs it in, ready to enrol
-    // (the rules of the authentication module's /register: letters and digits, passwords of 8 to 72 characters)
-    public function register() {
-        $p = $this->request->parameters();
-        $username = trim((string)($p['username'] ?? ''));
-        $password = (string)($p['password'] ?? '');
+// POST /facelogin/register { username, password } - creates the account and signs it in, ready to enrol
+// (the rules of the authentication module's /register: letters and digits, passwords of 8 to 72 characters)
+#[Capability(name: 'facelogin_register', description: 'Creates an account and signs it in, ready to enrol a face.', public: true, webOnly: true)]
+class FaceLoginRegister extends FaceLoginAction
+{
+    public $rules = ['username' => '', 'password' => ''];
+
+    public function handle(array $input, Context $context) {
+        $username = trim((string)($input['username'] ?? ''));
+        $password = (string)($input['password'] ?? '');
         if (!preg_match('/^[A-Za-z0-9]{1,100}$/', $username)) { return $this->fail(422, 'Usernames use letters and digits (up to 100)'); }
         if (strlen($password) < 8 || strlen($password) > 72) { return $this->fail(422, 'Passwords need 8 to 72 characters'); }
         $users = new User('users');
         if ($users->findByUsername($username)) { return $this->fail(409, 'This username is taken'); }
         Database::execute('INSERT INTO users (username, passcode) VALUES (?, ?)', [$username, User::hashPassword($password)]);
-        http_response_code(201);
-        return $this->signIn($users->findByUsername($username), ['password']);
+        return $this->signIn($users->findByUsername($username), ['password'], 201);
     }
+}
 
-    // POST /facelogin/login { username?, nonce, liveness, prints }
-    public function login() {
-        $p = $this->request->parameters();
-        $username = $this->username($p);
+// POST /facelogin/login { username?, nonce, liveness, prints }
+#[Capability(name: 'facelogin_login', description: 'Signs in the account whose enrolled face matches the prints.', public: true, webOnly: true)]
+class FaceLoginLogin extends FaceLoginAction
+{
+    public $rules = ['username' => '', 'nonce' => '', 'liveness' => '', 'prints' => ''];
+
+    public function handle(array $input, Context $context) {
+        $username = $this->username($input);
         if ($username === null) { return $this->fail(422, 'Invalid username'); }
         $key = ($_SERVER['REMOTE_ADDR'] ?? '') . '|' . ($username !== '' ? strtolower($username) : '*');
         [$locked, $failed] = $this->guard($key);
         if ($locked) { return $this->fail(429, 'Too many failed attempts: wait a minute'); }
 
         try {
-            $prints = FaceLogin::verify($p, $username);           // nonce (single use), liveness, prints
+            $prints = FaceLogin::verify($input, $username);       // nonce (single use), liveness, prints
         } catch (FaceLoginException $e) {
             return $failed($e->getCode(), $e->getMessage());
         }
@@ -293,70 +328,102 @@ class FaceLoginController extends Controller {
         if (self::PASSKEY_POLICY !== 'face' && $passkey->credentials($user->id)) {
             if (self::PASSKEY_POLICY === 'passkey') { return $this->fail(403, 'This account logs in with its passkey'); }
             $_SESSION[self::PENDING] = ['user' => (string)$user->id, 'expires' => time() + 120];
-            return api(['step' => 'passkey', 'options' => $passkey->authenticationOptions($user->id)]);
+            return Web::json(['step' => 'passkey', 'options' => $passkey->authenticationOptions($user->id)]);
         }
         return $this->signIn($user, ['face']);
     }
+}
 
-    public function me() {
+// GET /facelogin/me
+#[Capability(name: 'facelogin_me', description: 'Who is signed in, and whether their face is enrolled.', readOnly: true, public: true, webOnly: true)]
+class FaceLoginMe extends FaceLoginAction
+{
+    public function handle(array $input, Context $context) {
         if (!authorized()) { return $this->fail(401, 'Not logged in'); }
-        return api(['user' => ['username' => user()->username ?? null], 'enrolled' => count($this->enrolled((int)user()->id)) > 0]);
+        return Web::json(['user' => ['username' => user()->username ?? null], 'enrolled' => count($this->enrolled((int)user()->id)) > 0]);
     }
-    public function signout() { Auth::unauthorize(); session_regenerate_id(true); return api(['loggedOut' => true]); }
+}
+
+// POST /facelogin/logout
+#[Capability(name: 'facelogin_logout', description: 'Signs out.', public: true, webOnly: true)]
+class FaceLoginLogout extends FaceLoginAction
+{
+    public function handle(array $input, Context $context) {
+        Auth::unauthorize();
+        session_regenerate_id(true);
+        return Web::json(['loggedOut' => true]);
+    }
 }
 ```
 ```php
-// application/controllers/FaceLogin/PasskeyController.php
-use Caligrafy\Controller;
-use Caligrafy\Database;
+// application/services/FaceLogin/PasskeyCapabilities.php
 use Caligrafy\Auth;
+use Caligrafy\Capability;
+use Caligrafy\Context;
 use Caligrafy\Passkey;
 use Caligrafy\PasskeyException;
+use Caligrafy\Web;
 
 /**
- * Passkeys (Caligrafy\Passkey): registration for logged-in users, login alone or after face login (step-up)
+ * Passkeys (Caligrafy\Passkey): registration for signed-in people, sign-in alone or after face login (step-up)
  */
-class PasskeyController extends Controller {
-
-    private function fail($code, $message) { http_response_code($code); return api(['error' => $message]); }
-
-    // the user whose face was just recognized, waiting for the passkey (FaceLoginController::PENDING)
-    private function pending() {
-        $p = $_SESSION[FaceLoginController::PENDING] ?? null;
+abstract class FacePasskeyAction extends FaceLoginAction
+{
+    // the user whose face was just recognized, waiting for the passkey (FaceLoginAction::PENDING)
+    protected function pending() {
+        $p = $_SESSION[self::PENDING] ?? null;
         return is_array($p) && $p['expires'] >= time() ? $p['user'] : null;
     }
+}
 
-    // POST /passkey/register/options
-    public function registerOptions() {
+// POST /passkey/register/options
+#[Capability(name: 'facepasskey_register_options', description: 'The options to register a passkey.', public: true, webOnly: true)]
+class FacePasskeyRegisterOptions extends FacePasskeyAction
+{
+    public function handle(array $input, Context $context) {
         if (!authorized()) { return $this->fail(401, 'Log in first'); }
         $user = user();
-        return api((new Passkey())->registrationOptions($user->id, $user->username));
+        return Web::json((new Passkey())->registrationOptions($user->id, $user->username));
     }
+}
 
-    // POST /passkey/register { id, clientDataJSON, attestationObject, transports, name? }
-    public function register() {
+// POST /passkey/register { id, clientDataJSON, attestationObject, transports, name? }
+#[Capability(name: 'facepasskey_register', description: 'Registers a passkey for the signed-in person.', public: true, webOnly: true)]
+class FacePasskeyRegister extends FacePasskeyAction
+{
+    public $rules = ['id' => '', 'clientDataJSON' => '', 'attestationObject' => '', 'transports' => '', 'name' => ''];
+
+    public function handle(array $input, Context $context) {
         if (!authorized()) { return $this->fail(401, 'Log in first'); }
-        $p = $this->request->parameters();
         try {
-            $credential = (new Passkey())->register($p, user()->id, $p['name'] ?? null);
+            $credential = (new Passkey())->register($input, user()->id, $input['name'] ?? null);
         } catch (PasskeyException $e) {
             return $this->fail($e->getCode(), $e->getMessage());
         }
-        http_response_code(201);
-        return api(['passkey' => ['name' => $credential['name']]]);
+        return Web::json(['passkey' => ['name' => $credential['name']]], 201);
     }
+}
 
-    // POST /passkey/login/options: after face login only this user's passkeys, else any passkey of the site
-    public function loginOptions() {
-        return api((new Passkey())->authenticationOptions($this->pending()));
+// POST /passkey/login/options: after face login only this user's passkeys, else any passkey of the site
+#[Capability(name: 'facepasskey_login_options', description: 'The options to sign in with a passkey.', public: true, webOnly: true)]
+class FacePasskeyLoginOptions extends FacePasskeyAction
+{
+    public function handle(array $input, Context $context) {
+        return Web::json((new Passkey())->authenticationOptions($this->pending()));
     }
+}
 
-    // POST /passkey/login { id, clientDataJSON, authenticatorData, signature, userHandle }
-    public function login() {
+// POST /passkey/login { id, clientDataJSON, authenticatorData, signature, userHandle }
+#[Capability(name: 'facepasskey_login', description: 'Signs in with a passkey, alone or after the face.', public: true, webOnly: true)]
+class FacePasskeyLogin extends FacePasskeyAction
+{
+    public $rules = ['id' => '', 'clientDataJSON' => '', 'authenticatorData' => '', 'signature' => '', 'userHandle' => ''];
+
+    public function handle(array $input, Context $context) {
         $pending = $this->pending();
-        unset($_SESSION[FaceLoginController::PENDING]);
+        unset($_SESSION[self::PENDING]);
         try {
-            $userId = (new Passkey())->authenticate($this->request->parameters());
+            $userId = (new Passkey())->authenticate($input);
         } catch (PasskeyException $e) {
             return $this->fail($e->getCode(), $e->getMessage());
         }
@@ -365,7 +432,7 @@ class PasskeyController extends Controller {
         if (!$user) { return $this->fail(401, 'Unknown account'); }
         session_regenerate_id(true);
         Auth::authorize($user);
-        return api(['user' => ['username' => $user->username], 'factors' => $pending !== null ? ['face', 'passkey'] : ['passkey']]);
+        return Web::json(['user' => ['username' => $user->username], 'factors' => $pending !== null ? ['face', 'passkey'] : ['passkey']]);
     }
 }
 ```
@@ -907,13 +974,13 @@ app.mount('#app');
   Windows Hello / Android prompts, synced passkeys (sign count 0) and attestation formats other than "none".
 
 ## Checklist
-- [ ] Controllers not named after an example controller unless namespaced (G47); `php -l`; SQL run with the db skill.
+- [ ] Every sign-in step is a capability with `webOnly: true`, served by `Route::action` (no controller); `php -l`; SQL run with the db skill.
 - [ ] Enrolment only for a logged-in user (password sign-in or new account, with the lockout), with a liveness check;
       a face already enrolled on another account refused.
 - [ ] Login: `FaceLogin::verify()` (nonce, liveness, prints), then `FaceLogin::match()`, used-print hashes, lockout outside `users`.
 - [ ] Prints encrypted with `encryptDecrypt` (APP_KEY), compared on the server, never returned.
 - [ ] Passkey policy chosen and explained; `PASSKEY_RP_ID` / `PASSKEY_ORIGIN` set in production; https.
-- [ ] `session_regenerate_id(true)` + `Auth::authorize()` only after every required factor.
+- [ ] `session_regenerate_id(true)` + `Auth::authorize()` only after every required factor (not `AuthRoutes::signIn()`: the page stays open and keeps its CSRF token).
 - [ ] Client: `Vue.markRaw`, `autoStart: false` + `startStream()` errors, challenges from the server (no `blink`),
       sign-in loop stopped on failure and on tab change, `theme.css` + Caligrafy header.
 - [ ] User told: browser liveness raises the bar but is not proof; passkeys for sensitive accounts.

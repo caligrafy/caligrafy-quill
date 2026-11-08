@@ -95,7 +95,10 @@ failed sign-ins limited, a new session id at sign-in; no controller), leaving th
 Before 2.19.0: uncomment the authentication routes (`/login`, `/logout`, `/notAuthorized`, `/register`, both `POST`s)
 and make `/home` (where sign-in lands) the main page: `Route::page('/home', '<Folder>/index');` instead of
 `AuthController@home`. Password reset and face sign-in are not in `Route::auth`: leave them out of the plan unless the
-user asks (they need a controller). Run `application/models/Auth/create_db.sql`. Add to
+user asks (password reset is `Route::page` and `Route::form` on two capabilities, 09.1-authentication.md; face sign-in is
+recipes-face-login.md, web-only capabilities with `Route::action`). A page only for visitors: `'visitorsOnly' => '/<things>'`;
+a page that needs someone: `'signedIn' => true, 'comeBack' => true`, so that signing in comes back to it. A sign-up form
+with more than `/register` gives: `Route::form` with `same`, `accepted`, `signsIn`. Run `application/models/Auth/create_db.sql`. Add to
 the main page a line with *Sign in* / *Sign up* links for visitors and *Sign out* for signed-in people. Every page is a
 `Route::page` (`/`, `/<things>`, `/home`): it gives the view `$authorized` and `$user` (G74); a closure that returns
 `view()` does not. The sign-up page accepts usernames of letters and digits only (no email
@@ -143,7 +146,11 @@ calls it, then shows the token once and the line to paste:
   whose capability starts `handle()` with `if ($context->actorType() !== 'webhook') { throw ServiceError::forbidden('Only the webhook calls this'); }`
   and has `mcp: false` (otherwise `/capabilities` and `/mcp` let a signed-in user or a token post a made-up event,
   G137; a scheduled or queued capability checks `schedule` / `queue` the same way);
-  a file field: the `file` rule, `required|file` when it must be sent (G131). A controller only for HTTP none of these covers;
+  a file field: the `file` rule, `required|file` when it must be sent (G131); a form that leaves for a payment page:
+  `Route::form` with `'success' => fn ($r) => $r['url']` and `'inputs' => fn () => ['site' => session('home')]`. Whatever a
+  page or a form cannot say (one address, several answers; the session; a page that creates something when opened):
+  `Route::action` on a capability with `webOnly: true` returning `Caligrafy\Web`, which calls plain capabilities with
+  `$this->capability()` (G143). Never a controller;
 - REST for every capability: `Route::capability('GET', '/api/<things>', 'list_<things>');`,
   `Route::capability('GET', '/api/<things>/{id}', 'get_<thing>');`, `POST`, `PUT /{id}`, `DELETE /{id}`...;
 - `Route::capabilities('/capabilities');` and `Route::mcp('/mcp');` (quickstart adds them: keep one of each);

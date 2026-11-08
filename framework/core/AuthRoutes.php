@@ -137,10 +137,10 @@ class AuthRoutes
             Route::post("$p/register", function () use ($o) { self::signUp($o); });
         }
         if ($o['passkeys']) {
-            Route::post("$p/passkey/register/options", function () { self::passkey('registerOptions'); });
-            Route::post("$p/passkey/register", function () { self::passkey('register'); });
-            Route::post("$p/passkey/login/options", function () { self::passkey('loginOptions'); });
-            Route::post("$p/passkey/login", function () { self::passkey('login'); });
+            Route::post("$p/passkey/register/options", function () use ($o) { self::passkey('registerOptions', $o); });
+            Route::post("$p/passkey/register", function () use ($o) { self::passkey('register', $o); });
+            Route::post("$p/passkey/login/options", function () use ($o) { self::passkey('loginOptions', $o); });
+            Route::post("$p/passkey/login", function () use ($o) { self::passkey('login', $o); });
         }
         return $o;
     }
@@ -411,7 +411,7 @@ class AuthRoutes
     /**
      * The passkey endpoints: the ceremonies of Caligrafy\Passkey, a new session at sign-in
      */
-    private static function passkey($step)
+    private static function passkey($step, array $o)
     {
         $request = request();
         if (!$request->authorizeSessionRequest()) {

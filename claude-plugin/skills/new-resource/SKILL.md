@@ -14,8 +14,8 @@ Read first: the `caligrafy` skill's [api-reference.md](../caligrafy/reference/ap
 and [gotchas.md](../caligrafy/reference/gotchas.md) G2, G4, G6, G7, G10, G19, G23, G52, G76, G83, G122-G131, G138, G139.
 
 **Only capabilities touch models**: the model is read and written by the capabilities of this resource, never by a
-controller or a page. Pages get their data with `Route::page`, forms post with `Route::form` (2.19.0+), exports use `Route::download`:
-no controller (one only for HTTP none of them covers, and it calls the capabilities).
+controller or a page. Pages get their data with `Route::page`, forms post with `Route::form` (2.19.0+), exports use `Route::download`,
+anything else is `Route::action` on a `webOnly: true` capability (2.21.0+, G143): no controller.
 
 ## Preconditions
 1. Confirm this is an initialized Quill project: `application/config/routing/web.php` exists. If only `framework/settings/application` exists, tell the user to run `php caligrafer.php initialize` (it deletes `.git` - ask first).
@@ -126,7 +126,7 @@ Insert inside the `try` block, after the existing `/` route and before `Route::r
     Route::capability('DELETE', '/api/books/{id}', 'delete_book');
     Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']]);
     Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);
-    // forms of the pages (2.19.0+): no controller
+    // forms of the pages (2.19.0+)
     Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);
     Route::form('/books/{id}', 'update_book', ['method' => 'PUT', 'success' => '/books/{id}', 'flash' => 'Saved']);
     Route::form('/books/{id}', 'delete_book', ['method' => 'DELETE', 'success' => '/books', 'flash' => 'Book deleted']);
@@ -135,28 +135,10 @@ Keep one `Route::capabilities('/capabilities');` and one `Route::mcp('/mcp');` i
 `php caligrafer.php client` for the JS client. Every form of its pages has `method='POST'`, also when a script sends
 it (G104). A capability that refuses a page's data sends a visitor to sign in or
 answers 404/403 (G83); add `'notFound' => 'Books/missing'` to show your own 404 view. Only `readOnly` capabilities can
-be page data, and the view never gets the query string.
+be page data; of the query string the view gets only the names of the `query` option (2.20.0+).
 
 ### 5. Views (only if the user wants HTML pages)
-`application/views/Books/index.pug` and `show.pug`, built with Caligrafy's look of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (a title band `section.cq-hero.cq-hero--page`, then `section.cq-band > .cq-inner`: a `.cq-form-grid` of labeled `.cq-field`s and `btn btn-primary`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`; follow its checklist), `extends ../default/master/site`, `block title`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, `Route::form` (2.19.0+, routes above): the form has `method='POST'`, `action="{$home}books"`, `=csrf()` (and `=methodField('PUT')` / `'DELETE'`), each input `value=old('title')` with `p.cq-field-error= errors('title')` under it, and the page shows `flash('success')` / `flash('error')` in a `.cq-alert` (G129). A `file` input: the `file` rule in `$rules` (`required|file|extension,png;jpg|max_size,2mb` when it must be sent: `required_file` is only enforced since 2.19.1) and `enctype='multipart/form-data'` (G131). Only on a framework before 2.19.0, a thin controller:
-```php
-use Caligrafy\Controller;
-use Caligrafy\ServiceError;
-
-class BookFormController extends Controller
-{
-    public function store()
-    {
-        try {
-            $book = $this->call('create_book');   // the posted fields; never new Book() here
-            redirect('/books/' . $book['id']);   // capabilities return plain arrays
-        } catch (ServiceError $e) {
-            return view('Books/index', array('errors' => $e->fields, 'books' => $this->call('list_books', array())));
-        }
-    }
-}
-```
-with `Route::post('/books', 'BookFormController@store');` and `=csrf()` in the form.
+`application/views/Books/index.pug` and `show.pug`, built with Caligrafy's look of [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md) (a title band `section.cq-hero.cq-hero--page`, then `section.cq-band > .cq-inner`: a `.cq-form-grid` of labeled `.cq-field`s and `btn btn-primary`, `ul.cq-rows > li.cq-row` with `.cq-row-actions`, `.cq-empty-state`; follow its checklist), `extends ../default/master/site`, `block title`, `block content`. They receive the `data` of their route as plain arrays (`each $book in $books`, `$book['title']`), `$authorized` and `$user`. Changes go through the capabilities: from the page's script with the JS client (`createBook({...})`, like the Tasks example of `quickstart --example`), or, for a classic form, `Route::form` (2.19.0+, routes above): the form has `method='POST'`, `action="{$home}books"`, `=csrf()` (and `=methodField('PUT')` / `'DELETE'`), each input `value=old('title')` with `p.cq-field-error= errors('title')` under it, and the page shows `flash('success')` / `flash('error')` in a `.cq-alert` (G129). A `file` input: the `file` rule in `$rules` (`required|file|extension,png;jpg|max_size,2mb` when it must be sent: `required_file` is only enforced since 2.19.1) and `enctype='multipart/form-data'` (G131).
 
 ## Finish
 1. `php -l` every new PHP file (the plugin hook also does it on save).

@@ -1,6 +1,6 @@
 ---
 name: new-capability
-description: Build a Caligrafy Quill capability once and serve it to every channel - a Caligrafy\Service with #[Capability] in application/services/, its REST routes (Route::capability), the generic endpoint and the JS client for Vue apps (Route::capabilities, php caligrafer.php client), web pages (Route::page, Route::form, Route::download; Route::webhook for a service's events) and AI agents over MCP (Route::mcp, personal access tokens) - with tests that prove every channel behaves the same.
+description: Build a Caligrafy Quill capability once and serve it to every channel - a Caligrafy\Service with #[Capability] in application/services/, its REST routes (Route::capability), the generic endpoint and the JS client for Vue apps (Route::capabilities, php caligrafer.php client), web pages (Route::page, Route::form, Route::download, Route::action for what a page or a form cannot say; Route::webhook for a service's events) and AI agents over MCP (Route::mcp, personal access tokens) - with tests that prove every channel behaves the same.
 when_to_use: The user wants a feature available to several channels (web pages, a Vue app or SPA, a REST API, AI agents), asks for MCP tools or to let Claude/agents use their app, asks for "build once" or capabilities, e.g. "/caligrafy-quill:new-capability create_book books:write" or "let agents add books".
 argument-hint: "<capability_name> [scope] [read-only|destructive]"
 ---
@@ -43,21 +43,28 @@ the declarative routes, G134-G135 for the rules `exists`, `unique` and `current_
      `Book::where('id', $input['id'])->update($changes)` (the older model calls `create`, `update`, `find` still work).
      Return data (selected columns: never password hashes or secrets; `select(...)` on `Book::query()` still gives models
      with the other columns `null`: add `->arrays()`, G138), refuse with `ServiceError::invalid([...])`, `notFound()`, `forbidden()`, `conflict()`.
-     No `view()`, `api()`, `redirect()`, `echo`, `$_SESSION` or request access (G52); use `$context->user`.
+     No `view()`, `api()`, `redirect()`, `echo`, `$_SESSION` or request access (G52); use `$context->user`. The one exception
+     is a capability the web alone can serve: see `Route::action` below.
    - Flags: `readOnly: true` for reads; `destructive: true` for deletes and overwrites; `level: N` when only users
-     with `permissions >= N` may call it; `public: true` only for data anyone may read.
+     with `permissions >= N` may call it; `public: true` only for data anyone may read; `webOnly: true` only for a
+     `Route::action` (G143).
 3. **Channels** in `web.php`, before `Route::run()` (add only what the user needs, once per project for the last two):
    - REST: `Route::capability('POST', '/books', 'create_book');` (route variables become inputs)
    - Generic endpoint + JS client: `Route::capabilities('/capabilities');` then `php caligrafer.php client public/<app>/src/capabilities.js`
      (Vite SPA) or `public/js/capabilities.js`; use `createBook(...)` and `CapabilityError` in the Vue code.
    - MCP: `Route::mcp('/mcp');`
    - Pug page that shows the result: `Route::page('/books/{id}', 'Books/show', ['data' => ['book' => 'get_book']]);` (the
-     view gets `$book` as a plain array, `$authorized`, `$user`, never the query string; only `readOnly` capabilities; a
-     refusal sends a visitor to sign in or answers 404/403, or renders the page's `notFound` view, G83).
+     view gets `$book` as a plain array, `$authorized`, `$user`; only `readOnly` capabilities; a refusal sends a visitor to
+     sign in or answers 404/403, or renders the page's `notFound` view, G83). Options: `signedIn`, `level`, `comeBack` (a
+     visitor signs in and comes back here), `visitorsOnly` (a path for people signed in), `query` (`['sort' => 'title', 'q']`:
+     what the view gets of the query string).
    - A form post (2.19.0+): `Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);`
      (`'method' => 'PUT'|'DELETE'` with `=methodField('PUT')` in the form), and in the view `=csrf()`,
      `value=old('title')`, `p.cq-field-error= errors('title')`, `flash('success')` / `flash('error')`; `back` and
-     `success` point at the page that shows them (flash lasts one request, G129). Never a controller for it.
+     `success` point at the page that shows them (flash lasts one request, G129). Never a controller for it. Also:
+     `same` (two fields that must match), `accepted` (a box to tick), `inputs` (values only the server sets, such as
+     `fn () => ['site' => session('home')]`), `signsIn` (the field of the answer with the id of the person to sign in),
+     `visitorsOnly`; `success` may return a full address (a payment page).
    - A CSV or JSON export: `Route::download('/books.csv', '<read-only capability>', ['filename' => 'books.csv']);`
      (the capability returns a list of rows).
    - Events another service posts: `Route::webhook('/stripe/events', '<capability>', ['verify' => 'stripe']);` with
@@ -66,12 +73,16 @@ the declarative routes, G134-G135 for the rules `exists`, `unique` and `current_
      webhook calls this'); }`, and `mcp: false` in its attribute: the capability is also served by `/capabilities`,
      `/mcp` and `call` to anyone its scope and level allow (G137). A capability only the scheduler or the queue runs
      checks `schedule` / `queue` the same way.
-   - Sign-in pages: `Route::auth([...])` after `Auth::authentication('User', 'users')`, not a controller (no password
-     reset or face sign-in there: those keep their controllers).
+   - Sign-in pages: `Route::auth([...])` after `Auth::authentication('User', 'users')`, not a controller. Password reset:
+     `Route::page` and `Route::form` on two capabilities (`09.1-authentication.md`). Face sign-in: `recipes-face-login.md`.
    - A file input: the `file` rule, `'cover' => 'required|file|extension,png;jpg|max_size,2mb'`; `handle()` gets its URL (G131).
-   - A controller only for HTTP none of these covers (several capabilities with conditions, custom headers, streaming),
-     and then thin: `try { $book = $this->call('create_book'); ... } catch (ServiceError $e) { ... $e->fields ... }`.
-     Never data work in a closure route (G130). Never `new <Model>()`, `associate()` or `save()` outside `application/services/`: only capabilities touch models.
+   - Anything else a browser asks (several capabilities with conditions, a choice between a view and a redirect, the
+     session, a sign-in between two sites, a gate, a payment page, custom headers, streaming): `Route::action('/x', '<name>')`
+     (`'method' => 'POST'`, `signedIn`, `level`, `comeBack`, `visitorsOnly`, `back`) on a capability declared
+     `webOnly: true`, which returns `Web::view()`, `Web::redirect()`, `Web::json()` or `Web::text()` (`use Caligrafy\Web;`), and
+     calls plain capabilities with `$this->capability($name, $input, $context)`. Nothing but that route reaches it (G143),
+     so the work REST or agents need stays in a plain capability. Test it with `$this->action()`.
+     **Never write a controller.** Never data work in a closure route (G130). Never `new <Model>()`, `associate()` or `save()` outside `application/services/`: only capabilities touch models.
    - Any page you build for it (Pug, or a page calling the JS client) uses the page components and the worked example of
      [ui-guidelines.md](../caligrafy/reference/ui-guidelines.md): `extends ../default/master/site`, a title band, labeled
      `.cq-field`s, field errors in `.cq-field-error` under their own field, `.cq-rows` with `.cq-row-actions`, an empty state;

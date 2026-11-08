@@ -368,7 +368,7 @@ changes every row. Every value is bound. A capability that creates a book return
 
 ## Other ways
 
-These still work in 2.19. Use them only in older code; the prescriptive way is in brackets.
+These still work. Use them only in older code; the prescriptive way is in brackets.
 
 + **A model in a controller** [a capability]: `$this->associate('Book', 'books');` then `$this->model->find(1)`. See
   [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers).

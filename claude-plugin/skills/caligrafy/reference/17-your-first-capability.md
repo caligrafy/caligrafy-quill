@@ -20,7 +20,7 @@ For each entity, the `new-resource` skill writes the table script (`application/
 + `docker compose exec dev-box php caligrafer.php capabilities` lists the new capabilities with the scopes you expect (`books:read`, `books:write`) and `read` only on the reads.
 + `author_id` has the rule `exists,authors.id`: a book with an unknown author is refused with a message, not a database error.
 + No capability that changes data is `public: true`, unless you asked for it.
-+ `web.php` has no new controller for the forms: they are `Route::form` lines.
++ `web.php` has no controller: the forms are `Route::form` lines.
 + The page opens, and an empty form shows a message under each required field.
 
 ## By hand
@@ -749,7 +749,7 @@ A second book with the same ISBN is now refused on every channel with `"isbn": "
 + **`flash()`, `errors()` and `old()` last one request.** Point `success` (and `back`) at the page that shows them.
 + **A `POST` with `curl` without `Accept: application/json`.** It is treated as a form without a CSRF token: `[ERROR 3000]` (403).
 + **Editing a `create_db.sql` that already ran online** to change a table: the change is a migration (step 9).
-+ **Model code outside a capability.** Pages, forms, controllers and scripts call capabilities; only capabilities read and write models.
++ **Model code outside a capability.** Pages, forms, custom requests (`Route::action`) and scripts call capabilities; only capabilities read and write models.
 
 ## What you built
 

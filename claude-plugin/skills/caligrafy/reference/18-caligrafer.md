@@ -141,7 +141,7 @@ The Docker server is `dev-box` (PHP 8.5 and Apache, your folder mounted in it), 
 php caligrafer.php version        # also --version and -v
 ```
 ```text
-Caligrafy Quill 2.21.1
+Caligrafy Quill 2.21.2
 ```
 It works before `composer install` and never creates `.env`. In code: `Caligrafy\Framework::VERSION`. The changes of every version are in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
 
@@ -160,7 +160,7 @@ php caligrafer.php service Bookshelf/ListBooks --scope books:read --read-only
  Created application/services/Bookshelf/CreateBook.php: capability 'create_book' (scope books:write)
  Fill in $rules and handle(), then serve it: a page (Route::page data), a form (Route::form), REST (Route::capability or Route::capabilities), MCP (Route::mcp)
 ```
-The capability's name is the snake_case of the class name. Always give `--scope`: without it the capability needs no scope, and any token can call it. It refuses to overwrite a file, and needs `application/`. Fill the class as [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#capabilities) shows.
+For a [web-only capability](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#webonly), add `webOnly: true` to its attribute by hand. The capability's name is the snake_case of the class name. Always give `--scope`: without it the capability needs no scope, and any token can call it. It refuses to overwrite a file, and needs `application/`. Fill the class as [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability#capabilities) shows.
 
 ### `capabilities`
 ```text
@@ -417,7 +417,7 @@ php caligrafer.php doctor --env .env.production    # another environment file
 php caligrafer.php doctor --json                   # for scripts
 ```
 ```text
-Caligrafy doctor (read-only): Caligrafy Quill 2.21.1
+Caligrafy doctor (read-only): Caligrafy Quill 2.21.2
 
  Database
   OK    Database: connected to mysql://mysql:3306/caligrafy (server 8.4.13)

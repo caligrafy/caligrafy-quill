@@ -72,7 +72,23 @@ class Rest
                 unset($route[$key]);
             }
         }
-        return array_merge($body, $route);
+        return array_merge($body, $route, self::routeVariables($request));
+    }
+
+    // The variables of the route's own pattern win over the query string, which Route also merges into the bind on a
+    // GET (2.21.2): /books/3?id=9 is the book 3
+    private static function routeVariables($request)
+    {
+        if (!is_string(Route::$currentRoute ?? null) || !is_string($request->uri ?? null)) {
+            return array();
+        }
+        $variables = (array) bindRouteToVar(Route::$currentRoute, $request->uri);
+        foreach ($variables as $key => $value) {
+            if (is_int($key) || strpos((string) $key, '__') === 0) {
+                unset($variables[$key]);
+            }
+        }
+        return $variables;
     }
 
     private static function needsCsrf($request, Context $context)

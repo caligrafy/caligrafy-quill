@@ -25,7 +25,8 @@ it with cross-channel tests.
 **One rule keeps it true: only capabilities touch models.** Pages, controllers, scripts and the JS client get and change
 data by calling capabilities, never `new Model(...)`. The framework follows it too: since 2.5.0 the user administration
 pages and sign-up call the user capabilities. The one exception is signing in and out (`AuthController`, or
-`AuthRoutes` behind `Route::auth`, 2.19.0), which is the web session, and capabilities never touch the session.
+`AuthRoutes` behind `Route::auth`, 2.19.0), which is the web session. Capabilities never touch the session, except those
+declared `webOnly: true` (2.21.0), which only `Route::action` reaches.
 
 ## Where the code lives
 
@@ -46,7 +47,7 @@ application/       (a project: copied from framework/settings/application by ini
 ├── models/        one model per table, and the table's create_db.sql
 ├── migrations/    changes to tables that have data: numbered SQL files, each run once (2.18.0)
 ├── views/         Pug pages built with the page components of public/css/tokens.css
-├── controllers/   pages with their own logic; core/ holds the framework's (Auth, Admin, AI, Client, Watson)
+├── controllers/   the older way, still working; core/ holds the framework's (Auth, Admin, AI, Client, Watson)
 └── config/        config.php, routing/web.php (every route of the project), schedule.php (jobs), container.php (bindings)
 tests/             the application's own tests (php caligrafer.php test, Caligrafy\Testing\TestCase); never loaded on a page
 public/            css/tokens.css (the look), js/capabilities.js (the generated client), <app>/ (client apps)
@@ -149,7 +150,9 @@ capability that calls `Tokens::create()` for the signed-in person (how an applic
   sign-out), `Route::webhook` (`Webhook`: no CSRF token, the signature checked before the capability runs as the
   system), `Route::download` (`Download`: a read-only capability as CSV or JSON). The `file` rule of a capability
   (`Uploads`) saves an uploaded file after the access check and gives `handle()` its URL.
-- **Controllers** remain for HTTP none of these covers: several capabilities with conditions, custom answers.
+- **`Route::action`** (`Action`, 2.21.0): HTTP none of these covers (a sign-in between two sites, a gate, a page that
+  decides where to go): a capability declared `webOnly: true` answers with a `Caligrafy\Web`. Nothing else reaches it.
+- **Controllers** still work; no application needs one since 2.21.0.
   They call capabilities with `$this->call()` (the inputs default to the request parameters and the route variables)
   and catch `ServiceError` to show the form again. The framework's own controllers: `AuthController` (sign-in, sign-up
   through `register_user`), `AdminController` (the user capabilities), `ClientController` (client app pages),

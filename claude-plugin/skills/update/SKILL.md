@@ -75,8 +75,13 @@ php caligrafer.php platform install # the framework tables of the new release (2
   Pug errors show their line only with `APP_DEBUG=true` (set it locally). `.env.php` is in `.gitignore`; production
   needs nothing (the deploy step runs `env cache`); an own server without the image runs `php caligrafer.php env cache`
   after each `.env` change. Escape hatches, to name only when something breaks: `SESSION_LAZY=false`,
-  `VIEW_OPTIMIZER=false`. Moving controllers to `Route::form` / `Route::auth` / `Route::webhook` is optional: offer
-  it, never do it unasked.
+  `VIEW_OPTIMIZER=false`. Moving controllers to `Route::form` / `Route::auth` / `Route::webhook` / `Route::action` is optional: offer
+  it, never do it unasked (08-controllers.md shows how).
++ 2.21.1: a JSON call to `Route::action` needs the page's `X-CSRF-Token` or a token granting `*`, signed in or not. Nothing to
+  change when pages send `apiHeaders()`.
++ 2.20.0-2.21.0: nothing to change. New: `Route::page` `visitorsOnly`, `comeBack`, `query`; `Route::form` `visitorsOnly`, `same`,
+  `accepted`, `inputs`, `signsIn`; `Route::redirect` `keepQuery`; `Route::auth` `?return=`; `Route::action`, `webOnly: true`,
+  `Route::bots()`. Existing controllers keep working.
 + 2.19.1+: `upgrade --apply` must replace `application/views/Client/app.pug` (its `env.request` no longer carries the
   session cookie or the `Authorization` header, G136); a customized copy gets `app.pug.caligrafy-new`: merge its
   `'request' => request()->forClient()` line. Check that the root `.htaccess` denies `backups` and `.gitignore` has

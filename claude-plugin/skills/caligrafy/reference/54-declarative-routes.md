@@ -5,18 +5,27 @@
 
 # Declarative routes
 
-A **declarative route** is one line of `web.php` that connects a web need to a capability: a form, the sign-in pages,
-the events another service posts, a file to download, an address that moved. There is no controller: the capability
-holds the rules (who may call it, which inputs it accepts), and the route says where the person goes next. Since 2.19.0.
+A **declarative route** is one line of `web.php` that connects a request to a capability: a page, a form, the sign-in
+pages, the events another service posts, a file to download, an address that moved. The capability holds the rules (who
+may call it, which inputs it accepts), and the route says where the person goes next.
+
+Since 2.21.0 every request of an application can be declared, so **a new application needs no controller**: what a page
+or a form cannot say (a sign-in between two sites, a page that decides where to go, a gate, a payment page) is a
+web-only capability served by [`Route::action`](#action). Existing controllers keep working.
 
 | You need | One line in `application/config/routing/web.php` |
 |---|---|
 | A page, with its data | `Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']]);` |
+| A page people return to after signing in | `Route::page('/books/new', 'Bookshelf/new', ['signedIn' => true, 'comeBack' => true]);` |
+| A page for visitors only | `Route::page('/join', 'Bookshelf/join', ['visitorsOnly' => '/books']);` |
 | A form that creates, changes or deletes | `Route::form('/books', 'create_book', ['success' => '/books/{id}']);` |
+| A sign-up form that signs the person in | `Route::form('/join', 'register_user', ['signsIn' => 'id', 'success' => '/books', 'same' => [...], 'accepted' => [...]]);` |
+| A form that leaves for a payment page | `Route::form('/membership/checkout', 'start_checkout', ['success' => fn ($r) => $r['url']]);` |
 | Sign-in, sign-out, sign-up | `Route::auth(['home' => '/books']);` |
 | Events another service posts | `Route::webhook('/stripe/events', 'record_event', ['verify' => 'stripe']);` |
 | A CSV or JSON export | `Route::download('/authors.csv', 'list_authors', ['filename' => 'authors.csv']);` |
 | An address that moved | `Route::redirect('/old/books/{id}', '/books/{id}', 301);` |
+| Anything else a browser asks | `Route::action('/authors/{author_id}/books', 'open_author_books');` |
 | A file in a form | the `file` rule of the capability: `'cover' => 'required\|file\|extension,png;jpg\|max_size,2mb'` |
 
 ## With Claude
@@ -28,13 +37,17 @@ If a field is wrong, come back to the form with the message under the field and 
 ```
 
 Other requests the plugin turns into one of these lines: "let people export the books as CSV", "receive Stripe's
-checkout events", "add sign-in pages", "redirect /catalog to /books". What Claude writes: the capability in
-`application/services/<Folder>/`, the route in `application/config/routing/web.php`, and for a form the page
-(`Route::page`) and its Pug view with `=csrf()`, `old()`, `errors()` and `flash()`.
+checkout events", "add sign-in pages", "redirect /catalog to /books", "after signing in, come back to the page you were
+on", "a sign-up page with the password typed twice and a terms box", "when an author has one book, go straight to it".
+What Claude writes: the capability in `application/services/<Folder>/`, the route in
+`application/config/routing/web.php`, and for a form the page (`Route::page`) and its Pug view with `=csrf()`, `old()`,
+`errors()` and `flash()`.
 
 **Check** before you say OK:
 
-- [ ] No controller and no closure was written for the form, the export, the webhook or the redirect.
+- [ ] No controller and no closure was written: each request is one of these lines.
+- [ ] A capability with `webOnly: true` is one that needs the session, signs someone in, or chooses between a page and a
+      redirect. Everything else stays a plain capability, so REST and agents can reach it.
 - [ ] The form has `method='POST'`, `=csrf()`, and `=methodField('PUT')` or `'DELETE'` for those routes.
 - [ ] `success` and `back` point at the pages that show `flash()` and `errors()`.
 - [ ] A download names a read-only capability; a webhook has `verify` and its capability is safe to run twice.
@@ -237,7 +250,7 @@ in the project folder (with Docker: `docker compose exec dev-box php caligrafer.
 
        // the Bookshelf pages and their forms
        Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books']]);
-       Route::page('/books/new', 'Bookshelf/new', ['signedIn' => true, 'data' => ['authors' => 'list_authors']]);
+       Route::page('/books/new', 'Bookshelf/new', ['signedIn' => true, 'comeBack' => true, 'data' => ['authors' => 'list_authors']]);
        Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);
        Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book'], 'notFound' => 'Bookshelf/notfound']);
        Route::form('/books/{id}', 'update_book', ['method' => 'PUT', 'success' => '/books/{id}', 'flash' => 'Saved']);
@@ -248,7 +261,8 @@ in the project folder (with Docker: `docker compose exec dev-box php caligrafer.
        Route::redirect('/catalog', '/books');
    ```
 
-   `/books/new` comes before `/books/{id}`: the first route that matches wins.
+   `/books/new` comes before `/books/{id}`: the first route that matches wins. `comeBack` sends a visitor to
+   `/login?return=/books/new` instead of `/login`, so that signing in lands on the form.
 
 4. **Write the views.** `application/views/Bookshelf/new.pug`, the form that posts to `create_book`:
 
@@ -355,9 +369,9 @@ in the project folder (with Docker: `docker compose exec dev-box php caligrafer.
 
    The cover form is used in [step 7](#files).
 
-5. **Try the forms in the browser.** Open `http://localhost:8080/books/new`: you are sent to `/login`. Open
-   `http://localhost:8080/register`, create an account (a username, a password typed twice), then sign in at
-   `/login`: you land on `/books`.
+5. **Try the forms in the browser.** Open `http://localhost:8080/books/new`: you are sent to
+   `/login?return=%2Fbooks%2Fnew`. Open `http://localhost:8080/register`, create an account (a username, a password
+   typed twice), then open `/books/new` again and sign in: you land on the form.
 
    + On `/books/new`, send the form empty: the page comes back with "Some of the inputs are invalid" at the top and,
      under the fields, "The Title field is required" and "The Published Year field is required" (the list of authors
@@ -479,17 +493,134 @@ in the project folder (with Docker: `docker compose exec dev-box php caligrafer.
 
    `curl -s -i http://localhost:8080/catalog` answers `302 Found` with `Location: http://localhost:8080/books`.
 
-9. **Receive events from another service.** Webhooks are in [their own section](#webhook), with a complete example.
+9. **Add a sign-up page of your own.** `/register` asks for a username and a password. The page `/join` also asks to
+   accept the terms, signs the person in at once, and is for visitors only. In `web.php`, after `Route::auth(...)`:
+
+   ```php
+       Route::page('/join', 'Bookshelf/join', ['visitorsOnly' => '/books']);
+       Route::form('/join', 'register_user', [
+           'visitorsOnly' => '/books',
+           'same' => ['confirmpasscode' => ['passcode', 'The two passwords are not the same']],
+           'accepted' => ['terms' => 'Accept the terms of use to create an account'],
+           'signsIn' => 'id',
+           'success' => '/books',
+           'back' => '/join',
+           'flash' => 'Welcome to the Bookshelf',
+       ]);
+   ```
+
+   `register_user` is the capability the authentication module ships. It answers the new account, and `'signsIn' => 'id'`
+   signs in the person whose id is in that field. Write `application/views/Bookshelf/join.pug`:
+
+   ```pug
+   extends ../default/master/site
+
+   block content
+     main.cq-auth
+       h1 Join the Bookshelf
+       if flash('error')
+         .cq-alert.cq-alert--error(role='alert')= flash('error')
+       form(method='POST', action=$home . 'join')
+         =csrf()
+         .cq-field
+           label(for='username') Username
+           input#username.form-control(type='text', name='username', value=old('username'), required)
+           if errors('username')
+             p.cq-field-error= errors('username')
+         .cq-field
+           label(for='passcode') Password
+           input#passcode.form-control(type='password', name='passcode', required, autocomplete='new-password', maxlength='72')
+           if errors('passcode')
+             p.cq-field-error= errors('passcode')
+         .cq-field
+           label(for='confirmpasscode') The same password again
+           input#confirmpasscode.form-control(type='password', name='confirmpasscode', required, autocomplete='new-password', maxlength='72')
+           if errors('confirmpasscode')
+             p.cq-field-error= errors('confirmpasscode')
+         .cq-field
+           label
+             input(type='checkbox', name='terms', value='1')
+             |  I accept the terms of use
+           if errors('terms')
+             p.cq-field-error= errors('terms')
+         button.btn.btn-primary(type='submit') Join
+   ```
+
+   Sign out and open `http://localhost:8080/join`. Send two different passwords and leave the box empty: the page comes
+   back with "Some of the inputs are invalid", "The two passwords are not the same" under the second password and
+   "Accept the terms of use to create an account" under the box, and the username is still there. Send the form right: you
+   land on `/books`, signed in, with "Welcome to the Bookshelf" (`books.pug` shows `flash('success')`). Open `/join` again:
+   you are sent to `/books`.
+
+10. **Answer a request no page or form can say.** When an author has exactly one book, `/authors/{author_id}/books` goes
+    straight to that book; otherwise it shows the list. One address, two answers: [a web-only capability](#action). Run
+    `docker compose exec dev-box php caligrafer.php service Bookshelf/OpenAuthorBooks` and replace the content of
+    `application/services/Bookshelf/OpenAuthorBooks.php` with:
+
+    ```php
+    <?php
+
+    use Caligrafy\Capability;
+    use Caligrafy\Context;
+    use Caligrafy\Service;
+    use Caligrafy\Web;
+
+    // open_author_books: one book goes straight to its page, otherwise the list
+    #[Capability(
+        name: 'open_author_books',
+        description: 'Opens the books of an author: the book itself when there is one, otherwise the list.',
+        readOnly: true,
+        public: true,
+        webOnly: true
+    )]
+    class OpenAuthorBooks extends Service
+    {
+        public $rules = array('author_id' => 'required|integer');
+
+        public function handle(array $input, Context $context)
+        {
+            $books = $this->capability('list_books', array('author_id' => $input['author_id']), $context);
+            if ($books['total'] == 1) {
+                return Web::redirect('/books/' . $books['data'][0]['id']);
+            }
+            return Web::view('Bookshelf/books', array('books' => $books));
+        }
+    }
+    ```
+
+    In `web.php`:
+
+    ```php
+        Route::action('/authors/{author_id}/books', 'open_author_books', ['back' => '/books']);
+    ```
+
+    Run:
+
+    ```bash
+    curl -s -i http://localhost:8080/authors/3/books | grep -iE "^HTTP|^Location"
+    curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/authors/2/books
+    curl -s -i http://localhost:8080/authors/abc/books | grep -iE "^HTTP|^Location"
+    ```
+
+    They print `HTTP/1.1 302 Found` with `Location: http://localhost:8080/books/5` (Italo Calvino has one book), `200` (the
+    list of Octavia E. Butler's two books), and `302` to `/books` (the `back` option), where `flash('error')` says "Some of
+    the inputs are invalid". `docker compose exec dev-box php caligrafer.php call open_author_books author_id=3` prints
+    `{"error":{"code":"not_found","message":"There is no capability 'open_author_books'"}}`: only the route reaches it.
+
+11. **Receive events from another service.** Webhooks are in [their own section](#webhook), with a complete example.
 
 **Check**
 
-- [ ] `/books/new` sends a visitor to `/login`, and shows the form to someone signed in.
+- [ ] `/books/new` sends a visitor to `/login?return=%2Fbooks%2Fnew`, shows the form to someone signed in, and signing in
+      from there lands on the form.
 - [ ] An empty form comes back with a message under each field; a reload of that page shows no message (they last one
       request).
 - [ ] A valid form lands on the new book's page with "Book added"; Save shows "Saved"; Delete lands on `/books` with
       "Book deleted".
 - [ ] A post without `_token` answers `403`.
 - [ ] `/authors.csv` downloads the rows; `/catalog` redirects to `/books`.
+- [ ] `/join` signs a new person in and sends someone already signed in to `/books`.
+- [ ] `/authors/3/books` redirects to `/books/5`, and `/authors/2/books` shows a list.
 
 ## Forms: `Route::form`
 
@@ -513,22 +644,36 @@ person who sent it. The page that shows the form stays a `Route::page`.
 | `back` | the `Referer` of this site, else `/` | where invalid input goes, with the route's `{placeholders}`: `'back' => '/books/{id}'` |
 | `error` | the capability's message | your message for `flash('error')`, or `['key' => 'message']` |
 | `signIn` | `'/login'` | where a visitor goes when the capability needs someone |
-| `visitorsOnly` | none | a path: people already signed in are sent there instead (2.20.0) |
-| `same` | none | fields that must match: `['password_again' => ['password', 'The two passwords are not the same']]` (2.20.0) |
-| `accepted` | none | boxes that must be ticked: `['terms' => 'Accept the terms of use']` (2.20.0) |
-| `inputs` | none | values only the server sets: an array, or `function ($input) { return [...]; }`; they replace what the form sent (2.20.0) |
-| `signsIn` | none | the field of the capability's answer that holds the id of the person to sign in: `'signsIn' => 'id'` (2.20.0) |
+| `visitorsOnly` | none | a path: people already signed in are sent there and the capability does not run; a JSON request gets `403` |
+| `same` | none | fields that must match: `['password_again' => ['password', 'The two passwords are not the same']]`; without a message, "The two values are not the same" |
+| `accepted` | none | boxes that must be ticked: `['terms' => 'Accept the terms of use']` |
+| `inputs` | none | values only the server sets: an array, or `function ($input) { return [...]; }`. They replace what the form sent; the route variables still win |
+| `signsIn` | none | the field of the capability's answer that holds the id of the person to sign in: `'signsIn' => 'id'`. A new session id and a new CSRF token, as for `Route::auth` |
 
-`same` and `accepted` are checked before the capability runs, and their messages arrive in `errors('password_again')`,
-like the capability's. `success` can be a full address, which is how a form leaves for a payment page:
+The last five options arrived in 2.20.0.
+
+**The order of the checks.** `visitorsOnly`, then (JSON with the session) the CSRF header, then `same` and `accepted`,
+then the capability. A form that breaks `same` or `accepted` never reaches the capability, and their messages arrive in
+`errors('password_again')`, like the capability's. Both are read from what the person sent: declare `password_again` in
+`$rules` only if the capability needs it.
+
+**Values the form must not choose.** A form can send any field. `inputs` writes the ones only the server knows, over
+anything the form sent: the address a payment page comes back to, the visitor's address, today's price.
+
+**A form that leaves the site.** `success` can be a full `https://` address, or a function that returns one: that is how a
+form leaves for a payment page.
 
 ```php
 Route::form('/orders/{order}/pay', 'start_checkout', [
-    'inputs' => fn () => ['return_url' => session('base') . 'orders'],
+    'inputs' => fn () => ['site' => session('home')],
     'success' => fn ($result) => $result['url'],
     'back' => '/orders',
 ]);
 ```
+
+**A form that signs someone in.** `signsIn` is for a capability that creates or finds the person, and answers their id:
+sign-up, an invitation link, a confirmation code. The form that decides how to sign in, or a sign-in with a state to
+check, is a [`Route::action`](#action).
 
 + **The CSRF token** of the form (`=csrf()`) is checked as for every form (`403` `[ERROR 3000]` without it).
 + **One request only.** The errors, the old values and the messages are read by the next page, then gone: point
@@ -566,7 +711,7 @@ public $rules = array('cover' => 'required|file|extension,png;jpg;webp|max_size,
 + The form needs `enctype='multipart/form-data'`. `required|file` and `required_file` both make the file required, on
   every channel: no file, URL or path answers "The Cover field needs a file", and the input schema of MCP and
   `GET /capabilities` lists the field in `required` (2.19.1; in 2.19.0 `required_file` alone was ignored).
-+ A controller's `$this->call()` does not take files: post a file input to `Route::form` or a capability route.
++ `Route::action` passes the files of the request too: a web-only capability with a `file` rule gets the URL.
 
 ## Sign-in: `Route::auth`
 
@@ -601,13 +746,17 @@ views of the authentication module (`application/views/Auth/login.pug`, `registe
 + A JSON request with `X-CSRF-Token` gets `200` `{"data":{"user":{"id":1,"username":"ada","permissions":0}}}`, `401`
   or `429` in JSON: a Vue app signs in with the same routes.
 + Sign-up sends the register capability every input its `$rules` declare; nothing else of the form reaches it.
-+ Not in `Route::auth`: password reset and face sign-in. `'reset' => true` or `'face' => true` stops with an error.
++ After signing in, a person goes to `home`, or to the page named by `/login?return=/books/3` (2.20.0). Only a path of
+  this site is followed: another site, or `//evil.example`, is ignored and the person goes to `home`. `Route::page` and
+  `Route::action` with `'comeBack' => true` build that address for you. A person already signed in who opens that address
+  goes straight to the page.
++ Not in `Route::auth`: password reset and face sign-in. `'reset' => true` or `'face' => true` stops with an error. They
+  are declared with the other routes: [password reset](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#passwordreset) is
+  `Route::page` and `Route::form`, [face sign-in](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.2-Face-Detection-and-Face-Recognition#face-login)
+  is `Route::action`.
 
 Everything about users, levels and the sign-in views:
 [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#routeauth).
-
-After signing in, `Route::auth` goes to `home`, or to the page named by `/login?return=/books/3` (2.20.0): only a page of
-this site, anything else is ignored. `Route::page` with `'comeBack' => true` builds that address for you.
 
 ## Webhooks: `Route::webhook`
 
@@ -771,59 +920,154 @@ Route::redirect('/old/books/{id}', '/books/{id}', 301);  // moved for good
   the same name (url-encoded); the query string never fills it (`/old/books/2?x=1` goes to `/books/2`).
 + The target is a path of the site or a full `https://` address. The status is `301`, `302` (default), `303`, `307`
   or `308`; anything else, or an empty target, stops with an error when `web.php` runs.
-+ To take the query string along (2.20.0): `Route::redirect('/old', '/new', 302, ['keepQuery' => true]);`
++ `Route::redirect($from, $to, $status, ['keepQuery' => true])` (2.20.0) takes the query string along:
+  `/old?page=2` goes to `/new?page=2`. A `#fragment` of the target stays last.
++ A redirect that depends on who asks, or on the data, is a [`Route::action`](#action).
 
 ## Everything else: `Route::action`
 
-Some requests are neither a page nor a form: a sign-in between two sites, a page that decides where to go, a gate, a
-payment page. Since 2.21.0 they are capabilities too, declared `webOnly: true`:
+`Route::page` shows a view and `Route::form` calls a capability and redirects. A few requests are neither: a sign-in
+between two sites, a page that chooses between a view and a redirect, a gate, a page that creates a payment. Since
+2.21.0 they are capabilities too, declared `webOnly: true` and served by one line. The controller of a new application
+is gone: this replaces it.
 
 ```php
-#[Capability(name: 'open_proof', description: 'Sends the customer to their proof', webOnly: true)]
-class OpenProof extends Service
+<?php
+
+use Caligrafy\Capability;
+use Caligrafy\Context;
+use Caligrafy\Service;
+use Caligrafy\Web;
+
+#[Capability(
+    name: 'open_author_books',
+    description: 'Opens the books of an author: the book itself when there is one, otherwise the list.',
+    readOnly: true,
+    public: true,
+    webOnly: true
+)]
+class OpenAuthorBooks extends Service
 {
-    public $rules = ['id' => 'required|integer'];
+    public $rules = array('author_id' => 'required|integer');
 
     public function handle(array $input, Context $context)
     {
-        $idea = Ideas::find($input['id']);
-        if (!$idea) {
-            return Web::view('Cloud/message', ['message' => 'It does not exist'], 404);
+        $books = $this->capability('list_books', array('author_id' => $input['author_id']), $context);
+        if ($books['total'] == 1) {
+            return Web::redirect('/books/' . $books['data'][0]['id']);
         }
-        session('last_proof', $idea['id']);
-        return Web::redirect('https://proof.example.com/?pass=' . rawurlencode(Proofs::pass($idea)));
+        return Web::view('Bookshelf/books', array('books' => $books));
     }
 }
 ```
 
 ```php
-Route::action('/proofs/{id}', 'open_proof', ['signedIn' => true, 'comeBack' => true]);
-Route::action('/unlock/{name}', 'unlock_app', ['method' => 'POST']);
+Route::action('/authors/{author_id}/books', 'open_author_books', ['back' => '/books']);
+Route::action('/unlock/{name}', 'unlock_shelf', ['method' => 'POST']);
+Route::action('/shelf/report', 'shelf_report', ['level' => 1, 'comeBack' => true]);
 ```
 
 | Option | Default | What it does |
 |---|---|---|
-| `method` | `'GET'` | `'POST'`, `'PUT'`, `'DELETE'`, or a list |
-| `signedIn`, `level`, `comeBack`, `visitorsOnly` | none | as in `Route::page` |
-| `back`, `error`, `signIn` | as in `Route::form` | for a refusal the capability does not answer itself |
+| `method` | `'GET'` | `'POST'`, `'PUT'`, `'DELETE'`, or a list (`['GET', 'POST']`) |
+| `signedIn`, `level` | none | as in `Route::page`: visitors go to `/login`, people below the level to `/notAuthorized` |
+| `comeBack` | `false` | with `signedIn` or `level`, or when the capability needs someone: visitors go to `/login?return=<this page>` |
+| `visitorsOnly` | none | a path: people already signed in are sent there |
+| `back` | the `Referer` of this site, else `/` | where invalid input or a conflict goes, with the route's `{placeholders}` |
+| `error` | the capability's message | your message for `flash('error')` |
+| `signIn` | `'/login'` | where a visitor goes when the capability needs someone (`comeBack` replaces it) |
 
-+ **What it answers**: `Web::view($view, $data, $status)`, `Web::redirect($to, $status)`, `Web::json($data, $status)`,
-  `Web::text($body, $status)`, each with `->header($name, $value)`. Anything else is sent as JSON.
-+ **What it may do that other capabilities may not**: read `session()`, `$_GET`, `$_POST`, `$_COOKIE`, `$_SERVER`, sign
-  people in with `AuthRoutes::signIn($user)`, and change data on a `GET`.
-+ **That is why nothing else reaches it.** REST, MCP, the JS client, the command line, `Route::page`, `Route::form` and
-  `$this->call()` answer "There is no capability". Keep what several channels share in plain capabilities, and call them
-  with `$this->capability('list_books', $input, $context)`.
-+ **Tests**: `$this->action('open_proof', ['id' => 3], $user)` returns the `Web`; `->describe()` says what it answers.
-+ `Route::bots()` declares the data routes of a Watson bot app.
+**What it answers.** A `Caligrafy\Web`, or plain data, which is sent as JSON.
+
+| The capability returns | The browser gets |
+|---|---|
+| `Web::view('Bookshelf/book', $data, $status = 200)` | a Pug view, with `$authorized` and `$user` as on `Route::page` (`$data` wins). A request that asks for JSON gets the data as JSON |
+| `Web::redirect('/books', $status = 302)` | a redirect: a path of this site or a full `http(s)` address |
+| `Web::json($data, $status = 200)` | JSON, the data as it is, with no `{"data": ...}` around it |
+| `Web::text($body, $status = 200)` | the text as it is |
+| any of them `->header('Cache-Control', 'no-store')` | one more response header |
+| plain data (an array, a model) | JSON, as with `Web::json` |
+
+**When it refuses.** A capability that answers a refusal itself returns a `Web`. One that throws a `ServiceError` gets the
+answers of `Route::form`:
+
+| It throws | A browser | A JSON request |
+|---|---|---|
+| `invalid` or `conflict` | back (`back`, the `Referer`, or `/`) with `errors()`, `old()`, `flash('error')` | `422` or `409` and the REST error |
+| `unauthenticated` | the sign-in page (`comeBack`: and back here) | `401` |
+| `forbidden` | `403` `[ERROR 1006]` | `403` |
+| `not_found` or anything else | `404` `[ERROR 1005]` | `404` |
+
+**What it receives.** The inputs its `$rules` declare, from the form, the JSON body or the query string, and the route
+variables. Its files are saved and given as URLs, as for `Route::form`. It runs as the person who sent the request, with
+its `public`, `scope` and `level` checks, its validation and its audit log, like any capability.
+
+> On a `GET`, the query string is merged over the route variables by the router: `/books/3?id=9` gives `id = 9` here, while
+> `Route::page` and `Route::form` keep `3`. When a route variable decides who or what is reached, read it with
+> `Caligrafy\PageController::routeVariables()['id']`, or check that the person may open that row.
+
+### What a web-only capability may do
+
+The rule of the framework still holds: **only capabilities touch models**. A web-only capability is a capability. What
+sets it apart is what it may do besides:
+
+| A plain capability | A web-only capability |
+|---|---|
+| returns data, or refuses | may also return a view, a redirect, JSON or text |
+| never reads the session or the request: `$context` says who calls | may read `session()`, `request()`, `$_SERVER`, `$_COOKIE` |
+| never signs anyone in | may sign people in and out |
+| on a page, only `readOnly` | a `GET` may change data |
+| reached by REST, MCP, the JS client, the command line, `Route::page`, `Route::form`, `$this->call()` | reached by **`Route::action` only** |
+
+That last line is the price. Everywhere else it answers `not_found` "There is no capability", it is left out of
+`GET /capabilities`, MCP and `php caligrafer.php capabilities`, and `Route::page`, `Route::form` or `Route::download` on it
+fail. So keep the work that several channels share in plain capabilities, and call them from the web-only one:
+
+```php
+$books = $this->capability('list_books', array('author_id' => 2), $context);   // as the same person, with its rules
+```
+
+`$this->capability()` runs the other capability with its checks, validation and audit, and throws its `ServiceError`.
+
+**Signing someone in.** For a page that leaves or reloads, `Caligrafy\AuthRoutes::signIn($user)`: a new session id and a
+new CSRF token. For a page that stays open and keeps sending JSON, `session_regenerate_id(true); Auth::authorize($user);`:
+the page keeps its token. `$context` was built before the sign-in and does not change: to call a capability as the person
+just signed in, build a new one with `Context::fromRequest(request(), 'web')`.
+
+**CSRF and JSON.**
+
++ A form's `POST`, `PUT` or `DELETE` needs its `_token` (`=csrf()`), as for every form: `403` `[ERROR 3000]` without it.
++ A JSON call (`Accept: application/json`), `GET` included, needs the page's `X-CSRF-Token` header (`apiHeaders()` of the
+  Vue apps) or a token that grants everything (`--scopes "*"`), signed in or not: `401` `[ERROR 1004]` without it (2.21.1).
+  A scoped token is refused: programs use the capability routes.
++ A plain `GET` opened by a link has no token. A `GET` that changes data can be triggered by a link on another site: keep
+  it to what is harmless when that happens, and use `'method' => 'POST'` with a form for the rest.
+
+**Tests.** `$this->action('open_author_books', ['author_id' => 3], $user)` calls it as `Route::action` does and returns
+what it answered; `->describe()` gives `type`, `target`, `data`, `status` and `headers`. `$this->call()` answers
+`not_found`, as every other channel does. See [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App#helpers).
+
+**The data routes of the Watson bot apps** are one line too: `Route::bots();`.
 
 ## Do you still need a controller?
 
 No. With `Route::page`, `Route::form`, `Route::auth`, `Route::webhook`, `Route::download`, `Route::redirect`,
-`Route::action` and the capability routes, every request is declared. Controllers still work, and existing ones can stay:
-they call capabilities with `$this->call()`
-([Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)). Never write data in
-a closure route (`Route::post('/x', function () {...})`): it has no permission rules and no CSRF check for JSON calls.
+`Route::action` and the capability routes, every request is declared, and an application can have no controller at all.
+Existing controllers keep working and can stay:
+[Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers) shows how to move one when you want to. Never write data in a closure route
+(`Route::post('/x', function () {...})`): it has no permission rules and no CSRF check for JSON calls.
+
+| The request | Declare it with |
+|---|---|
+| A view, with data from read-only capabilities | `Route::page` |
+| A form that calls one capability, then redirects | `Route::form` |
+| Sign-in, sign-out, sign-up pages | `Route::auth` |
+| A confirmation or sign-up that signs someone in | `Route::form` with `signsIn` |
+| Events another service posts | `Route::webhook` |
+| A file | `Route::download` |
+| An address that moved | `Route::redirect` |
+| Data for programs, the JS client, agents | `Route::capability`, `Route::capabilities`, `Route::mcp` |
+| Different answers for one address, the session, a sign-in of your own, a page that creates a payment | `Route::action` |
 
 ## Common mistakes
 
@@ -839,6 +1083,15 @@ a closure route (`Route::post('/x', function () {...})`): it has no permission r
   `whsec_...`, not the `sk_...` key.
 + **A webhook capability that is not idempotent**: a retried event is recorded twice.
 + **A download of a capability that writes**: `Route::download` refuses it when the link is opened.
++ **`Route::action` on a capability without `webOnly: true`**, or `webOnly: true` behind `Route::page`, `Route::form` or
+  REST: the first stops with an error that names it, the others answer "There is no capability".
++ **A web-only capability for work other channels need**: agents and programs cannot reach it. Put the work in a plain
+  capability and call it with `$this->capability()`.
++ **A JSON call to `Route::action` without `X-CSRF-Token`**: `401` `[ERROR 1004]`, even for a `GET` and for a visitor. Send
+  `apiHeaders()`.
++ **`AuthRoutes::signIn()` on a page that stays open**: it gives the session a new CSRF token, and the page's next JSON call
+  answers `401`. Use `session_regenerate_id(true); Auth::authorize($user);` there.
++ **`comeBack` with a `return=` you build by hand to another site**: it is ignored, the person goes to `home`.
 
 ## Related pages
 
@@ -847,5 +1100,5 @@ a closure route (`Route::post('/x', function () {...})`): it has no permission r
 + [Views: forms](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#formhelpers): `errors()`, `old()`, `flash()`
 + [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#routeauth): `Route::auth` in depth
 + [Stripe & cryptocurrency payment](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment#webhook)
-+ [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers): custom HTTP only
-+ [Release notes 2.19.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0)
++ [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers): what existing controllers do, and how to move one
++ [Release notes 2.19.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0), [2.20.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.20.0), [2.21.0](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.21.0)

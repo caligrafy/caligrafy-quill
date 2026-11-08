@@ -153,6 +153,7 @@ container (`docker compose exec dev-box php caligrafer.php ...`; without Docker,
 |---|---|
 | `$this->call($capability, $input, $as)` | calls the capability with its checks, validation and audit; returns its answer as plain data |
 | `$this->user($id = 1, $level = 0, $attributes = [])` | a signed-in user for `$as`: an id, a permission level (`permissions`), other attributes the capability reads |
+| `$this->action($capability, $input, $as)` | calls a capability declared `webOnly: true` as `Route::action` does (2.21.0); returns its answer: a `Caligrafy\Web`, whose `->describe()` gives `type`, `target`, `data`, `status` and `headers`, or plain data |
 | `$this->assertCapabilityFails($kind, $capability, $input, $as)` | the capability refuses with `$kind` (`invalid`, `unauthenticated`, `forbidden`, `not_found`, `conflict`); returns the `ServiceError` (`->fields`, `->getMessage()`) |
 | `$this->render($view, $data)` | the HTML of a Pug view of `application/views`, as a page shows it |
 | `$this->fake($class, $object)` | the [container](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection) gives `$object` for `$class` in this test |
@@ -202,7 +203,10 @@ The production image leaves `tests/` out, and the framework never loads it on a 
   `.env.example` (2.19.1); a project made before 2.19.1 adds `/.env.*` and `!/.env.example` to its `.gitignore`.
 + **`migrate "" --env .env.testing`**: the empty `""` was needed before 2.19.1. Since 2.19.1, write
   `migrate --env .env.testing`.
-+ **A test that reads `$_SESSION` or the request**: a capability never does; give the user with `$this->user()`.
++ **A test that reads `$_SESSION` or the request**: a plain capability never does; give the user with `$this->user()`.
++ **`$this->call()` on a web-only capability**: it answers `not_found`, as every other channel. Use `$this->action()`. It
+  runs `handle()` without a request: a capability that calls `request()` or signs someone in is tested through its parts, and
+  in the browser.
 
 ## Related pages
 

@@ -6,6 +6,20 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.2] - 2026-11-08
+
+### Security
+- On a `GET`, `Route::action` and `Route::capability` keep the route variable when the query string has the same name:
+  `/books/3?id=9` is the book 3.
+
+### Fixed
+- A passkey sign-in follows `Route::auth`'s `level` (it read a value that was not in scope).
+- `php caligrafer.php client` leaves out web-only capabilities.
+- The refusal of a scoped token no longer speaks of controller routes.
+
+### Documentation
+- The wiki, README and plugin teach 2.20 and 2.21: every request declared, no new controller.
+
 ## [2.21.1] - 2026-11-08
 
 ### Security

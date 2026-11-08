@@ -27,7 +27,7 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
 `ServiceError`; never render, redirect, print or read the session there. Read data with the query builder
 (`Book::where(...)->with('author')->paginate(20, $input['page'] ?? 1)`, `Database::table()`, 2.19.0+). Expose it with
 `Route::page` (pages), `Route::form` (form posts), `Route::download` (CSV/JSON exports), `Route::webhook` (a
-service's events), `$this->call()` in a controller only for custom HTTP,
+service's events), `Route::action` with a `webOnly: true` capability for custom HTTP (2.21.0, no controller),
 `Route::capability()` (REST), `Route::capabilities()` + `php caligrafer.php client` (Vue apps) and `Route::mcp()`
 (agents). `php caligrafer.php capabilities` lists them.
 

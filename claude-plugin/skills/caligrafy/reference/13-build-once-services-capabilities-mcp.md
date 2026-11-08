@@ -19,6 +19,9 @@ behaves the same for a person, a phone, a program and an agent.
 | AI agents | MCP: `Route::mcp('/mcp')` over HTTP, or `php caligrafer.php mcp` over stdio | a personal access token (stdio: also your own full access) |
 | The command line, scripts, jobs | `php caligrafer.php call create_book ...`, `Capabilities::call()`, the queue and the scheduler | full access, or a token |
 
+A capability declared `webOnly: true` has one channel instead of all of them: [`Route::action`](#webonly), for what only a
+browser can do.
+
 Every call goes through the same steps, in this order:
 
 1. **Find** the capability (`not_found`, 404).
@@ -28,8 +31,8 @@ Every call goes through the same steps, in this order:
 4. **Run** `handle()`.
 5. **Audit**: every refusal, and every success of a capability that changes data, is written to the audit log.
 
-**Only capabilities touch models**: pages, REST, agents and the rare controller all go through them, so the rules
-exist once.
+**Only capabilities touch models**: pages, forms, REST, agents and the controllers of older code all go through them, so
+the rules exist once.
 
 ## With Claude
 
@@ -282,9 +285,9 @@ Open `http://localhost:8080/books`: the books, each with its author. `http://loc
 
 + A page's `data` capabilities must be read-only. They run as the person who opens the page, with the route
   variables (`{id}`) and the query string as inputs, the route variables winning. The view gets plain arrays
-  (`$book['title']`), plus `$authorized` and `$user`; never the query string.
+  (`$book['title']`), plus `$authorized` and `$user`, and of the query string only the names you list in `query`.
 + A capability that refuses a visitor sends them to sign in (with the authentication module), or answers 403 or 404.
-+ A form posts to a capability with no controller:
++ A form posts to a capability:
   `Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Added {title}'])`. It calls the
   capability as the signed-in person; on invalid input it goes back, and the view shows `errors('title')`,
   `old('title')` and `flash('error')`. Sign-in pages come from `Route::auth()`. Both are on
@@ -380,7 +383,7 @@ curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
      http://localhost:8080/mcp
 ```
 ```json
-{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"caligrafy-app","title":"caligrafy-app","version":"2.21.1"},"instructions":"Tools are the capabilities of this application that your token allows. Tools marked destructive delete or overwrite data: confirm with the user first."}}
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"caligrafy-app","title":"caligrafy-app","version":"2.21.2"},"instructions":"Tools are the capabilities of this application that your token allows. Tools marked destructive delete or overwrite data: confirm with the user first."}}
 ```
 (`serverInfo.name` is your `APP_NAME`.) Then the tools:
 ```bash
@@ -500,6 +503,7 @@ transaction that is rolled back:
 ```php
 $book = $this->call('create_book', ['title' => 'Tehanu', 'published_year' => 1990, 'author_id' => $authorId], $this->user(7));
 $this->assertCapabilityFails('unauthenticated', 'create_book', ['title' => 'Tehanu'], 'guest');
+$answer = $this->action('open_author_books', ['author_id' => 3])->describe();   // a web-only capability: what it answers
 ```
 Run them with `php caligrafer.php test`: [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App).
 A capability asks for what it uses in its constructor ([Dependency injection](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection)),
@@ -519,7 +523,8 @@ and can run later as a [background job](https://github.com/caligrafy/caligrafy-q
 | `readOnly` | `false` | it changes nothing: not audited when it succeeds; can be page data and a download; `readOnlyHint` for agents |
 | `destructive` | `false` | it deletes or overwrites data: `destructiveHint`, agents ask the user first |
 | `public` | `false` | anyone may call it, without signing in or a token |
-| `mcp` | `true` | `false` keeps it out of MCP (a capability only a browser can use) |
+| `mcp` | `true` | `false` keeps it out of MCP (a capability only a browser can use). REST still reaches it |
+| `webOnly` | `false` | `true` (2.21.0): [`Route::action`](#webonly) reaches it, nothing else |
 
 `php caligrafer.php service <Folder>/<Name> [--scope <scope>] [--read-only]` writes the class in
 `application/services/<Folder>/<Name>.php`, the name in snake_case (`CreateBook` -> `create_book`). Without
@@ -535,7 +540,25 @@ and can run later as a [background job](https://github.com/caligrafy/caligrafy-q
 | `handle(array $input, Context $context)` | does the work and returns data: an array, a model, a list of models, a value (models become arrays of their columns) |
 | `__construct(...)` | what it uses, given by the [container](https://github.com/caligrafy/caligrafy-quill/wiki/Dependency-Injection) |
 
-A service never renders a view, redirects, prints, or reads the request or the session: the channel does that.
+A service does not render a view, redirect, print, or read the request or the session: the channel does that. A
+web-only capability is the one exception, [below](#webonly).
+
+`$this->capability($name, $input, $context)` (2.21.0) calls another capability as the same person, with its checks, its
+validation and its audit, and throws its `ServiceError`.
+
+### Web-only capabilities
+
+```php
+#[Capability(name: 'open_author_books', description: 'Opens the books of an author.', readOnly: true, public: true, webOnly: true)]
+```
+
+For a request that belongs to the browser: a sign-in between two sites, a page that chooses where to go, a gate, a payment
+page. A capability declared `webOnly: true` keeps its `public`, `scope` and `level` checks, its validation and its audit,
+and may also return a `Caligrafy\Web` (`Web::view`, `Web::redirect`, `Web::json`, `Web::text`), read `session()` and
+`request()`, sign people in, and change data on a `GET`. In exchange, **`Route::action` is the only way to it**: REST, MCP, the
+JS client, `php caligrafer.php call`, `Route::page`, `Route::form` and a controller's `$this->call()` answer `not_found`, and it
+is not listed in `GET /capabilities`, MCP or `php caligrafer.php capabilities`. A `service` command has no flag for it: add
+`webOnly: true` to the attribute. Everything: [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#webonly).
 
 **From the rules to the input schema** (what MCP and `GET /capabilities` show):
 
@@ -617,35 +640,17 @@ All of them are on [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wik
 
 ## Other ways
 
-+ **A controller** [`Route::form`, `Route::page`, the declarative routes]: only for HTTP none of the routes covers
-  (several capabilities with conditions, custom headers). It stays thin and calls the capability as the signed-in
-  person, the inputs being the posted fields and the route variables:
-    ```php
-    use Caligrafy\Controller;
-    use Caligrafy\ServiceError;
-
-    class BookController extends Controller
-    {
-        public function store()
-        {
-            try {
-                $book = $this->call('create_book');
-                redirect('/books/' . $book['id']);
-            } catch (ServiceError $e) {
-                return view('Bookshelf/books', array('errors' => $e->fields, 'message' => $e->getMessage()));
-            }
-        }
-    }
-    ```
-    See [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers).
++ **A controller** [`Route::form`, `Route::page`, `Route::action`]: a controller you keep calls the capability as the
+  signed-in person with `$this->call('create_book')`, the inputs being the posted fields and the route variables. New code
+  does not need one: [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers) shows how to move it.
 + **A script** [`php caligrafer.php call`]: `Caligrafy\Capabilities::call('get_book', ['id' => 3], Caligrafy\Context::cli())`
   (with the checks and the audit), or `Caligrafy\Container::make(GetBook::class)->run(['id' => 3])` (validation only:
   no checks, no audit; it returns the model).
 + **The legacy API key** [tokens]: keys made with `generatekeys` and `generateapikey` all encrypt the same `APP_KEY`:
   each one gives full access, and none can be revoked without changing `APP_KEY`. They keep working for old programs
   (`Authorization: Bearer <key>` on REST, never on MCP). Once your programs use tokens, set `LEGACY_API_KEY=false` in
-  `.env`; `doctor` reminds you while they are allowed. Controller routes of `web.php` accept tokens with the scope
-  `*`. Never put a token or a key in a page or a Vue bundle: browser code uses the session.
+  `.env`; `doctor` reminds you while they are allowed. `Route::action` and controller routes accept JSON calls with a
+  token that has the scope `*`. Never put a token or a key in a page or a Vue bundle: browser code uses the session.
 
 ## Common mistakes
 
@@ -653,6 +658,8 @@ All of them are on [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wik
 + **`service` without `--scope`** (G76): `scope: ''` lets any token call it.
 + **A write over the session without `X-CSRF-Token`** (G54): 403. Use the JS client, or send the `csrf` of `GET /capabilities`.
 + **A capability that is not read-only as page data** (G83): refused. Pages show read-only capabilities; forms use `Route::form`.
++ **`webOnly: true` on a feature agents or programs need** (G143): they get "There is no capability". Keep the work in a plain
+  capability and let the web-only one call it with `$this->capability()`.
 + **Sending the legacy key to MCP** (G56): 401. MCP takes tokens only.
 + **Trusting the level with an application token** (G53): a token without `--user` passes any level. Create agent
   tokens with `--user <id>` when the level matters.

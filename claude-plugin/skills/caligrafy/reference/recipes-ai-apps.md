@@ -409,7 +409,7 @@ application/json" -H "Authorization: Bearer cq_..." -d '{"messages": "[{\"role\"
 <base>/capabilities/chat_reply`; without a token: 401.
 
 **Watson** is the exception: the bot scaffold (`/caligrafy-quill:new-app bot <name>`) keeps its
-`Caligrafy\Controllers\WatsonController` routes (`/__bots__/{appName}/...`) because its conversation is a Watson
+`Route::bots()` data routes (`/__bots__/{appName}/...`, on `Caligrafy\Controllers\WatsonController`) because its conversation is a Watson
 session kept in the PHP session, which only a browser has. For REST and agents add a one-question capability that opens
 and closes a Watson session in `handle()` (wiki 9.9.1, `ask_helpdesk`).
 
@@ -445,7 +445,7 @@ message of the input is dropped by `history()`). Fake `Agent` the same way only 
 constructor; `AgentReply` creates its own, so test its `history()` and refusals instead.
 
 ## Checklist
-- [ ] Every AI call is a capability in `application/services/` (scope `ai:use`, `readOnly: true`, never `public: true`); no controller (only the Watson bot's), no closure route; `php -l` on each file.
+- [ ] Every AI call is a capability in `application/services/` (scope `ai:use`, `readOnly: true`, never `public: true`); no controller (only the Watson bot's `Route::bots()`), no closure route; `php -l` on each file.
 - [ ] Roles filtered to user/assistant, number and length capped, server-side system prompt; the history is an input, never the session.
 - [ ] `response['error']` checked for OpenAI; `api_success` false handled (timeouts); provider problems are `ServiceError::conflict`, bad input `invalid` with `fields`.
 - [ ] Model ids validated with a regex; lists fetched live.

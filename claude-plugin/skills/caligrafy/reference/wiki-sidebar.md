@@ -33,8 +33,8 @@
 + **Web pages**
     > + [Views and page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views#pagecomponents)
     > + [Design styles: another look, one setting](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles)
-    > + [Declarative routes: forms, sign-in, webhooks, downloads](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)
-    > + [Controllers: calling a capability](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#callcapability)
+    > + [Declarative routes: every request, in one line](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes) · [`Route::action`](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#action)
+    > + [Controllers: moving one to a declared route](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#controllerstartup)
     > + [Forms and helpers](https://github.com/caligrafy/caligrafy-quill/wiki/9.-Helpers-,-Forms-&-REST-API)
 + **Vue apps**
     > + [Vue as a library](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.0-Setting-up-Vue.js-as-a-library) · [calling capabilities](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.3-Requests#capabilities) · [structure](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.1-Understanding-the-structure) · [forms](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.4-Forms) · [components](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.6-Components)

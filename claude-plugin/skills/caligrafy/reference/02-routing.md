@@ -9,11 +9,12 @@
 # Routing
 
 A route connects an address (`GET /books/3`) to what answers it. Every route of a Caligrafy project is one line of
-`application/config/routing/web.php`. In 2.19 most routes name a capability (a feature written once, in
-`application/services/`) and say how the web reaches it: a page that shows its data (`Route::page`), a form that calls
-it (`Route::form`), a file to download (`Route::download`), a JSON API (`Route::capability`). This page covers how
-routes match, pages, redirects and capability routes. Forms, sign-in, webhooks and downloads have their own page:
-[Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes).
+`application/config/routing/web.php`. A route names a capability (a feature written once, in `application/services/`)
+and says how the web reaches it: a page that shows its data (`Route::page`), a form that calls it (`Route::form`), a file
+to download (`Route::download`), a JSON API (`Route::capability`), or anything else a browser asks (`Route::action`).
+Since 2.21.0 every request can be declared this way, so a new application has no controller. This page covers how routes
+match, pages, redirects and capability routes. Forms, sign-in, webhooks, downloads and `Route::action` have their own
+page: [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes).
 
 ## With Claude
 
@@ -37,7 +38,8 @@ REST API, inside the `try` block and before `Route::run();`) and the Pug views i
 **Check** before you say OK:
 
 - [ ] Every new route is in the `try` block of `web.php`, before `Route::run();`.
-- [ ] Pages are `Route::page`, forms are `Route::form`: no controller and no closure that reads or writes data.
+- [ ] Pages are `Route::page`, forms are `Route::form`, a custom request is `Route::action`: no controller and no closure
+      that reads or writes data.
 - [ ] A fixed address such as `/books/new` comes before `/books/{id}` (the first route that matches wins).
 - [ ] Each page's `data` names a read-only capability (`readOnly: true`).
 - [ ] `curl -i` of each new address answers the status you expect (200, 302, 404).
@@ -344,7 +346,9 @@ Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']])
   of the view (`$id`).
 + In `Route::form`, `Route::download`, `Route::capability` and `Route::redirect`, they become inputs or fill the
   `{name}` of the target, the same way.
-+ In a controller or a closure, read them with `request()->fetch('id')` or `$this->request->fetch('id')`
++ In `Route::action`, they become inputs too. On a `GET`, a query string value of the same name replaces them there, and
+  in `Route::capability`: `/books/3?id=9` gives `id = 9`.
++ In a controller you keep, read them with `$this->request->fetch('id')`
   ([Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request)).
 
 A variable is always a string, and the route does not check it: `/books/abc` reaches `get_book`, whose `integer` rule
@@ -358,43 +362,45 @@ refuses it.
 Route::page('/', 'default/index');
 Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books']]);
 Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book'], 'notFound' => 'Bookshelf/notfound']);
-Route::page('/books/new', 'Bookshelf/new', ['signedIn' => true]);
+Route::page('/books/new', 'Bookshelf/new', ['signedIn' => true, 'comeBack' => true]);
 Route::page('/admin/books', 'Bookshelf/admin', ['level' => 1, 'data' => ['books' => 'list_books']]);
 Route::page('/about', 'default/about', ['with' => ['title' => 'About the Bookshelf']]);
+Route::page('/join', 'Bookshelf/join', ['visitorsOnly' => '/books']);
+Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books'], 'query' => ['sort' => 'title']]);
 ```
 
 | Option | Default | What it does |
 | --- | --- | --- |
 | `data` | none | `name => 'capability'`: calls each capability as the person who opens the page and gives the result to the view as `$name`. Its inputs are the query string and the route variables; the route variables win (`/books/3?id=9` gives `id = 3`). `name => ['capability', ['author_id' => 2]]` gives fixed inputs instead. Only read-only capabilities: a capability that changes data, or does not exist, stops the page with an error that names it |
 | `signedIn` | `false` | `true`: visitors are sent to `/login` |
-| `comeBack` | `false` | `true`, with `signedIn` or `level`: visitors go to `/login?return=<this page>` and come back here after signing in (2.20.0) |
-| `visitorsOnly` | none | a path: people already signed in are sent there (a sign-up page, for example) (2.20.0) |
-| `query` | none | the names of the query string the view gets: `'query' => ['show']` gives `$show`, as a string, `''` when absent (2.20.0); `'query' => ['app' => 'index']` gives a default (2.21.0) |
+| `comeBack` | `false` | `true`, with `signedIn` or `level`, or when a `data` capability needs someone: visitors go to `/login?return=<this page, with its query string>`, and `Route::auth` brings them back after signing in (2.20.0) |
+| `visitorsOnly` | none | a path: people already signed in are sent there (a sign-up or landing page) (2.20.0) |
+| `query` | none | what the view gets of the query string: `'query' => ['show']` gives `$show`, a string, `''` when absent (2.20.0); `'query' => ['app' => 'index']` gives `$app`, `'index'` when absent; the two can be mixed (2.21.0). A route variable of the same name wins |
 | `level` | `0` | people whose level (the `permissions` column of `users`) is lower are sent to `/notAuthorized`, visitors to `/login` |
 | `with` | none | fixed values for the view: `['with' => ['title' => 'Books']]` |
 | `notFound` | none | a view shown with a `404` when a `data` capability refuses (not found, or inputs it refuses). It gets the route variables, the `with` values, `$message`, `$authorized` and `$user` |
 
-`signedIn` and `level` need `Auth::authentication('User', 'users');` in `web.php`; without it, opening the page stops
-with an error that says so.
+`signedIn`, `level` and `visitorsOnly` need `Auth::authentication('User', 'users');` in `web.php`; without it, opening
+the page stops with an error that says so.
 
-**What the view receives**: the route variables, the `with` values, the `data` results (plain arrays:
-`$book['title']`), `$authorized` (true when someone is signed in) and `$user` (`id`, `username`, `permissions`, or
-`null`). Never the query string: a page reads it through a capability's inputs. `authorized` and `user` are reserved
-names: a `data` or `with` entry with one of them is an error.
+**What the view receives**: the route variables, the names listed in `query`, the `with` values, the `data` results
+(plain arrays: `$book['title']`), `$authorized` (true when someone is signed in) and `$user` (`id`, `username`,
+`permissions`, or `null`). The rest of the query string stays out of the view: a `data` capability gets it as inputs.
+`authorized` and `user` are reserved names: a `data`, `with` or `query` entry with one of them is an error.
 
 **When a capability refuses the page's data**:
 
 | The capability | The answer |
 | --- | --- |
-| needs someone signed in, nobody is | a redirect to `/login` (with the authentication module), else `403` |
+| needs someone signed in, nobody is | a redirect to `/login` (`comeBack`: with `?return=`), with the authentication module; else `403` |
 | refuses the person (`forbidden`) | `403` `[ERROR 1006] Forbidden` |
 | finds nothing, or refuses the inputs | the `notFound` view with `404`, else `404` `[ERROR 1005] Page Not Found` |
 
 A request with `Accept: application/json` gets the view's data as JSON instead of the page.
 
-## Forms, sign-in, webhooks, downloads and redirects
+## Forms, sign-in, webhooks, downloads, redirects and everything else
 
-One line each, calling a capability, without a controller:
+One line each, calling a capability:
 
 ```php
 Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Book added']);   // a form's POST
@@ -402,6 +408,7 @@ Route::auth(['home' => '/books']);                                              
 Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe']);                  // events another service posts
 Route::download('/books.csv', 'list_books', ['filename' => 'books.csv']);                   // a read-only capability as a file
 Route::redirect('/old/books/{id}', '/books/{id}', 301);                                     // an address that moved
+Route::action('/authors/{author_id}/books', 'open_author_books');                           // what a page or a form cannot say
 ```
 
 Every option, with a complete example of each:
@@ -441,12 +448,14 @@ All are static methods of `Caligrafy\Route` (`use Caligrafy\Route;` at the top o
 | `auth($options = [])` | several | `/login`, `/logout`, `/register`, `/notAuthorized` (needs `Auth::authentication(...)` before it) |
 | `webhook($route, $capability, $options)` | POST | events another service posts, signature checked, no CSRF token |
 | `download($route, $capability, $options = [])` | GET | a read-only capability's result as a CSV or JSON file |
-| `redirect($from, $to, $status = 302)` | GET | sends the visitor to `$to` (`301`, `302`, `303`, `307` or `308`) |
+| `redirect($from, $to, $status = 302, $options = [])` | GET | sends the visitor to `$to` (`301`, `302`, `303`, `307` or `308`); `['keepQuery' => true]` takes the query string along |
+| `action($route, $capability, $options = [])` | GET, or `method` | a web-only capability answers: a view, a redirect, JSON or text ([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#action)) |
 | `capability($method, $route, $name)` | the method given | one capability as JSON (`GET`, `POST`, `PUT` or `DELETE`) |
 | `capabilities($prefix = '/capabilities')` | GET, POST | the listing and `POST {prefix}/{name}` for the JS client |
 | `mcp($route = '/mcp')` | POST (GET, DELETE: 405) | the MCP endpoint for AI agents |
 | `notifications()` | GET, POST | the confirm and unsubscribe pages of notification emails |
-| `get`, `post`, `put`, `delete($route, $method)` | that method | a closure, `'Controller'` or `'Controller@action'` ([Other ways](#controllerroute)) |
+| `bots()` | POST, DELETE | the data routes of the Watson bot apps (`/__bots__/...`) |
+| `get`, `post`, `put`, `delete($route, $method)` | that method | a closure, `'Controller'` or `'Controller@action'`, for what existing projects declare that way ([Other ways](#controllerroute)) |
 | `run()` | | matches the request and runs its route: the last line of the `try` block |
 | `routes()` | | the routes declared so far: `[['method' => 'GET', 'route' => 'books/{id}'], ...]` (tests) |
 | `handler($method, $route)` | | the closure or `'Controller@action'` of a declared route (tests) |
@@ -462,12 +471,13 @@ Errors of the router (each one also answers JSON to a JSON request):
 | `403` | `3000` Cross Site Forgery | a form post without the session's `_token` |
 | `403` | `1006` Forbidden | a page's capability refuses the person |
 | `404` | `1001` Invalid Controller or Action | a `'Controller@action'` route whose class or method does not exist |
-| `401` | `1004` Access Denied | a JSON request to a controller route without `X-CSRF-Token` or a token that grants `*` |
+| `401` | `1004` Access Denied | a JSON request to `Route::action` or a controller route without `X-CSRF-Token` or a token that grants `*` |
 
 ## Other ways: closures and controller routes
 
-`Route::get`, `post`, `put` and `delete` take a closure or a controller. Use them only for HTTP that no route above
-covers (a response that is neither a page, a redirect, JSON nor a file): see
+`Route::get`, `post`, `put` and `delete` take a closure or a controller. A new request does not need them: the routes
+above cover every case, with `Route::action` for what is neither a page nor a form. They stay for existing projects and
+for the routes a new project's `web.php` ships: see
 [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#when).
 
 ```php
@@ -484,7 +494,7 @@ Route::get('/books', 'BookController');                                   // no 
   (the session cookie and the `X-CSRF-Token` header) or, with `Auth::activateAPI();` in `web.php`, from a program
   with a personal access token that grants `*` (`401` `[ERROR 1004] Access Denied: <why>` otherwise).
 + A **closure route** has no such check, and a JSON request skips the form's CSRF check. Never read or write data in
-  a closure: use `Route::page`, `Route::form` or a capability route.
+  a closure: use `Route::page`, `Route::form`, `Route::action` or a capability route.
 
 ## HTML form methods
 
@@ -507,7 +517,7 @@ real method (`fetch(url, {method: 'PUT', ...})`).
 + **A route after `Route::run();`** is never declared. Every route goes before it, in the `try` block.
 + **`/books/{id}` before `/books/new`**: `/books/new` shows the book `new` (a 404). Declare fixed addresses first.
 + **A page whose data capability writes**: `Route::page` refuses it (opening a page must not change data). Use
-  `Route::form` for writes.
+  `Route::form` for writes, or `Route::action` when opening an address really has to change something.
 + **Data work in a closure route**: it has no permission rules and no CSRF check for JSON calls. Write a capability.
 + **`redirect()` in a closure without `return`**: `redirect()` only sends a `Location` header; code after it still
   runs. `Route::redirect` has no such problem.
@@ -515,9 +525,9 @@ real method (`fetch(url, {method: 'PUT', ...})`).
 
 ## Related pages
 
-+ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): forms, sign-in, webhooks, downloads, redirects
-+ [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request): what a controller or closure reads from the request
-+ [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers): custom HTTP only
++ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): forms, sign-in, webhooks, downloads, redirects, `Route::action`
++ [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request): what a web-only capability or a controller reads from the request
++ [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers): existing ones, and how to move one
 + [Views](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views): Pug pages and `errors()`, `old()`, `flash()`
 + [Build once: services, capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP)
 + [Queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries): the query builder the capabilities use

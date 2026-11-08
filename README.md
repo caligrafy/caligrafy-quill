@@ -54,7 +54,8 @@ A feature, by hand, is four small pieces:
 
 The same capability is then a REST endpoint (`Route::capabilities()`), a tool for AI agents (`Route::mcp()`) and a
 function of the generated JavaScript client. Forms, sign-in, webhooks and downloads are one route each
-(`Route::form`, `Route::auth`, `Route::webhook`, `Route::download`): no controller to write.
+(`Route::form`, `Route::auth`, `Route::webhook`, `Route::download`), and `Route::action` answers whatever a page or a form
+cannot say. Every request is declared: an application needs no controller.
 [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) builds one, page
 included.
 

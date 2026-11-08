@@ -179,7 +179,7 @@ PHP's built-in server (`php -S`) reads no `.htaccess`: it neither routes the pag
 | `doctor` | checks the project and its services ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#doctor)) |
 | `update` | moves the project to a newer release ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#update)) |
 
-+ The version of a project: `php caligrafer.php version` prints `Caligrafy Quill 2.21.1` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#version)).
++ The version of a project: `php caligrafer.php version` prints `Caligrafy Quill 2.21.2` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#version)).
 + Capabilities, tokens, MCP and the audit log: `service`, `capabilities`, `call`, `client`, `platform install`, `token`, `mcp`, `audit` ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#service)).
 + Something does not work: `php caligrafer.php doctor` checks the project, the database and every service of `.env`, with a fix for each problem ([details](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer#doctor)).
 
@@ -190,10 +190,10 @@ Caligrafy is a Model-View-Controller framework with one more layer on top, so th
 | Layer | What it holds | Where |
 | --- | --- | --- |
 | **Capabilities** | the features, written once: inputs and their rules, who may use them, the work, the result | `application/services/` (a `Caligrafy\Service` with `#[Capability]`) |
-| **Experiences** | every way to reach a capability | Pug pages (`Route::page`, `Route::form`), Vue apps (the JavaScript client), REST (`Route::capability`, `Route::capabilities`), AI agents (`Route::mcp`) |
+| **Experiences** | every way to reach a capability | Pug pages (`Route::page`, `Route::form`, `Route::action`), Vue apps (the JavaScript client), REST (`Route::capability`, `Route::capabilities`), AI agents (`Route::mcp`) |
 | **Models** | one class per table, read and written by capabilities only | `application/models/` |
 | **Views** | the Pug pages | `application/views/` |
-| **Controllers** | only HTTP no route covers; they call capabilities | `application/controllers/` |
+| **Controllers** | older code and the examples a new project ships; a new request never needs one | `application/controllers/` |
 
 ### Build once, experience everywhere
 

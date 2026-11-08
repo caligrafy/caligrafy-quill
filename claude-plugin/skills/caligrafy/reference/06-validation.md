@@ -272,7 +272,7 @@ are left out; on a string, `minimum` and `maximum` are.
 | `valid_time` | `HH:MM` or `HH:MM:SS` | |
 | `date_range,2024-01-01;2024-12-31` | between the two dates | |
 
-**Uploaded files with GUMP** (in a controller's `check()` on `$_FILES`; in a capability, use [the `file` rule](#filevalidation))
+**Uploaded files with GUMP** (in the `check()` of a controller you keep, on `$_FILES`; in a capability, use [the `file` rule](#filevalidation))
 
 | Rule | Passes when |
 | --- | --- |
@@ -302,7 +302,7 @@ Filters change an input before the rules run. Write them in `$filters`, separate
 
 ## Other ways: validating in a controller
 
-A controller (only for custom HTTP, see [Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#when))
+A controller in older code ([Controllers](https://github.com/caligrafy/caligrafy-quill/wiki/8.-Controllers#when))
 can validate data itself. The framework's rules work there too. These checks are for the web only: a capability is
 the place for rules that every channel must follow.
 

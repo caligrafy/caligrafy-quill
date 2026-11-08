@@ -5,107 +5,161 @@
 
 # Controllers
 
-A controller is a PHP class whose actions answer routes. In 2.19 it is the exception: the rules of a feature live in a
-capability (`application/services/`), and one line of `web.php` serves it to the web (`Route::page`, `Route::form`,
-`Route::auth`, `Route::webhook`, `Route::download`, `Route::redirect`, `Route::capability`). Write a controller only
-for **custom HTTP**: an answer that none of those lines gives. It stays thin: it calls capabilities with
-`$this->call()` and decides what to send back.
+A controller is a PHP class whose actions answer routes. It is how Caligrafy applications answered custom requests
+before 2.21.0, and **a new application does not need one**: every request can be declared in one line of `web.php`
+([Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes)), the rules of a feature live in a capability
+(`application/services/`), and what a page or a form cannot say is a web-only capability served by `Route::action`.
 
-## When a controller is still the right tool
+Existing controllers keep working, with nothing to change. This page says what replaces each use of a controller, shows
+how to move one, and documents the controllers you may still have.
 
-| You need | Write | Not a controller because |
+## What replaces a controller
+
+| You need | Write | Where |
 | --- | --- | --- |
-| A page, with or without data | `Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']]);` | the page controller does it |
+| A page, with or without data | `Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']]);` | [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#pageroutes) |
 | A page only signed-in people or administrators open | `Route::page(..., ['signedIn' => true])` or `['level' => 1]` | the same |
-| A form that creates, changes or deletes, back to the form with its errors | `Route::form('/books', 'create_book', ['success' => '/books/{id}']);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form) |
+| A page that sends people back after signing in | `Route::page(..., ['signedIn' => true, 'comeBack' => true])` | the same |
+| A page for visitors only | `Route::page('/join', 'Bookshelf/join', ['visitorsOnly' => '/books']);` | the same |
+| A page that reads the query string | `Route::page(..., ['query' => ['sort' => 'title']])` | the same |
+| A Vue, bot or machine learning app | `Route::page('/apps/{appName}', 'Client/app', ['query' => ['app' => 'index']]);` | [Routes for client apps](https://github.com/caligrafy/caligrafy-quill/wiki/9.7.2-Routes) |
+| A form that creates, changes or deletes | `Route::form('/books', 'create_book', ['success' => '/books/{id}']);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#form) |
+| A sign-up with a confirmation field, a box to tick, that signs in | `Route::form` with `same`, `accepted`, `signsIn` | the same |
+| A form that leaves for a payment page | `Route::form` with `'success' => fn ($r) => $r['url']` | [Payments](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment) |
+| Password reset | `Route::page` and `Route::form` on two capabilities | [Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#passwordreset) |
 | Sign-in, sign-out, sign-up | `Route::auth(['home' => '/books']);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#auth) |
 | Events Stripe or another service posts | `Route::webhook('/stripe/events', 'record_event', ['verify' => 'stripe']);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#webhook) |
 | A CSV or JSON file to download | `Route::download('/books.csv', 'list_books');` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#download) |
 | An address that moved | `Route::redirect('/old/books/{id}', '/books/{id}', 301);` | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#redirect) |
 | A JSON API | `Route::capability('GET', '/api/books', 'list_books');` | [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#capabilityroutes) |
-| An action that calls several capabilities with conditions, or chooses between a redirect and a view | **a controller** | no route expresses the condition |
-| Custom headers, streaming, a response that is neither a page, a redirect, JSON nor a file | **a controller** | |
-| Password reset, face sign-in, an OAuth callback | **a controller** | not in `Route::auth` |
+| Several capabilities with conditions, a choice between a redirect and a view | `Route::action` and a web-only capability | [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#action) |
+| The session, a sign-in of your own (face, another site), a gate, a payment page, custom headers | the same | [the same](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes#webonly) |
 
-A controller that calls `new Book()`, `associate()`, `save()` or `all()` keeps its rules for the web only: the REST
-API and AI agents would follow other rules. Those methods are under [Other ways](#controllercontext).
+`AdminController`, `AuthController`, `AIController`, `ClientController` and `WatsonController` ship in
+`application/controllers/core/`, and the routes of a new project's `web.php` still name them. They are examples that work:
+leave them, or replace their lines with the routes above.
 
 ## With Claude
 
 ```text
+"Move application/controllers/BookController.php to declared routes."
 "Add GET /authors/{author_id}/books: when the author has exactly one book, go straight to that book's page;
 otherwise show the list."
 ```
 
-The `caligrafy` skill writes a controller only when no declarative route fits; here the action chooses between a
-redirect and a view. Claude writes `application/controllers/BookController.php` (an action that calls `list_books`
-with `$this->call()`) and one `Route::get` line in `application/config/routing/web.php`. Ask the `caligrafy-reviewer`
-agent to review it: it flags controllers where a declarative route fits.
+For a new request, the `caligrafy` skill never writes a controller: Claude writes a capability in
+`application/services/<Folder>/`, `webOnly: true` only when the request needs it, and one line of
+`application/config/routing/web.php`. To move an existing controller, it writes one capability per action, swaps the
+routes, removes the controller, and runs `php caligrafer.php test`. Ask the `caligrafy-reviewer` agent to review it: it
+flags new controllers where a declared route fits.
 
 **Check**
 
-- [ ] The action calls capabilities with `$this->call()` and never touches a model (`new Book`, `associate()`, `save()`).
-- [ ] It catches `ServiceError` and answers with its status (`$e->status()`).
-- [ ] After `redirect()`, it returns.
-- [ ] No form post, sign-in, export or webhook went into a controller.
+- [ ] `application/controllers/` got no new file.
+- [ ] A capability with `webOnly: true` is one that returns a view or a redirect, reads the session, or signs someone
+      in. The rest stays a plain capability, which REST and agents can reach.
+- [ ] The web-only capability calls other capabilities with `$this->capability()`.
+- [ ] `/authors/3/books` redirects and `/authors/2/books` shows the list.
 
-## By hand
+## By hand: move a controller to a declared route
 
 Before you start: the Bookshelf tables, the `Book` model, `list_books`, `get_book` and the views of
-[Routing, steps 1 to 5](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#definingroutes).
+[Routing, steps 1 to 5](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#definingroutes). You have this controller, and want it gone:
 
-1. **Write the controller.** `application/controllers/BookController.php`:
+```php
+<?php
+// application/controllers/BookController.php
+
+use Caligrafy\Controller;
+use Caligrafy\ServiceError;
+
+class BookController extends Controller
+{
+    // GET /authors/{author_id}/books: one book goes straight to its page, otherwise the list
+    public function byAuthor()
+    {
+        try {
+            $books = $this->call('list_books', array('author_id' => $this->request->fetch('author_id')));
+        } catch (ServiceError $e) {
+            http_response_code($e->status());
+            return view('Bookshelf/notfound', array('message' => $e->getMessage()));
+        }
+        if ($books['total'] == 1) {
+            redirect('/books/' . $books['data'][0]['id']);
+            return null;
+        }
+        return view('Bookshelf/books', array('books' => $books));
+    }
+}
+```
+
+```php
+Route::get('/authors/{author_id}/books', 'BookController@byAuthor');
+```
+
+1. **Write the capability.** Run
+   `docker compose exec dev-box php caligrafer.php service Bookshelf/OpenAuthorBooks`, and replace the content of
+   `application/services/Bookshelf/OpenAuthorBooks.php` with:
 
    ```php
    <?php
 
-   use Caligrafy\Controller;
-   use Caligrafy\ServiceError;
+   use Caligrafy\Capability;
+   use Caligrafy\Context;
+   use Caligrafy\Service;
+   use Caligrafy\Web;
 
-   class BookController extends Controller
+   // open_author_books: one book goes straight to its page, otherwise the list
+   #[Capability(
+       name: 'open_author_books',
+       description: 'Opens the books of an author: the book itself when there is one, otherwise the list.',
+       readOnly: true,
+       public: true,
+       webOnly: true
+   )]
+   class OpenAuthorBooks extends Service
    {
-       // GET /authors/{author_id}/books: one book goes straight to its page, otherwise the list
-       public function byAuthor()
+       public $rules = array('author_id' => 'required|integer');
+
+       public function handle(array $input, Context $context)
        {
-           try {
-               $books = $this->call('list_books', array('author_id' => $this->request->fetch('author_id')));
-           } catch (ServiceError $e) {
-               http_response_code($e->status());
-               return view('Bookshelf/notfound', array('message' => $e->getMessage()));
-           }
-           // list_books answers a page: data (the books), total, page, per_page, pages
+           $books = $this->capability('list_books', array('author_id' => $input['author_id']), $context);
            if ($books['total'] == 1) {
-               redirect('/books/' . $books['data'][0]['id']);
-               return null;
+               return Web::redirect('/books/' . $books['data'][0]['id']);
            }
-           return view('Bookshelf/books', array('books' => $books));
+           return Web::view('Bookshelf/books', array('books' => $books));
        }
    }
    ```
 
-   Every class under `application/` (except `config/` and `views/`) is found without a `require`.
+   Each action becomes one capability. `$this->call()` becomes `$this->capability($name, $input, $context)`, `view()`
+   `Web::view()`, `redirect()` `Web::redirect()`, `api()` `Web::json()`, and `$this->request->fetch('author_id')` an input
+   declared in `$rules`.
 
-2. **Route it.** In `application/config/routing/web.php`, before `Route::run();`:
+2. **Swap the route.** In `application/config/routing/web.php`, replace the
+   `Route::get` line with:
 
    ```php
-       Route::get('/authors/{author_id}/books', 'BookController@byAuthor');
+       Route::action('/authors/{author_id}/books', 'open_author_books', ['back' => '/books']);
    ```
 
-3. **Try it.** Run:
+3. **Remove the controller.** Delete `application/controllers/BookController.php`.
+
+4. **Try it.** Run:
 
    ```bash
    curl -s -i http://localhost:8080/authors/3/books | grep -iE "^HTTP|^Location"
+   curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/authors/2/books
    curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/authors/9/books
-   curl -s -o /dev/null -w "%{http_code}\n" http://localhost:8080/authors/abc/books
+   curl -s -i http://localhost:8080/authors/abc/books | grep -iE "^HTTP|^Location"
    ```
 
-   They print `HTTP/1.1 302 Found` with `Location: http://localhost:8080/books/5` (Italo Calvino has one book,
-   *Invisible Cities*), `200` (the list page with "No books yet.": nobody has the id 9) and `422` (the "Not found"
-   page with "Some of the inputs are invalid": `author_id` must be an integer). `/authors/2/books` shows the list
-   page with Octavia E. Butler's two books.
+   They print `HTTP/1.1 302 Found` with `Location: http://localhost:8080/books/5` (Italo Calvino has one book, *Invisible
+   Cities*), `200` (Octavia E. Butler's two books), `200` (the list with "No books yet.": nobody has the id 9) and
+   `302` with `Location: http://localhost:8080/books` (`author_id` must be an integer: the `back` option, with the message
+   in `flash('error')`).
 
-   A JSON call to a controller route needs the page's `X-CSRF-Token` header or a personal access token that grants
-   `*`:
+   A JSON call needs the page's `X-CSRF-Token` header or a token that grants `*`, as on a controller route:
 
    ```bash
    curl -s -H "Accept: application/json" http://localhost:8080/authors/3/books
@@ -116,11 +170,28 @@ Before you start: the Bookshelf tables, the `Book` model, `list_books`, `get_boo
 
 **Check**
 
-- [ ] `/authors/3/books` redirects to `/books/5`.
-- [ ] `/authors/abc/books` answers `422`, not `500`.
-- [ ] The controller has no `use` of a model and no SQL.
+- [ ] `/authors/3/books` redirects to `/books/5`, and `/authors/abc/books` to `/books`, not `500`.
+- [ ] `php caligrafer.php call open_author_books author_id=3` answers `not_found`: only the route reaches it.
+- [ ] `application/controllers/` no longer has the class, and `grep -n BookController application/config/routing/web.php`
+      prints nothing.
 
-## Calling a capability: `$this->call()`
+**What moves, and what does not**
+
+| In the controller | In the web-only capability |
+| --- | --- |
+| `$this->call('x', $input)` | `$this->capability('x', $input, $context)` |
+| `$this->request->fetch('id')`, `$this->request->parameters()` | an input declared in `$rules` |
+| `view('X', $data)`, with `'authorized' => authorized()` by hand | `Web::view('X', $data)`: `$authorized` and `$user` are given |
+| `redirect('/x'); return;` | `return Web::redirect('/x');` |
+| `http_response_code(422); return api($data);` | `return Web::json($data, 422);` |
+| `header('X: y');` | `Web::text('...')->header('X', 'y')`, on any `Web` |
+| `guard('permissions', 1);` | `'level' => 1` on the route, or `level: 1` on the capability |
+| `try { ... } catch (ServiceError $e)` | nothing, unless you answer it yourself: `Route::action` sends it back like a form |
+| `$_SESSION`, `authorized()`, `user()` | the same, a web-only capability may read them |
+| a form and `=csrf()` | the same: a form's `POST` needs its token |
+| a file: `uploadFile($this->request->files('x'))` | a `file` rule in `$rules`: `handle()` gets the URL |
+
+## In a controller you keep: `$this->call()`
 
 ```php
 $book = $this->call('create_book');                                  // inputs: the route variables and the request's fields
@@ -129,7 +200,8 @@ $books = $this->call('list_books', array('author_id' => 2));         // inputs y
 
 `$this->call($name, $input = null)` runs the capability as the person who sent the request (the signed-in user, a
 token, or a visitor), with its validation, its permissions and its audit, exactly as REST and AI agents call it. It
-returns plain data (arrays: `$book['id']`) or throws `Caligrafy\ServiceError`:
+returns plain data (arrays: `$book['id']`) or throws `Caligrafy\ServiceError`. It answers `not_found` for a capability
+declared `webOnly: true`.
 
 | `$e->kind` | `$e->status()` | When |
 | --- | --- | --- |
@@ -141,8 +213,8 @@ returns plain data (arrays: `$book['id']`) or throws `Caligrafy\ServiceError`:
 
 Without `$input`, the inputs are the route variables and the request's parameters (the form fields, the JSON body or,
 for a `GET`, the query string); only the inputs the capability declares in `$rules` reach it. `$this->call()` does not
-take uploaded files: a form with a file input posts to `Route::form` or a capability route. The framework's own user
-administration works this way: `AdminController` calls `list_users`, `get_user`, `update_user` and `delete_user`
+take uploaded files: a form with a file input posts to `Route::form`, `Route::action` or a capability route. The
+framework's own user administration works this way: `AdminController` calls `list_users`, `get_user`, `update_user` and `delete_user`
 ([Authentication](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#usercapabilities)).
 
 ## Namespaced controllers
@@ -214,9 +286,9 @@ base `index()` does nothing. Do not give your own methods the names below.
 
 ## Other ways: controllers that read and write models
 
-Before capabilities, a controller read and wrote its model itself. These methods still work in 2.19, for existing
-projects; a new feature is a capability with `Route::form` or `Route::capability` instead, so the web, REST and agents
-follow the same rules.
+Before capabilities, a controller read and wrote its model itself. These methods still work, for existing projects; a
+new feature is a capability with `Route::form` or `Route::capability` instead, so the web, REST and agents follow the
+same rules.
 
 ```php
 <?php
@@ -252,19 +324,20 @@ class LegacyBookController extends Controller
 
 ## Common mistakes
 
-+ **A controller for a form post**: `Route::form` does it in one line, with `errors()`, `old()` and `flash()`.
++ **A new controller**: every request can be declared. A form post is `Route::form`, in one line, with `errors()`,
+  `old()` and `flash()`; the rest is `Route::action`.
 + **Code after `redirect()`** keeps running: `return` after it.
 + **A JSON call from a page without `X-CSRF-Token`** answers `401` `[ERROR 1004]`: send `apiHeaders()` (Vue apps)
   or the token in the header.
-+ **A scoped token on a controller route** is refused: controller routes need a token that grants `*`. Give programs
-  capability routes with scoped tokens instead.
++ **A scoped token on a controller route** is refused: controller routes, like `Route::action`, need a token that grants
+  `*`. Give programs capability routes with scoped tokens instead.
 + **A short controller name that collides with an example controller** (`AuthController`): yours wins when it is
   declared; otherwise the example one answers.
 + **Overriding a base method** (`find`, `save`, `view`, `call`...) breaks the controller.
 
 ## Related pages
 
-+ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): what replaces most controllers
++ [Declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes): what replaces controllers
 + [Routing](https://github.com/caligrafy/caligrafy-quill/wiki/2.-Routing#controllerroute): controller and closure routes
 + [Request](https://github.com/caligrafy/caligrafy-quill/wiki/3.-Request): `$this->request`
 + [Build once: services, capabilities and MCP](https://github.com/caligrafy/caligrafy-quill/wiki/11.-Build-Once:-Services,-Capabilities-and-MCP#service)
