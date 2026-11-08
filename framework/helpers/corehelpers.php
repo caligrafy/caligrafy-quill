@@ -735,6 +735,40 @@ function csrf()
 }
 
 /**
+ * The field errors a Route::form() sent back with the previous request (2.19.0): all of them, or one field's message
+ * (null when it has none). In a view: if errors('title') / p.cq-field-error= errors('title')
+ */
+function errors($field = null)
+{
+    $errors = (array) Caligrafy\Flash::get('errors', array());
+    return $field === null ? $errors : ($errors[$field] ?? null);
+}
+
+/**
+ * What a field held when a Route::form() sent it back (2.19.0), else $default: input(name='title', value=old('title'))
+ * Passwords and other secrets are never kept.
+ */
+function old($field, $default = '')
+{
+    $old = (array) Caligrafy\Flash::get('old', array());
+    return array_key_exists($field, $old) ? $old[$field] : $default;
+}
+
+/**
+ * A message of the previous request (2.19.0): flash('success') after a Route::form() 'flash', flash('error') after
+ * invalid input; with a value, keeps a message for the next request
+ */
+function flash($key, $value = null)
+{
+    if ($value !== null) {
+        Caligrafy\Flash::message($key, $value);
+        return $value;
+    }
+    $messages = (array) Caligrafy\Flash::get('messages', array());
+    return $messages[$key] ?? null;
+}
+
+/**
  * Method that authorizes a logged in user to perform actions
  * @author Dory A.Azar 
  * @version 1.0

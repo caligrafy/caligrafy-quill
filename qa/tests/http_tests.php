@@ -1263,4 +1263,233 @@ qa_test('the root and HEAD still answer', function () {
     qa_contains('Hello World', (new QaBrowser())->get('/helloworld')['body']);
 });
 
+// ---------------------------------------------------------------------------
+qa_section('Declarative routes (2.19.0): Route::auth, Route::form, file inputs, Route::webhook, Route::download');
+
+// the session id a response sets (session_regenerate_id sends a new one)
+function qa_session_cookie($r)
+{
+    preg_match_all('/^Set-Cookie:\s*PHPSESSID=([^;]+)/mi', $r['headers'], $m);
+    return end($m[1]) ?: null;
+}
+
+// a browser signed in through Route::auth (/qa/auth), with an account of its own
+function qa_auth_user($name)
+{
+    $b = new QaBrowser();
+    $r = $b->post('/qa/auth/register', ['_token' => $b->token('/qa/auth/register'), 'username' => $name, 'passcode' => 'Passw0rdQa', 'confirmpasscode' => 'Passw0rdQa']);
+    qa_contains('/qa/auth/login', $r['location'], "register $name: {$r['status']} " . substr(strip_tags($r['body']), 0, 200));
+    $r = $b->post('/qa/auth/login', ['_token' => $b->token('/qa/auth/login'), 'username' => $name, 'passcode' => 'Passw0rdQa']);
+    qa_contains('/qa/bare', $r['location'], "sign in $name: {$r['status']} " . substr(strip_tags($r['body']), 0, 200));
+    return $b;
+}
+
+qa_test('Route::auth: the sign-up and sign-in pages render with the views of the authentication module', function () {
+    $b = new QaBrowser();
+    $r = $b->get('/qa/auth/login');
+    qa_equals(200, $r['status']);
+    qa_contains('Sign in', $r['body']);
+    qa_contains('Create account', $b->get('/qa/auth/register')['body']);
+    $r = $b->post('/qa/auth/register', ['_token' => $b->token('/qa/auth/register'), 'username' => 'routeqa', 'passcode' => 'Passw0rdQa', 'confirmpasscode' => 'Passw0rdQa']);
+    qa_contains('/qa/auth/login', $r['location'], substr(strip_tags($r['body']), 0, 300));
+    qa_contains('Your account is ready', $b->get('/qa/auth/login')['body'], 'the flash message of the sign-up');
+    qa_equals(0, strpos(qa_sql("SELECT passcode FROM users WHERE username = 'routeqa'"), '$2y$'), 'a password hash');
+    $r = $b->post('/qa/auth/register', ['_token' => $b->token('/qa/auth/register'), 'username' => 'routeqa', 'passcode' => 'Passw0rdQa', 'confirmpasscode' => 'Passw0rdQa']);
+    qa_contains('already exists', $r['body']);
+    $r = $b->post('/qa/auth/register', ['_token' => $b->token('/qa/auth/register'), 'username' => 'routeqa2', 'passcode' => 'Passw0rdQa', 'confirmpasscode' => 'other']);
+    qa_contains('don&#039;t match', $r['body']);
+});
+
+qa_test('Route::auth: signing in gives a new session id and a new CSRF token; signing out too', function () {
+    $b = new QaBrowser();
+    $page = $b->get('/qa/auth/login');
+    $before = qa_session_cookie($page);
+    preg_match("/name='_token' value='([^']+)'/", $page['body'], $m);
+    qa_assert($before && !empty($m[1]), 'a session and a token on the sign-in page');
+    $r = $b->post('/qa/auth/login', ['_token' => $m[1], 'username' => 'routeqa', 'passcode' => 'Passw0rdQa']);
+    qa_contains('/qa/bare', $r['location'], substr(strip_tags($r['body']), 0, 300));
+    $after = qa_session_cookie($r);
+    qa_assert($after && $after !== $before, "the session id changes at sign-in ($before -> $after)");
+    qa_contains('>Sign out<', $b->get('/qa/bare')['body']);
+    qa_assert($b->token('/qa/forms/new') !== $m[1], 'a new CSRF token');
+    $r = $b->get('/qa/auth/logout');
+    qa_contains('/qa/bare', $r['location']);
+    qa_assert(qa_session_cookie($r) && qa_session_cookie($r) !== $after, 'the session id changes at sign-out');
+    qa_contains('/login', $b->get('/qa/members')['location'], 'signed out');
+});
+
+qa_test('Route::auth: a wrong password fails, and 3 failures lock that username from that address', function () {
+    qa_auth_user('lockqa')->get('/qa/auth/logout');
+    $b = new QaBrowser();
+    $r = $b->post('/qa/auth/login', ['_token' => $b->token('/qa/auth/login'), 'username' => 'lockqa', 'passcode' => 'wrong-1']);
+    qa_equals(200, $r['status']);
+    qa_contains('Invalid credentials', $r['body']);
+    $b->post('/qa/auth/login', ['_token' => $b->token('/qa/auth/login'), 'username' => 'lockqa', 'passcode' => 'wrong-2']);
+    $r = $b->post('/qa/auth/login', ['_token' => $b->token('/qa/auth/login'), 'username' => 'lockqa', 'passcode' => 'wrong-3']);
+    qa_equals(429, $r['status']);
+    qa_contains('Too many failed attempts', $r['body']);
+    // a new browser (no cookie) is still locked: the count is in the cache, not the session
+    $c = new QaBrowser();
+    $r = $c->post('/qa/auth/login', ['_token' => $c->token('/qa/auth/login'), 'username' => 'lockqa', 'passcode' => 'Passw0rdQa']);
+    qa_equals(429, $r['status'], 'the right password is refused while locked');
+    qa_contains('/qa/bare', $c->post('/qa/auth/login', ['_token' => $c->token('/qa/auth/login'), 'username' => 'routeqa', 'passcode' => 'Passw0rdQa'])['location'], 'another username is not locked');
+});
+
+qa_test('Route::auth: a sign-in without the CSRF token is refused; JSON needs X-CSRF-Token', function () {
+    $b = new QaBrowser();
+    $b->get('/qa/auth/login');
+    qa_equals(403, $b->post('/qa/auth/login', ['username' => 'routeqa', 'passcode' => 'Passw0rdQa'])['status']);
+    $r = qa_json('POST', '/qa/auth/login', ['username' => 'routeqa', 'passcode' => 'Passw0rdQa'], null, $b);
+    qa_equals(403, $r['status'], $r['body']);
+    $csrf = $b->token('/qa/auth/login');
+    $r = qa_json('POST', '/qa/auth/login', ['username' => 'routeqa', 'passcode' => 'Passw0rdQa'], null, $b, ["X-CSRF-Token: $csrf"]);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_equals('routeqa', $r['json']['data']['user']['username'] ?? null);
+    $bad = qa_json('POST', '/qa/auth/login', ['username' => 'routeqa', 'passcode' => 'nope'], null, $c = new QaBrowser(), ["X-CSRF-Token: " . $c->token('/qa/auth/login')]);
+    qa_equals(401, $bad['status'], $bad['body']);
+});
+
+qa_test("Route::auth 'passkeys': the endpoints of Caligrafy\\Passkey answer JSON with the page's CSRF token", function () {
+    $b = new QaBrowser();
+    $csrf = $b->token('/qa/auth/login');
+    $r = qa_json('POST', '/qa/auth/passkey/login/options', [], null, $b, ["X-CSRF-Token: $csrf"]);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_assert(!empty($r['json']['publicKey']['challenge'] ?? $r['json']['challenge'] ?? null), 'a challenge: ' . $r['body']);
+    qa_equals(403, qa_json('POST', '/qa/auth/passkey/login/options', [], null, $b)['status'], 'without the token');
+    qa_equals(401, qa_json('POST', '/qa/auth/passkey/register/options', [], null, $b, ["X-CSRF-Token: $csrf"])['status'], 'registering needs a signed-in user');
+});
+
+qa_test('Route::form: a signed-in post calls the capability, redirects to the result and flashes the message once', function () {
+    $b = qa_auth_user('formqa');
+    $r = $b->post('/qa/forms/books', ['_token' => $b->token('/qa/forms/new'), 'title' => '  Neuromancer ', 'author' => 'William Gibson', 'publisher_id' => '1']);
+    qa_equals(302, $r['status'], substr(strip_tags($r['body']), 0, 300));
+    qa_assert(preg_match('#/v2/books/(\d+)$#', $r['location'], $m) === 1, 'location: ' . $r['location']);
+    qa_equals('Neuromancer', qa_sql("SELECT title FROM books WHERE id = {$m[1]}"));
+    $page = $b->get('/qa/forms/new')['body'];
+    qa_contains('Added Neuromancer', $page);
+    qa_contains('no error', $page);
+    qa_contains('no success', $b->get('/qa/forms/new')['body'], 'one request only');
+
+    // PUT through _method, the route variable {id} wins over the form
+    $r = $b->post("/qa/forms/books/{$m[1]}", ['_token' => $b->token('/qa/forms/new'), '_method' => 'PUT', 'title' => 'Count Zero', 'id' => '999999']);
+    qa_contains("/v2/books/{$m[1]}", $r['location'], substr(strip_tags($r['body']), 0, 300));
+    qa_equals('Count Zero', qa_sql("SELECT title FROM books WHERE id = {$m[1]}"));
+});
+
+qa_test('Route::form: invalid input goes back with the field errors and the old input, never the password', function () {
+    $b = qa_auth_user('formqa2');
+    $r = $b->post('/qa/forms/books', ['_token' => $b->token('/qa/forms/new'), 'title' => 'Kept title', 'author' => '', 'publisher_id' => '1', 'passcode' => 'Secret123']);
+    qa_contains('/qa/forms/new', $r['location'], substr(strip_tags($r['body']), 0, 300));
+    $page = $b->get('/qa/forms/new')['body'];
+    qa_not_contains('no author error', $page);
+    qa_contains('old title Kept title', $page);
+    qa_contains('old passcode none', $page);
+    qa_contains('Some of the inputs are invalid', $page);
+    $again = $b->get('/qa/forms/new')['body'];
+    qa_contains('no author error', $again, 'the errors are gone on the next page');
+    qa_contains('old title none', $again);
+});
+
+qa_test('Route::form: a visitor is sent to sign in, a post without the CSRF token is refused', function () {
+    $v = new QaBrowser();
+    $r = $v->post('/qa/forms/books', ['_token' => $v->token('/qa/forms/new'), 'title' => 'X', 'author' => 'Y', 'publisher_id' => '1']);
+    qa_contains('/login', $r['location'], "status {$r['status']}");
+    $b = qa_auth_user('formqa3');
+    $r = $b->post('/qa/forms/books', ['title' => 'No token', 'author' => 'Y', 'publisher_id' => '1']);
+    qa_equals(403, $r['status']);
+    qa_equals('0', qa_sql("SELECT COUNT(*) FROM books WHERE title = 'No token'"));
+});
+
+qa_test('Route::form: JSON requests get the REST answer and need X-CSRF-Token with the session', function () {
+    $b = qa_auth_user('formqa4');
+    $csrf = $b->token('/qa/forms/new');
+    $r = qa_json('POST', '/qa/forms/books', ['title' => 'Json book', 'author' => 'A', 'publisher_id' => 1], null, $b, ["X-CSRF-Token: $csrf"]);
+    qa_equals(201, $r['status'], $r['body']);
+    qa_equals('Json book', $r['json']['data']['title'] ?? null);
+    $r = qa_json('POST', '/qa/forms/books', ['title' => '', 'author' => 'A', 'publisher_id' => 1], null, $b, ["X-CSRF-Token: $csrf"]);
+    qa_equals(422, $r['status'], $r['body']);
+    qa_assert(isset($r['json']['error']['fields']['title']), $r['body']);
+    qa_equals(403, qa_json('POST', '/qa/forms/books', ['title' => 'No header', 'author' => 'A', 'publisher_id' => 1], null, $b)['status']);
+});
+
+qa_test("file inputs: Route::form saves the 'file' field under a new name in public/uploads and gives its URL", function () {
+    $b = qa_auth_user('coverqa');
+    $tmp = tempnam(sys_get_temp_dir(), 'qa');
+    file_put_contents($tmp, 'QA-PNG-BYTES');
+    $r = $b->post('/qa/forms/cover', ['_token' => $b->token('/qa/forms/new'), 'label' => 'Front', 'cover' => new CURLFile($tmp, 'image/png', 'my cover.png')]);
+    qa_contains('/qa/forms/new', $r['location'], substr(strip_tags($r['body']), 0, 300));
+    $page = $b->get('/qa/forms/new')['body'];
+    qa_assert(preg_match('#Cover (https?://[^<\s]+/public/uploads/([A-Za-z0-9]+)\.png)#', $page, $m) === 1, 'flash: ' . substr(strip_tags($page), 0, 300));
+    qa_not_contains('my cover', $m[1], 'never the client name');
+    qa_equals('QA-PNG-BYTES', (new QaBrowser())->get(parse_url($m[1], PHP_URL_PATH))['body']);
+    @unlink(dirname(__DIR__, 2) . '/public/uploads/' . $m[2] . '.png');
+
+    // a type outside the allow-list, and a string instead of a file
+    file_put_contents($tmp, '<?php echo "EXEC"."UTED";');
+    $b->post('/qa/forms/cover', ['_token' => $b->token('/qa/forms/new'), 'cover' => new CURLFile($tmp, 'application/x-php', 'shell.php')]);
+    qa_contains('not accepted', $b->get('/qa/forms/new')['body']);
+    $b->post('/qa/forms/cover', ['_token' => $b->token('/qa/forms/new'), 'cover' => '/etc/passwd']);
+    qa_not_contains('no cover error', $b->get('/qa/forms/new')['body'], 'a string is not a file: required');
+    unlink($tmp);
+});
+
+qa_test('file inputs: REST (Route::capability) takes the file from a multipart request with a token', function () use ($WRITER) {
+    $tmp = tempnam(sys_get_temp_dir(), 'qa');
+    file_put_contents($tmp, 'QA-JPG-BYTES');
+    $r = (new QaBrowser())->request('POST', '/v2/covers', ['headers' => ['Accept: application/json', "Authorization: Bearer $WRITER"], 'form' => ['cover' => new CURLFile($tmp, 'image/jpeg', 'c.jpg')]]);
+    qa_equals(201, $r['status'], $r['body']);
+    $url = json_decode($r['body'], true)['data']['cover'] ?? '';
+    qa_assert(preg_match('#/public/uploads/[A-Za-z0-9]+\.jpg$#', $url) === 1, "url $url");
+    @unlink(dirname(__DIR__, 2) . '/public/uploads/' . basename(parse_url($url, PHP_URL_PATH)));
+    $r = (new QaBrowser())->request('POST', '/v2/covers', ['headers' => ['Accept: application/json', 'Content-Type: application/json', "Authorization: Bearer $WRITER"], 'form' => json_encode(['cover' => 'https://evil.example/x.png'])]);
+    qa_equals(422, $r['status'], 'a URL is not a file on REST: ' . $r['body']);
+    unlink($tmp);
+});
+
+// a Stripe-Signature header for the QA secret (qa/run.sh writes QA_STRIPE_WEBHOOK_SECRET to .env)
+function qa_stripe_post($payload, $secret = 'whsec_qa_http_secret', $time = null)
+{
+    $time = $time ?? time();
+    $signature = "t=$time,v1=" . hash_hmac('sha256', "$time.$payload", $secret);
+    return (new QaBrowser())->request('POST', '/qa/hooks/stripe', ['headers' => ['Content-Type: application/json', 'Accept: */*; q=0.5, application/xml', "Stripe-Signature: $signature"], 'agent' => 'Stripe/1.0 (+https://stripe.com/docs/webhooks)', 'form' => $payload]);
+}
+
+qa_test('Route::webhook: a signed Stripe event runs the capability as the system, without a CSRF token', function () {
+    $payload = json_encode(['id' => 'evt_qa_' . time(), 'object' => 'event', 'type' => 'checkout.session.completed']);
+    $r = qa_stripe_post($payload);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_equals(['received' => true], json_decode($r['body'], true));
+    qa_equals('webhook', qa_sql("SELECT actor_type FROM caligrafy_audit WHERE capability = 'qa_record_stripe' AND outcome = 'ok' ORDER BY id DESC LIMIT 1"));
+    qa_equals('/qa/hooks/stripe', qa_sql("SELECT actor_id FROM caligrafy_audit WHERE capability = 'qa_record_stripe' AND outcome = 'ok' ORDER BY id DESC LIMIT 1"));
+});
+
+qa_test('Route::webhook: a bad or old signature answers 400, a failure 500, GET 405', function () {
+    $payload = json_encode(['id' => 'evt_qa_bad', 'object' => 'event', 'type' => 'checkout.session.completed']);
+    qa_equals(400, qa_stripe_post($payload, 'whsec_wrong')['status']);
+    qa_equals(400, qa_stripe_post($payload, 'whsec_qa_http_secret', time() - 3600)['status']);
+    $r = (new QaBrowser())->request('POST', '/qa/hooks/stripe', ['headers' => ['Content-Type: application/json'], 'form' => $payload]);
+    qa_equals(400, $r['status'], 'no signature: ' . $r['body']);
+    $r = qa_stripe_post(json_encode(['id' => 'evt_qa_boom', 'object' => 'event', 'type' => 'qa.boom']));
+    qa_equals(500, $r['status'], $r['body']);
+    qa_not_contains('QA webhook failure', $r['body'], 'the cause is logged, not answered');
+    qa_equals(405, (new QaBrowser())->get('/qa/hooks/stripe', ['headers' => ['Accept: application/json']])['status']);
+});
+
+qa_test('Route::download: a CSV attachment of a read-only capability for the signed-in user, JSON too; visitors sign in', function () {
+    $b = qa_auth_user('downloadqa');
+    $r = $b->get('/qa/books.csv');
+    qa_equals(200, $r['status'], substr($r['body'], 0, 300));
+    qa_assert(preg_match('#^Content-Type:\s*text/csv; charset=utf-8#mi', $r['headers']) === 1, $r['headers']);
+    qa_assert(preg_match('#^Content-Disposition:\s*attachment; filename="books.csv"#mi', $r['headers']) === 1, $r['headers']);
+    qa_equals("\xEF\xBB\xBF", substr($r['body'], 0, 3), 'the BOM');
+    $lines = explode("\r\n", substr($r['body'], 3));
+    qa_contains('title', $lines[0]);
+    qa_contains('Count Zero', $r['body']);
+    $json = $b->get('/qa/books.json');
+    qa_equals(200, $json['status']);
+    qa_assert(preg_match('#^Content-Disposition:\s*attachment; filename="books.json"#mi', $json['headers']) === 1, $json['headers']);
+    qa_assert(is_array(json_decode($json['body'], true)), 'JSON: ' . substr($json['body'], 0, 200));
+    qa_contains('/login', (new QaBrowser())->get('/qa/books.csv')['location'], 'a visitor signs in first');
+});
+
 qa_summary();

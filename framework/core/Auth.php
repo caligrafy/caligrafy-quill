@@ -82,6 +82,22 @@ class Auth extends \stdClass {
     }
 
     /**
+     * A copy of the authentication model (null when authentication is off): Route::auth() finds users with it
+     */
+    public static function model()
+    {
+        return self::active() ? clone self::$authModel : null;
+    }
+
+    /**
+     * Turns authentication off again (tests)
+     */
+    public static function reset()
+    {
+        self::$authModel = null;
+    }
+
+    /**
      * Loads a user by id with the authentication model (null when authentication is off or the user does not exist)
      */
     public static function find($id)

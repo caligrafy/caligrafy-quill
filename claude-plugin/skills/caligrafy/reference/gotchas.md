@@ -649,3 +649,30 @@ the connection, such as a test's) just runs: an exception still reaches the oute
 an inner exception that you catch inside the outer callback does not undo the inner writes. MySQL commits at any DDL
 (`CREATE`, `ALTER`, and `Model::belongsToMany()`'s `CREATE TABLE IF NOT EXISTS`), ending the transaction early (G121).
 Proof: `Database::transaction()`, `qa/unit/DatabaseQueryTest.php`.
+
+**G129. Flash data lasts one request: the redirect target must be the page that shows it (2.19.0+).** `Route::run()`
+ages the flash (`Flash::age()`) at the start of every request, so `errors()`, `old()` and `flash()` are read by the
+first page after a `Route::form` post: a `success` path that redirects again, a page loaded in between (a prefetch,
+another tab) or a JSON call on the same session consumes them. Point `back` and `success` at the page with the form or
+the message. Passwords and other secrets are never kept for `old()` (`/pass|secret|token|card|cvc|cvv|iban/i`).
+Proof: `framework/core/Flash.php`, `Form::oldInput()`.
+
+**G130. A JSON request skips the form's CSRF check: the declarative routes ask for X-CSRF-Token themselves (2.19.0+).**
+`Request::checkCSRF()` does not check `_token` when `wantsJson()` is true, and `Accept` is a header any cross-site
+`fetch()` may set. `Route::form` (like `Rest`), `Route::auth` and the passkey endpoints therefore refuse a JSON write
+that comes with the session cookie and no `X-CSRF-Token` (403). A controller route that answers JSON must check
+`$this->request->authorizeSessionRequest()` the same way. Proof: `Form::outcome()`, `AuthRoutes::login()`.
+
+**G131. A file input is a URL, and only web pages and REST can send the file (2.19.0+).** With
+`'cover' => 'required|file|extension,png;jpg|max_size,2mb'` the web and REST channels save `$_FILES['cover']` (after
+the access check, under a random name, executable types always refused) and give `handle()` its URL; a string posted in
+that field is dropped. MCP and the CLI send a URL or a path whose extension is checked: never `fopen()` or `include` it
+without checking where it points. The file is deleted when the call fails, not when a later step of your own fails.
+Proof: `framework/core/Uploads.php`.
+
+**G132. A webhook has no session and no CSRF token: its signature is the only proof (2.19.0+).** `Route::webhook`
+refuses to register without `verify`; with `'stripe'` set `STRIPE_WEBHOOK_SECRET` (the endpoint's `whsec_...`, not the
+API key) or every event answers 500. The capability runs as `Context::system('webhook', $path)` with full access: treat
+`event` as data from outside (look the object up again with the Stripe API before trusting amounts), and make it
+idempotent, Stripe retries until it gets a 2xx. Proof: `framework/core/Webhook.php`.
+

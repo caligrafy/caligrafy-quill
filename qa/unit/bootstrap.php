@@ -14,7 +14,8 @@ require $root . '/framework/helpers/corehelpers.php';
 foreach (['DB_ACTIVATE' => 'false', 'DB_CONNECTION' => 'mysql', 'DB_HOST' => 'localhost', 'DB_DATABASE' => 'none', 'DB_USERNAME' => '', 'DB_PASSWORD' => ''] as $name => $value) {
     defined($name) || define($name, $value);
 }
-foreach (['Framework', 'Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor', 'FaceLogin', 'Passkey', 'Auth', 'Tokens', 'Context', 'Audit', 'ServiceError', 'Capability', 'Service', 'Capabilities', 'Quickstart', 'Deployer', 'CloudClient', 'Designs', 'Updater', 'PluginSource', 'Scheduler', 'Notify', 'Mail', 'ClassMap', 'View', 'Migrations', 'Container', 'Cache', 'Query'] as $class) {
+defined('ROUTE_ARG_PATTERN') || define('ROUTE_ARG_PATTERN', '#\{+(.*?)\}+#');
+foreach (['Framework', 'Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor', 'FaceLogin', 'Passkey', 'Auth', 'Tokens', 'Context', 'Audit', 'ServiceError', 'Capability', 'Service', 'Capabilities', 'Quickstart', 'Deployer', 'CloudClient', 'Designs', 'Updater', 'PluginSource', 'Scheduler', 'Notify', 'Mail', 'ClassMap', 'View', 'Migrations', 'Container', 'Cache', 'Query', 'PageController', 'Flash', 'Uploads', 'Form', 'Webhook', 'Download', 'Throttle', 'AuthRoutes'] as $class) {
     require_once $root . "/framework/core/$class.php";
 }
 foreach (['Rest', 'Mcp/Server', 'Mcp/Http', 'Client'] as $class) {

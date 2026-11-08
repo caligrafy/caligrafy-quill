@@ -95,10 +95,12 @@ class Capabilities
      * @param string $name the capability name
      * @param array $input the inputs (extra keys are ignored)
      * @param Context $context who calls, through which channel
+     * @param Uploads|null $uploads the files of the request (web and REST): saved once the caller is allowed, given to
+     *                     the capability as their URLs, deleted again when the call fails
      * @return mixed plain data
      * @throws ServiceError
      */
-    public static function call($name, array $input, Context $context)
+    public static function call($name, array $input, Context $context, ?Uploads $uploads = null)
     {
         $entry = self::get($name);
         if ($entry === null) {
@@ -115,11 +117,20 @@ class Capabilities
                 }
             }
             $service = Container::make($entry['class']);   // its constructor gets what it needs (2.18.0)
+            if ($uploads !== null) {
+                $input = $uploads->apply($input, (array) $service->rules);
+            }
             $result = self::plain($service->handle($service->validate($input), $context));
         } catch (ServiceError $e) {
+            if ($uploads !== null) {
+                $uploads->discard();
+            }
             Audit::record($context, $name, $e->kind, $e->getMessage());
             throw $e;
         } catch (\Throwable $e) {
+            if ($uploads !== null) {
+                $uploads->discard();
+            }
             Audit::record($context, $name, 'error', get_class($e));
             throw $e;
         }
@@ -173,6 +184,8 @@ class Capabilities
                     case 'min_numeric': $property['minimum'] = $argument + 0; break;
                     case 'max_numeric': $property['maximum'] = $argument + 0; break;
                     case 'contains_list': $property['enum'] = array_values(array_filter(array_map('trim', explode(';', (string) $argument)), 'strlen')); break;
+                    // a file input (Uploads): agents send the URL or the path of the file
+                    case 'file': $property['description'] = 'The URL or the path of a file'; break;
                 }
             }
             if ($type !== 'string') {

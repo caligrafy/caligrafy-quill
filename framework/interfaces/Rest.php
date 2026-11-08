@@ -36,7 +36,8 @@ class Rest
             if ($entry !== null && !$entry['capability']->readOnly && self::needsCsrf($request, $context) && !self::validCsrf($request)) {
                 throw new ServiceError('forbidden', 'Missing or invalid CSRF token: send the X-CSRF-Token header');
             }
-            $result = Capabilities::call($name, self::input($request), $context);
+            // file inputs (the `file` rule, 2.19.0): the uploaded files are saved once the caller is allowed
+            $result = Capabilities::call($name, self::input($request), $context, new Uploads($_FILES ?? array()));
             self::send($request->method === 'POST' && $entry !== null && !$entry['capability']->readOnly ? 201 : 200, array('data' => $result));
         } catch (ServiceError $e) {
             if ($e->kind === 'unauthenticated' && !headers_sent()) {

@@ -353,6 +353,12 @@ class Request extends \stdClass {
             return;
         }
 
+        // a Route::webhook address (2.19.0): another service posts it with no session; Webhook::verify() checks its
+        // signature before the capability runs
+        if ($this->method === 'POST' && Route::isWebhook((string) ($_REQUEST['uri'] ?? ''))) {
+            return;
+        }
+
         // nor can it send a custom header: X-CSRF-Token with the session's token is a page of this application (2.7.0)
         if ($this->authorizeSessionRequest()) {
             return;
