@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.31.7** - Caligrafy Quill 2.19.7: `upgrade` matches the whole controller name when it holds unused sign-in controllers.
 - **1.31.6** - Caligrafy Quill 2.19.6: `Route::auth`'s `attemptsPerUser`, no sign-up link when there is no sign-up,
   `upgrade` holding unused sign-in controllers.
 - **1.31.5** - Caligrafy Quill 2.19.5: `Route::auth`'s `level` option, `Route::download`'s `columns` option and its 422

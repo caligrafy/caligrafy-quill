@@ -131,7 +131,8 @@ class Upgrader
         // the lines of code, not the comments
         $code = implode("\n", array_filter(preg_split('/\R/', $routes), function ($line) { return !preg_match('#^\s*(//|\*|/\*)#', $line); }));
         foreach (array(self::AUTH_CONTROLLER, self::ADMIN_CONTROLLER) as $path) {
-            if (($plan[$path]['status'] ?? '') !== 'missing' || strpos($code, basename($path, '.php')) !== false) continue;
+            // the whole name: FaceAuthController is another controller (2.19.7)
+            if (($plan[$path]['status'] ?? '') !== 'missing' || preg_match('/(?<![A-Za-z0-9_])' . basename($path, '.php') . '(?![A-Za-z0-9_])/', $code)) continue;
             $plan[$path]['status'] = 'held';
             $plan[$path]['reason'] = strpos($code, 'Route::auth') !== false && $path === self::AUTH_CONTROLLER
                 ? 'your routes sign people in with Route::auth: AuthController is not needed (add it with --force)'

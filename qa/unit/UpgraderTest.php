@@ -50,6 +50,9 @@ final class UpgraderTest extends TestCase
         $this->write('application/config/routing/web.php', "<?php\nRoute::get('/login', 'Caligrafy\\\\Controllers\\\\AuthController');\nRoute::run();\n");
         $this->assertSame('missing', $plan(Upgrader::AUTH_CONTROLLER)['status']);
         $this->assertSame('held', $plan(Upgrader::ADMIN_CONTROLLER)['status'], 'no route uses AdminController');
+        // another controller whose name ends the same way does not count (2.19.7)
+        $this->write('application/config/routing/web.php', "<?php\nRoute::post('/face', 'FaceAuthController@face');\nRoute::run();\n");
+        $this->assertSame('held', $plan(Upgrader::AUTH_CONTROLLER)['status']);
         // only in a comment (the template's commented routes): held (2.19.6)
         $this->write('application/config/routing/web.php', "<?php\n// Route::get('/login', 'Caligrafy\\\\Controllers\\\\AuthController');\nRoute::run();\n");
         $this->assertSame('held', $plan(Upgrader::AUTH_CONTROLLER)['status']);

@@ -6,6 +6,13 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.7] - 2026-11-08
+
+### Fixed
+- `upgrade` and `update` match the whole controller name in the routes: a route to `FaceAuthController` or
+  `ServicesAdminController` counted as a use of `AuthController` or `AdminController` in 2.19.6, which added those unused
+  files back to the project.
+
 ## [2.19.6] - 2026-11-08
 
 ### Added
