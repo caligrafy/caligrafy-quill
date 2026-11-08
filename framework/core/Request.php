@@ -326,6 +326,12 @@ class Request extends \stdClass {
         return $this->getFiles($fileAttribute);
     }
 
+    // the decoded JSON body; anything but an object or a list (a bare number or string) counts as no input (2.21.8)
+    private static function jsonBody() {
+        $body = json_decode((string) file_get_contents("php://input"), true);
+        return is_array($body) ? $body : array();
+    }
+
     /**
      * Fetches all the parameters of a request depending on the method
      */
@@ -336,15 +342,15 @@ class Request extends \stdClass {
                 $parameters = $_GET?? array();
                 break;
             case 'POST':
-                $parameters = !empty($_POST)? $_POST : json_decode(file_get_contents("php://input"), true)?? array();
+                $parameters = !empty($_POST)? $_POST : self::jsonBody();
                 $this->checkCSRF();
                 break;
             case 'PUT':
-                $parameters = !empty($_POST)? $_POST : json_decode(file_get_contents("php://input"), true)?? array();
+                $parameters = !empty($_POST)? $_POST : self::jsonBody();
                 $this->checkCSRF();
                 break;
             case 'DELETE':
-                $parameters = !empty($_POST)? $_POST : json_decode(file_get_contents("php://input"), true)?? array();
+                $parameters = !empty($_POST)? $_POST : self::jsonBody();
                 $this->checkCSRF();
                 break;
             break;

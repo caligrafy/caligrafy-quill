@@ -71,6 +71,14 @@ abstract class Service
                 $fileErrors[$field] = 'The ' . ucwords(str_replace(array('_', '-'), ' ', (string) $field)) . ' field needs a file';
             }
         }
+        // a number field never takes a list or true/false, which the validator would accept or fail on (2.21.8)
+        foreach ($this->rules as $field => $rule) {
+            if (is_string($rule) && isset($data[$field]) && (is_array($data[$field]) || is_bool($data[$field]))
+                && preg_match('/(^|\|)(integer|numeric|float|min_numeric|max_numeric)(,|\||$)/', $rule)) {
+                $fileErrors[$field] = 'The ' . ucwords(str_replace(array('_', '-'), ' ', (string) $field)) . ' field must be a number';
+                unset($data[$field]);
+            }
+        }
         $rules = array_filter($files ? Uploads::strip($this->rules) : $this->rules, function ($rule) { return is_string($rule) && trim($rule) !== ''; });
         $filters = array_filter(array_intersect_key($this->filters, $this->rules), function ($filter) { return is_string($filter) && trim($filter) !== ''; });
         $validator->validation_rules($rules);

@@ -13,6 +13,7 @@ const app = Vue.createApp({
         return {
             env: env,
             capabilities: [],
+            loaded: false,
             error: ''
         }
     },
@@ -28,6 +29,7 @@ const app = Vue.createApp({
         } catch (e) {
             this.error = e.message
         }
+        this.loaded = true
     }
 })
 

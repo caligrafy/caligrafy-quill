@@ -61,6 +61,15 @@ class Quickstart
      * @param array $options example (bool), yes (bool: allowed to delete .git), db (bool: false skips the database steps)
      * @return int exit code
      */
+    /**
+     * The port of the Docker server on this computer, from docker-compose.yaml (2.21.8)
+     */
+    public static function dockerPort($root = '.')
+    {
+        $compose = @file_get_contents($root . '/docker-compose.yaml');
+        return is_string($compose) && preg_match('/dev-box:.*?["\']?(\d+):80["\']?/s', $compose, $m) ? $m[1] : '8080';
+    }
+
     public function run(array $options = array())
     {
         $docker = is_file('/.dockerenv');
@@ -73,9 +82,11 @@ class Quickstart
                 $this->say('        Run again with --yes to continue, or copy the project elsewhere first.');
                 return 1;
             }
-            $this->step('Project', $this->php('initialize' . ($docker ? ' off' : '') . ' --yes') === 0 && is_dir($this->root . '/application'),
-                'application/ and .env created, keys generated', 'php caligrafer.php initialize failed');
-            if (!is_dir($this->root . '/application')) {
+            $initialized = $this->php('initialize' . ($docker ? ' off' : '') . ' --yes') === 0 && is_dir($this->root . '/application');
+            $this->step('Project', $initialized, 'application/ and .env created, keys generated', 'php caligrafer.php initialize failed');
+            if (!$initialized) {
+                // never go on: the project would still hold the framework's .git, and a push would aim at the framework (2.21.8)
+                $this->say('        Nothing else was done. Run php caligrafer.php initialize to see why, then quickstart again.');
                 return 1;
             }
         } else {
@@ -84,7 +95,7 @@ class Quickstart
 
         $envFile = $this->root . '/.env';
         $env = is_file($envFile) ? file_get_contents($envFile) : '';
-        $base = $docker ? 'http://localhost:8080' : '<your site>';
+        $base = $docker ? 'http://localhost:' . self::dockerPort($this->root) : '<your site>';
         if (!$docker) {
             list($env, $base) = $this->localServer($env, $options);
             file_put_contents($envFile, $env);

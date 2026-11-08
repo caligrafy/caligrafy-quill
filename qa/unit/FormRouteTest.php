@@ -314,4 +314,13 @@ final class FormRouteTest extends TestCase
         $this->expectException(InvalidArgumentException::class);
         Route::action('/go', 'qa_web_action', array('method' => 'PATCH'));
     }
+
+    public function testANumberFieldRefusesListsAndBooleans(): void
+    {
+        foreach (array(array(1), true) as $wrong) {
+            $outcome = Form::outcome('qa_save_book', array('back' => '/new'), array('title' => 'Dune', 'id' => $wrong), $this->user(), true, $this->env(array('csrf' => true)));
+            $this->assertSame(422, $outcome['status']);
+            $this->assertArrayHasKey('id', $outcome['json']['error']['fields']);
+        }
+    }
 }

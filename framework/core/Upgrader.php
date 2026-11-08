@@ -209,7 +209,7 @@ class Upgrader
             return 1;
         }
         $changing = $this->apply || $this->force !== null;
-        print("\n Caligrafy upgrade" . ($this->apply? "" : ($this->force !== null? " (--force " . $this->force . " only)" : " (dry run: nothing is changed, run 'php caligrafer.php upgrade --apply' to update)")) . "\n");
+        print("\n Caligrafy upgrade" . ($this->apply? "" : ($this->force !== null? " (--force " . $this->force . " only)" : " (dry run: nothing is changed, run 'php caligrafer.php upgrade " . (in_array('--local', (array) ($_SERVER['argv'] ?? array()), true) ? '--local ' : '') . "--apply' to update)")) . "\n");
         print(" Templates: " . self::TEMPLATE . " (" . count($plan) . " files) compared with application/ - "
             . ($manifest? "manifest " . self::MANIFEST . " found" : "no manifest (older project): untouched files recognized from the release history") . "\n\n");
 

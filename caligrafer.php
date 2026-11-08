@@ -230,7 +230,7 @@ switch(strtolower($argv[1])) {
 			print(" A local web server is running, but this folder is not in its web folder (MAMP: /Applications/MAMP/htdocs,\n XAMPP: htdocs, LAMP: /var/www/html): move it there, or use Docker (quickstart --docker).\n");
 		}
 		if ($docker) {
-			print(" Docker is running: " . ($server || $site !== null ? 'add --docker to use it instead' : 'quickstart uses it') . " (http://localhost:8080).\n");
+			print(" Docker is running: " . ($server || $site !== null ? 'add --docker to use it instead' : 'quickstart uses it') . " (http://localhost:" . Caligrafy\Quickstart::dockerPort('.') . ").\n");
 		} elseif (!$server && $site === null) {
 			print(" quickstart needs a server: start MAMP, XAMPP or Apache and MySQL (LAMP) with this folder in its web folder,\n or Docker Desktop.\n");
 		}
@@ -295,6 +295,10 @@ switch(strtolower($argv[1])) {
 				$days = $option('expires');
 				$expires = $days !== null && $days !== '' ? Caligrafy\Tokens::expiresAt(time() + 86400 * max(1, (int) $days)) : null;
 				$user = $option('user');
+				if ($user !== null && $user !== '' && !Caligrafy\Database::table('users')->where('id', (int) $user)->exists()) {
+					print("\n There is no user #" . (int) $user . ": no token was created.\n\n");
+					exit(1);
+				}
 				$created = Caligrafy\Tokens::create($argv[3], $scopes, $user !== null && $user !== '' ? (int) $user : null, $expires);
 				print("\n Token #{$created['id']} \"{$argv[3]}\" created with " . implode(' ', $scopes) . ($expires ? ", expires $expires" : '') . "\n\n"
 					. " " . $created['token'] . "\n\n It is shown only now: store it as a secret (Authorization: Bearer <token>).\n\n");
@@ -832,6 +836,10 @@ switch(strtolower($argv[1])) {
 		exit(Caligrafy\Designs::cli(array_slice($argv, 2), '.', $envFile));
 
 	case 'create':
+		if (isset($argv[2]) && file_exists('./public/' . $argv[2])) {
+			print("\n public/" . $argv[2] . " already exists: nothing was created. Choose another name, or remove the folder first.\n\n");
+			exit(1);
+		}
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {
 			system('cp -r framework/librairies/app ./public/'.$argv[2], $retValue);
 			print("\n Project created in the public folder.\n Type cd public/".$argv[2]. " to access it anytime\n\n");
@@ -858,6 +866,10 @@ switch(strtolower($argv[1])) {
 		break;
 
     case (strtolower($argv[1]) == 'bot' || strtolower($argv[1]) == 'ml' || strtolower($argv[1]) == 'facedetect' || strtolower($argv[1]) == 'app'):
+		if (isset($argv[2]) && file_exists('./public/' . $argv[2])) {
+			print("\n public/" . $argv[2] . " already exists: nothing was created. Choose another name, or remove the folder first.\n\n");
+			exit(1);
+		}
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {
 			system('cp -r framework/plugins/' . $argv[1] .' ./public/' . $argv[2], $retValue);
 			print("\n Project created in the public folder.\n Type cd public/".$argv[2]. " to access it anytime\n\n");
@@ -876,7 +888,7 @@ switch(strtolower($argv[1])) {
 				if ($retValue) {
 					print(" You don't have a server running.\n Start your local apache server if you have one. \n If not, check the Caligrafy documentation to run docker. \n\n");
 				} else {
-					print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080 \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
+					print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:" . Caligrafy\Quickstart::dockerPort('.') . " \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
 				}
 			} 
 			elseif (isset($argv[2]) && strtolower($argv[2]) == "rebuild") {

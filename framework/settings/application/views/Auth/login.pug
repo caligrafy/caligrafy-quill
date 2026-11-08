@@ -6,8 +6,8 @@ block title
 block content
   if $authorized
     section.cq-hero
-      h1.cq-display You are signed in
-      p.cq-lead Welcome to Caligrafy.
+      h1.cq-display= !empty($error) ? $message_header : 'You are signed in'
+      p.cq-lead= !empty($error) ? $message : 'Welcome to Caligrafy.'
       .cq-cta
         a.btn.btn-primary(href="{$home}") Continue
         a.btn.btn-secondary(href="{$home}logout") Sign out

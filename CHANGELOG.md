@@ -6,6 +6,19 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.21.8] - 2026-11-08
+
+### Fixed
+- `quickstart` stops when `initialize` fails, and exits with an error: it went on, leaving a project still tied to the framework's own repository.
+- `app`, `create`, `bot`, `ml` and `facedetect` refuse a folder that already exists: they copied the template inside it and reported success.
+- A field with a number rule refuses a list or true/false (422): a list gave a 500, and `true` was read as 1.
+- A JSON body that is neither an object nor a list counts as no input: it gave a 500.
+- `token create --user` refuses a user that does not exist.
+- `upgrade --local` prints the matching `--apply` command.
+- `quickstart` and `server start` print the port of `docker-compose.yaml`.
+- A signed-in person on `/notAuthorized` sees the refusal, not the sign-in form.
+- The `app` template no longer flashes "No capability yet" while it loads.
+
 ## [2.21.7] - 2026-11-08
 
 ### Security

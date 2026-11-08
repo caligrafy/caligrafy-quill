@@ -40,7 +40,7 @@
                             </div>
                         </li>
                     </ul>
-                    <p class="cq-empty-state" v-if="!error && !capabilities.length">No capability yet: write one with php caligrafer.php service, then run php caligrafer.php client public/js/capabilities.js.</p>
+                    <p class="cq-empty-state" v-if="loaded && !error && !capabilities.length">No capability yet: write one with php caligrafer.php service, then run php caligrafer.php client public/js/capabilities.js.</p>
                 </div>
             </section>
         </div>

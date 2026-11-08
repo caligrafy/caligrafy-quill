@@ -407,7 +407,7 @@ class AuthRoutes
     private static function notAuthorized(array $o)
     {
         http_response_code(403);
-        view($o['views']['login'], array('signUp' => $o['register'] !== false, 'error' => true, 'status' => 'danger', 'message_header' => 'Restricted Page', 'message' => 'You have not been granted permission to access this page'));
+        view($o['views']['login'], array('authorized' => self::signedIn(), 'signUp' => $o['register'] !== false, 'error' => true, 'status' => 'danger', 'message_header' => 'Restricted Page', 'message' => 'You have not been granted permission to access this page'));
     }
 
     private static function registerPage(array $o)
