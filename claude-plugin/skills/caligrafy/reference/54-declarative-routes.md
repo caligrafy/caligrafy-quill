@@ -571,6 +571,7 @@ views of the authentication module (`application/views/Auth/login.pug`, `registe
 | `register` | `true` | `true`: `/register` with the `register_user` capability; `false`: no sign-up; a capability name: yours |
 | `identifier` | `'username'` | the `users` column people sign in with, and the name of the sign-in field (`'email'`) |
 | `signInAfterRegister` | `false` | `true`: a new account is signed in and goes to `home` instead of the sign-in page |
+| `attemptsPerUser` | `0` (off) | failed sign-ins of one username from any address before it is locked (2.19.6) |
 | `level` | `0` | the lowest permission level that may sign in (2.19.5): below it, a sign-in is refused like a wrong password |
 | `messages` | human words | what sign-in and sign-up say: `invalid`, `locked` (2.19.3, `{minutes}` is the wait), `mismatch`, `register_invalid`, `register_taken`, `registered` (2.19.4); the defaults are `AuthRoutes::MESSAGES` |
 | `attempts`, `lock` | `5`, `900` | failed sign-ins per username and address before a `429`, and the window in seconds |

@@ -28,5 +28,8 @@ block content
           label(for='passcode') Password
           input#passcode.form-control(type='password', name='passcode', required, autocomplete='current-password', maxlength='72')
         button.btn.btn-primary(type='submit') Sign in
-      .cq-or Or
-      a.btn.btn-secondary.cq-btn-block(href="{$home}register") Create account
+      //- no sign-up in Route::auth (register => false): no link to it (2.19.6)
+      - $canSignUp = isset($signUp) ? $signUp : \Caligrafy\AuthRoutes::signUpOpen()
+      if $canSignUp
+        .cq-or Or
+        a.btn.btn-secondary.cq-btn-block(href="{$home}register") Create account

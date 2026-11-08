@@ -537,6 +537,7 @@ class Route extends \stdClass
     public static function reset()
     {
         self::$_httpMethods = self::$_routes = self::$_routesComponents = self::$_methods = self::$_webhooks = self::$_mcp = array();
+        AuthRoutes::$signUp = null;
     }
 
     /**

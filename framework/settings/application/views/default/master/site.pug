@@ -52,7 +52,10 @@ html(lang="en")
             a.cq-nav-link(href="{$home}logout") Sign out
           else
             a.cq-nav-link(href="{$home}login") Sign in
-            a.cq-nav-link(href="{$home}register") Create account
+            //- no sign-up (Route::auth with register => false): no link to it (2.19.6)
+            - $canSignUp = isset($signUp) ? $signUp : \Caligrafy\AuthRoutes::signUpOpen()
+            if $canSignUp
+              a.cq-nav-link(href="{$home}register") Create account
     if $metadata
       include ../modules/metadata_body
 

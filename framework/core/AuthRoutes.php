@@ -29,7 +29,7 @@ namespace Caligrafy;
  * Options: prefix (''), home ('/'), logout ('/'), register (true, or the name of the capability), attempts, lock,
  * views (['login' => 'Auth/login', 'register' => 'Auth/register']), passkeys (false), identifier ('username': the
  * users column people sign in with and the name of its field, 'email' for instance), signInAfterRegister (false),
- * level (2.19.5: the lowest permission level that may sign in, 0 by default; below it, the sign-in is refused like a
+ * attemptsPerUser (2.19.6: failures of one username from any address before it is locked, 0 = off), level (2.19.5: the lowest permission level that may sign in, 0 by default; below it, the sign-in is refused like a
  * wrong password), messages (what sign-in and sign-up say: 'invalid', 'locked' ({minutes} is the wait), 2.19.3; 'mismatch',
  * 'register_invalid', 'register_taken', 'registered', 2.19.4; see AuthRoutes::MESSAGES).
  * A failed sign-in shows the page again with what the person typed in the identifier field (never the password).
@@ -55,6 +55,15 @@ class AuthRoutes
     );
 
     /**
+     * Whether the site has a sign-up page (2.19.6, the top bar and the sign-in page): true without Route::auth, and when
+     * a Route::auth of the request has one; false when every Route::auth says 'register' => false
+     */
+    public static function signUpOpen()
+    {
+        return self::$signUp ?? true;
+    }
+
+    /**
      * Whether a user may sign in: their permission level (Context::$levelAttribute) is at least Route::auth's 'level'
      */
     public static function mayEnter($user, $level)
@@ -62,6 +71,9 @@ class AuthRoutes
         $attribute = Context::$levelAttribute;
         return (int) $level <= 0 || (int) ($user->$attribute ?? 0) >= (int) $level;
     }
+
+    /** @var bool|null whether a Route::auth of this request has a sign-up page (null: no Route::auth) */
+    public static $signUp = null;
 
     /** @var callable|null replaces session_regenerate_id(true) (tests) */
     public static $regenerate = null;
@@ -79,7 +91,12 @@ class AuthRoutes
         }
         $o = array_merge(array('prefix' => '', 'home' => '/', 'logout' => '/', 'register' => true, 'attempts' => 5, 'lock' => 900,
             'views' => array(), 'passkeys' => false, 'identifier' => 'username', 'signInAfterRegister' => false, 'messages' => array(),
-            'level' => 0), $options);
+            'level' => 0, 'attemptsPerUser' => 0), $options);
+        // failures of one username from any address before it is locked (2.19.6): 0 = off, 'attempts' still counts per address
+        if (!is_int($o['attemptsPerUser']) && !ctype_digit((string) $o['attemptsPerUser'])) {
+            throw new \InvalidArgumentException("Route::auth: 'attemptsPerUser' is a number of failed sign-ins (0 = off)");
+        }
+        $o['attemptsPerUser'] = (int) $o['attemptsPerUser'];
         // the lowest permission level that may sign in (2.19.5): 0 lets everyone in, 1 only administrators...
         if (!is_int($o['level']) && !ctype_digit((string) $o['level'])) {
             throw new \InvalidArgumentException("Route::auth: 'level' is the lowest permission level that may sign in (0, 1...)");
@@ -105,6 +122,7 @@ class AuthRoutes
     public static function register(array $options = array())
     {
         $o = self::options($options);
+        self::$signUp = (self::$signUp ?? false) || $o['register'] !== false;
         $p = $o['prefix'];
         Route::get("$p/login", function () use ($o) { self::loginPage($o); });
         Route::post("$p/login", function () use ($o) { self::login($o); });
@@ -130,11 +148,14 @@ class AuthRoutes
      * @param callable $find function (string $username): ?user (a model with verifyPassword())
      * @return array ['status' => 'ok', 'user' => $user] | ['status' => 'invalid'] | ['status' => 'locked']
      */
-    public static function attempt($username, $password, $ip, Throttle $throttle, callable $find, $level = 0)
+    public static function attempt($username, $password, $ip, Throttle $throttle, callable $find, $level = 0, $perUser = 0)
     {
         $username = trim((string) $username);
         $key = Throttle::key('signin', $ip, $username);
-        if ($throttle->locked($key)) {
+        // the 'attemptsPerUser' option: the failures of this username from any address (guessing spread over many machines)
+        $everywhere = (int) $perUser > 0 ? $throttle->limitedTo($perUser) : null;
+        $userKey = Throttle::key('signin-user', '*', $username);
+        if ($throttle->locked($key) || ($everywhere !== null && $everywhere->locked($userKey))) {
             return array('status' => 'locked');
         }
         $user = $username !== '' ? call_user_func($find, $username) : null;
@@ -144,9 +165,15 @@ class AuthRoutes
         // below the 'level' of Route::auth: refused exactly like a wrong password, so the page never tells who exists
         if (!$user || !$user->verifyPassword((string) $password) || !self::mayEnter($user, $level)) {
             $throttle->fail($key);
-            return array('status' => $throttle->locked($key) ? 'locked' : 'invalid');
+            if ($everywhere !== null) {
+                $everywhere->fail($userKey);
+            }
+            return array('status' => $throttle->locked($key) || ($everywhere !== null && $everywhere->locked($userKey)) ? 'locked' : 'invalid');
         }
         $throttle->clear($key);
+        if ($everywhere !== null) {
+            $everywhere->clear($userKey);
+        }
         return array('status' => 'ok', 'user' => $user);
     }
 
@@ -277,7 +304,7 @@ class AuthRoutes
             redirect($o['home']);
             return;
         }
-        $data = array('identifier' => $o['identifier']);
+        $data = array('identifier' => $o['identifier'], 'signUp' => $o['register'] !== false);
         if (($text = Flash::get('messages', array())['success'] ?? null) !== null) {
             $data += array('error' => true, 'status' => 'success', 'message_header' => '', 'message' => $text);
         }
@@ -296,7 +323,7 @@ class AuthRoutes
         $text = function ($value) { return is_string($value) ? $value : ''; };
         $password = $text($p['passcode'] ?? ($p['password'] ?? ''));
         $result = self::attempt($text($p[$o['identifier']] ?? ''), $password, self::ip(), new Throttle($o['attempts'], $o['lock']),
-            self::finder($model, $o['identifier']), $o['level']);
+            self::finder($model, $o['identifier']), $o['level'], $o['attemptsPerUser']);
         if ($result['status'] !== 'ok') {
             $locked = $result['status'] === 'locked';
             $message = $locked ? str_replace('{minutes}', (string) max(1, (int) ceil($o['lock'] / 60)), $o['messages']['locked']) : $o['messages']['invalid'];
@@ -308,7 +335,7 @@ class AuthRoutes
             }
             // the page again, with what the person typed in the identifier field (so they only fix what is wrong)
             $typed = mb_substr(trim($text($p[$o['identifier']] ?? '')), 0, 254);
-            return view($o['views']['login'], array('identifier' => $o['identifier'], 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => $message,
+            return view($o['views']['login'], array('identifier' => $o['identifier'], 'signUp' => $o['register'] !== false, 'error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'message' => $message,
                 'user' => (object) array($o['identifier'] => $typed)));
         }
         $user = self::upgrade($model, $result['user'], $password);
@@ -334,7 +361,7 @@ class AuthRoutes
     private static function notAuthorized(array $o)
     {
         http_response_code(403);
-        view($o['views']['login'], array('error' => true, 'status' => 'danger', 'message_header' => 'Restricted Page', 'message' => 'You have not been granted permission to access this page'));
+        view($o['views']['login'], array('signUp' => $o['register'] !== false, 'error' => true, 'status' => 'danger', 'message_header' => 'Restricted Page', 'message' => 'You have not been granted permission to access this page'));
     }
 
     private static function registerPage(array $o)

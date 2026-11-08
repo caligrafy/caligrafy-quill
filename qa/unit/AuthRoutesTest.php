@@ -153,6 +153,26 @@ final class AuthRoutesTest extends TestCase
         AuthRoutes::options(array('level' => 'admins'));
     }
 
+    public function testAUsernameCanBeLockedFromAnyAddress(): void
+    {
+        // Route::auth(['attemptsPerUser' => 3]) (2.19.6): guessing spread over many addresses; 'attempts' per address stays
+        $throttle = $this->throttle(10);
+        $this->assertSame('invalid', AuthRoutes::attempt('ann', 'nope', '10.0.0.1', $throttle, $this->finder(), 0, 3)['status']);
+        $this->assertSame('invalid', AuthRoutes::attempt('ann', 'nope', '10.0.0.2', $throttle, $this->finder(), 0, 3)['status']);
+        $this->assertSame('locked', AuthRoutes::attempt('ann', 'nope', '10.0.0.3', $throttle, $this->finder(), 0, 3)['status'], 'the third failure, from a third address');
+        $this->assertSame('locked', AuthRoutes::attempt('ann', 'Passw0rd!', '10.0.0.4', $throttle, $this->finder(), 0, 3)['status'], 'even the right password');
+        $this->assertSame('invalid', AuthRoutes::attempt('bob', 'x', '10.0.0.4', $throttle, $this->finder(), 0, 3)['status'], 'another username is counted apart');
+        // off by default, and a success forgets the count
+        $free = $this->throttle(10);
+        foreach (array('10.1.0.1', '10.1.0.2', '10.1.0.3') as $ip) {
+            $this->assertSame('invalid', AuthRoutes::attempt('ann', 'nope', $ip, $free, $this->finder())['status']);
+        }
+        $this->assertSame('ok', AuthRoutes::attempt('ann', 'Passw0rd!', '10.1.0.4', $free, $this->finder(), 0, 5)['status']);
+        $this->assertSame(0, $free->failures(Throttle::key('signin-user', '*', 'ann')));
+        $this->expectException(\InvalidArgumentException::class);
+        AuthRoutes::options(array('attemptsPerUser' => 'many'));
+    }
+
     public function testASuccessForgetsTheFailures(): void
     {
         $throttle = $this->throttle(3);

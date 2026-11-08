@@ -1368,6 +1368,11 @@ qa_test('Route::auth: the sign-out form (POST /logout with the page token) signs
     qa_contains('signedOut', $r['body']);
 });
 
+qa_test('Route::auth: the sign-in page links to sign-up only when there is one (2.19.6)', function () {
+    qa_contains('Create account', (new QaBrowser())->get('/qa/auth/login')['body']);
+    qa_not_contains('Create account', (new QaBrowser())->get('/qa/closed/login')['body']);
+});
+
 qa_test('Route::auth: a wrong password fails, and 3 failures lock that username from that address', function () {
     qa_auth_user('lockqa')->get('/qa/auth/logout');
     $b = new QaBrowser();

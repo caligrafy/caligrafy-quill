@@ -120,17 +120,22 @@ class Upgrader
     }
 
     /**
-     * A project that signs people in with Route::auth (2.19) and removed the AuthController template does not get it back:
-     * its routes no longer call it (2.19.3). --force adds it anyway.
+     * A sign-in or user administration controller the project removed is not added back when no route of the project
+     * uses it (2.19.3 for Route::auth, 2.19.6 for every project: an app with its own sign-in, face sign-in for instance).
+     * --force adds it anyway.
      */
     private function holdSignInController(array $plan)
     {
-        if (($plan[self::AUTH_CONTROLLER]['status'] ?? '') !== 'missing') return $plan;
         $routes = @file_get_contents($this->root . '/application/config/routing/web.php');
-        // Route::auth( in code, not in a comment: a line that does not start with // or *
-        if ($routes !== false && preg_match('#^(?!\s*(//|\*|/\*)).*Route::auth\s*\(#m', $routes)) {
-            $plan[self::AUTH_CONTROLLER]['status'] = 'held';
-            $plan[self::AUTH_CONTROLLER]['reason'] = 'your routes sign people in with Route::auth: AuthController is not needed (add it with --force)';
+        if ($routes === false) return $plan;
+        // the lines of code, not the comments
+        $code = implode("\n", array_filter(preg_split('/\R/', $routes), function ($line) { return !preg_match('#^\s*(//|\*|/\*)#', $line); }));
+        foreach (array(self::AUTH_CONTROLLER, self::ADMIN_CONTROLLER) as $path) {
+            if (($plan[$path]['status'] ?? '') !== 'missing' || strpos($code, basename($path, '.php')) !== false) continue;
+            $plan[$path]['status'] = 'held';
+            $plan[$path]['reason'] = strpos($code, 'Route::auth') !== false && $path === self::AUTH_CONTROLLER
+                ? 'your routes sign people in with Route::auth: AuthController is not needed (add it with --force)'
+                : 'none of your routes uses it (add it with --force)';
         }
         return $plan;
     }

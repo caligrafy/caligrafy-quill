@@ -6,6 +6,21 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.19.6] - 2026-11-08
+
+### Added
+- `Route::auth(['attemptsPerUser' => 20])`: the failed sign-ins of one username, from any address, before it is locked
+  (0, off, by default), against guessing spread over many machines. `attempts` still counts per address and username.
+
+### Changed
+- `upgrade` and `update` do not add back `AuthController` or `AdminController` to a project that removed them when no
+  line of code of its routes names them (only with `Route::auth` before): an app with its own sign-in keeps them out.
+- With `Route::auth(['register' => false])` the sign-in page and the top bar of the pages do not link to a sign-up page
+  that does not exist (`AuthRoutes::signUpOpen()`).
+
+### Documentation
+- Plugin 1.31.6; the wiki (Authentication, Declarative routes) documents `attemptsPerUser`.
+
 ## [2.19.5] - 2026-11-08
 
 ### Added

@@ -41,17 +41,23 @@ final class UpgraderTest extends TestCase
         $this->assertSame(['mine.php' => 'customized', 'new.php' => 'missing', 'old.php' => 'outdated', 'same.php' => 'identical'], $status);
     }
 
-    public function testTheSignInControllerIsNotAddedBackWhenRouteAuthSignsPeopleIn(): void
+    public function testASignInControllerNoRouteUsesIsNotAddedBack(): void
     {
         $this->write(Upgrader::TEMPLATE . '/' . Upgrader::AUTH_CONTROLLER, '<?php // AuthController');
-        $plan = fn () => (new Upgrader($this->root))->plan()[Upgrader::AUTH_CONTROLLER];
-        // routes without Route::auth (or only in a comment): the missing controller is added as before
-        $this->write('application/config/routing/web.php', "<?php\n// Route::auth(['home' => '/']);\nRoute::run();\n");
-        $this->assertSame('missing', $plan()['status']);
-        // Route::auth in the routes: held, with the reason (2.19.3)
+        $this->write(Upgrader::TEMPLATE . '/' . Upgrader::ADMIN_CONTROLLER, '<?php // AdminController');
+        $plan = fn ($path) => (new Upgrader($this->root))->plan()[$path];
+        // a route of the project uses it: the missing controller is added, as before
+        $this->write('application/config/routing/web.php', "<?php\nRoute::get('/login', 'Caligrafy\\\\Controllers\\\\AuthController');\nRoute::run();\n");
+        $this->assertSame('missing', $plan(Upgrader::AUTH_CONTROLLER)['status']);
+        $this->assertSame('held', $plan(Upgrader::ADMIN_CONTROLLER)['status'], 'no route uses AdminController');
+        // only in a comment (the template's commented routes): held (2.19.6)
+        $this->write('application/config/routing/web.php', "<?php\n// Route::get('/login', 'Caligrafy\\\\Controllers\\\\AuthController');\nRoute::run();\n");
+        $this->assertSame('held', $plan(Upgrader::AUTH_CONTROLLER)['status']);
+        $this->assertStringContainsString('none of your routes', $plan(Upgrader::AUTH_CONTROLLER)['reason']);
+        // Route::auth in the routes: held, with that reason (2.19.3)
         $this->write('application/config/routing/web.php', "<?php\n    Route::auth(['home' => '/home']);\nRoute::run();\n");
-        $this->assertSame('held', $plan()['status']);
-        $this->assertStringContainsString('Route::auth', $plan()['reason']);
+        $this->assertSame('held', $plan(Upgrader::AUTH_CONTROLLER)['status']);
+        $this->assertStringContainsString('Route::auth', $plan(Upgrader::AUTH_CONTROLLER)['reason']);
     }
 
     public function testTemplateHistoryMarksUntouchedFilesAsOutdated(): void

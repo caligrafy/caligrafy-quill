@@ -43,6 +43,16 @@ class Throttle
     }
 
     /**
+     * The same counts and window with another limit (2.19.6: Route::auth's attemptsPerUser)
+     */
+    public function limitedTo($max)
+    {
+        $copy = clone $this;
+        $copy->max = max(1, (int) $max);
+        return $copy;
+    }
+
+    /**
      * Whether the key failed $max times within the window
      */
     public function locked($key)

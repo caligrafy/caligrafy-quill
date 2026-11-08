@@ -110,6 +110,7 @@ $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n    Route::g
     . "    Route::form(\"/qa/forms/cover\", \"qa_set_cover\", [\"success\" => \"/qa/forms/new\", \"flash\" => \"Cover {cover}\", \"back\" => \"/qa/forms/new\"]);\n"
     . "    Route::capability(\"POST\", \"/v2/covers\", \"qa_set_cover\");\n"
     . "    Route::auth([\"prefix\" => \"/qa/auth\", \"home\" => \"/qa/bare\", \"logout\" => \"/qa/bare\", \"attempts\" => 3, \"lock\" => 60, \"passkeys\" => true]);\n"
+    . "    Route::auth([\"prefix\" => \"/qa/closed\", \"home\" => \"/qa/bare\", \"register\" => false]);\n"
     . "    Route::webhook(\"/qa/hooks/stripe\", \"qa_record_stripe\", [\"verify\" => \"stripe\", \"secret_env\" => \"QA_STRIPE_WEBHOOK_SECRET\"]);\n"
     . "    Route::download(\"/qa/books.csv\", \"list_books\", [\"filename\" => \"books.csv\", \"bom\" => true]);\n"
     . "    Route::download(\"/qa/books.json\", \"list_books\", [\"as\" => \"json\", \"filename\" => \"books.json\"]);\n"
