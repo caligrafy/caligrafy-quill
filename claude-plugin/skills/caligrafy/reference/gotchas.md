@@ -601,3 +601,48 @@ Proof: `Migrations::run()`.
 `Caligrafy\Testing\TestCase` each test runs in a transaction that is rolled back; MySQL commits it at any DDL
 statement, so a test that creates or alters a table leaves its rows behind: create tables with migrations, run once on
 the test database (`DB_TEST_DATABASE`). Proof: `framework/core/Queue.php`, `framework/testing/TestCase.php`.
+
+## Queries (the query builder: `Database::table()`, `Book::query()`)
+
+**G122. `Book::find()` and `$book->find()` are two methods.** `Model` no longer declares `find()`: on an instance
+`__call()` runs the old `SELECT * FROM <table> WHERE id = ?`, statically `__callStatic()` runs
+`Book::query()->find($id)` (`... WHERE \`id\` = ? LIMIT 1`, a `Book`). A model that declares its own `find()` keeps it
+for instances (and `parent::find()` still works), but `Book::find(1)` then fails with "Non-static method cannot be
+called statically": use `Book::query()->find(1)`. The same holds for `all()`, `search()`, `create()`, `update()`,
+`delete()` (instance methods: never static). `method_exists($model, 'find')` is now false; `is_callable()` is true.
+Proof: `framework/core/Model.php` (`__call`, `__callStatic`).
+
+**G123. The table of `Book::query()` is guessed from the class name.** `Book` -> `books`, `BookReview` -> `bookreviews`
+(the short class name lower-cased + plural, not snake_case), unless the class declares `protected static $tableName =
+'book_reviews';` or a default `public $table = 'book_reviews';`. A private static `$tableName` is not seen. An
+instance (`(new Book('books'))->where(...)`) uses its own `$table`. Proof: `Model::queryTable()`.
+
+**G124. Relations of `with()` follow names, not the database.** A singular name is belongsTo (`author` -> `author_id`
+on this table, `authors.id`), a plural one hasMany (`books` -> `books.<singular this table>_id`). Many-to-many needs
+`['tags' => ['pivot' => true]]` (pivot `book_tag`: singular names, alphabetical) or a pivot name: the pivots that
+`Model::belongsToMany()` creates are `<table1>_<table2>` (`books_tags`, G10), so pass `['pivot' => 'books_tags']`
+for those. Irregular names (`person`/`people`, `status`) need `table` / `type`. The key columns must be in the rows:
+`select('title')->with('author')` has no `author_id` and attaches `null`. A `query` constraint on a belongsToMany
+relation runs on the join: qualify columns (`tags.label`). A `limit()` in a constraint limits the whole relation
+query, not each parent. Related rows stay arrays when the main rows are models. Proof: `Query::relation()`,
+`qa/unit/QueryEagerTest.php`.
+
+**G125. `update()`, `delete()`, `increment()` and `decrement()` of a query need a `where`.** Without one they throw
+`LogicException` and run nothing; `whereNotIn('id', [])` and `search($cols, '')` add no condition, so they do not count.
+For every row of a table write the SQL with `Database::execute()`. Proof: `Query::needsWhere()`.
+
+**G126. `search()` of a query escapes `%` and `_`; `Model::search()` does not.** `Book::query()->search(['title'],
+'50%')` finds the text `50%` (bound `%50\%%`, MySQL's default `\` escape; `NO_BACKSLASH_ESCAPES` mode breaks it).
+`(new Book('books'))->search('title', '%50%')` still takes a LIKE pattern as is (G2). Proof: `Query::search()`.
+
+**G127. The N+1 warning is development only, once per shape and process.** With `APP_ENV` other than `production`
+the 10th identical SELECT shape logs "Probable N+1 query" with the first file:line outside `framework/`; it counts
+queries run through `Database::execute()` (models included). `APP_ENV` is read once per process, so a long-running
+worker counts across jobs (the counts reset at 2000 shapes); call `Query::watch(null)` between jobs. Proof:
+`Query::observe()`.
+
+**G128. `Database::transaction()` does not nest.** A call inside another one (or inside a transaction already open on
+the connection, such as a test's) just runs: an exception still reaches the outer call, which rolls back everything;
+an inner exception that you catch inside the outer callback does not undo the inner writes. MySQL commits at any DDL
+(`CREATE`, `ALTER`, and `Model::belongsToMany()`'s `CREATE TABLE IF NOT EXISTS`), ending the transaction early (G121).
+Proof: `Database::transaction()`, `qa/unit/DatabaseQueryTest.php`.
