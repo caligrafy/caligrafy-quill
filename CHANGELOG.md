@@ -10,7 +10,7 @@ same number. Check the version of a project with `php caligrafer.php version`.
 
 ### Fixed
 - Production builds no longer log `Installation failed after 3 tries`: the `Dockerfile` runs `composer install` and `composer dump-autoload` with `--no-plugins`, and `composer.json` turns off `nodejs-php-fallback` (from `pug-php/pug`), which tried to install `pug-cli` with npm on every build. No view uses Node; the build is shorter and its log shows only real failures.
-- `php caligrafer.php update` merges `config.allow-plugins` of `composer.json` as it merges packages (the release's value unless the project changed it), so a project gets the release's plugin settings.
+- `php caligrafer.php update` merges `config.allow-plugins` of `composer.json` as it merges packages (the release's value unless the project changed it), for the releases after 2.22.1. The update to 2.22.1 itself runs the updater of the release a project comes from, so it does not turn the plugin off in `composer.json`: set `"nodejs-php-fallback/nodejs-php-fallback": false` by hand to stop it locally too (builds skip it either way).
 
 ## [2.22.0] - 2026-11-13
 
