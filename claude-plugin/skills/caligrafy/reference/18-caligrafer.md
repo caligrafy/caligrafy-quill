@@ -46,6 +46,7 @@ It prints one line per capability: its name, who may call it, whether it reads, 
 | [`sql`](#sql) | Runs a SQL script on the database |
 | [`migrate`](#migrate) | Runs, lists or writes migrations |
 | [`platform install`](#platform) | Creates the framework tables |
+| [`snap`](#snap) | Snap Cards and the assistant: its tables, a starter hints file, what is ready |
 | [`token`](#token) | Creates, lists and revokes personal access tokens |
 | [`mcp`](#mcp) | An MCP server over stdio, for AI agents on this computer |
 | [`audit`](#audit) | The latest capability calls and refusals |
@@ -141,7 +142,7 @@ The Docker server is `dev-box` (PHP 8.5 and Apache, your folder mounted in it), 
 php caligrafer.php version        # also --version and -v
 ```
 ```text
-Caligrafy Quill 2.22.1
+Caligrafy Quill 2.23.0
 ```
 It works before `composer install` and never creates `.env`. In code: `Caligrafy\Framework::VERSION`. The changes of every version are in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
 
@@ -262,15 +263,31 @@ Then `Nothing to migrate: caligrafy is up to date`. `--env <file>` can come anyw
 ### `platform install`
 ```text
  Usage: php caligrafer.php platform install
- Creates the framework tables (tokens, audit log, job runs, notifications, jobs, cache, migrations) from framework/settings/platform.sql
+ Creates the framework tables (tokens, audit log, job runs, notifications, jobs, cache, migrations, Snap) from framework/settings/platform.sql
 ```
 ```bash
 php caligrafer.php platform install
 ```
 ```text
- Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, the notifications tables, caligrafy_jobs, caligrafy_cache and caligrafy_migrations
+ Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, the notifications tables, caligrafy_jobs, caligrafy_cache, caligrafy_migrations and Snap's tables
 ```
 Safe to run again. `quickstart` and `deploy` run it; `doctor` says when the tables are missing.
+
+### `snap`
+```bash
+php caligrafer.php snap install   # Snap's tables, and application/config/snap.php when there is none
+php caligrafer.php snap           # what is ready (snap status)
+```
+```text
+ Snap Cards and the assistant
+  [ok] Tables            caligrafy_snap_*
+  [ok] Route             Route::snap(); in application/config/routing/web.php
+  [ok] Card hints        application/config/snap.php (optional: cards work without it)
+  [ok] Background tasks  the queue runs them: ...
+  [ok] Routines          ... snap_routines_due ...
+  [--] Assistant model   ANTHROPIC_API_KEY in .env (without it the assistant answers from the cards' names)
+```
+Since 2.23.0. See [Snap Cards and the assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant).
 
 ### `cache clear`
 ```text
@@ -417,7 +434,7 @@ php caligrafer.php doctor --env .env.production    # another environment file
 php caligrafer.php doctor --json                   # for scripts
 ```
 ```text
-Caligrafy doctor (read-only): Caligrafy Quill 2.22.1
+Caligrafy doctor (read-only): Caligrafy Quill 2.23.0
 
  Database
   OK    Database: connected to mysql://mysql:3306/caligrafy (server 8.4.13)
@@ -448,7 +465,7 @@ php caligrafer.php update --check      # what it would change, nothing written
 php caligrafer.php update              # to the latest release
 php caligrafer.php update 2.21.6       # to one release
 ```
-On the latest release: `Caligrafy Quill 2.22.1 is the latest: nothing to update. php caligrafer.php upgrade checks application/.` It downloads the project's release and the target from GitHub, then:
+On the latest release: `Caligrafy Quill 2.23.0 is the latest: nothing to update. php caligrafer.php upgrade checks application/.` It downloads the project's release and the target from GitHub, then:
 
 1. replaces `framework/` and `claude-plugin/` whole (keeping `framework/librairies/app/.env`);
 2. compares every other file of the release (`caligrafer.php`, `.bin/`, `Dockerfile`, `docker-compose.yaml`, `index.php`, `public/css`, `public/js`...) with the project's release: a file you never changed is replaced, a missing one is added, a file you changed is kept with the new version next to it as `<file>.caligrafy-new`. Your documents (`README.md`...) are left alone; `application/`, `tests/`, `qa/`, `public/uploads/` and `composer.lock` are never touched here;

@@ -127,6 +127,11 @@ Check: `php caligrafer.php queue work --once` prints `done`; in a test, `$this->
 Slow reads that change rarely: `Caligrafy\Cache::remember('<key>', <seconds>, fn () => ...)`, forgotten in the
 capabilities that change the data (reference/48-caching.md).
 
+**In an app with Snap** (`Route::snap()`, 2.23.0): a slow capability can instead declare `async: true` in its
+`#[Capability(...)]`: Snap's cards run it in the background as a Track card: Task (REST, MCP and pages still run it
+directly, G155). Give the new capability its hints in `application/config/snap.php` when it needs them (a `title`, a
+list's `columns`, a change's `done` line, `applies` when it only fits some records; the `assistant` skill, G157).
+
 ## On a timer (2.14.0+)
 
 When the feature must run with no page open ("every minute", "every morning", "check the due ones"), it is a

@@ -383,7 +383,7 @@ curl -s -H "Content-Type: application/json" -H "Authorization: Bearer $TOKEN" \
      http://localhost:8080/mcp
 ```
 ```json
-{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"caligrafy-app","title":"caligrafy-app","version":"2.22.1"},"instructions":"Tools are the capabilities of this application that your token allows. Tools marked destructive delete or overwrite data: confirm with the user first."}}
+{"jsonrpc":"2.0","id":1,"result":{"protocolVersion":"2025-06-18","capabilities":{"tools":{"listChanged":false}},"serverInfo":{"name":"caligrafy-app","title":"caligrafy-app","version":"2.23.0"},"instructions":"Tools are the capabilities of this application that your token allows. Tools marked destructive delete or overwrite data: confirm with the user first."}}
 ```
 (`serverInfo.name` is your `APP_NAME`.) Then the tools:
 ```bash
@@ -525,6 +525,7 @@ and can run later as a [background job](https://github.com/caligrafy/caligrafy-q
 | `public` | `false` | anyone may call it, without signing in or a token |
 | `mcp` | `true` | `false` keeps it out of MCP (a capability only a browser can use). REST still reaches it |
 | `webOnly` | `false` | `true` (2.21.0): [`Route::action`](#webonly) reaches it, nothing else |
+| `async` | `false` | `true` (2.23.0): a slow capability; [Snap](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant#tasks) runs it in the background as a Track card: Task. Other channels call it as before |
 
 `php caligrafer.php service <Folder>/<Name> [--scope <scope>] [--read-only]` writes the class in
 `application/services/<Folder>/<Name>.php`, the name in snake_case (`CreateBook` -> `create_book`). Without

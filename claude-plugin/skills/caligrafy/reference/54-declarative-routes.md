@@ -27,6 +27,7 @@ web-only capability served by [`Route::action`](#action). Existing controllers k
 | Many files as one ZIP | `Route::download('/photos.zip', 'list_photo_files', ['as' => 'zip', 'root' => 'public/uploads/photos']);` |
 | An address that moved | `Route::redirect('/old/books/{id}', '/books/{id}', 301);` |
 | Anything else a browser asks | `Route::action('/authors/{author_id}/books', 'open_author_books');` |
+| Every capability as a card, and an assistant | `Route::snap();` ([Snap Cards and the assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant)) |
 | A file in a form | the `file` rule of the capability: `'cover' => 'required\|file\|extension,png;jpg\|max_size,2mb'` |
 
 ## With Claude

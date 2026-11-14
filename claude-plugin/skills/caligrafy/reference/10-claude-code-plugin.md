@@ -5,7 +5,7 @@
 
 Caligrafy Quill ships with its own **[Claude Code](https://code.claude.com) plugin**, `caligrafy-quill`, in the [`claude-plugin/`](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin) folder of every project. When you open a project in Claude Code, Claude knows the framework from its source: capabilities, the declarative routes, the query builder, models, Pug views, authentication, payments, Vue apps, bots, face detection, machine learning and the AI integrations. It builds the Caligrafy way, **build once, experience everywhere**: a feature becomes a capability, and every experience (pages, Vue apps, REST, AI agents) calls it. With `/caligrafy-quill:idea` it goes from your idea to an app online: **Describe it. Approve it. Ship it.**
 
-Current version: **1.34.1**, for Caligrafy Quill v2.22.1.
+Current version: **1.35.0**, for Caligrafy Quill v2.23.0.
 
 ## What the plugin gives Claude
 
@@ -15,6 +15,7 @@ Current version: **1.34.1**, for Caligrafy Quill v2.22.1.
 | Command | `/caligrafy-quill:idea` | Your idea turned into a complete app online, with one confirmation: the plan, the project, every feature as a capability, the checks, then GitHub and Caligrafy Cloud |
 | Command | `/caligrafy-quill:new-capability` | One capability, served to the channels you need (REST, the JavaScript client, pages and forms, MCP), with a token and tests |
 | Command | `/caligrafy-quill:new-resource` | A table, its model, its five CRUD capabilities, their REST routes, pages and forms |
+| Command | `/caligrafy-quill:assistant` | Snap Cards and the assistant: every capability as a card, a Home that shows what needs you, a conversation that answers with cards (`Route::snap()`, 2.23.0) |
 | Command | `/caligrafy-quill:new-app` | A client app in `public/<name>` (Vue as a library, a Vite SPA, a Watson bot, face detection, machine learning) and its routes |
 | Command | `/caligrafy-quill:server` | Starts, stops or checks the Docker development server |
 | Command | `/caligrafy-quill:db` | Runs SQL scripts and migrations, lists tables, runs queries |
@@ -111,6 +112,12 @@ Runs the Caligrafer scaffold into `public/<name>`, adds its page route, prefers 
 The names `app`, `bot`, `__bots__`, `css`, `facedetect`, `fonts`, `images`, `js`, `ml`, `resources` and `uploads` are reserved. The `caligrafy` skill carries two complete recipes Claude follows: **AI chat apps** (OpenAI, Groq, or an open model on OpenRouter or Ollama) and **face login** (face prints checked on the server, with a lockout; a photo can pass, so use it as a convenience or a second factor).
 ```text
 /caligrafy-quill:new-app facedetect faceauth
+```
+
+### `/caligrafy-quill:assistant [what the app is about]`
+Gives the project [Snap Cards and the assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant) (2.23.0): adds `Route::snap();` to `web.php`, runs `php caligrafer.php snap install`, writes the hints of `application/config/snap.php` from your capabilities (names, columns, the assistant's lines, Home's numbers with their actions, what Home invites to browse, when an action applies), marks slow capabilities `async: true` (a Track card: Task in the background), adds the queue and routines jobs, asks before setting an Anthropic API key (you type it in a hidden prompt), and checks `/assistant` and `/snap`.
+```text
+/caligrafy-quill:assistant a library app: books, authors and loans
 ```
 
 ### `/caligrafy-quill:server <start | stop | status>`

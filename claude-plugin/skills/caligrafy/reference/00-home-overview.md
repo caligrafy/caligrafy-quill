@@ -49,6 +49,7 @@ that same capability to every way people and machines reach your application:
 | **Vue apps** on desktop, tablet and phone | a generated JavaScript function: `await createTask({ title })` |
 | **REST API** for other applications | `POST /api/tasks` |
 | **AI agents** such as Claude or Cursor | an MCP tool: `create_task` |
+| **Snap Cards and the assistant** | a card a person uses, and an assistant that answers with it: `Route::snap();` ([more](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant)) |
 
 The same validation messages, the same permissions and the same audit log, whichever way it is called. You never
 write a feature twice, and the experiences never drift apart.

@@ -1,0 +1,81 @@
+extends ../../../application/views/default/master/site
+
+//- The Snap shell (Route::snap(), 2.23.0; designed in a prototype, redesigned after the 2026-11-14 reviews): Home and the task space, one page, on white.
+//-   Home        the conversation section in full (the assistant's mark, greeting, its line for the situation, your
+//-               progress, suggestions with "What else can I do?", the input), then At a glance and the sections that
+//-               have something (Needs you, For you, In progress, Just done, Your shortcuts), three minimal cards a row.
+//-               Any card opens in the task space.
+//-   Task space  the assistant's latest line on the page itself (what you asked is in the history only) (no box: what it says is not something
+//-               to act on), its controls, what you may want to do next, then only the cards of that answer, in white
+//-               cards. The input is there when you would rather type. Every action gets a line; done things are celebrated.
+//- Desktop and tablet: the conversation on top. Mobile: at the bottom.
+
+block title
+    | Assistant
+
+block additional_css
+    meta(name='snap-home', content=$home)
+    meta(name='snap-assistant', content=$snap['assistant'])
+    meta(name='snap-cards', content=$snap['cards'])
+    meta(name='snap-csrf', content=session('token'))
+    meta(name='snap-signed-in', content='yes')
+    link(rel='stylesheet', href=$home . 'public/snap/snap.css?v=' . @filemtime(PUBLIC_PATH . 'snap/snap.css'))
+    link(rel='stylesheet', href=$home . 'public/snap/snap-shell.css?v=' . @filemtime(PUBLIC_PATH . 'snap/snap-shell.css'))
+
+block content
+    #snap-app.snap-app(data-mode='home')
+        section#snap-convo.snap-convo(aria-label='Conversation')
+            .snap-convo-inner
+                .snap-hello
+                    span.snap-mark(aria-hidden='true', data-icon='sparkles')
+                    h1#snap-greeting.snap-greeting= $snaphome['greeting']
+                .snap-latest
+                    span.snap-mark.snap-mark--sm(aria-hidden='true', data-icon='sparkles')
+                    p#snap-message.snap-message(aria-live='polite')= $snaphome['message']
+                #snap-progress.snap-progress-chips
+                .snap-controls(role='toolbar', aria-label='Conversation')
+                    button#snap-go-home.snap-ctl(type='button', title='Home', aria-label='Home', data-icon='house')
+                    button#snap-prev.snap-ctl(type='button', title='Previous answer', aria-label='Previous answer', data-icon='chevron-left')
+                    span#snap-position.snap-position
+                    button#snap-next.snap-ctl(type='button', title='Next answer', aria-label='Next answer', data-icon='chevron-right')
+                    button#snap-history-btn.snap-ctl(type='button', title='History', aria-label='History', aria-expanded='false', aria-controls='snap-history', data-icon='history')
+                    span.snap-ctl-sep(aria-hidden='true')
+                    button#snap-up.snap-ctl(type='button', aria-pressed='false', title='Helpful', aria-label='Helpful', data-icon='thumbs-up')
+                    button#snap-down.snap-ctl(type='button', aria-pressed='false', title='Not helpful', aria-label='Not helpful', data-icon='thumbs-down')
+                    button#snap-again.snap-ctl(type='button', title='A different answer', aria-label='A different answer', data-icon='refresh-cw')
+                    button#snap-open-input.snap-ctl.snap-ctl--type(type='button', aria-expanded='false', aria-controls='snap-ask', title='Type a message', aria-label='Type a message', data-icon='keyboard')
+                    button#snap-talk.snap-ctl.snap-ctl--talk(type='button', hidden, aria-pressed='false', title='Talk to me', aria-label='Talk to me', data-icon='mic')
+                #snap-engage.snap-engage
+                    #snap-suggestions.snap-suggestions(role='group', aria-label='What you may want to do next')
+                    #snap-attached.snap-attached(hidden, aria-live='polite')
+                    form#snap-ask.snap-bar(autocomplete='off')
+                        button#snap-attach.snap-bar-btn.snap-bar-btn--attach(type='button', title='Attach files', aria-label='Attach files', data-icon='plus')
+                        input#snap-files.visually-hidden(type='file', multiple, tabindex='-1', aria-hidden='true', accept='image/png,image/jpeg,image/gif,image/webp,application/pdf,text/plain,text/csv,text/markdown,.md,.csv,.txt')
+                        label.visually-hidden(for='snap-text') Ask or search for anything
+                        input#snap-text(type='text', maxlength='500', placeholder='Ask or search for anything')
+                        button#snap-mic.snap-bar-btn(type='button', hidden, aria-pressed='false', aria-label='Speak', data-icon='mic')
+                        button.snap-bar-btn.snap-bar-btn--send(type='submit', aria-label='Send', data-icon='send')
+        //- the conversation, compact, pinned under the top bar once the page scrolls (desktop and tablet)
+        #snap-compact.snap-compact(hidden, role='region', aria-label='Conversation')
+            .snap-compact-inner
+                span.snap-mark.snap-mark--sm(aria-hidden='true', data-icon='sparkles')
+                button#snap-compact-line.snap-compact-line(type='button', title='Back to the top')
+                .snap-compact-ctl
+                    button#snap-compact-home.snap-ctl(type='button', title='Home', aria-label='Home', data-icon='house')
+                    button#snap-compact-type.snap-ctl(type='button', aria-label='Type a message', data-icon='keyboard')
+                    button#snap-compact-talk.snap-ctl.snap-ctl--talk(type='button', hidden, aria-pressed='false', aria-label='Talk to me', data-icon='mic')
+        section#snap-cards.snap-cards(aria-label='Cards')
+        aside#snap-history.snap-history(hidden, aria-label='History')
+            .snap-history-head
+                h2 Your conversations
+                button#snap-history-close.snap-icon-btn(type='button', aria-label='Close', data-icon='x')
+            ol#snap-history-list.snap-history-list
+        p.snap-foot-note
+            a(href=$home . $snap['assistant'] . '/noticed') What I've noticed
+    script#snap-home-data(type='application/json')!= json_encode($snaphome, JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT)
+
+block additional_scripts
+    script(src='https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js')
+    script(src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js')
+    script(src=$home . 'public/snap/snap-card.js?v=' . @filemtime(PUBLIC_PATH . 'snap/snap-card.js'))
+    script(src=$home . 'public/snap/snap-shell.js?v=' . @filemtime(PUBLIC_PATH . 'snap/snap-shell.js'))

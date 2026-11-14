@@ -57,8 +57,18 @@ class ClassMap
             self::$file = $folder . DIRECTORY_SEPARATOR . 'map-' . substr(md5(implode('|', self::$dirs) . '#' . implode('|', self::$skip)), 0, 12) . '.php';
         }
         spl_autoload_register(array(__CLASS__, 'load'));
-        foreach (self::map()['eager'] as $path) {
-            require_once $path;
+        $eager = self::map()['eager'];
+        foreach ($eager as $path) {
+            if (!is_file($path)) {
+                // a file the map remembers was deleted (2.23.0): the map is checked again before anything loads
+                $eager = self::refresh()['eager'];
+                break;
+            }
+        }
+        foreach ($eager as $path) {
+            if (is_file($path)) {
+                require_once $path;
+            }
         }
     }
 

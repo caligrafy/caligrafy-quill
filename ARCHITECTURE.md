@@ -17,6 +17,7 @@ and programs reach the application is an adapter around the same capabilities:
 | Vue apps, the Vite SPA, installable mobile pages | the generated JS client (`php caligrafer.php client`) calls `/capabilities` | the signed-in person (cookie + `X-CSRF-Token`) |
 | REST | `Route::capability()` routes and `POST /capabilities/{name}` | a personal access token, the legacy key, or the session |
 | AI agents | MCP: `Route::mcp('/mcp')` over HTTP, `php caligrafer.php mcp` over stdio | a personal access token |
+| Snap Cards and the assistant | `Route::snap()` (2.23.0): `Caligrafy\Snap` builds a card from each capability's declaration, the shell (`/assistant`) shows them and its planner (Claude) chooses them; a change runs only from its Confirm token (`Snap\Consent`) | the signed-in person (session) |
 | Scripts and the command line | `php caligrafer.php call <capability>`, `Capabilities::call()` | the CLI (full access, audited as `cli`) |
 
 A rule written once (validation, permission, audit) behaves the same whichever way it is called; the QA suite proves
@@ -36,6 +37,9 @@ framework/
 │                  capabilities: Service, ServiceError, Capability, Capabilities, Context, Tokens, Audit
 │                  tools: Caligrafer, Quickstart, Doctor, Upgrader, Deployer, CloudClient
 │                  services the apps use: Payment, OpenAI, Assistant, Agent, Watson, FaceLogin, Passkey, Mail...
+│                  Snap/: Snap Cards and the assistant (Cards, Flow, Consent, Conversation, Planner, Tasks, Offers...)
+├── services/      the framework's own capabilities: Notify (notify_*), Snap (snap_*), queue_work
+├── views/         snap/: the pages of Route::snap() (they extend the app's own site.pug)
 ├── interfaces/    how the world reaches a capability: Rest, Mcp/ (Server, Http), Client (the JS client generator)
 ├── database/      Database (PDO, bound parameters)
 ├── helpers/       initialize.php (session, CSRF token, URLs), corehelpers.php (view, api, redirect, guard...)
@@ -50,7 +54,7 @@ application/       (a project: copied from framework/settings/application by ini
 ├── controllers/   the older way, still working; core/ holds the framework's (Auth, Admin, AI, Client, Watson)
 └── config/        config.php, routing/web.php (every route of the project), schedule.php (jobs), container.php (bindings)
 tests/             the application's own tests (php caligrafer.php test, Caligrafy\Testing\TestCase); never loaded on a page
-public/            css/ (tokens.css, layout.css, look.css, camera.css: the look), js/capabilities.js (the generated client), <app>/ (client apps)
+public/            css/ (tokens.css, layout.css, look.css, camera.css: the look), js/capabilities.js (the generated client), snap/ (Snap's scripts and styles), <app>/ (client apps)
 Dockerfile         the production image; docker/Dockerfile is the development image of docker-compose.yaml
 claude-plugin/     the Claude Code plugin: the documentation, skills, a reviewer agent
 ```

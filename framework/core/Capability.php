@@ -36,7 +36,8 @@ class Capability
         public bool $destructive = false,
         public bool $public = false,
         public bool $mcp = true,
-        public bool $webOnly = false
+        public bool $webOnly = false,
+        public bool $async = false
     ) {
         if (!preg_match('/^[a-z][a-z0-9_]{0,63}$/', $name)) {
             throw new \InvalidArgumentException("Capability name '$name' must be snake_case: letters, digits and _, starting with a letter");

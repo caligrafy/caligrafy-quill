@@ -39,7 +39,8 @@
         "phpmailer/phpmailer": "^7.2",
         "lucianotonet/groq-php": "^1.4",
         "lbuchs/webauthn": "^2.2",
-        "minishlink/web-push": "^11.0"
+        "minishlink/web-push": "^11.0",
+        "anthropic-ai/sdk": "^1.8"
     },
     "config": {
         "allow-plugins": {

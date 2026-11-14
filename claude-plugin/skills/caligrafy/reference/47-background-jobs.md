@@ -259,6 +259,7 @@ In a test, `$this->assertQueued('send_loan_receipt')` checks that a job was push
 
 + [Scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)
 + [Notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications)
++ [Snap Cards: a capability declared `async: true` runs in the queue as a Track card: Task](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant#tasks)
 + [Authentication: tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication#agents)
 + [Testing your app](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App)
 

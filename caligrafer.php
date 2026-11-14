@@ -62,6 +62,7 @@ $defaultMsg = "\n Available Functions:
 				\n - cache clear: empties the cache (Caligrafy\Cache, CACHE_STORE), the compiled views and the class map
 				\n - test [<filter>] | test make <Name>: runs the tests of tests/ (PHPUnit, Caligrafy\Testing\TestCase); make writes one
 				\n - platform install: creates the framework tables (personal access tokens, audit log, jobs, cache)
+				\n - snap [install | status]: Snap Cards and the assistant (Route::snap()): install creates its tables and application/config/snap.php, status says what is ready
 				\n - token <create | list | revoke>: personal access tokens for REST and MCP clients (scoped, revocable)
 				\n - audit [--limit 50] [--capability <name>]: the latest capability calls
 				\n - service <Name> [--scope books:write] [--read-only]: creates a capability in application/services/
@@ -261,17 +262,42 @@ switch(strtolower($argv[1])) {
 
 	case 'platform':
 		if (strtolower($argv[2] ?? '') !== 'install') {
-			print("\n Usage: php caligrafer.php platform install\n Creates the framework tables (tokens, audit log, job runs, notifications, jobs, cache, migrations) from framework/settings/platform.sql\n\n");
+			print("\n Usage: php caligrafer.php platform install\n Creates the framework tables (tokens, audit log, job runs, notifications, jobs, cache, migrations, Snap) from framework/settings/platform.sql\n\n");
 			exit(1);
 		}
 		try {
 			caligrafyConnect();
 			caligrafySqlFile('framework/settings/platform.sql');
-			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, the notifications tables, caligrafy_jobs, caligrafy_cache and caligrafy_migrations\n\n");
+			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, the notifications tables, caligrafy_jobs, caligrafy_cache, caligrafy_migrations and Snap's tables\n\n");
 		} catch (Throwable $e) {
 			print("\n The framework tables could not be created: " . $e->getMessage() . "\n Check DB_ACTIVATE and the DB_* settings in .env (php caligrafer.php doctor --only database)\n\n");
 			exit(1);
 		}
+		break;
+
+	case 'snap':
+		$sub = strtolower($argv[2] ?? 'status');
+		if (!in_array($sub, array('install', 'status'), true)) {
+			print("\n Usage: php caligrafer.php snap [install | status]\n install: Snap's tables and a starter application/config/snap.php; status: what is ready\n\n");
+			exit(1);
+		}
+		try {
+			caligrafyConnect();
+			if ($sub === 'install') {
+				caligrafySqlFile('framework/settings/platform.sql');
+				print("\n Snap's tables are ready (caligrafy_snap_*)");
+				print(Caligrafy\Snap\Setup::config('.') ? "\n Wrote application/config/snap.php (optional card hints)" : '');
+				print("\n");
+			}
+		} catch (Throwable $e) {
+			print("\n Snap could not reach the database: " . $e->getMessage() . "\n Check DB_ACTIVATE and the DB_* settings in .env\n\n");
+			exit(1);
+		}
+		print("\n Snap Cards and the assistant\n");
+		foreach (Caligrafy\Snap\Setup::status('.') as $label => $state) {
+			printf("  %s %-17s %s\n", $state[0] ? '[ok]' : '[--]', $label, $state[1]);
+		}
+		print("\n Then open /assistant (signed in), and /snap for every card.\n\n");
 		break;
 
 	case 'token':
@@ -415,7 +441,7 @@ switch(strtolower($argv[1])) {
 			print("\n Could not write $target\n\n");
 			exit(1);
 		}
-		$names = array_keys(array_filter(Caligrafy\Capabilities::all(), function ($entry) { return !$entry['capability']->webOnly; }));
+		$names = array_keys(array_filter(Caligrafy\Capabilities::all(), function ($entry) { return !$entry['capability']->webOnly && strpos($entry['capability']->name, 'snap_') !== 0; }));
 		$example = $names ? lcfirst(str_replace(' ', '', ucwords(str_replace('_', ' ', $names[0])))) : 'myCapability';
 		print("\n $target written: " . count($names) . " capabilities, calls $prefix (Route::capabilities('$prefix') in web.php)\n"
 			. " import { $example, CapabilityError } from './capabilities.js'\n\n");

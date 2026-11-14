@@ -1,0 +1,27 @@
+extends ../../../application/views/default/master/site
+
+//- One Snap Card at its own address (/snap/c/<capability>?in=<inputs>), then the same card at glance size
+
+block title
+    | #{$snapcard['title']} · Snap Cards
+
+block additional_css
+    meta(name='snap-home', content=$home)
+    meta(name='snap-assistant', content=$snap['assistant'])
+    meta(name='snap-cards', content=$snap['cards'])
+    meta(name='snap-csrf', content=session('token'))
+    link(rel='stylesheet', href=$home . 'public/snap/snap.css?v=' . @filemtime(PUBLIC_PATH . 'snap/snap.css'))
+
+block content
+    section.cq-band
+        .cq-inner.cq-inner--narrow
+            p
+                a(href=$home . $snap['cards']) All the cards
+            snap-card(data-card=json_encode($snapcard))
+            h2.cq-heading(style='margin-top: 32px') The same card, at a glance
+            snap-card(size='glance', data-card=json_encode($snapcard))
+
+block additional_scripts
+    script(src='https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js')
+    script(src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js')
+    script(src=$home . 'public/snap/snap-card.js?v=' . @filemtime(PUBLIC_PATH . 'snap/snap-card.js'))

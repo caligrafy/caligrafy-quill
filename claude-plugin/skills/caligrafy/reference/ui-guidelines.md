@@ -200,6 +200,12 @@ Pages built on `default/master/layoutblocks.pug` before 2.11.0 keep working, wit
 `.cq-error`, `.cq-tabs`, `ul.cq-list > li.cq-item`, `.cq-empty`, `.cq-foot`) and the look of `look.css`, which
 `layoutblocks.pug` also loads. Add new pages to such a project with `site.pug`; move an old page when you rework it.
 
+## Snap's pages (2.23.0)
+
+`Route::snap()` brings its own pages (`/assistant`, `/assistant/noticed`, `/snap`): they extend your `site.pug` and
+draw the cards with their own stylesheet, so never rebuild them by hand. See the wiki page
+[Snap Cards and the Assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant).
+
 ## Design styles
 
 The structure above is the markup of every page, whatever the style. A project can give every page another look with

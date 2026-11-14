@@ -6,6 +6,22 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.23.0] - 2026-11-14
+
+### Added
+- **Snap Cards and the assistant** (`Caligrafy\Snap`, `Route::snap()`): every capability a person may use becomes a card, built from what it declares (rules, descriptions, `readOnly`, `destructive`), in five families and nine types: Ask (Form, Choice, Confirm), Show (Answer, List), Go (Shortcut), Track (Task), Offer (Suggestion, Routine). `Route::snap();` declares `/assistant` (Home and the task space), `/assistant/ask`, `/assistant/noticed`, `/snap` (every card), `/snap/c/{capability}` (a card at its own address), `/snap/run` and `/snap/call/{snap_*}`; `Route::snap(['assistant' => ..., 'cards' => ...])` moves them.
+  - Home orchestrates what to concentrate on: what needs the person (alerts, tasks waiting, changes to confirm), insights that come with the action they call for, offers, work in progress, things to browse (more like what they looked at, new, available by the app's rule), just done, shortcuts; at most two lines from the assistant; one card template per kind of card (banner, offer, progress, object, update, shortcut, insight) and every row full.
+  - The task space is a conversation: the assistant's line names what the card is about, suggestions say what comes next (never a dead end), empty answers lead somewhere, the context is kept (focus, screen, selections, earlier turns), "delete it" works at once; history, rating, a different answer, keyboard shortcuts (Alt+K, Alt+M, /), file attachments, a compact bar on scroll, thinking and progress moments.
+  - The assistant uses Claude when `ANTHROPIC_API_KEY` is set (`SNAP_MODEL`, default `claude-opus-5-5`; `SNAP_EFFORT`, default `low`), through `anthropic-ai/sdk` (now a dependency): it looks things up with the read-only capabilities the person may call, as them, and answers with cards; without a key it answers the names of cards and shortcuts.
+  - A change only ever runs from its Confirm: a one-time token tied to the person, the capability and its exact inputs, which the model never sees; Undo right after when it can be undone.
+  - Opt-in noticing (per person) offers Suggestions at the usual moment and Routines on a rhythm (remind, prepare to confirm, do and tell); `/assistant/noticed` shows and forgets everything.
+  - Optional hints in `application/config/snap.php` (`about`, and per capability: title, columns, done, insight, discover, applies, alert, empty_next, working...); `php caligrafer.php snap [install | status]` creates the tables and a starter file and says what is ready.
+  - 23 `snap_*` capabilities ship with the framework (`framework/services/Snap`), none an MCP tool nor a function of the generated JS client; tables `caligrafy_snap_*` in `framework/settings/platform.sql` (`platform install`, every deploy).
+- `#[Capability(..., async: true)]`: Snap runs the capability in the background as a Track card: Task (the queue, as the person); other channels call it as before.
+
+### Fixed
+- The class map no longer stops every request when a file it loads at start was deleted: it checks the folder again and loads only what exists.
+
 ## [2.22.1] - 2026-11-13
 
 ### Fixed

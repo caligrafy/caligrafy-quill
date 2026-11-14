@@ -27,7 +27,8 @@ class Client
         $prefix = '/' . trim((string) $prefix, '/');
         $functions = array();
         foreach (Capabilities::all() as $name => $entry) {
-            if ($entry['capability']->webOnly) {
+            // Snap's own capabilities (2.23.0) serve the Snap shell, not the app's code: left out of the client
+            if ($entry['capability']->webOnly || strpos($name, 'snap_') === 0) {
                 continue;   // Route::action only (2.21.0)
             }
             $capability = $entry['capability'];

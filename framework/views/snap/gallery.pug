@@ -1,0 +1,34 @@
+extends ../../../application/views/default/master/site
+
+//- The Snap Cards gallery (prototype, phase 1): one card per capability this person may use, built from its rules
+//- and its result: Show cards (List, Answer) for what reads without inputs, Ask cards (Form, Choice) for the rest.
+
+block title
+    | Snap Cards
+
+block additional_css
+    meta(name='snap-home', content=$home)
+    meta(name='snap-assistant', content=$snap['assistant'])
+    meta(name='snap-cards', content=$snap['cards'])
+    meta(name='snap-csrf', content=session('token'))
+    link(rel='stylesheet', href=$home . 'public/snap/snap.css?v=' . @filemtime(PUBLIC_PATH . 'snap/snap.css'))
+
+block content
+    section.cq-hero.cq-hero--page
+        h1.cq-display Snap Cards
+        p.cq-lead Every card below is built from what a capability declares: nothing was designed by hand.
+    - $families = array('show' => 'Show: what you can read now', 'ask' => 'Ask: what needs a few answers first')
+    each $label, $family in $families
+        - $group = array_values(array_filter($cards, function ($c) use ($family) { return $c['family'] === $family; }))
+        if count($group)
+            section.cq-band.cq-band--tight
+                .cq-inner
+                    h2.cq-heading= $label
+                    .snap-grid
+                        each $card in $group
+                            snap-card(data-card=json_encode($card))
+
+block additional_scripts
+    script(src='https://unpkg.com/lucide@0.460.0/dist/umd/lucide.min.js')
+    script(src='https://cdn.jsdelivr.net/npm/canvas-confetti@1.9.3/dist/confetti.browser.min.js')
+    script(src=$home . 'public/snap/snap-card.js?v=' . @filemtime(PUBLIC_PATH . 'snap/snap-card.js'))

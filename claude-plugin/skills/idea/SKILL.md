@@ -49,6 +49,7 @@ You'll only approve sign-ins in your browser; I'll ask before spending any credi
 | Pages | one page per main table at `/<things>`: a form, the list with its actions, an empty state; `/` opens the main page |
 | Sample data | 3 to 6 rows so the app is not empty, online too |
 | Slow work | only when the idea has work that is slow or may fail (an AI call, an email to many, a report): the capability the page calls pushes a **background job** (`Caligrafy\Queue::push`) on a second capability, and a `queue_work` job runs it |
+| Assistant | only when the idea asks for one ("ask the app", "a home that shows what needs me", "an assistant"): Snap Cards and the assistant with `Route::snap()` (the `assistant` skill sets it up after the pages); say it needs an Anthropic API key to understand free text |
 | On a timer, alerts | only when the idea asks for work with no page open ("every morning", "check every hour", "remind", "alert me when"): each **scheduled job** (its capability, `every` or `cron` and timezone) and each **notification** (who gets it, its title, push and/or email), plus a **Turn on alerts** button on the page that matters |
 
 ## 2. Start

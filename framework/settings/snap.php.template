@@ -1,0 +1,20 @@
+<?php
+// Snap Cards and the assistant (Route::snap()): optional hints, keyed by capability name.
+// Every card already works without them: it is built from what the capability declares (its rules, descriptions,
+// readOnly, destructive). A hint only makes a card better. The full list: the wiki page "Snap Cards and the Assistant".
+return array(
+    // what the assistant is the assistant of (it reads it before every answer)
+    'about' => '',
+
+    'cards' => array(
+        // 'list_books' => array(
+        //     'title' => 'The catalog',                                   // the card's name (else from the capability)
+        //     'columns' => array('title', 'author.name', 'published_year'), // the columns of a list
+        //     'empty' => 'No book yet.',                                  // what an empty list says
+        //     'insight' => array('label' => 'New this month', 'since' => array('field' => 'created_at', 'days' => 30),
+        //         'action' => array('capability' => 'list_books', 'text' => 'Browse the catalog')),   // a number on Home, with its action
+        // ),
+        // 'lend_book' => array('done' => 'Done! {heading} is lent. Enjoy the read.'),   // the assistant's line once done
+        // 'reading_report' => array('working' => array('Counting the books…', 'Putting the report together…')),   // a slow task's words
+    ),
+);

@@ -411,6 +411,59 @@ class Route extends \stdClass
     }
 
     /**
+     * Snap Cards and the assistant (2.23.0, Caligrafy\Snap): every capability of the app as a card, and an assistant
+     * that answers with them, in one line of web.php:
+     *   Route::snap();
+     *   Route::snap(['assistant' => '/help', 'cards' => '/cards']);
+     * It declares, for the signed-in person:
+     *   /assistant              Home (what needs you, insights, things to browse, shortcuts) and the task space
+     *   /assistant/ask          what they typed, said, attached or clicked (snap_ask)
+     *   /assistant/noticed      what the assistant noticed, and their routines (a settings page)
+     *   /snap                   every card they may use (a gallery), /snap/c/{capability} one card at its own address
+     *   /snap/run, /snap/call/  a card sent (snap_run), and the snap_* capabilities the pages call
+     * The tables come with php caligrafer.php platform install; card hints are in application/config/snap.php; the
+     * assistant uses Claude when ANTHROPIC_API_KEY is set (else it answers from the cards' names, without a model).
+     * Changes only ever run from a Confirm the person clicks (Caligrafy\Snap\Consent).
+     * @param array $options 'assistant' (the path of the assistant, '/assistant'), 'cards' (the path of the cards, '/snap')
+    */
+    public static function snap(array $options = array())
+    {
+        $assistant = '/' . trim((string) ($options['assistant'] ?? '/assistant'), '/');
+        $cards = '/' . trim((string) ($options['cards'] ?? '/snap'), '/');
+        \Caligrafy\Snap\Cards::$path = $cards;
+        $views = '../../framework/views/snap/';
+        $with = array('snap' => array('assistant' => ltrim($assistant, '/'), 'cards' => ltrim($cards, '/')));
+        // without its tables, a page that says what to do instead of an error
+        $installed = function () {
+            if (\Caligrafy\Snap\Conversation::installed()) {
+                return true;
+            }
+            http_response_code(503);
+            echo '<!doctype html><meta charset="utf-8"><title>Snap is not installed</title><body style="font-family:system-ui;max-width:560px;margin:80px auto;padding:0 16px">'
+                . '<h1>Snap is almost ready</h1><p>Its tables are missing. Run <code>php caligrafer.php platform install</code> (or <code>php caligrafer.php snap</code>), then reload this page.</p>';
+            return false;
+        };
+        $page = function ($view, array $page) use ($installed) {
+            return function () use ($view, $page, $installed) { if ($installed()) (new PageController())->render($view, $page); };
+        };
+        self::get($cards, $page($views . 'gallery', array('data' => array('cards' => 'snap_catalog'), 'with' => $with)));
+        self::get($cards . '/c/{capability}', $page($views . 'card', array('query' => array('in'), 'data' => array('snapcard' => 'snap_open'), 'with' => $with)));
+        self::action($cards . '/run', 'snap_run', array('method' => 'POST'));
+        // the snap_* capabilities the pages call (and only them), as the signed-in person
+        self::post($cards . '/call/{__snap}', function () {
+            $name = (string) (currentBind()['__snap'] ?? '');
+            if (!preg_match('/^snap_[a-z_]{1,58}$/', $name)) {
+                http_response_code(404);
+                return;
+            }
+            Rest::respond($name);
+        });
+        self::get($assistant, $page($views . 'shell', array('signedIn' => true, 'comeBack' => true, 'data' => array('snaphome' => 'snap_home'), 'with' => $with)));
+        self::action($assistant . '/ask', 'snap_ask', array('method' => 'POST'));
+        self::get($assistant . '/noticed', $page($views . 'noticed', array('signedIn' => true, 'comeBack' => true, 'data' => array('noticed' => 'snap_noticed'), 'with' => $with)));
+    }
+
+    /**
      * Exposes the capabilities to AI agents over MCP (Streamable HTTP) at a uri: Route::mcp('/mcp')
      * Agents authenticate with a personal access token and see the capabilities its scopes allow.
      * @param string $route the uri of the MCP endpoint

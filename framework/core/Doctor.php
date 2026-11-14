@@ -298,6 +298,16 @@ class Doctor
             $missing ? $this->add('database', 'Framework tables', 'SKIP', implode(', ', $missing) . ' not installed (tokens, the audit log, MCP, scheduled and background jobs, the cache, migrations need them)', 'php caligrafer.php platform install')
                 : $this->add('database', 'Framework tables', 'OK', 'tokens, audit log, job runs, jobs, cache and migrations installed');
             $this->migrations($pdo);
+            // Snap (2.23.0): its tables matter only to an app that declares Route::snap()
+            $routes = is_file($this->root . '/application/config/routing/web.php') ? (string) file_get_contents($this->root . '/application/config/routing/web.php') : '';
+            if (preg_match('/Route::snap\s*\(/', $routes)) {
+                try {
+                    $pdo->query('SELECT 1 FROM caligrafy_snap_turns LIMIT 1');
+                    $this->add('database', 'Snap', 'OK', 'Route::snap() and its tables (caligrafy_snap_*)');
+                } catch (\PDOException $e) {
+                    $this->add('database', 'Snap', 'FAIL', 'Route::snap() is declared but its tables are missing: /assistant says "Snap is almost ready"', 'php caligrafer.php snap install');
+                }
+            }
         } catch (\PDOException $e) {
             $message = $this->scrub($e->getMessage());
             $fix = 'check the DB_* values in .env';

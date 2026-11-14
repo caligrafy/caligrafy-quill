@@ -58,7 +58,7 @@ if it is a fix, and tell the user what you chose. Views and controllers under `a
 php caligrafer.php version
 php caligrafer.php doctor
 php caligrafer.php upgrade --local  # should report nothing outdated in application/
-php caligrafer.php platform install # the framework tables of the new release (2.18.0: jobs, cache, migrations); safe to run again
+php caligrafer.php platform install # the framework tables of the new release (2.18.0: jobs, cache, migrations; 2.23.0: Snap); safe to run again
 ```
 + 2.18.0+: `doctor`'s Framework tables line must be OK (else `platform install`). If `tests/.gitignore` holds `*`
   (projects made before 2.18.0; `update` never touches `tests/`), replace it with the line
@@ -77,6 +77,10 @@ php caligrafer.php platform install # the framework tables of the new release (2
   after each `.env` change. Escape hatches, to name only when something breaks: `SESSION_LAZY=false`,
   `VIEW_OPTIMIZER=false`. Moving controllers to `Route::form` / `Route::auth` / `Route::webhook` / `Route::action` is optional: offer
   it, never do it unasked (08-controllers.md shows how).
++ 2.23.0: Snap Cards and the assistant, off until `Route::snap();` is added (nothing to change otherwise). `composer
+  install` brings the `anthropic-ai/sdk` package of the new `composer.json` (G156) and `platform install` the
+  `caligrafy_snap_*` tables (G153). Offer, never do unasked, to turn it on with the `assistant` skill. A file with
+  top-level code that was deleted no longer stops every request (G159).
 + 2.21.6: in a client app made earlier, load `app.js` with a version: `APP_SERVICE_ROOT.'app.js?v='.@filemtime(PUBLIC_PATH.'js/services/app.js')`.
 + 2.21.5: `loadVue()` versions a client app's scripts. Nothing to change.
 + 2.21.3: a face sign-in without a liveness check must not change the face or add a passkey: check `AuthRoutes::signedInBy()` (G146), and record the sign-in with `AuthRoutes::signIn($user, null, 'face')`.

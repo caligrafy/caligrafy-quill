@@ -1,0 +1,101 @@
+extends ../../../application/views/default/master/site
+
+//- What I've noticed (prototype, redesigned after the fourth 2026-11-14 review): a settings page in Caligrafy's own
+//- look (title band, narrow column, rows, Caligrafy buttons), with Caligrafy's cards for its sections:
+//-   Noticing   on or off (off forgets everything noticed)
+//-   Patterns   what you do again and again, each with its reason, each can be forgotten
+//-   Routines   what is done for you on a rhythm, each can be stopped
+
+block title
+    | What I've noticed
+
+block additional_css
+    meta(name='snap-home', content=$home)
+    meta(name='snap-assistant', content=$snap['assistant'])
+    meta(name='snap-cards', content=$snap['cards'])
+    meta(name='snap-csrf', content=session('token'))
+    style.
+        .snap-noticed .cq-card { max-width: none; }
+        .snap-noticed .cq-card + .cq-card { margin-top: 20px; }
+        .snap-noticed .cq-card-head { padding: 28px 28px 4px; }
+        .snap-noticed .cq-section { padding: 4px 28px 20px; }
+        .snap-noticed .cq-foot { padding: 0 28px 20px; display: flex; justify-content: flex-end; }
+        .snap-noticed .cq-rows { margin: 0; }
+        .snap-noticed .cq-row:last-child { border-bottom: 0; }
+        .snap-noticed .form-switch .form-check-input { width: 2.6em; height: 1.4em; cursor: pointer; }
+        .snap-noticed .cq-empty-state { margin: 4px 0 0; }
+        @media (max-width: 575px) { .snap-noticed .cq-card-head, .snap-noticed .cq-section, .snap-noticed .cq-foot { padding-left: 20px; padding-right: 20px; } }
+
+block content
+    section.cq-hero.cq-hero--page
+        h1.cq-display What I've noticed
+        p.cq-lead What the assistant remembers to make suggestions and routines for you. Only here, only if you want it.
+
+    section.cq-band.cq-band--tight
+        .cq-inner.cq-inner--narrow.snap-noticed
+            p
+                a(href=$home . $snap['assistant']) ← Back to the assistant
+
+            .cq-card
+                .cq-card-head
+                    h2.cq-title Noticing
+                    p.cq-note When it is on, the assistant keeps which card you used, with which inputs and when. Nothing else.
+                .cq-section
+                    ul.cq-rows
+                        li.cq-row
+                            .cq-row-main
+                                p.cq-row-title
+                                    label(for='snap-noticing') Notice what I do again and again
+                                p.cq-row-meta Turning it off forgets everything noticed.
+                            .cq-row-actions
+                                .form-check.form-switch.m-0
+                                    input#snap-noticing.form-check-input(type='checkbox', role='switch', checked=$noticed['noticing'])
+
+            .cq-card
+                .cq-card-head
+                    h2.cq-title Patterns
+                    p.cq-note What you do again and again, and why the assistant thinks so.
+                .cq-section
+                    if count($noticed['patterns'])
+                        ul.cq-rows
+                            each $p in $noticed['patterns']
+                                li.cq-row
+                                    .cq-row-main
+                                        p.cq-row-title= $p['title']
+                                        p.cq-row-meta= $p['reason']
+                                    .cq-row-actions
+                                        button.btn.btn-secondary.btn-sm(type='button', data-forget=$p['fingerprint']) Forget
+                    else
+                        p.cq-empty-state Nothing noticed yet: use the assistant for a few days and patterns appear here.
+                if count($noticed['patterns'])
+                    .cq-foot
+                        button.btn.btn-secondary.btn-sm(type='button', data-forget='') Forget everything
+
+            .cq-card
+                .cq-card-head
+                    h2.cq-title Routines
+                    p.cq-note What the assistant does for you on a rhythm.
+                .cq-section
+                    if count($noticed['routines'])
+                        ul.cq-rows
+                            each $r in $noticed['routines']
+                                li.cq-row
+                                    .cq-row-main
+                                        p.cq-row-title
+                                            = $r['title'] . ' '
+                                            span.cq-badge= $r['level'] === 'auto' ? 'Done and told' : ($r['level'] === 'confirm' ? 'Prepared to confirm' : 'Reminded')
+                                        p.cq-row-meta= $r['rhythm']
+                                    .cq-row-actions
+                                        button.btn.btn-secondary.btn-sm(type='button', data-stop=$r['id']) Stop
+                    else
+                        p.cq-empty-state No routine yet: accept one when the assistant offers it.
+
+block additional_scripts
+    script(src=$home . 'public/snap/snap-card.js?v=' . @filemtime(PUBLIC_PATH . 'snap/snap-card.js'))
+    script.
+        (function () {
+          var reload = function () { window.location.reload() }
+          document.getElementById('snap-noticing').addEventListener('change', function (e) { Snap.call('snap_noticing_set', { on: e.target.checked }).then(reload) })
+          document.querySelectorAll('[data-forget]').forEach(function (b) { b.addEventListener('click', function () { Snap.call('snap_forget', b.dataset.forget ? { fingerprint: b.dataset.forget } : {}).then(reload) }) })
+          document.querySelectorAll('[data-stop]').forEach(function (b) { b.addEventListener('click', function () { Snap.call('snap_routine_delete', { id: Number(b.dataset.stop) }).then(reload) }) })
+        })()
