@@ -43,7 +43,7 @@ if [ -f .env ] && ! grep -q '^# QA-GENERATED' .env; then fail ".env exists and i
 cleanup() {
     if [ "$KEEP" = 1 ]; then echo "qa: --keep: stack and generated files left in place"; return; fi
     $COMPOSE down -v >/dev/null 2>&1
-    rm -rf application public/qaapp public/qabot public/qaspa public/qafacelogin public/qafacedetect .env qa/tmp
+    rm -rf application public/qaapp public/qabot public/qaspa public/qafacelogin public/qafacedetect .env qa/tmp public/uploads/qa-zip
     for f in public/uploads/*; do
         [ -e "$f" ] || continue
         echo "$UPLOADS_BEFORE" | grep -qxF "$f" || rm -f "$f"
@@ -69,7 +69,7 @@ API_KEY=$(echo "$KEYS" | sed -n 's/^ *API_KEY=//p')
 } > .env
 
 # --- application/ and client apps -------------------------------------------------------
-rm -rf application public/qaapp public/qabot public/qafacelogin public/qafacedetect
+rm -rf application public/qaapp public/qabot public/qafacelogin public/qafacedetect public/uploads/qa-zip
 cp -r framework/settings/application ./application
 touch application/.qa-generated
 cp -r qa/fixtures/application/. application/
@@ -116,11 +116,13 @@ $qa = "    Route::get(\"/qa/books/{id}\", \"QaController@books\");\n    Route::g
     . "    Route::webhook(\"/qa/hooks/stripe\", \"qa_record_stripe\", [\"verify\" => \"stripe\", \"secret_env\" => \"QA_STRIPE_WEBHOOK_SECRET\"]);\n"
     . "    Route::download(\"/qa/books.csv\", \"list_books\", [\"filename\" => \"books.csv\", \"bom\" => true]);\n"
     . "    Route::download(\"/qa/books.json\", \"list_books\", [\"as\" => \"json\", \"filename\" => \"books.json\"]);\n"
-    . "    Route::download(\"/qa/book.csv\", \"get_book\", [\"columns\" => [\"title\", \"id\"]]);\n";
+    . "    Route::download(\"/qa/book.csv\", \"get_book\", [\"columns\" => [\"title\", \"id\"]]);\n"
+    . "    Route::download(\"/qa/files.zip\", \"qa_zip_files\", [\"as\" => \"zip\", \"root\" => \"public/uploads/qa-zip\", \"filename\" => \"files.zip\"]);\n";
 $s = str_replace("    Route::run();", $qa . "    Route::run();", $s);
 file_put_contents($f, $s);
 '
 cp -r framework/plugins/app public/qaapp
+mkdir -p public/uploads/qa-zip && printf 'QA-ZIP-ONE' > public/uploads/qa-zip/one.txt && printf 'QA-ZIP-TWO' > public/uploads/qa-zip/two.jpg
 printf '<?php echo "QA-SECOND-PAGE";\n' > public/qaapp/second.php
 cp qa/fixtures/docs/components.php public/qaapp/components.php
 cp qa/fixtures/docs/components.js public/qaapp/scripts/components.js

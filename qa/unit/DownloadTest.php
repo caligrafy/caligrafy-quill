@@ -103,4 +103,73 @@ final class DownloadTest extends TestCase
         $this->assertSame('attachment; filename="books.csv"', Download::disposition('books.csv'));
         $this->assertSame("attachment; filename=\"livres_t_.csv\"; filename*=UTF-8''livres%C3%A9t%C3%A9.csv", Download::disposition('livresété.csv'));
     }
+
+    // 'as' => 'zip' (2.22.0): the files a capability lists, under a folder of the project
+
+    private function zipFolder(): string
+    {
+        $dir = 'qa/tmp/ziptest-' . bin2hex(random_bytes(4));
+        mkdir($dir . '/photos/sub', 0777, true);
+        file_put_contents("$dir/photos/a.jpg", str_repeat('j', 2000));
+        file_put_contents("$dir/photos/notes.txt", str_repeat('text ', 400));
+        file_put_contents("$dir/photos/sub/a.jpg", 'second a');
+        file_put_contents("$dir/outside.txt", 'not in the root');
+        return $dir;
+    }
+
+    public function testZipIsAFormatAndItsRootStaysInTheProject(): void
+    {
+        Route::download('/photos.zip', 'qa_export_rows', array('as' => 'zip', 'root' => 'public/uploads'));
+        $this->assertSame('zip', Download::format(array('as' => 'zip')));
+        foreach (array('../etc', 'public/../../etc', '', '/', 'C:/Windows') as $root) {
+            try {
+                Download::format(array('as' => 'zip', 'root' => $root));
+                $this->fail("root '$root' was accepted");
+            } catch (InvalidArgumentException $e) {
+                $this->assertStringContainsString("'root' is a folder of the project", $e->getMessage());
+            }
+        }
+        $this->assertNull(Download::root(array('root' => 'qa/tmp/no-such-folder')), 'a folder that does not exist yet');
+    }
+
+    public function testZipFilesStayInTheRootAndGetCleanUniqueNames(): void
+    {
+        $dir = $this->zipFolder();
+        $root = Download::root(array('root' => "$dir/photos"));
+        $files = Download::files(array(
+            'a.jpg',
+            array('file' => 'sub/a.jpg'),                                  // same name: made unique
+            array('file' => 'notes.txt', 'name' => '../../evil/./notes.txt'),
+            '../outside.txt',                                              // outside the root: left out
+            '/etc/passwd',                                                 // read under the root, which has none
+            'missing.jpg',
+            "a.jpg\0.txt",
+            array('title' => 'no file'),
+        ), $root);
+        $this->assertSame(array('a.jpg', 'a (2).jpg', 'evil/notes.txt'), array_values($files));
+        $this->assertSame(realpath("$dir/photos/sub/a.jpg"), array_keys($files)[1]);
+        $this->assertSame('pictures/2026/x.jpg', Download::entryName("/pictures//2026/../x.jpg\r"));
+        $this->assertSame(array(), Download::files(array('a.jpg'), null), 'no root, no file');
+    }
+
+    public function testZipArchiveStoresImagesCompressesTextAndIsNullWhenEmpty(): void
+    {
+        $dir = $this->zipFolder();
+        $page = array('data' => array(array('file' => 'a.jpg', 'name' => 'pictures/a.jpg'), array('file' => 'notes.txt')), 'total' => 2, 'page' => 1, 'per_page' => 20, 'pages' => 1);
+        $archive = Download::archive($page, array('root' => "$dir/photos"));
+        try {
+            $this->assertSame(2, $archive['count']);
+            $this->assertSame(array('pictures/a.jpg', 'notes.txt'), $archive['names']);
+            $zip = new ZipArchive();
+            $this->assertTrue($zip->open($archive['path']));
+            $this->assertSame(str_repeat('j', 2000), $zip->getFromName('pictures/a.jpg'));
+            $this->assertSame(ZipArchive::CM_STORE, $zip->statName('pictures/a.jpg')['comp_method'], 'a JPEG is stored');
+            $this->assertSame(ZipArchive::CM_DEFLATE, $zip->statName('notes.txt')['comp_method'], 'text is compressed');
+            $zip->close();
+        } finally {
+            @unlink($archive['path']);
+        }
+        $this->assertNull(Download::archive(array('missing.jpg', '../outside.txt'), array('root' => "$dir/photos")));
+        $this->assertNull(Download::archive(array(), array('root' => "$dir/photos")));
+    }
 }

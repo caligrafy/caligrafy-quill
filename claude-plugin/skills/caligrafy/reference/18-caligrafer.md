@@ -141,7 +141,7 @@ The Docker server is `dev-box` (PHP 8.5 and Apache, your folder mounted in it), 
 php caligrafer.php version        # also --version and -v
 ```
 ```text
-Caligrafy Quill 2.21.9
+Caligrafy Quill 2.22.0
 ```
 It works before `composer install` and never creates `.env`. In code: `Caligrafy\Framework::VERSION`. The changes of every version are in the [changelog](https://github.com/caligrafy/caligrafy-quill/blob/master/CHANGELOG.md).
 
@@ -417,7 +417,7 @@ php caligrafer.php doctor --env .env.production    # another environment file
 php caligrafer.php doctor --json                   # for scripts
 ```
 ```text
-Caligrafy doctor (read-only): Caligrafy Quill 2.21.9
+Caligrafy doctor (read-only): Caligrafy Quill 2.22.0
 
  Database
   OK    Database: connected to mysql://mysql:3306/caligrafy (server 8.4.13)
@@ -448,7 +448,7 @@ php caligrafer.php update --check      # what it would change, nothing written
 php caligrafer.php update              # to the latest release
 php caligrafer.php update 2.21.6       # to one release
 ```
-On the latest release: `Caligrafy Quill 2.21.9 is the latest: nothing to update. php caligrafer.php upgrade checks application/.` It downloads the project's release and the target from GitHub, then:
+On the latest release: `Caligrafy Quill 2.22.0 is the latest: nothing to update. php caligrafer.php upgrade checks application/.` It downloads the project's release and the target from GitHub, then:
 
 1. replaces `framework/` and `claude-plugin/` whole (keeping `framework/librairies/app/.env`);
 2. compares every other file of the release (`caligrafer.php`, `.bin/`, `Dockerfile`, `docker-compose.yaml`, `index.php`, `public/css`, `public/js`...) with the project's release: a file you never changed is replaced, a missing one is added, a file you changed is kept with the new version next to it as `<file>.caligrafy-new`. Your documents (`README.md`...) are left alone; `application/`, `tests/`, `qa/`, `public/uploads/` and `composer.lock` are never touched here;

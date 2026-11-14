@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (its 81 mirrored pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G148) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (its 82 mirrored pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G148) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` and forms with `Route::form` (no controller) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: describe it, approve it, ship it. Your idea turned into a complete app online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.34.0** - Caligrafy Quill 2.22.0: `Route::download` with `'as' => 'zip'` (many files as one archive, under a `root` folder), Vue 3.5.45, axios 1.21.1, Bootstrap 5.3.9, stripe-php 23; gotcha G151.
 - **1.33.9** - Caligrafy Quill 2.21.9: `cloud create` finds the repository in Docker, `cloud extend` is right on an account with no limit, `running` in job history, and the secret check of `ship` and `deploy` prints nothing on a clean project.
 - **1.33.8** - Caligrafy Quill 2.21.8: what the course walk found: quickstart stops when it fails, `app` and `create` refuse a folder that exists, number fields refuse lists and booleans.
 - **1.33.7** - Caligrafy Quill 2.21.7: a full read of the wiki and the references against the code; route variables in `Route`; `signsInWith`; no key in the SPA template.

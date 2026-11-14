@@ -132,7 +132,7 @@ container (`docker compose exec dev-box php caligrafer.php ...`; without Docker,
     docker compose exec dev-box php caligrafer.php test
     ```
     ```text
-    PHPUnit 12.5.40 by Sebastian Bergmann and contributors.
+    PHPUnit 12.5.44 by Sebastian Bergmann and contributors.
 
     ....                                                                4 / 4 (100%)
 

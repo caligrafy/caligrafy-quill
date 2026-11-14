@@ -35,8 +35,8 @@
         "vlucas/phpdotenv": "^5.8",
         "wixel/gump": "^2.3",
         "claviska/simpleimage": "^4.4",
-        "stripe/stripe-php": "^22.0",
-        "phpmailer/phpmailer": "^7.1",
+        "stripe/stripe-php": "^23.0",
+        "phpmailer/phpmailer": "^7.2",
         "lucianotonet/groq-php": "^1.4",
         "lbuchs/webauthn": "^2.2",
         "minishlink/web-push": "^11.0"

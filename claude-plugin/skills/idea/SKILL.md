@@ -146,6 +146,8 @@ calls it, then shows the token once and the line to paste:
   (`'method' => 'PUT'|'DELETE'` for the others), the view with `=csrf()`, `value=old('<field>')`,
   `p.cq-field-error= errors('<field>')` and `flash('success')` (reference/54-declarative-routes.md); a page that sends
   its form with the JS client needs none;
+- many files to download at once (photos, uploads), 2.22.0+: `Route::download('/<things>.zip', 'list_<thing>_files', ['as' => 'zip',
+  'root' => 'public/uploads/<things>'])`, the capability listing paths or `['file' => ..., 'name' => ...]` (G151);
 - a CSV export when the plan has one: `Route::download('/<things>.csv', 'list_<things>_export')` (a read-only capability
   returning `->get()`); payments or another service's events: `Route::webhook(..., ['verify' => 'stripe'])` (G132),
   whose capability starts `handle()` with `if ($context->actorType() !== 'webhook') { throw ServiceError::forbidden('Only the webhook calls this'); }`

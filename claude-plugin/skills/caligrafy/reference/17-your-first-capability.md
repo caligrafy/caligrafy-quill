@@ -640,7 +640,7 @@ final class BookshelfTest extends TestCase
 docker compose exec dev-box php caligrafer.php test
 ```
 ```text
-PHPUnit 12.5.40 by Sebastian Bergmann and contributors.
+PHPUnit 12.5.44 by Sebastian Bergmann and contributors.
 
 Runtime:       PHP 8.5.12
 

@@ -299,7 +299,7 @@ qa_test('query parameters cannot inject script into the env template literal', f
 qa_test('the Watson bot page uses the pinned Vue 3 build and no BotUI', function () use ($guest) {
     $r = $guest->get('/bot/qabot?botSkillId=qa');
     qa_equals(200, $r['status']);
-    qa_contains('vue@3.5.44/dist/vue.global.prod.js', $r['body']);
+    qa_contains('vue@3.5.45/dist/vue.global.prod.js', $r['body']);
     qa_not_contains('botui', strtolower($r['body']));
 });
 
@@ -1124,7 +1124,7 @@ qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per messag
 
 qa_test('the generated JS client calls the same capabilities from Node with a token', function () use ($WRITER, $BASE, $ROOT) {
     @mkdir("$ROOT/qa/tmp", 0777, true);
-    qa_contains('23 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));   // the app's 13, the 2 of the declarative routes' fixtures (2.19.0), the framework's 7 notify_* and queue_work (2.18.0)
+    qa_contains('24 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));   // the app's 13, the 2 of the declarative routes' fixtures (2.19.0), qa_zip_files (2.22.0), the framework's 7 notify_* and queue_work (2.18.0)
     $script = "$ROOT/qa/tmp/client-check.mjs";
     file_put_contents($script, "import { configure, listBooks, createBook, getBook, CapabilityError } from './capabilities.mjs'\n"
         . "configure({ baseUrl: process.argv[2], token: process.argv[3] })\n"
@@ -1608,6 +1608,27 @@ qa_test('Route::download: the columns option gives the header row and its order;
     $one = $b->get('/qa/book.csv?id=' . $first['id']);
     qa_equals(200, $one['status'], substr($one['body'], 0, 200));
     qa_equals('title,id', explode("\r\n", $one['body'])[0], 'the columns, in that order');
+});
+
+qa_test('Route::download as zip: the files a capability lists, under its root only, as one archive; none is a 404 (2.22.0)', function () {
+    $b = qa_auth_user('zipqa');
+    $r = $b->get('/qa/files.zip');
+    qa_equals(200, $r['status'], substr($r['body'], 0, 300));
+    qa_assert(preg_match('#^Content-Type:\s*application/zip#mi', $r['headers']) === 1, $r['headers']);
+    qa_assert(preg_match('#^Content-Disposition:\s*attachment; filename="files.zip"#mi', $r['headers']) === 1, $r['headers']);
+    qa_assert(preg_match('#^Content-Length:\s*' . strlen($r['body']) . '\s*$#mi', $r['headers']) === 1, 'Content-Length: ' . $r['headers']);
+    qa_equals('PK', substr($r['body'], 0, 2), 'a ZIP file');
+    $file = tempnam(sys_get_temp_dir(), 'qazip');
+    file_put_contents($file, $r['body']);
+    $zip = new ZipArchive();
+    qa_assert($zip->open($file) === true, 'the archive opens');
+    qa_equals(2, $zip->numFiles, 'the two files under the root; .env and the missing file are left out');
+    qa_equals('QA-ZIP-ONE', $zip->getFromName('one.txt'));
+    qa_equals('QA-ZIP-TWO', $zip->getFromName('pictures/two.jpg'));
+    $zip->close();
+    @unlink($file);
+    qa_equals(404, $b->get('/qa/files.zip?none=1')['status'], 'no file: the missing page');
+    qa_contains('/login', (new QaBrowser())->get('/qa/files.zip')['location'], 'a visitor signs in first');
 });
 
 qa_summary();

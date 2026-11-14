@@ -483,7 +483,8 @@ class Route extends \stdClass
     /**
      * A read-only capability's result as a file (2.19.0, Caligrafy\Download): GET
      *   Route::download('/books.csv', 'list_books', ['as' => 'csv', 'filename' => 'books.csv']);
-     * Options: 'as' (csv or json), 'columns' (2.19.5: the header row, written even with no row), 'filename' (a name or a
+     *   Route::download('/photos.zip', 'list_photo_files', ['as' => 'zip', 'root' => 'public/uploads/photos']);  // 2.22.0
+     * Options: 'as' (csv, json or zip: the files the capability lists, under 'root', default public/uploads), 'columns' (2.19.5: the header row, written even with no row), 'filename' (a name or a
      * callable($result, $input)), 'bom' (bool), 'formulas' (keep
      * cells that start with = + - @ as they are), 'signIn'. Refusals as Route::page; inputs to fix answer 422 (2.19.5).
      */

@@ -67,6 +67,8 @@ the declarative routes, G134-G135 for the rules `exists`, `unique` and `current_
      `visitorsOnly`; `success` may return a full address (a payment page).
    - A CSV or JSON export: `Route::download('/books.csv', '<read-only capability>', ['filename' => 'books.csv']);`
      (the capability returns a list of rows).
+   - Many files as one ZIP (2.22.0+): `Route::download('/photos.zip', '<read-only capability>', ['as' => 'zip', 'root' => 'public/uploads/photos']);`
+     (the capability returns paths relative to `root`, or `['file' => ..., 'name' => 'folder/name']`; G151).
    - Events another service posts: `Route::webhook('/stripe/events', '<capability>', ['verify' => 'stripe']);` with
      `$rules = ['event' => 'required']`, idempotent, and `STRIPE_WEBHOOK_SECRET` (G132). Generate the guard as the
      first line of its `handle()`: `if ($context->actorType() !== 'webhook') { throw ServiceError::forbidden('Only the

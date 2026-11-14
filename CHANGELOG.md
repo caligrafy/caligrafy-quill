@@ -6,6 +6,16 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.22.0] - 2026-11-13
+
+### Added
+- `Route::download(..., ['as' => 'zip'])`: the files a read-only capability lists, in one ZIP archive streamed from a temporary file (with its `Content-Length`, then removed). Each item is a path or `['file' => ..., 'name' => 'folder/name']`, relative to the `root` option (a folder of the project, `public/uploads` by default; a `root` with `..` stops when `web.php` runs). A file outside the root, a folder or a missing file is left out; names are cleaned and made unique; images, video, audio and archives are stored, other files compressed; no file answers 404. `Download::archive()` builds the same archive in a test.
+
+### Changed
+- Vue 3.5.45, axios 1.21.1 and Bootstrap 5.3.9 in `scripts()` and the single page app template (Vite 8.3.8, `@vitejs/plugin-vue` 6.0.11, Vue Router 5.5.1).
+- stripe-php 23 (`^23.0`): Stripe objects no longer keep their API key through PHP serialization, and `StripeClient` no longer takes the global `Stripe::setAccountId()`. Caligrafy uses neither; `Payment` passes `stripe_account` with each request as before.
+- PHPMailer 7.2, PHPUnit 12.5.44.
+
 ## [2.21.9] - 2026-11-08
 
 ### Fixed

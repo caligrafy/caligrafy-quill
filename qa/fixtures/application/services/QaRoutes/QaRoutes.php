@@ -51,3 +51,17 @@ class QaAction extends Service
     }
 }
 
+#[Capability(name: 'qa_zip_files', description: 'Lists files for a ZIP download (QA Route::download as zip)', scope: 'books:read', readOnly: true)]
+class QaZipFiles extends Service
+{
+    public $rules = array('none' => '');
+
+    public function handle(array $input, Context $context)
+    {
+        if (!empty($input['none'])) {
+            return array();
+        }
+        return array('one.txt', array('file' => 'two.jpg', 'name' => 'pictures/two.jpg'), '../../../.env', 'missing.txt');
+    }
+}
+

@@ -53,7 +53,7 @@ A feature, by hand, is four small pieces:
 | Its routes | `application/config/routing/web.php` | `Route::page('/books', 'Books/index', ['data' => ['books' => 'list_books']])` |
 
 The same capability is then a REST endpoint (`Route::capabilities()`), a tool for AI agents (`Route::mcp()`) and a
-function of the generated JavaScript client. Forms, sign-in, webhooks and downloads are one route each
+function of the generated JavaScript client. Forms, sign-in, webhooks and downloads (CSV, JSON or many files as one ZIP) are one route each
 (`Route::form`, `Route::auth`, `Route::webhook`, `Route::download`), and `Route::action` answers whatever a page or a form
 cannot say. Every request is declared: an application needs no controller.
 [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) builds one, page

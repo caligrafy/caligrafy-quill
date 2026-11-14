@@ -24,6 +24,7 @@ web-only capability served by [`Route::action`](#action). Existing controllers k
 | Sign-in, sign-out, sign-up | `Route::auth(['home' => '/books']);` |
 | Events another service posts | `Route::webhook('/stripe/events', 'record_event', ['verify' => 'stripe']);` |
 | A CSV or JSON export | `Route::download('/authors.csv', 'list_authors', ['filename' => 'authors.csv']);` |
+| Many files as one ZIP | `Route::download('/photos.zip', 'list_photo_files', ['as' => 'zip', 'root' => 'public/uploads/photos']);` |
 | An address that moved | `Route::redirect('/old/books/{id}', '/books/{id}', 301);` |
 | Anything else a browser asks | `Route::action('/authors/{author_id}/books', 'open_author_books');` |
 | A file in a form | the `file` rule of the capability: `'cover' => 'required\|file\|extension,png;jpg\|max_size,2mb'` |
@@ -890,13 +891,15 @@ Route::webhook('/stripe/events', 'record_event', ['verify' => 'stripe']);   // S
 ```php
 Route::download('/authors.csv', 'list_authors', ['filename' => 'authors.csv']);
 Route::download('/books.json', 'list_books', ['as' => 'json']);   // a page of list_books, ?page=2 for the next
+Route::download('/photos.zip', 'list_photo_files', ['as' => 'zip', 'root' => 'public/uploads/photos']);   // 2.22.0
 ```
 
 | Option | Default | What it does |
 |---|---|---|
-| `as` | `'csv'` | `'csv'` or `'json'` (pretty-printed); anything else stops with an error when `web.php` runs |
+| `as` | `'csv'` | `'csv'`, `'json'` (pretty-printed) or `'zip'` (the files the capability lists, 2.22.0); anything else stops with an error when `web.php` runs |
+| `root` | `'public/uploads'` | for `zip`: the folder of the project the files are read from; a file outside it is never sent. A `root` with `..` stops with an error when `web.php` runs |
 | `columns` | the first row's keys | the header row and its order, written even when there is no row: `['title', 'year']` (2.19.5) |
-| `filename` | `<capability>.<as>` | a name, or `function ($result, $input) { return 'books-' . date('Y-m-d') . '.csv'; }` |
+| `filename` | `<capability>.<as>` (`.zip` for a ZIP) | a name, or `function ($result, $input) { return 'books-' . date('Y-m-d') . '.csv'; }` |
 | `bom` | `false` | `true` starts the CSV with a UTF-8 BOM (Excel) |
 | `formulas` | `false` | `true` keeps cells that start with `=`, `+`, `-`, `@` as they are |
 | `signIn` | `'/login'` | where a visitor goes when the capability needs someone |
@@ -916,6 +919,42 @@ Route::download('/books.json', 'list_books', ['as' => 'json']);   // a page of l
 + Each row of the list the capability returns is a line. A `paginate()` page exports its rows (that page only: return
   `get()` to export every row); a single record gives one line.
 + The answer carries `Cache-Control: private, no-store` and `X-Content-Type-Options: nosniff`.
+
+### Many files as one ZIP (2.22.0)
+
+The capability lists the files; `Route::download` puts them in one archive and sends it. The capability stays plain
+data, so the same list also reaches REST, the JS client and agents (who get the names, not the files).
+
+```php
+#[Capability(name: 'list_photo_files', description: 'The files of the photos, oldest first', scope: 'photos:read', level: 1, readOnly: true)]
+class ListPhotoFiles extends Service
+{
+    public function handle(array $input, Context $context)
+    {
+        return array_map(fn ($photo) => [
+            'file' => $photo['image'],                                        // relative to 'root'
+            'name' => 'pictures/' . date('Y-m-d_H-i-s', strtotime($photo['created_at'])) . '.jpg',   // in the archive
+        ], Photo::query()->arrays()->select('image', 'created_at')->orderBy('created_at')->get());
+    }
+}
+```
+
+```php
+Route::download('/photos.zip', 'list_photo_files', ['as' => 'zip', 'root' => 'public/uploads/photos',
+    'filename' => fn ($files, $input) => 'photos-' . date('Y-m-d') . '.zip']);
+```
+
++ **Each item** is a path (the file keeps its own name) or `['file' => path, 'name' => 'folder/name.jpg']`. Paths are
+  relative to `root`; a `paginate()` page gives its rows.
++ **Only files under `root` go in.** A path that leaves it (`../../.env`), a folder, or a file that is missing is left
+  out without an error, so a row whose file was deleted does not stop the download. Names are cleaned (no `..`, no
+  leading `/`), and a name used twice becomes `name (2).jpg`.
++ **No file at all answers `404`** (the missing page). Hide the link when there is nothing to download, or throw
+  `ServiceError::notFound('No photo yet')` in the capability.
++ **Images, video, audio and archives are stored as they are; other files are compressed.** The archive is written to
+  a temporary file, sent with its `Content-Length`, then removed: a large export never sits in memory.
++ It needs PHP's **zip** extension: Caligrafy's Docker images and Caligrafy Cloud have it. `Download::archive($files,
+  ['root' => ...])` builds the same archive in a test (`['path', 'count', 'names']`; remove `path` afterwards).
 
 ## Redirects: `Route::redirect`
 
@@ -1074,7 +1113,7 @@ Existing controllers keep working and can stay:
 | Sign-in, sign-out, sign-up pages | `Route::auth` |
 | A confirmation or sign-up that signs someone in | `Route::form` with `signsIn` |
 | Events another service posts | `Route::webhook` |
-| A file | `Route::download` |
+| A file, or many files as one ZIP | `Route::download` |
 | An address that moved | `Route::redirect` |
 | Data for programs, the JS client, agents | `Route::capability`, `Route::capabilities`, `Route::mcp` |
 | Different answers for one address, the session, a sign-in of your own, a page that creates a payment | `Route::action` |
@@ -1093,6 +1132,8 @@ Existing controllers keep working and can stay:
   `whsec_...`, not the `sk_...` key.
 + **A webhook capability that is not idempotent**: a retried event is recorded twice.
 + **A download of a capability that writes**: `Route::download` refuses it when the link is opened.
++ **A ZIP whose files live outside `root`**: they are left out, and an empty list answers `404`. Give the folder that
+  holds them, relative to the project (`public/uploads/photos`), and paths relative to it.
 + **`Route::action` on a capability without `webOnly: true`**, or `webOnly: true` behind `Route::page`, `Route::form` or
   REST: the first stops with an error that names it, the others answer "There is no capability".
 + **A web-only capability for work other channels need**: agents and programs cannot reach it. Put the work in a plain

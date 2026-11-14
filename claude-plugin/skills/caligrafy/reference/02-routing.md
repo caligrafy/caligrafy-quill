@@ -408,6 +408,7 @@ Route::form('/books', 'create_book', ['success' => '/books/{id}', 'flash' => 'Bo
 Route::auth(['home' => '/books']);                                                          // /login, /logout, /register
 Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe']);                  // events another service posts
 Route::download('/books.csv', 'list_books', ['filename' => 'books.csv']);                   // a read-only capability as a file
+Route::download('/photos.zip', 'list_photo_files', ['as' => 'zip', 'root' => 'public/uploads/photos']);   // its files as one ZIP (2.22.0)
 Route::redirect('/old/books/{id}', '/books/{id}', 301);                                     // an address that moved
 Route::action('/authors/{author_id}/books', 'open_author_books');                           // what a page or a form cannot say
 ```
