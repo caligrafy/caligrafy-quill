@@ -43,7 +43,7 @@
     },
     "config": {
         "allow-plugins": {
-            "nodejs-php-fallback/nodejs-php-fallback": true,
+            "nodejs-php-fallback/nodejs-php-fallback": false,
             "php-http/discovery": false
         }
     },

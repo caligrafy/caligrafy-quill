@@ -33,7 +33,7 @@ COPY ./*.php ./
 COPY ./framework ./framework/
 COPY ./public ./public/
 COPY ./.env ./
-RUN composer install
+RUN composer install --no-plugins
 RUN php caligrafer.php initialize
 COPY ./application ./application/
 COPY ./public ./public/

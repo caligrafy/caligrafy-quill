@@ -50,6 +50,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.34.1** - Caligrafy Quill 2.22.1: builds without the useless npm step of a Composer plugin (G152); `update` carries `allow-plugins`.
 - **1.34.0** - Caligrafy Quill 2.22.0: `Route::download` with `'as' => 'zip'` (many files as one archive, under a `root` folder), Vue 3.5.45, axios 1.21.1, Bootstrap 5.3.9, stripe-php 23; gotcha G151.
 - **1.33.9** - Caligrafy Quill 2.21.9: `cloud create` finds the repository in Docker, `cloud extend` is right on an account with no limit, `running` in job history, and the secret check of `ship` and `deploy` prints nothing on a clean project.
 - **1.33.8** - Caligrafy Quill 2.21.8: what the course walk found: quickstart stops when it fails, `app` and `create` refuse a folder that exists, number fields refuse lists and booleans.

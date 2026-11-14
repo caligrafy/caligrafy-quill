@@ -22,10 +22,11 @@ WORKDIR /var/www/html
 
 # libraries first, so that a code change does not reinstall them
 COPY composer.json composer.lock ./
-RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader
+# --no-plugins: no Composer plugin runs in the image (nodejs-php-fallback would try npm for pug-cli, which no view uses)
+RUN composer install --no-dev --no-interaction --prefer-dist --no-scripts --no-autoloader --no-plugins
 
 COPY . .
-RUN composer dump-autoload --optimize --no-dev \
+RUN composer dump-autoload --optimize --no-dev --no-plugins \
     && mkdir -p public/uploads backups \
     && chown -R www-data:www-data public/uploads
 

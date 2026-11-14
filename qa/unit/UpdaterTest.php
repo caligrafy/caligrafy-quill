@@ -23,7 +23,7 @@ final class UpdaterTest extends TestCase
             'public/js/services/app.js' => 'app 1',
             'public/css/styles.css' => 'styles 1',
             'README.md' => 'readme 1',
-            'composer.json' => json_encode(['require' => ['php' => '>=8.3', 'a/lib' => '^1.0', 'b/lib' => '^2.0']]),
+            'composer.json' => json_encode(['require' => ['php' => '>=8.3', 'a/lib' => '^1.0', 'b/lib' => '^2.0'], 'config' => ['allow-plugins' => ['x/plugin' => true, 'y/plugin' => true]]]),
             '.gitignore' => "/vendor/\n",
         ];
         $new = array_merge($old, [
@@ -35,7 +35,7 @@ final class UpdaterTest extends TestCase
             'public/js/services/app.js' => 'app 2',
             'public/css/tokens.css' => 'tokens',
             'README.md' => 'readme 2',
-            'composer.json' => json_encode(['require' => ['php' => '>=8.3', 'a/lib' => '^1.5', 'b/lib' => '^3.0', 'c/lib' => '^1.0']]),
+            'composer.json' => json_encode(['require' => ['php' => '>=8.3', 'a/lib' => '^1.5', 'b/lib' => '^3.0', 'c/lib' => '^1.0'], 'config' => ['allow-plugins' => ['x/plugin' => false, 'y/plugin' => false, 'z/plugin' => false]]]),
             '.gitignore' => "/vendor/\n/.caligrafy/\n",
             'qa/run.sh' => 'tests',
             '.claude/skills/caligrafy-contributor/SKILL.md' => 'for the framework repository only',
@@ -51,7 +51,7 @@ final class UpdaterTest extends TestCase
             'public/js/services/app.js' => 'app 1 + mine',
             'public/css/styles.css' => 'styles 1 + mine',
             'README.md' => 'my app',
-            'composer.json' => json_encode(['require' => ['php' => '>=8.3', 'a/lib' => '^1.0', 'b/lib' => '^2.1', 'mine/lib' => '^1']]),
+            'composer.json' => json_encode(['require' => ['php' => '>=8.3', 'a/lib' => '^1.0', 'b/lib' => '^2.1', 'mine/lib' => '^1'], 'config' => ['allow-plugins' => ['x/plugin' => true, 'mine/plugin' => true]]]),
             '.env' => "APP_ENV=local\nMY_SECRET=keep\n",
             'application/views/page.pug' => 'mine',
         ]));
@@ -123,6 +123,9 @@ final class UpdaterTest extends TestCase
         $this->assertSame('^2.1', $composer['b/lib']);      // changed by the project: kept
         $this->assertSame('^1.0', $composer['c/lib']);      // new
         $this->assertSame('^1', $composer['mine/lib']);
+        // config.allow-plugins (2.22.1): as the release has it unless the project changed it; the project's own stay
+        $plugins = json_decode($this->read('composer.json'), true)['config']['allow-plugins'];
+        $this->assertSame(['x/plugin' => false, 'mine/plugin' => true, 'y/plugin' => false, 'z/plugin' => false], $plugins);
         $this->assertSame(["composer update --no-interaction 'a/lib' 'c/lib'"], array_slice($this->commands, 0, 1));
         $this->assertStringEndsWith('caligrafer.php upgrade --apply --local', end($this->commands));
         $this->assertStringContainsString('/.caligrafy/', $this->read('.gitignore'));

@@ -240,6 +240,25 @@ class Updater
                 }
             }
         }
+        // config.allow-plugins (2.22.1): the same rule, a plugin the project did not set or left as the release had it
+        $plugins = array();
+        $allowed = $mine['config']['allow-plugins'] ?? array();
+        foreach ((array) ($theirs['config']['allow-plugins'] ?? array()) as $plugin => $allow) {
+            if (!is_array($allowed)) {
+                $this->lines[] = "  kept        composer.json config.allow-plugins: " . json_encode($allowed) . " (the release lists each plugin)";
+                break;
+            }
+            $current = $allowed[$plugin] ?? null;
+            $before = $base['config']['allow-plugins'][$plugin] ?? null;
+            if ($current === $allow) continue;
+            if ($current === null || $current === $before) {
+                $mine['config']['allow-plugins'][$plugin] = $allow;
+                $plugins[] = $plugin . ($allow ? ' allowed' : ' turned off');
+                $changed = true;
+            } else {
+                $this->lines[] = "  kept        composer.json allow-plugins $plugin: " . json_encode($current) . " (the release asks for " . json_encode($allow) . ")";
+            }
+        }
         foreach ((array) ($theirs['scripts'] ?? array()) as $name => $script) {
             if (!isset($mine['scripts'][$name])) {
                 $mine['scripts'][$name] = $script;
@@ -247,7 +266,8 @@ class Updater
             }
         }
         if ($changed) {
-            $this->lines[] = '  merged      composer.json' . ($packages ? ': ' . implode(', ', $packages) : ': scripts');
+            $what = array_merge($packages, $plugins);
+            $this->lines[] = '  merged      composer.json' . ($what ? ': ' . implode(', ', $what) : ': scripts');
             if (!$check) {
                 self::put("$backup/composer.json", $file);
                 file_put_contents($file, json_encode($mine, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE) . "\n");
