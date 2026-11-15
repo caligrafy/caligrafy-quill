@@ -66,6 +66,11 @@ what the change makes wrong or incomplete; no rewrite for its own sake.
   `_Sidebar.md` ("Release notes:" line). A patch release: a page `Release-notes:-X.Y.Z.md` too, short (it is a fix
   release of X.Y.0, then its CHANGELOG section): `php caligrafer.php update` prints a link to that exact page.
 - `10.-Claude-Code-Plugin.md`: the "Current version: **<plugin>**, for Caligrafy Quill v<version>." line.
+- The API reference, generated from the source once `Framework::VERSION` is set (step 4.1):
+  `php qa/build-api-reference.php ../caligrafy-quill.wiki` rewrites `API-Reference.md` and the `API-*.md` pages
+  (source links to the tag `vX.Y.Z`; `--check` exits 1 when they are out of date; `--missing` lists the public
+  methods without a doc comment). Never edit those pages by hand: fix the doc comment in the code and run it again.
+  A new class lands in "Other classes" until it gets an area in the script's `$areas`.
 - Then step 1's `sync-wiki.py`.
 
 ## 4. Version, changelog, QA, release
