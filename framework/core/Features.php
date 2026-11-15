@@ -66,6 +66,14 @@ class Features
             'settings' => array('ANTHROPIC_API_KEY'),
             'code' => '/\\\\?Anthropic\\\\(Client|Messages|Core)\b/',
         ),
+        'async' => array(
+            'title' => 'the async server (php caligrafer.php async start, ASYNC=on in the production image)',
+            'packages' => array('workerman/workerman' => '^5.1'),
+            'settings' => array(),
+            'code' => '/(?!)/',
+            // used when .env says ASYNC=on (Features::used reads the settings with a value)
+            'onSetting' => array('ASYNC' => array('on', 'true')),
+        ),
     );
 
     // a class of each package: present when the package is installed
@@ -74,6 +82,7 @@ class Features
         'lucianotonet/groq-php' => 'LucianoTonet\\GroqPHP\\Groq',
         'minishlink/web-push' => 'Minishlink\\WebPush\\WebPush',
         'guzzlehttp/guzzle' => 'GuzzleHttp\\Client',
+        'workerman/workerman' => 'Workerman\\Worker',
         'lbuchs/webauthn' => 'lbuchs\\WebAuthn\\WebAuthn',
         'anthropic-ai/sdk' => 'Anthropic\\Client',
     );
@@ -213,6 +222,9 @@ class Features
             }
             foreach ($code as $file => $source) {
                 if (preg_match($f['code'], $source)) { $used[$feature][] = "$file uses it"; break; }
+            }
+            foreach ((array) ($f['onSetting'] ?? array()) as $setting => $values) {
+                if (in_array(strtolower(trim((string) $env($setting))), $values, true)) $used[$feature][] = "$setting=" . trim((string) $env($setting)) . ' in .env';
             }
             if (!empty($f['agent']) && in_array(strtolower(trim((string) $env('AGENT_PROVIDER'))), array('', 'groq'), true)) {
                 foreach ($code as $file => $source) {
