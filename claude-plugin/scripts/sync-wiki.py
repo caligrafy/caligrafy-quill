@@ -105,6 +105,7 @@ PAGES = {
     '60-performance-and-deployment.md': ('Performance-and-Deployment.md', 'Performance and deployment'),
     '61-security-defaults.md': ('Security-Defaults.md', 'Security defaults'),
     '62-release-notes-2.26.0.md': ('Release-notes:-2.26.0.md', 'Release notes: 2.26.0'),
+    '64-support-and-release-policy.md': ('Support-and-Release-Policy.md', 'Support and release policy'),
     '63-why-caligrafy.md': ('Why-Caligrafy.md', 'Why Caligrafy: the benefits for developers'),
     'wiki-sidebar.md': ('_Sidebar.md', 'Wiki sidebar (table of contents)'),
 }

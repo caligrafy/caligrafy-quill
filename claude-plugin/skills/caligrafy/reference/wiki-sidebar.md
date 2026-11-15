@@ -87,7 +87,7 @@
 + [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): the production image, the database at every start
     > + [Caligrafy Cloud](https://github.com/caligrafy/caligrafy-quill/wiki/Deploying-to-Caligrafy-Cloud) · [your own server](https://github.com/caligrafy/caligrafy-quill/wiki/Deploying-to-Your-Own-Server)
     > + [The production image](https://github.com/caligrafy/caligrafy-quill/wiki/The-Production-Image) · [the deploy step](https://github.com/caligrafy/caligrafy-quill/wiki/The-Deploy-Step) · [updating Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Updating-Caligrafy)
-    > + [Performance and deployment](https://github.com/caligrafy/caligrafy-quill/wiki/Performance-and-Deployment) · [security defaults](https://github.com/caligrafy/caligrafy-quill/wiki/Security-Defaults)
+    > + [Performance and deployment](https://github.com/caligrafy/caligrafy-quill/wiki/Performance-and-Deployment) · [security defaults](https://github.com/caligrafy/caligrafy-quill/wiki/Security-Defaults) · [support and release policy](https://github.com/caligrafy/caligrafy-quill/wiki/Support-and-Release-Policy)
 
 ## Build with AI
 
