@@ -98,6 +98,14 @@ forgotten (the cache copies, a transaction, container instances). Its callers ar
 
 Development: `php caligrafer.php async start --listen http://0.0.0.0:8081` answers on its own port.
 
+## Capability calls
+
+Since 2.26.1 a call of a capability by name (`/capabilities/{name}`, MCP, the JS client) reads the registry of
+capabilities from a file kept next to the class map instead of building it on every request: it loads only the file of
+the capability it calls. On 2 CPUs through Apache, a public read-only capability answered 2,816 calls a second on
+2.26.0 and 4,948 on 2.26.1 (a plain route: about 6,900). Nothing to set: it follows the class map
+([How the attribute is found](https://github.com/caligrafy/caligrafy-quill/wiki/Capability-Attribute#registry)).
+
 ## Measured
 
 The numbers of the benchmark (Docker, 2 CPUs and 1 GB for the app) are on the

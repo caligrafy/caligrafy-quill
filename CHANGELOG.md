@@ -6,6 +6,11 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.26.1] - 2026-11-15
+
+### Fixed
+- **Capability calls are 1.75 to 1.9 times faster** on the web server (2 CPUs: a capability returning 20 items went from 2,816 to 4,948 requests per second, 20 database rows from 2,319 to 4,398). Each call rebuilt the whole registry of capabilities: it sorted every declared class (719 with preloading), checked each for a `Service` and read the attributes of every one, about 160 µs of the 180 µs a call cost more than a plain route. `Capabilities::get()` now reads a cached copy of the registry kept next to the class map and loads only the capability it calls; the cache is out of date whenever the class map changes (a file added, removed or edited) or the framework's own service files change, and a name it does not know, a class registered by hand or `CLASS_MAP=false` builds the registry as before. `Capabilities::all()` sorts only the services. Answers are unchanged.
+
 ## [2.26.0] - 2026-11-15
 
 ### Added

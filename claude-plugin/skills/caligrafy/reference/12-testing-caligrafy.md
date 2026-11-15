@@ -124,6 +124,7 @@ The configuration is `phpunit.xml.dist`: test suite `unit` (the folder `qa/unit`
 | `DoctorFormsTest.php`, `DoctorPugTest.php` | Doctor's checks of forms without a method and of two Pug mistakes |
 | `ViewTest.php` | The compiled view cache (2.17.0): a private folder, an edited view compiled again |
 | `ClassMapTest.php` | The class map (2.18.0): declarations found, classes loaded when used, files that run at start, a new class found at once |
+| `CapabilityCacheTest.php` | The registry's cache (2.26.1): a call by name reads it, a file added or edited makes it out of date, a name it lacks builds the registry, each request in its own process |
 | `MigrationsTest.php` | Migrations (2.18.0): how a script is split, the order and names of the files, `make` |
 | `ContainerTest.php` | The container (2.18.0): constructor injection, bindings, singletons, instances, clear errors |
 | `CacheTest.php` | The cache (2.18.0): the default store, JSON values, expiry, `remember`, `off` |
