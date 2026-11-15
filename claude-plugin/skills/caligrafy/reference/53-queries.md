@@ -8,6 +8,8 @@ SQL statement with every value bound (sent apart from the SQL, so what a person 
 is how a capability lists, filters, pages and counts rows, and loads related rows in one query instead of one per row.
 Since 2.19.0.
 
+**Since 2.26.0** N+1 queries are prevented by default: calling a relation method on one of several rows a query returned throws `[ERROR 2004] Lazy loading prevented` in development, with the `with('<relation>')` fix, and logs a warning in production. `->lazy()`, `#[Caligrafy\Lazy]` or `STRICT_RELATIONS=false` allow it. See [eager loading](https://github.com/caligrafy/caligrafy-quill/wiki/Query-Builder-Eager-Loading).
+
 ```php
 use Caligrafy\Database;
 

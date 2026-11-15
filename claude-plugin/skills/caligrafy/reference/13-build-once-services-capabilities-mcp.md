@@ -9,6 +9,8 @@ reaching your application is a **channel** that calls the same capability: your 
 `Route::form`), a REST API, the JavaScript client of your Vue apps, and AI agents over MCP. A rule written once
 behaves the same for a person, a phone, a program and an agent.
 
+**Since 2.26.0**: a write capability declared without a `scope` needs, from a token, the scope named after it (or `*`); a public read-only capability may declare `cache: <seconds>` to be served from the production image's memory ([performance](https://github.com/caligrafy/caligrafy-quill/wiki/Performance-and-Deployment)); and the experimental async server answers the capabilities channel from processes that keep the app in memory (`ASYNC=on`).
+
 ## How it fits together
 
 | Channel | How it calls a capability | Who is calling |

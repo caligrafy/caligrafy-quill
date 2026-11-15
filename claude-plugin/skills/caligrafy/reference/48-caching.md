@@ -7,6 +7,8 @@ The **cache** keeps a value for a while, so that slow work (a call to another se
 once and read many times. A capability reads through the cache, and the capabilities that change the data forget the
 value, so nobody reads an old copy for long. Since 2.18.0.
 
+**Since 2.26.0** whole answers can be cached too: a public read-only capability with `cache: <seconds>`, or a page with `Route::page(..., ['cache' => <seconds>])`, is kept in the production image's memory and answered without PHP: see [performance and deployment](https://github.com/caligrafy/caligrafy-quill/wiki/Performance-and-Deployment).
+
 ## With Claude
 
 Say what is slow, how old the answer may be, and what changes it:

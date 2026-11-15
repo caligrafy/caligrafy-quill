@@ -9,6 +9,8 @@ that shows what needs them, and a conversation that keeps its context. Nothing t
 your capability already declares (its rules, descriptions, `readOnly`, `destructive`), and shown the way your app
 shows it: its card view in your app's own look, or a card designed in your design system ([how a card looks](#looks)). Since 2.23.0.
 
+**Since 2.26.0** the assistant's free-text understanding with Claude needs `php caligrafer.php add snap` once (the Anthropic SDK); without it, with `ANTHROPIC_API_KEY` set, the assistant answers from the cards' names and logs which command to run.
+
 ## With Claude
 
 ```text

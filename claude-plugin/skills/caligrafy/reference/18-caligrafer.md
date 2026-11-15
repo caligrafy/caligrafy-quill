@@ -5,6 +5,8 @@
 
 **Caligrafer** is the command line tool of Caligrafy: `caligrafer.php` at the root of every project, and the shell launcher `.bin/caligrafer`. It sets a project up, creates capabilities and client apps, runs SQL and migrations, manages the tokens of programs and AI agents, runs jobs and tests, checks the project, updates it, and puts it online. This page lists every command, with the usage text the command prints.
 
+**Since 2.26.0**: `php caligrafer.php add <payments | ai | push | passkeys | snap | async | facedetect>` (an optional feature's SDK or files), `optimize` (every view compiled and the class map built, as the production image does at start) and `async <check | start>` (the experimental async server).
+
 ## With Claude
 
 The plugin's skills run Caligrafer for you: `/caligrafy-quill:server` (the Docker server), `/caligrafy-quill:db` (`sql`, `migrate`), `/caligrafy-quill:new-capability` (`service`, `client`, `token`, `call`), `/caligrafy-quill:update` (`update`, `upgrade`), `/caligrafy-quill:ship` and `/caligrafy-quill:deploy` (`cloud`). Ask in plain words, for example "list my capabilities" or "create a token for my agent with books:read": Claude runs the command and shows the output, never a secret it does not have to.

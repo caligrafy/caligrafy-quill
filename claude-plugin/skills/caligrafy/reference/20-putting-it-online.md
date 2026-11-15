@@ -8,6 +8,8 @@ image (the `Dockerfile` of every project), one command that prepares the databas
 (`php caligrafer.php deploy`), and two ways to run it, [Caligrafy Cloud](#cloud) (`https://<name>.caligrafy.com`, a
 free first half hour) or [your own server](#ownserver). Since Caligrafy Quill 2.4.0.
 
+**Since 2.26.0** the production image tunes itself to its container (processes, database connections, preloading, a response cache): see [performance and deployment](https://github.com/caligrafy/caligrafy-quill/wiki/Performance-and-Deployment). An app that uses an optional SDK (payments, push, passkeys, Groq, the assistant with Claude) must have added it with `php caligrafer.php add <feature>` and committed `composer.lock`.
+
 ## With Claude
 
 | You want | Ask |

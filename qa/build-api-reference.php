@@ -57,11 +57,11 @@ $areas = array(
     'API-Routing' => array('Routing and requests', 'Declaring requests and reading them: routes, the request, forms, downloads, webhooks, web-only actions, errors and flash messages.',
         array('Route', 'AuthRoutes', 'Request', 'Web', 'Action', 'Form', 'Download', 'Webhook', 'Uploads', 'Throttle', 'Errors', 'Flash', 'Context')),
     'API-Pages' => array('Controllers and views', 'Rendering pages: the controller base class, the page controller of Route::page, views and design styles.',
-        array('Controller', 'PageController', 'View', 'Designs')),
+        array('Controller', 'PageController', 'View', 'Designs', 'HttpCache')),
     'API-Capabilities' => array('Services and capabilities', 'Build once: services, the capability registry, errors, the container, personal access tokens and the audit log.',
         array('Service', 'Capability', 'Capabilities', 'ServiceError', 'Container', 'Tokens', 'Audit')),
     'API-Data' => array('Data', 'Models, the query builder, the database connection, migrations, validation and the cache.',
-        array('Model', 'Query', 'Database', 'Migrations', 'Validator', 'Cache')),
+        array('Model', 'Query', 'Database', 'Migrations', 'Validator', 'Cache', 'Lazy', 'LazyLoadingException')),
     'API-Auth' => array('Sign-in', 'Users and sessions, passkeys and face login.',
         array('Auth', 'Passkey', 'PasskeyException', 'FaceLogin', 'FaceLoginException')),
     'API-Jobs' => array('Jobs, notifications and mail', 'Scheduled jobs, background jobs, web push and email notifications, mail.',
@@ -71,18 +71,18 @@ $areas = array(
     'API-AI' => array('AI', 'OpenAI, open models through OpenAI-compatible providers, the OpenAI Assistants and Watson.',
         array('OpenAI', 'Agent', 'Assistant', 'Watson')),
     'API-Interfaces' => array('Interfaces: REST, the JS client and MCP', 'The channels that serve the capabilities besides web pages.',
-        array('Rest', 'Client', 'Mcp\\Http', 'Mcp\\Server')),
+        array('Rest', 'Client', 'Mcp\\Http', 'Mcp\\Server', 'Async\\Kernel', 'Async\\Eligibility', 'Async\\WorkermanServer')),
     'API-Snap' => array('Snap', 'Snap Cards and the assistant (namespace Caligrafy\\Snap): cards built from what capabilities declare, the conversation, the planner and the setup.',
         array('Snap\\Cards', 'Snap\\Hints', 'Snap\\Views', 'Snap\\Designer', 'Snap\\Conversation', 'Snap\\Planner', 'Snap\\Flow', 'Snap\\Input',
               'Snap\\Reads', 'Snap\\Say', 'Snap\\Consent', 'Snap\\Offers', 'Snap\\Shortcuts', 'Snap\\Tasks', 'Snap\\Discover', 'Snap\\Setup', 'Snap\\Shell')),
     'API-Testing' => array('Testing', 'The base class of the tests of an application (tests/, php caligrafer.php test).',
         array('Testing\\TestCase')),
     'API-Tooling' => array('Framework and tooling', 'The framework bootstrap and what the caligrafer command runs: the CLI, doctor, update, upgrade, deploy, Cloud, quickstart and the plugin copy.',
-        array('Framework', 'Loader', 'ClassMap', 'Caligrafer', 'Doctor', 'Updater', 'Upgrader', 'Deployer', 'CloudClient', 'Quickstart', 'PluginSource')),
+        array('Features', 'FeatureMissing', 'Framework', 'Loader', 'ClassMap', 'Caligrafer', 'Doctor', 'Updater', 'Upgrader', 'Deployer', 'CloudClient', 'Quickstart', 'PluginSource')),
 );
 
 $sources = array();
-foreach (array('framework/core', 'framework/core/Snap', 'framework/database', 'framework/interfaces', 'framework/interfaces/Mcp', 'framework/testing') as $dir) {
+foreach (array('framework/core', 'framework/core/Snap', 'framework/core/Async', 'framework/database', 'framework/interfaces', 'framework/interfaces/Mcp', 'framework/testing') as $dir) {
     foreach (glob($dir . '/*.php') as $file) $sources[] = $file;
 }
 sort($sources);

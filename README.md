@@ -81,14 +81,17 @@ with retries).
 | **Assistant** | [Snap Cards](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant): every capability as a card (Ask, Show, Go, Track, Offer) in your app's own look (card views written from your pages), a Home that orchestrates what needs you, an assistant (Claude) that keeps the conversation's context; changes only from a Confirm |
 | **People** | [sign-in with a username or an email, passkeys, permissions and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) |
 | **In the box** | [payments](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment), AI (OpenAI, open models, Watson), face detection, machine learning, [social cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards), a production `Dockerfile` |
+| **Production** | a [production image](https://github.com/caligrafy/caligrafy-quill/wiki/Performance-and-Deployment) that sizes itself to its container, keeps database connections, preloads the framework and keeps public answers in memory; an experimental async server for the API and AI agents; a 15 MB install, with each optional SDK added by `php caligrafer.php add <feature>` |
+| **Security by default** | [CSRF, bound queries, inputs, passwords, sessions, token scopes and N+1 prevention](https://github.com/caligrafy/caligrafy-quill/wiki/Security-Defaults) with no code |
 | **Quality** | [tests](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App) that call capabilities the way every channel does, `php caligrafer.php doctor` |
 
 See [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works).
 
-**Fast.** In the same benchmark, Caligrafy 2.19 beats Symfony 8.1 and Laravel 13 on all 16 measures (requests per
-second, median and slowest response, memory, for plain text, JSON, a database query and an HTML page). An HTML page:
-2,887 requests per second, against 1,789 for Symfony and 324 for Laravel
-([release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.19.0)).
+**Fast and small.** On the same benchmark machine (2 CPUs), Caligrafy 2.26 answers 7,998 HTML pages a second, against
+4,182 for Nuxt, 1,135 for Next.js, 1,830 for Symfony and 266 for Laravel; it is faster than Next.js on every test, and
+its experimental async server answers capability calls at 113,700 a second. A new project installs 13 packages and
+16.6 MB, and a container uses about 35 MB
+([release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.26.0)).
 
 <br/>
 
