@@ -9,12 +9,14 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
     && apt-get update \
     && apt-get install -y --no-install-recommends libfreetype6-dev libjpeg62-turbo-dev libpng-dev libzip-dev libicu-dev unzip git \
     && rm -rf /var/lib/apt/lists/* \
-    && a2enmod rewrite headers \
+    && a2enmod rewrite headers cache cache_socache socache_shmcb \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j2 bcmath exif gd intl mysqli pdo_mysql zip \
     && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 # production settings (2.26.0): OPcache keeps the compiled code and stops checking files for changes
 COPY docker/production/php.ini /usr/local/etc/php/conf.d/zz-caligrafy.ini
+# response cache (2.26.0): public answers served from memory before PHP (docker/production/cache.conf, CACHE=off)
+COPY docker/production/cache.conf /etc/apache2/conf-available/caligrafy-cache.conf
 
 # sessions in their own folder: mount a volume there and a new deploy does not sign everyone out
 RUN mkdir -p /var/lib/php/sessions && chown www-data:www-data /var/lib/php/sessions \

@@ -39,7 +39,7 @@ class PageController extends Controller
      *                       [capability, inputs]), 'with' (array of fixed view data), 'notFound' (a view for 404s);
      *                       2.20.0: 'visitorsOnly' (a path: signed-in people go there), 'comeBack' (bool: visitors
      *                       come back here after signing in), 'query' (names of the query string the view gets, as
-     *                       strings, '' when absent)
+     *                       strings, '' when absent); 2.26.0: 'cache' (seconds a visitor's copy may be shared, see HttpCache)
      */
     public function render($view, array $options = array())
     {
@@ -78,6 +78,12 @@ class PageController extends Controller
             } catch (ServiceError $e) {
                 return $this->refused($e, $options);
             }
+        }
+
+        // 'cache' => seconds (2.26.0): a page open to everyone, answered to a visitor with no session cookie, may be kept
+        // by shared caches; a page that starts a session (a form's CSRF token) or that needs signing in never is
+        if (!empty($options['cache']) && empty($options['signedIn']) && empty($options['level']) && empty($options['visitorsOnly'])) {
+            HttpCache::publicFor((int) $options['cache']);
         }
 
         // embedded in a Snap card (?snap-embed=<capability>, 2.24.0): the page without the site's frame

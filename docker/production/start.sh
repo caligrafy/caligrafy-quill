@@ -6,7 +6,8 @@
 #      An app whose pages call slow services at the same time sets PHP_PROCESSES higher (php caligrafer.php doctor).
 #   2. keep-alive off (KEEP_ALIVE=on keeps it): with a fixed number of processes, an idle open connection would hold
 #      a process; the proxy in front (Traefik, Caddy, a load balancer) keeps visitors' connections open instead.
-#   3. prepares the database (php caligrafer.php deploy), then serves.
+#   3. the response cache (docker/production/cache.conf): on unless CACHE=off
+#   4. prepares the database (php caligrafer.php deploy), then serves.
 # PHP_PROCESSES and KEEP_ALIVE come from the environment or from the project's .env.
 set -e
 cd /var/www/html
@@ -48,7 +49,9 @@ cat > /etc/apache2/conf-enabled/zz-caligrafy-processes.conf <<CONF
 </IfModule>
 KeepAlive $keep
 CONF
-echo "caligrafy: $n PHP processes, keep-alive $(echo $keep | tr '[:upper:]' '[:lower:]')"
+cache=$(setting CACHE | tr '[:upper:]' '[:lower:]')
+case "$cache" in off|false|no|0) a2disconf -q caligrafy-cache >/dev/null 2>&1 || true; cache=off ;; *) a2enconf -q caligrafy-cache >/dev/null 2>&1 || true; cache=on ;; esac
+echo "caligrafy: $n PHP processes, keep-alive $(echo $keep | tr '[:upper:]' '[:lower:]'), response cache $cache"
 
 php caligrafer.php deploy --wait "${CALIGRAFY_DEPLOY_WAIT:-60}" || echo 'caligrafer deploy: the database is not prepared (see above)'
 exec apache2-foreground

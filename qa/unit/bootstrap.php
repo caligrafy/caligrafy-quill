@@ -10,12 +10,13 @@ putenv('APP_KEY=' . APP_KEY);
 $root = dirname(__DIR__, 2);
 require $root . '/vendor/autoload.php';
 require $root . '/framework/helpers/corehelpers.php';
+require $root . '/framework/settings/models.php';   // the AI model constants (2.26.0: out of Agent.php, Assistant.php, OpenAI.php)
 // Database reads these at its first use; no database in the unit tests (Database::useConnection() gives one SQLite)
 foreach (['DB_ACTIVATE' => 'false', 'DB_CONNECTION' => 'mysql', 'DB_HOST' => 'localhost', 'DB_DATABASE' => 'none', 'DB_USERNAME' => '', 'DB_PASSWORD' => ''] as $name => $value) {
     defined($name) || define($name, $value);
 }
 defined('ROUTE_ARG_PATTERN') || define('ROUTE_ARG_PATTERN', '#\{+(.*?)\}+#');
-foreach (['Framework', 'Web', 'Action', 'Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor', 'FaceLogin', 'Passkey', 'Auth', 'Tokens', 'Context', 'Audit', 'ServiceError', 'Capability', 'Service', 'Capabilities', 'Quickstart', 'Deployer', 'CloudClient', 'Designs', 'Updater', 'PluginSource', 'Scheduler', 'Notify', 'Mail', 'ClassMap', 'View', 'Migrations', 'Container', 'Cache', 'Query', 'PageController', 'Flash', 'Uploads', 'Form', 'Webhook', 'Download', 'Throttle', 'AuthRoutes'] as $class) {
+foreach (['Framework', 'Web', 'Action', 'Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor', 'FaceLogin', 'Passkey', 'Auth', 'Tokens', 'Context', 'Audit', 'ServiceError', 'Capability', 'Service', 'Capabilities', 'Quickstart', 'Deployer', 'CloudClient', 'Designs', 'Updater', 'PluginSource', 'Scheduler', 'Notify', 'Mail', 'ClassMap', 'View', 'Migrations', 'Container', 'Cache', 'Query', 'PageController', 'Flash', 'Uploads', 'Form', 'Webhook', 'Download', 'Throttle', 'AuthRoutes', 'HttpCache'] as $class) {
     require_once $root . "/framework/core/$class.php";
 }
 foreach (glob($root . '/framework/core/Snap/*.php') as $file) {   // Snap Cards and the assistant (2.23.0)

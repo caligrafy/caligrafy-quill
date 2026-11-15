@@ -38,6 +38,10 @@ class Rest
             }
             // file inputs (the `file` rule, 2.19.0): the uploaded files are saved once the caller is allowed
             $result = Capabilities::call($name, self::input($request), $context, new Uploads($_FILES ?? array()));
+            // cache (2.26.0): a public, read-only capability's answer to a visitor may be kept by shared caches
+            if ($entry !== null && $entry['capability']->cache > 0 && $request->bearer() === null) {
+                HttpCache::publicFor($entry['capability']->cache);
+            }
             self::send($request->method === 'POST' && $entry !== null && !$entry['capability']->readOnly ? 201 : 200, array('data' => $result));
         } catch (ServiceError $e) {
             if ($e->kind === 'unauthenticated' && !headers_sent()) {

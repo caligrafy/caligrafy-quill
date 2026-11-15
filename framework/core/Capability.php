@@ -26,6 +26,9 @@ class Capability
      * @param bool $public true when anyone may call it without signing in or a token
      * @param bool $mcp false keeps it out of the MCP tools (one only a browser can use, such as a push subscription)
      * @param bool $webOnly true (2.21.0): only Route::action() reaches it: it may read the session and sign people in
+     * @param int $cache seconds (2.26.0): a GET of it over REST by a visitor with no session cookie and no token may be
+     *                   kept by shared caches (the production image's own cache, a CDN) for that long; needs readOnly and
+     *                   public, and an answer that is the same for every visitor
      */
     public function __construct(
         public string $name,
@@ -37,10 +40,17 @@ class Capability
         public bool $public = false,
         public bool $mcp = true,
         public bool $webOnly = false,
-        public bool $async = false
+        public bool $async = false,
+        public int $cache = 0
     ) {
         if (!preg_match('/^[a-z][a-z0-9_]{0,63}$/', $name)) {
             throw new \InvalidArgumentException("Capability name '$name' must be snake_case: letters, digits and _, starting with a letter");
+        }
+        if ($cache < 0 || $cache > HttpCache::MAX) {
+            throw new \InvalidArgumentException("Capability '$name': cache must be between 0 and " . HttpCache::MAX . " seconds");
+        }
+        if ($cache > 0 && (!$readOnly || !$public || $webOnly)) {
+            throw new \InvalidArgumentException("Capability '$name': cache needs readOnly: true and public: true (one answer for every visitor), and no webOnly");
         }
     }
 }
