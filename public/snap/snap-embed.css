@@ -1,0 +1,11 @@
+/* A page shown inside a Snap card (?snap-embed, 2.24.0): the page alone, without the site's frame */
+html.snap-embedded, html.snap-embedded body { min-height: 0 !important; height: auto !important; background: transparent !important; }
+html.snap-embedded body { margin: 0 !important; --cq-footer-h: 0px; }
+html.snap-embedded .cq-nav, html.snap-embedded body > .cq-footer, html.snap-embedded body > footer, html.snap-embedded body > nav,
+html.snap-embedded .cq-install, html.snap-embedded [data-snap-hide] { display: none !important; }
+html.snap-embedded .snap-embed-hidden { display: none !important; }
+html.snap-embedded .snap-embed-part { margin: 0 !important; }
+/* a card is smaller than a screen: a page's title band and bands keep their look with less air around them */
+html.snap-embedded .cq-hero { min-height: 0 !important; padding: 28px 24px 12px !important; }
+html.snap-embedded .cq-band { padding-top: 20px !important; padding-bottom: 24px !important; }
+html.snap-embedded main { padding-bottom: 0 !important; }

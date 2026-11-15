@@ -100,4 +100,30 @@ final class QuickstartTest extends TestCase
         $this->assertSame('', Quickstart::envValue($env, 'NOPE'));
         $this->assertSame('a$b', Quickstart::envValue(Quickstart::envSet('X=1', ['X' => 'a$b']), 'X'));
     }
+
+    public function testTheDockerPortsComeFromTheComposeFilesAndTheirOverride(): void
+    {
+        $main = "services:\n  dev-box:\n    build: .\n    ports:\n      - \"8080:80\"\n  phpmyadmin:\n    image: phpmyadmin\n    ports:\n      - \"8077:80\"\n  mysql:\n    ports:\n      - \"3306:3306\"\n";
+        $this->assertSame('8080', Quickstart::composePort($main, 'dev-box', 80));
+        $this->assertSame('8077', Quickstart::composePort($main, 'phpmyadmin', 80), 'the port of its own service, not the first :80');
+        $this->assertSame('3306', Quickstart::composePort($main, 'mysql', 3306));
+        $override = "# Local ports for this machine\nservices:\n  dev-box:\n    ports: !override\n      - \"8170:80\"\n  mysql:\n    ports: !override\n      - '127.0.0.1:3416:3306'\n";
+        $this->assertSame('8170', Quickstart::composePort($override, 'dev-box', 80));
+        $this->assertSame('3416', Quickstart::composePort($override, 'mysql', 3306), 'with an address and single quotes');
+        $this->assertNull(Quickstart::composePort($override, 'phpmyadmin', 80), 'not in the override: the main file says');
+        $this->assertSame('8099', Quickstart::composePort("services:\n  dev-box:\n    ports:\n      - \"\${WEB_PORT:-8099}:80\"\n", 'dev-box', 80), 'a variable with its default');
+
+        $dir = sys_get_temp_dir() . '/caligrafy-ports-' . getmypid();
+        @mkdir($dir);
+        file_put_contents("$dir/docker-compose.yaml", $main);
+        file_put_contents("$dir/docker-compose.override.yml", $override);
+        $this->assertSame('8170', Quickstart::dockerPort($dir), 'the override wins');
+        $this->assertSame('8077', Quickstart::dockerPort($dir, 'phpmyadmin'), 'what the override does not move stays');
+        $this->assertSame('3416', Quickstart::dockerPort($dir, 'mysql'));
+        unlink("$dir/docker-compose.override.yml");
+        $this->assertSame('8080', Quickstart::dockerPort($dir), 'without an override: the main file');
+        unlink("$dir/docker-compose.yaml");
+        rmdir($dir);
+        $this->assertSame('8080', Quickstart::dockerPort($dir), 'without any file: the usual port');
+    }
 }

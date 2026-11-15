@@ -906,33 +906,46 @@ switch(strtolower($argv[1])) {
 		break;
 
 	case 'server':
-		if (isset($argv[3])) {
-			if (isset($argv[2]) && strtolower($argv[2]) == "start") {
-				// builds the image only the first time (or after 'server rebuild'): later starts take seconds
-				// with the scheduler, which runs the jobs of application/config/schedule.php every minute (schedule work)
-				system(caligrafyCompose() . ' up -d dev-box scheduler', $retValue);
-				if ($retValue) {
-					print(" You don't have a server running.\n Start your local apache server if you have one. \n If not, check the Caligrafy documentation to run docker. \n\n");
-				} else {
-					print("\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:" . Caligrafy\Quickstart::dockerPort('.') . " \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n");
-				}
-			} 
-			elseif (isset($argv[2]) && strtolower($argv[2]) == "rebuild") {
-				// rebuilds the image (after a Dockerfile change or to update the system packages), then starts it
-				system(caligrafyCompose() . ' build --pull dev-box', $retValue);
-				if (!$retValue) system(caligrafyCompose() . ' up -d dev-box', $retValue);
-				print($retValue ? "\n\nThe Caligrafy server image could not be rebuilt.\n\n" : "\n\nCaligrafy Server rebuilt and started: http://localhost:8080\n\n");
-			}
-			elseif (isset($argv[2]) && strtolower($argv[2]) == "stop") {
-				system(caligrafyCompose() . ' stop', $retValue);
-				print("\n\nCaligrafy Server stopped.\n\n");
-			}
+		// .bin/caligrafer adds a last word: 'local' when a local web server (MAMP, XAMPP, LAMP) runs, 'off' otherwise.
+		// Run by hand (php caligrafer.php server start), there is none: Docker serves the project (2.24.0).
+		$sub = strtolower($argv[2] ?? '');
+		$local = strtolower($argv[3] ?? '') === 'local';
+		// where the project answers on this computer: the ports Docker published, else the compose files and their
+		// override (docker-compose.override.yml), else 8080, 8077 and 3306
+		$where = function () {
+			return "\n Hostname: http://localhost:" . Caligrafy\Quickstart::dockerPort('.', 'dev-box')
+				. "\n phpmyadmin: http://localhost:" . Caligrafy\Quickstart::dockerPort('.', 'phpmyadmin')
+				. "\n mysql: localhost:" . Caligrafy\Quickstart::dockerPort('.', 'mysql') . " (from your computer; mysql:3306 from the containers)"
+				. "\n mysql username: root \n mysql password: root \n\n";
+		};
+		if (!in_array($sub, array('start', 'stop', 'rebuild'), true)) {
+			print("\n Usage: php caligrafer.php server <start | stop | rebuild>: the Docker development server\n\n");
+			exit(1);
 		}
-		elseif (isset($argv[2]) && strtolower($argv[2]) == "stop") {
-			print("\n\nYou are using a local Apache server.\nYou need to turn it off using LAMP/MAMP interface or the apache command line.\n\n");
+		if ($local) {
+			print($sub === 'stop' ? "\n\nYou are using a local Apache server.\nYou need to turn it off using LAMP/MAMP interface or the apache command line.\n\n"
+				: "\n\nA local web server (MAMP, XAMPP or LAMP) is running: it serves the project. Turn it off to use the Docker server.\n\n");
+			break;
 		}
-		break;
-		
+		if ($sub === 'start') {
+			// builds the image only the first time (or after 'server rebuild'): later starts take seconds
+			// with the scheduler, which runs the jobs of application/config/schedule.php every minute (schedule work)
+			system(caligrafyCompose() . ' up -d dev-box scheduler', $retValue);
+			print($retValue ? " The Docker server could not start: is Docker Desktop running? (or a port is taken: docker-compose.override.yml moves them)\n\n"
+				: "\n\nCaligrafy Server successfully started.\n" . $where());
+			exit($retValue ? 1 : 0);
+		}
+		if ($sub === 'rebuild') {
+			// rebuilds the image (after a Dockerfile change or to update the system packages), then starts it
+			system(caligrafyCompose() . ' build --pull dev-box', $retValue);
+			if (!$retValue) system(caligrafyCompose() . ' up -d dev-box scheduler', $retValue);
+			print($retValue ? "\n\nThe Caligrafy server image could not be rebuilt.\n\n" : "\n\nCaligrafy Server rebuilt and started.\n" . $where());
+			exit($retValue ? 1 : 0);
+		}
+		system(caligrafyCompose() . ' stop', $retValue);
+		print($retValue ? "\n\nThe Docker server could not be stopped: is Docker Desktop running?\n\n" : "\n\nCaligrafy Server stopped.\n\n");
+		exit($retValue ? 1 : 0);
+
     default:
         print($defaultMsg);
 }

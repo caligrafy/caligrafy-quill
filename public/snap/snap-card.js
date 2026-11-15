@@ -586,11 +586,17 @@
         return
       }
       if (c.variant === 'fact' && !c.done) { body.appendChild(el('p', 'snap-fact', c.heading)); return }
-      if (c.heading && c.variant !== 'fact') body.appendChild(el('p', 'snap-heading', c.heading))
-      if ((c.fields || []).length) {
-        var details = el('div', 'snap-details')
-        c.fields.forEach(function (f) { if (f.value !== '') details.appendChild(self.detail(self.fieldIcon(f.label), f.label, f.value)) })
-        body.appendChild(details)
+      if (c.embed) {
+        body.appendChild(this.embedded(c.embed, c.heading || c.title))   // its own page, as the app designed it
+      } else if ((c.blocks || []).length) {
+        body.appendChild(this.blocks(c.blocks))   // designed from its data, with the app's design tokens
+      } else {
+        if (c.heading && c.variant !== 'fact') body.appendChild(el('p', 'snap-heading', c.heading))
+        if ((c.fields || []).length) {
+          var details = el('div', 'snap-details')
+          c.fields.forEach(function (f) { if (f.value !== '') details.appendChild(self.detail(self.fieldIcon(f.label), f.label, f.value)) })
+          body.appendChild(details)
+        }
       }
       if ((c.actions || []).length) {
         var row = el('div', 'snap-actions')
@@ -603,6 +609,79 @@
         body.appendChild(row)
       }
     }
+    // ---- a capability's own page, embedded (Snap\\Views): sized to its content, scrolling past 760px ----
+    embedded (src, title) {
+      var wrap = el('div', 'snap-embed is-loading')
+      var frame = el('iframe', 'snap-embed-frame')
+      frame.src = address(src)
+      frame.title = title || 'Page'
+      frame.style.height = '320px'
+      var MAX = 760
+      var onMessage = function (e) {
+        if (e.source !== frame.contentWindow || !e.data || e.data.snapEmbed === undefined) return
+        frame.style.height = Math.min(Math.max(80, e.data.height), MAX) + 'px'
+        wrap.classList.toggle('is-tall', e.data.height > MAX)
+        wrap.classList.remove('is-loading')
+      }
+      window.addEventListener('message', onMessage)
+      frame.addEventListener('load', function () { setTimeout(function () { wrap.classList.remove('is-loading') }, 400) })
+      wrap.appendChild(frame)
+      return wrap
+    }
+
+    // ---- a card designed from its data (Snap\\Designer): hero, stats, fields, text, tags ----
+    blocks (blocks) {
+      var out = el('div', 'snap-b')
+      blocks.forEach(function (b) {
+        if (b.type === 'hero') {
+          var hero = el('div', 'snap-b-hero')
+          if (b.image) { var img = el('img', 'snap-b-image'); img.src = b.image; img.alt = ''; hero.appendChild(img) }
+          var text = el('div', 'snap-b-hero-text')
+          if (b.eyebrow) text.appendChild(el('p', 'snap-b-eyebrow', b.eyebrow))
+          text.appendChild(el('p', 'snap-b-title', b.title))
+          if (b.subtitle) text.appendChild(el('p', 'snap-b-subtitle', b.subtitle))
+          if ((b.badges || []).length) {
+            var badges = el('div', 'snap-b-badges')
+            b.badges.forEach(function (x) { badges.appendChild(el('span', 'snap-b-badge snap-b-badge--' + (x.tone || 'neutral'), x.text)) })
+            text.appendChild(badges)
+          }
+          hero.appendChild(text)
+          out.appendChild(hero)
+        } else if (b.type === 'stats') {
+          var stats = el('div', 'snap-b-stats')
+          stats.style.setProperty('--n', b.items.length)
+          b.items.forEach(function (x) { var st = el('div', 'snap-b-stat'); st.appendChild(el('span', 'snap-b-stat-value', x.value)); st.appendChild(el('span', 'snap-b-stat-label', x.label)); stats.appendChild(st) })
+          out.appendChild(stats)
+        } else if (b.type === 'fields') {
+          var dl = el('dl', 'snap-b-fields')
+          b.items.forEach(function (x) {
+            var row = el('div', 'snap-b-field')
+            row.appendChild(el('dt', null, x.label))
+            var dd = el('dd')
+            if (x.format === 'url') { var a = el('a', null, x.value); a.href = x.value; a.target = '_blank'; a.rel = 'noopener'; dd.appendChild(a) }
+            else if (x.format === 'email') { var m = el('a', null, x.value); m.href = 'mailto:' + x.value; dd.appendChild(m) }
+            else dd.textContent = x.value
+            row.appendChild(dd)
+            dl.appendChild(row)
+          })
+          out.appendChild(dl)
+        } else if (b.type === 'text') {
+          var t = el('div', 'snap-b-text')
+          t.appendChild(el('p', 'snap-b-label', b.label))
+          t.appendChild(el('p', 'snap-b-paragraph', b.value))
+          out.appendChild(t)
+        } else if (b.type === 'tags') {
+          var g = el('div', 'snap-b-text')
+          g.appendChild(el('p', 'snap-b-label', b.label))
+          var chips = el('div', 'snap-b-tags')
+          b.items.forEach(function (x) { chips.appendChild(el('span', 'snap-b-tag', x)) })
+          g.appendChild(chips)
+          out.appendChild(g)
+        }
+      })
+      return out
+    }
+
     fieldIcon (label) {
       var map = { Author: 'feather', Book: 'book-open', Title: 'book-open', 'Published year': 'calendar', Summary: 'text', ISBN: 'barcode', Borrower: 'user', 'Due on': 'calendar-clock', Username: 'mail', Permissions: 'shield-check', Bio: 'text', Name: 'user', Rhythm: 'repeat', Level: 'sparkles', Routine: 'repeat' }
       return map[label] || 'circle-dot'
@@ -618,7 +697,11 @@
         body.appendChild(empty)
         return
       }
-      var list = el('ul', 'snap-rows')
+      if (c.embed) {
+        body.appendChild(this.embedded(c.embed, c.title))   // its own page, as the app designed it
+        return
+      }
+      var list = el('ul', 'snap-rows' + (c.design ? ' snap-rows--designed' : ''))
       c.rows.forEach(function (cells, i) {
         var li = el('li', 'snap-rowitem')
         li.style.setProperty('--i', i)
@@ -626,10 +709,22 @@
         var b = el(openable ? 'button' : 'div', 'snap-rowbtn')
         if (openable) b.type = 'button'
         var text = el('span', 'snap-row-text')
-        text.appendChild(el('span', 'snap-row-title', cells[0]))
-        var rest = cells.slice(1).filter(function (x) { return x !== '' })
-        if (rest.length) text.appendChild(el('span', 'snap-row-meta', rest.join(' · ')))
-        b.appendChild(text)
+        var d = c.design && c.design[i]
+        if (d) {
+          // designed: what names it, a line under it, its details on the side, a badge for its state
+          text.appendChild(el('span', 'snap-row-title', d.title))
+          if (d.subtitle) text.appendChild(el('span', 'snap-row-sub', d.subtitle))
+          b.appendChild(text)
+          var side = el('span', 'snap-row-side')
+          if (d.badge) side.appendChild(el('span', 'snap-b-badge snap-b-badge--' + (d.badge.tone || 'neutral'), d.badge.text))
+          ;(d.meta || []).forEach(function (m) { side.appendChild(el('span', 'snap-row-meta', m)) })
+          if (side.childNodes.length) b.appendChild(side)
+        } else {
+          text.appendChild(el('span', 'snap-row-title', cells[0]))
+          var rest = cells.slice(1).filter(function (x) { return x !== '' })
+          if (rest.length) text.appendChild(el('span', 'snap-row-meta', rest.join(' · ')))
+          b.appendChild(text)
+        }
         if (openable) {
           b.appendChild(icon('chevron-right', 16))
           b.addEventListener('click', function () { var inputs = {}; inputs[c.open.input] = c.keys[i]; self.act(c.open.capability, inputs, null, cells[0]) })

@@ -319,7 +319,7 @@ class Doctor
             } elseif (stripos($message, 'Access denied') !== false) {
                 $fix = 'wrong DB_USERNAME / DB_PASSWORD';
             } elseif (stripos($message, 'Unknown database') !== false) {
-                $fix = 'create the database ' . $this->env('DB_DATABASE') . ' (phpMyAdmin on http://localhost:8077 with Docker)';
+                $fix = 'create the database ' . $this->env('DB_DATABASE') . ' (phpMyAdmin on http://localhost:' . \Caligrafy\Quickstart::dockerPort($this->root, 'phpmyadmin') . ' with Docker)';
             }
             $this->add('database', 'Database', 'FAIL', "$where: $message", $fix);
         }

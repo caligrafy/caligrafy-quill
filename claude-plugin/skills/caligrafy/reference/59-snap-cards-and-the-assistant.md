@@ -6,7 +6,8 @@
 **Snap Cards** turn every capability of your app into a card a person can use, and **the assistant** answers what
 they type, say or attach with those cards. One line of `web.php`, `Route::snap();`, gives every signed-in person a Home
 that shows what needs them, and a conversation that keeps its context. Nothing to design: each card is built from what
-your capability already declares (its rules, descriptions, `readOnly`, `destructive`). Since 2.23.0.
+your capability already declares (its rules, descriptions, `readOnly`, `destructive`), and shown the way your app
+shows it: your own page, or a card designed in your design system ([how a card looks](#looks)). Since 2.23.0.
 
 ## With Claude
 
@@ -107,6 +108,44 @@ Every card names its family with its type. People never see these names; they ar
 and these exact inputs; the assistant's model never sees it, and a card at an address never changes data. A change that
 can be undone (an update, a creation, a hint `undo`) offers **Undo** right after.
 
+## How a card looks: your pages, else your design system
+
+A card shows what its capability returns the way your app already shows it (since 2.24.0):
+
+1. **The page made for it.** When a capability is the first data of a `Route::page`, its card shows that page: your
+   view, with its design, its scripts and its data, inside the card. The site's frame (the top bar, menus, side rails
+   around `main`) steps aside, links open in the page around the card, and the card takes the page's height (760px at
+   most, then it scrolls). `get_book` with `id` 7 shows `/books/7`; `list_books` shows `/books`.
+2. **A part of it.** Mark the part that shows one capability with `data-snap`, and the card shows that part alone:
+
+   ```pug
+   section.cq-band(data-snap='list_books')
+       ul.cq-rows
+           each $b in $books['data']
+               li.cq-row= $b['title']
+   ```
+
+   Without a mark, the card of a capability that only reads shows the page without its forms that change things:
+   those are the card's own actions (Change, Delete, Lend).
+3. **A card designed for its data**, when no page shows it, in your design system: the `--design-*` tokens of
+   [`DESIGN_STYLE`](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles), else Caligrafy's. A record
+   becomes a hero (its name, a line under it, badges with a tone), a few numbers, its details, its longer text and its
+   tags; a list becomes rows (a name, a line under it, up to three short facts and a badge). Ids, keys and secrets stay
+   out; dates, amounts, shares, emails and links are formatted.
+   With `ANTHROPIC_API_KEY`, Claude designs it from a sample of the data, once per shape of data (it is kept 30 days;
+   `php caligrafer.php cache clear` forgets it). It can only name your data's own fields. Without a key, rules from the
+   names and values of the fields design it.
+
+Pages made to create or change something (`/books/new`, `/cases/bulk`, `.../edit`) are never used for a card, nor a
+page that only also reads a capability (the authors of the catalog's filter). The hints decide otherwise:
+
+```php
+'get_book' => array('view' => 'Bookshelf/book'),        // this page
+'list_people' => array('view' => false,                  // no page: a designed card
+    'design' => array('title' => 'name', 'subtitle' => 'role', 'meta' => array('email', 'active_cases'),
+        'badge' => array('path' => 'status', 'tones' => array('away' => 'warning')))),
+```
+
 ## Home's card grammar
 
 Each section of Home uses one template, chosen by what the person does with it:
@@ -169,6 +208,8 @@ return array(
 | `insight` | a number on Home, only with the action it calls for |
 | `discover` | the things Home invites to browse: more like what the person looked at, new, available by your rule |
 | `working`, `async` | what a background task says while it runs; async without the attribute |
+| `view` | the page that shows it (`'Bookshelf/book'`), or `false` for a designed card ([how a card looks](#looks)) |
+| `design` | how its data is shown without a page: `title`, `subtitle`, `eyebrow`, `image`, `badges` (`badge` for a list), `stats`, `fields`, `text`, `tags` (`meta` for a list), each a field name or `array('path' => ..., 'label' => ..., 'format' => 'date', 'tones' => array(...))` |
 
 ## Work in the background
 
@@ -217,9 +258,17 @@ Caligrafy\Snap\Planner::$transport = function (array $request) {
 $answer = $this->action('snap_ask', array('text' => 'show me the catalog'), $this->user(1))->describe()['data'];
 ```
 
+The designed cards use the same transport (their request asks for a structured output, `outputConfig.format`), or the
+rules alone with `Caligrafy\Snap\Designer::$model = false`.
+
 ## Questions
 
 **A page says "Snap is almost ready".** Its tables are missing: `php caligrafer.php snap install`.
+
+**A card shows my whole page, with its forms.** Mark the part it should show with `data-snap="<capability>"`. A page
+that draws itself with JavaScript works the same way: the card is your page.
+
+**A card shows the wrong page, or none.** Name it with the hint `view`, or keep the capability out with `'view' => false`.
 
 **A capability is not a card.** Snap's own (`snap_*`), `notify_*` and `queue_work` are left out, and so are the
 capabilities the person may not call: a card always respects permissions.

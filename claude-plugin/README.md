@@ -51,6 +51,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.36.0** - Caligrafy Quill 2.24.0: a Snap card shows the page made for its capability (a part of it with `data-snap`), else a card designed for its data in the app's design system: the `assistant` skill marks views and writes `view` and `design` hints, the API reference and G161; `server` and `quickstart` print the ports this computer uses (`docker-compose.override.yml` included) and `php caligrafer.php server` works by hand: the server skill, the API reference, G78 fixed and G160.
 - **1.35.0** - Caligrafy Quill 2.23.0: Snap Cards and the assistant (`Route::snap()`, `php caligrafer.php snap`, hints in `application/config/snap.php`, `#[Capability(async: true)]`): the new `/caligrafy-quill:assistant` skill sets it up end to end; Snap in the API reference and the idea, new-capability and update skills; gotchas G153-G159.
 - **1.34.1** - Caligrafy Quill 2.22.1: builds without the useless npm step of a Composer plugin (G152); `update` carries `allow-plugins`.
 - **1.34.0** - Caligrafy Quill 2.22.0: `Route::download` with `'as' => 'zip'` (many files as one archive, under a `root` folder), Vue 3.5.45, axios 1.21.1, Bootstrap 5.3.9, stripe-php 23; gotcha G151.

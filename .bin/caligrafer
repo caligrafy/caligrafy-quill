@@ -86,7 +86,9 @@ fi
 # every other command gets its arguments exactly as typed (design use linear.app, cloud deploy myapp, token create ...)
 run_caligrafer() {
     case "$MODE" in
-        initialize|server) ./caligrafer.php $MODE $COMMAND $SERVER ;;
+        initialize) ./caligrafer.php $MODE $COMMAND $SERVER ;;
+        # server: 'local' when a local web server runs (it serves the project), 'off' when Docker does
+        server) if localServerRunning; then ./caligrafer.php server $COMMAND local; else ./caligrafer.php server $COMMAND off; fi ;;
         *) ./caligrafer.php "$MODE" "${@:2}" ;;
     esac
 }

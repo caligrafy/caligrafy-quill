@@ -61,13 +61,81 @@ class Quickstart
      * @param array $options example (bool), yes (bool: allowed to delete .git), db (bool: false skips the database steps)
      * @return int exit code
      */
+    // the services of docker-compose.yaml, the port each listens on inside its container, and its usual port here
+    const DOCKER_SERVICES = array('dev-box' => array(80, '8080'), 'prod-box' => array(80, '8080'), 'phpmyadmin' => array(80, '8077'), 'mysql' => array(3306, '3306'));
+    // the files docker compose reads, in its order: the main file, then the override, which wins
+    const COMPOSE_FILES = array('compose.yaml', 'compose.yml', 'docker-compose.yaml', 'docker-compose.yml',
+        'compose.override.yaml', 'compose.override.yml', 'docker-compose.override.yaml', 'docker-compose.override.yml');
+
     /**
-     * The port of the Docker server on this computer, from docker-compose.yaml (2.21.8)
+     * The port of this computer that reaches a service of the Docker server (dev-box by default; 2.21.8, 2.24.0):
+     * first what Docker published (running containers: every compose file, overrides and variables counted), else the
+     * compose files with their override (docker-compose.override.yml, which the projects of a computer use to move
+     * 8080, 8077 and 3306 when another project holds them), else the usual port
+     * @param string $service dev-box, prod-box, phpmyadmin or mysql
      */
-    public static function dockerPort($root = '.')
+    public static function dockerPort($root = '.', $service = 'dev-box')
     {
-        $compose = @file_get_contents($root . '/docker-compose.yaml');
-        return is_string($compose) && preg_match('/dev-box:.*?["\']?(\d+):80["\']?/s', $compose, $m) ? $m[1] : '8080';
+        [$inside, $usual] = self::DOCKER_SERVICES[$service] ?? array(80, '8080');
+        $published = self::publishedPort($root, $service, $inside);
+        if ($published !== null) {
+            return $published;
+        }
+        $port = null;
+        foreach (self::COMPOSE_FILES as $file) {
+            $found = self::composePort((string) @file_get_contents(rtrim($root, '/') . '/' . $file), $service, $inside);
+            if ($found !== null) {
+                $port = $found;   // a later file (the override) wins
+            }
+        }
+        return $port ?? $usual;
+    }
+
+    /**
+     * The port Docker published for a service of this project (docker compose port), or null: Docker missing or off,
+     * the service not running, or inside a container (no docker command there)
+     */
+    public static function publishedPort($root, $service, $inside)
+    {
+        if (is_file('/.dockerenv') || !function_exists('exec')) {
+            return null;
+        }
+        $output = array();
+        @exec('cd ' . escapeshellarg($root) . ' && docker compose port ' . escapeshellarg($service) . ' ' . (int) $inside . ' 2>/dev/null', $output, $code);
+        return $code === 0 && preg_match('/:(\d+)\s*$/', trim(implode("\n", $output)), $m) && $m[1] !== '0' ? $m[1] : null;
+    }
+
+    /**
+     * The port of this computer a compose file maps to a service's port inside its container ("8170:80",
+     * "127.0.0.1:8170:80", "${WEB_PORT:-8080}:80"), or null when the file does not say
+     */
+    public static function composePort($compose, $service, $inside)
+    {
+        $lines = preg_split('/\R/', (string) $compose);
+        $in = false;
+        $indent = 0;
+        foreach ($lines as $line) {
+            if (trim($line) === '' || preg_match('/^\s*#/', $line)) {
+                continue;
+            }
+            $depth = strlen($line) - strlen(ltrim($line));
+            if (preg_match('/^(\s*)["\']?' . preg_quote($service, '/') . '["\']?\s*:\s*$/', $line, $m)) {
+                $in = true;
+                $indent = strlen($m[1]);
+                continue;
+            }
+            if ($in && $depth <= $indent) {
+                $in = false;   // the next service
+            }
+            if ($in && preg_match('/(?:^|[\s"\'\-])(?:[\d.]+:)?(\$\{(\w+)(?::?-(\d+))?\}|\d+):' . (int) $inside . '(?:\/tcp)?\b/', $line, $p)) {
+                if (ctype_digit($p[1])) {
+                    return $p[1];
+                }
+                $value = getenv($p[2]);
+                return is_string($value) && ctype_digit($value) ? $value : (($p[3] ?? '') !== '' ? $p[3] : null);
+            }
+        }
+        return null;
     }
 
     public function run(array $options = array())

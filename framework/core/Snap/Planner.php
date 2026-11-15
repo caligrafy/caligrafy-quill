@@ -151,7 +151,7 @@ class Planner
 
     // ---- inside ----
 
-    private static function send(array $request)
+    public static function send(array $request)   // the planner and the designer (Snap\Designer)
     {
         if (self::$transport !== null) {
             return call_user_func(self::$transport, $request);

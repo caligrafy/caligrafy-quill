@@ -38,6 +38,11 @@ class Route extends \stdClass
     private static $_routes = array();
 
     /**
+     * @var array the pages declared with Route::page: route, view, options (2.24.0: Snap shows a capability through its page)
+    */
+    private static $_pages = array();
+
+    /**
      * @var array $_routesComponents defines all the valid routes components that are set at runtime
      * @property array $_routesComponents defines all the valid routes components that are set at runtime
     */
@@ -346,7 +351,18 @@ class Route extends \stdClass
     */
     public static function page($route, $view, array $options = array())
     {
+        self::$_pages[] = array('route' => '/' . trim((string) $route, '/'), 'view' => $view, 'options' => $options);
         self::get($route, function () use ($view, $options) { (new PageController())->render($view, $options); });
+    }
+
+    /**
+     * The pages declared with Route::page (2.24.0): each with its route, its view and its options (its data
+     * capabilities), so that a capability can be shown through the page designed for it
+     * @return array of ['route' => 'books/{id}', 'view' => 'Bookshelf/book', 'options' => [...]]
+     */
+    public static function pages()
+    {
+        return self::$_pages;
     }
 
     /**
@@ -647,7 +663,7 @@ class Route extends \stdClass
      */
     public static function reset()
     {
-        self::$_httpMethods = self::$_routes = self::$_routesComponents = self::$_methods = self::$_webhooks = self::$_mcp = array();
+        self::$_httpMethods = self::$_routes = self::$_routesComponents = self::$_methods = self::$_webhooks = self::$_mcp = self::$_pages = array();
         AuthRoutes::$signUp = null;
     }
 

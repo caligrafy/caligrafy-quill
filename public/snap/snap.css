@@ -292,3 +292,53 @@ snap-card.is-busy .snap-body > :not(.snap-actions), snap-card.is-busy .snap-acti
 @keyframes snapLine { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: none; } }
 @keyframes snapFinish { 0% { transform: scale(1); box-shadow: 0 0 0 0 rgba(31,157,106,.5); } 40% { transform: scale(1.02); } 100% { transform: none; box-shadow: 0 0 0 18px rgba(31,157,106,0), var(--snap-shadow); } }
 @keyframes snapLine2 { from { opacity: 0; } to { opacity: 1; } }
+
+/* ======================================================================================================================
+   A capability's own page, embedded (Snap\Views, 2.24.0), and the cards designed from data (Snap\Designer).
+   The designed cards take the app's own design tokens (--design-*: Caligrafy's look, or its DESIGN_STYLE), so they
+   look like the rest of the app; Snap's colors are only the fallback.
+   ====================================================================================================================== */
+.snap-embed { position: relative; border-radius: calc(var(--snap-radius) - 6px); overflow: hidden; background: var(--design-canvas, #fff); }
+.snap-embed-frame { display: block; width: 100%; border: 0; min-height: 80px; background: transparent; transition: height .25s var(--snap-ease); }
+.snap-embed.is-loading::after { content: ''; position: absolute; inset: 0; background: linear-gradient(105deg, transparent 30%, rgba(124,92,255,.08) 50%, transparent 70%);
+  background-size: 250% 100%; animation: snapSweep 1.4s ease-in-out infinite; pointer-events: none; }
+.snap-embed.is-tall { box-shadow: inset 0 -12px 12px -12px rgba(29,27,44,.18); }
+.snap.is-voiced:has(.snap-embed) { padding: 10px; }
+
+.snap-b { display: flex; flex-direction: column; gap: 18px; font-family: var(--design-font, inherit); color: var(--design-body, var(--snap-text)); }
+.snap-b-hero { display: flex; gap: 16px; align-items: flex-start; }
+.snap-b-image { width: 72px; height: 72px; border-radius: var(--design-radius-control, 12px); object-fit: cover; flex: 0 0 auto; background: var(--design-surface, var(--snap-canvas)); }
+.snap-b-hero-text { display: flex; flex-direction: column; gap: 4px; min-width: 0; }
+.snap-b-eyebrow { margin: 0; font-size: 12px; font-weight: 600; letter-spacing: .04em; text-transform: uppercase; color: var(--design-muted, var(--snap-muted)); }
+.snap-b-title { margin: 0; font-size: 22px; font-weight: 650; line-height: 1.25; color: var(--design-ink, var(--snap-ink)); }
+.snap-b-subtitle { margin: 0; font-size: 15px; color: var(--design-muted, var(--snap-muted)); }
+.snap-b-badges { display: flex; flex-wrap: wrap; gap: 6px; margin-top: 6px; }
+.snap-b-badge { display: inline-flex; align-items: center; font-size: 12px; font-weight: 600; padding: 3px 10px; border-radius: 999px; white-space: nowrap;
+  background: var(--design-surface, var(--snap-canvas)); color: var(--design-body, var(--snap-text)); }
+.snap-b-badge--success { background: color-mix(in srgb, var(--design-success, #1f9d6a) 14%, transparent); color: var(--design-success, #13704b); }
+.snap-b-badge--danger { background: color-mix(in srgb, var(--design-error, #d4342c) 12%, transparent); color: var(--design-error, #a3231d); }
+.snap-b-badge--warning { background: #fff1de; color: #8a4f0c; }
+.snap-b-badge--info { background: color-mix(in srgb, var(--design-primary, #5b3fd3) 12%, transparent); color: var(--design-primary, var(--snap-purple-ink)); }
+.snap-b-stats { display: grid; grid-template-columns: repeat(var(--n, 3), minmax(0, 1fr)); gap: 10px; }
+.snap-b-stat { display: flex; flex-direction: column; gap: 2px; padding: 12px 14px; border-radius: var(--design-radius-control, 12px); background: var(--design-surface, var(--snap-canvas)); }
+.snap-b-stat-value { font-size: 22px; font-weight: 700; color: var(--design-ink, var(--snap-ink)); font-variant-numeric: tabular-nums; }
+.snap-b-stat-label { font-size: 12.5px; color: var(--design-muted, var(--snap-muted)); }
+.snap-b-fields { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 14px 24px; margin: 0; }
+.snap-b-field { display: flex; flex-direction: column; gap: 2px; min-width: 0; border-top: 1px solid var(--design-hairline, var(--snap-line)); padding-top: 10px; }
+.snap-b-field dt { font-size: 12.5px; font-weight: 500; color: var(--design-muted, var(--snap-muted)); }
+.snap-b-field dd { margin: 0; font-size: 15px; font-weight: 600; color: var(--design-ink, var(--snap-ink)); overflow-wrap: anywhere; }
+.snap-b-field dd a { color: var(--design-primary, var(--snap-purple)); }
+.snap-b-label { margin: 0 0 6px; font-size: 12.5px; font-weight: 600; color: var(--design-muted, var(--snap-muted)); }
+.snap-b-paragraph { margin: 0; font-size: 15px; line-height: 1.6; color: var(--design-body, var(--snap-text)); white-space: pre-line; }
+.snap-b-tags { display: flex; flex-wrap: wrap; gap: 6px; }
+.snap-b-tag { font-size: 13px; padding: 4px 10px; border-radius: 999px; border: 1px solid var(--design-hairline, var(--snap-line)); color: var(--design-body, var(--snap-text)); }
+@media (max-width: 640px) { .snap-b-fields { grid-template-columns: minmax(0, 1fr); } .snap-b-stats { grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+/* designed rows: what names it, a line under it, details and a badge on the side */
+.snap-rows--designed .snap-rowbtn { padding: 12px 12px; border-bottom: 1px solid var(--design-hairline, var(--snap-line)); border-radius: 0; gap: 16px; }
+.snap-rows--designed .snap-rowitem:last-child .snap-rowbtn { border-bottom: 0; }
+.snap-rows--designed .snap-row-text { flex: 1; gap: 2px; }
+.snap-rows--designed .snap-row-title { font-size: 15px; font-weight: 650; color: var(--design-ink, var(--snap-ink)); }
+.snap-row-sub { font-size: 13px; color: var(--design-muted, var(--snap-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.snap-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: 0 0 auto; text-align: right; }
+.snap-row-side .snap-row-meta { font-size: 12.5px; font-variant-numeric: tabular-nums; }

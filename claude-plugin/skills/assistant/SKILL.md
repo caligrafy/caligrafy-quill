@@ -9,7 +9,7 @@ argument-hint: "[what the app is about, in a few words]"
 
 What the app is about: `$ARGUMENTS` (else read it from the README, `APP_NAME` and the capabilities). Read the wiki page
 [Snap Cards and the Assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant), the
-Snap section of [api-reference.md](../caligrafy/reference/api-reference.md#snap) and G153-G159 of
+Snap section of [api-reference.md](../caligrafy/reference/api-reference.md#snap) and G153-G161 of
 [gotchas.md](../caligrafy/reference/gotchas.md). Snap needs Caligrafy Quill 2.23.0 or later
 (`php caligrafer.php version`): older, run the `update` skill first.
 
@@ -59,6 +59,21 @@ the hints that help:
 
 `php -l application/config/snap.php` after writing it.
 
+## 3b. How the cards look (2.24.0)
+
+A card shows the page made for its capability (the `Route::page` whose first data it is), else a card designed for
+its data in the app's design system (Claude designs it when the key is set, rules otherwise). Never a list of fields.
+For each main capability (the lists and records people open):
+
++ Its page shows more than the capability (a list with a create form, a dashboard): add `data-snap='<capability>'`
+  to the element of the view that shows it (`section.cq-band(data-snap='list_books')`, several names separated by
+  spaces). Only add the attribute; change nothing else in the view.
++ It picks the wrong page, or none while one fits: the hint `'view' => 'Folder/view'`; a page that should not be used:
+  `'view' => false`.
++ Without a page, its designed card misses what matters (check it at `/snap/c/<capability>`): a `design` hint naming
+  the fields (`'design' => array('title' => 'name', 'subtitle' => 'role', 'meta' => array('email'))`; the wiki page
+  lists the keys). Do not write one when the card already reads well.
+
 ## 4. Slow work: `async: true`
 
 A capability that takes seconds (a report, sending many emails, an import) gets `async: true` in its
@@ -99,7 +114,8 @@ php caligrafer.php snap
 ```
 
 Every line `[ok]` that the app needs. Then, signed in, open `/assistant` (Home greets the person, its sections show
-what the hints describe), type the name of a card ("the catalog"), open a record, try an action up to its Confirm
+what the hints describe), type the name of a card ("the catalog": it shows its page, or a designed card, never
+a list of raw fields), open a record, try an action up to its Confirm
 (stop there unless the user asked to change data), and open `/snap` (one card per capability the person may use).
-A page that says "Snap is almost ready" means the tables are missing (G153). Report the addresses, the hints written,
+A page that says "Snap is almost ready" means the tables are missing (G153). Report the addresses, the `data-snap` marks and hints written,
 what is async, and whether the model is on.

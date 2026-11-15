@@ -80,6 +80,17 @@ class PageController extends Controller
             }
         }
 
+        // embedded in a Snap card (?snap-embed=<capability>, 2.24.0): the page without the site's frame
+        if (isset($_GET['snap-embed']) && class_exists('Caligrafy\\Snap\\Views')) {
+            ob_start();
+            try {
+                $page = view($view, array_merge($data, self::identity()));
+            } finally {
+                $html = (string) ob_get_clean();
+            }
+            echo \Caligrafy\Snap\Views::page($html);
+            return $page;
+        }
         return view($view, array_merge($data, self::identity()));
     }
 

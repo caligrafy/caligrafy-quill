@@ -4,12 +4,27 @@
 if docker compose version >/dev/null 2>&1; then COMPOSE="docker compose"; else COMPOSE="docker-compose"; fi
 
 
+# the port of this computer Docker published for a service (docker-compose.override.yml included), else the usual one
+published() {
+    local PORT
+    PORT=$($COMPOSE port "$1" "$2" 2>/dev/null | sed -n 's/.*:\([0-9][0-9]*\)$/\1/p' | head -1)
+    # not running: the merged configuration (every compose file and its override), as docker compose config prints it
+    if [ -z "$PORT" ] || [ "$PORT" = "0" ]; then
+        PORT=$($COMPOSE config 2>/dev/null | awk -v svc="$1" -v tgt="$2" '
+            /^  [A-Za-z0-9_.-]+:$/ { inside = ($0 == "  " svc ":"); target = ""; next }
+            inside && /target:/ { target = $2 }
+            inside && /published:/ && target == tgt { gsub(/"/, "", $2); print $2; exit }')
+    fi
+    if [ -n "$PORT" ] && [ "$PORT" != "0" ]; then echo "$PORT"; else echo "$3"; fi
+}
+
 start() {
     printf "\n\n Building the Caligrafy development server...\n\n"
     $COMPOSE up --build -d prod-box
     if [ $? -eq 0 ]; then
         clear
-        printf "\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:8080/caligrafy-quill \n phpmyadmin: http://localhost:8077/ \n mysql username: root \n mysql password: root \n\n"
+        printf "\n\nCaligrafy Server successfully started.\n\n Hostname: http://localhost:%s \n phpmyadmin: http://localhost:%s \n mysql: localhost:%s \n mysql username: root \n mysql password: root \n\n" \
+            "$(published prod-box 80 8080)" "$(published phpmyadmin 80 8077)" "$(published mysql 3306 3306)"
         printf "\n\nMonitoring server changes in the application folder...\n\nPress CTRL-C at any point to exit \n\n"
         #watch "./application" "*.*" "$COMPOSE up --build -d prod-box"
         watch "" "*.*" "$COMPOSE up --build -d prod-box"

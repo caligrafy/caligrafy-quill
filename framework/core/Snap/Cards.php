@@ -120,6 +120,9 @@ class Cards
             $count = $page ? $page['total'] : count($rows);
             $card['glance'] = $count . ' ' . (isset($hints['noun']) ? ($count === 1 ? self::singular($hints['noun']) : $hints['noun']) : self::noun($name, $count));
             $card['empty'] = $hints['empty'] ?? 'Nothing here yet.';
+            // its own page when it has one (Snap\Views), else each row designed (Snap\Designer), never the raw data
+            $card['embed'] = $rows ? Views::embed($name, $input) : null;
+            $card['design'] = $card['embed'] === null ? Designer::rows($name, $rows) : null;
             return $card;
         }
         $card = self::base('show', 'answer', $name, $title, $hints['lead'] ?? null, $input);
@@ -129,6 +132,9 @@ class Cards
             $card['fields'] = self::record($plain, $hints, $card['heading']);
             $card['glance'] = $card['heading'];
             $card['actions'] = self::actions($name, $plain, $context);
+            // its own page when it has one (Snap\Views), else designed blocks (Snap\Designer), never the raw data
+            $card['embed'] = Views::embed($name, $input);
+            $card['blocks'] = $card['embed'] === null ? Designer::record($name, $plain) : null;
         } else {
             $card['variant'] = 'fact';
             $card['heading'] = is_bool($plain) ? ($plain ? 'Yes' : 'No') : (string) ($plain ?? 'Done');

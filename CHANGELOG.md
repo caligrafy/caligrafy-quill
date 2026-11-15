@@ -6,6 +6,22 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.24.0] - 2026-11-14
+
+### Added
+- **A Snap card shows the page made for its capability** (`Caligrafy\Snap\Views`): a capability that is the first data of a `Route::page` is shown through that page, the real view with its design, scripts and data, in the card (`?snap-embed=<capability>`, rendered as the person): without the site's frame (any layout: the bars, menus and side rails around `main`), unrolled when the layout scrolls inside the screen, its links opening in the page around the card, sized to its height (760px at most, then it scrolls). The route variables are filled from the card's inputs (`/books/{id}` with `id`), and the inputs the page reads from its address are added (`query`).
+  - A view marks the part that shows one capability with `data-snap="<capability>"` (`section(data-snap='get_book')`): the card shows that part alone. Without a mark, the card of a capability that only reads shows the page without its forms that change things (those are the card's actions).
+  - A page made to create or change something (`/new`, `/create`, `/add`, `/edit`, `/bulk`, `/import`, `/upload`, `/compose`, `/setup`) and a page that only also reads a capability are not used. The hint `'view' => 'Books/index'` picks a page, `'view' => false` keeps a capability out of it.
+  - `Route::pages()` lists the pages `Route::page` declared.
+- **A capability without a page gets a card designed for its data** (`Caligrafy\Snap\Designer`), in the app's design system (the `--design-*` tokens of `DESIGN_STYLE`, else Caligrafy's): a record becomes a hero (title, eyebrow, subtitle, badges with tones, image), stats, details, longer text and tags; a list becomes rows with a title, a line under it, a side with up to three short facts and a badge. Ids, keys, secrets and technical fields stay out; dates, amounts, shares, emails and links are formatted.
+  - With `ANTHROPIC_API_KEY`, Claude designs it from a sample of the data (a structured output that can only name the data's own fields, known formats and tones), once per data shape: it is kept 30 days in the cache. Without a key, or `Designer::$model = false`, rules from the names and values of the fields design it.
+  - The hint `'design' => ['title' => 'name', 'subtitle' => 'role', 'meta' => [...], 'badge' => [...]]` designs it by hand.
+
+### Fixed
+- `server start`, `server rebuild`, `quickstart` and `.bin/server` print the ports this computer really uses: the ones Docker published (`docker compose port`), else the compose files with their `docker-compose.override.yml` (a project moved to 8170, 8171 and 3416 because another one holds 8080, 8077 and 3306), else 8080, 8077 and 3306. They printed 8080 and 8077 whatever the override said, `rebuild` always 8080 and `.bin/server` `http://localhost:8080/caligrafy-quill`. `server start` also prints the MySQL port.
+- `php caligrafer.php server start`, `stop` and `rebuild` work when run by hand: they waited for a last word only `.bin/caligrafer` adds, so `start` did nothing and `stop` answered "You are using a local Apache server". `.bin/caligrafer` now says `local` only when a local web server (MAMP, XAMPP, LAMP) runs.
+- `doctor` names the real phpMyAdmin port when the database is missing.
+
 ## [2.23.0] - 2026-11-14
 
 ### Added

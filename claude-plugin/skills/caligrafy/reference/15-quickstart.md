@@ -197,8 +197,9 @@ The Tasks feature is written once, as five **capabilities** (one class per actio
 ```text
 Caligrafy Server successfully started.
 
- Hostname: http://localhost:8080 
- phpmyadmin: http://localhost:8077/ 
+ Hostname: http://localhost:8080
+ phpmyadmin: http://localhost:8077
+ mysql: localhost:3306 (from your computer; mysql:3306 from the containers)
  mysql username: root 
  mysql password: root 
 ```
