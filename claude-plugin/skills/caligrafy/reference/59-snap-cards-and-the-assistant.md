@@ -258,8 +258,9 @@ Caligrafy\Snap\Planner::$transport = function (array $request) {
 $answer = $this->action('snap_ask', array('text' => 'show me the catalog'), $this->user(1))->describe()['data'];
 ```
 
-The designed cards use the same transport (their request asks for a structured output, `outputConfig.format`), or the
-rules alone with `Caligrafy\Snap\Designer::$model = false`.
+The designed cards have their own, `Caligrafy\Snap\Designer::$transport` (the same shape; the request asks for a
+structured output, `outputConfig.format`, and the answer's first text block is the design as JSON), or keep to the rules
+with `Caligrafy\Snap\Designer::$model = false` (since 2.24.1).
 
 ## Questions
 

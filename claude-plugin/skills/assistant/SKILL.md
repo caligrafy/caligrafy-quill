@@ -9,7 +9,7 @@ argument-hint: "[what the app is about, in a few words]"
 
 What the app is about: `$ARGUMENTS` (else read it from the README, `APP_NAME` and the capabilities). Read the wiki page
 [Snap Cards and the Assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant), the
-Snap section of [api-reference.md](../caligrafy/reference/api-reference.md#snap) and G153-G161 of
+Snap section of [api-reference.md](../caligrafy/reference/api-reference.md#snap) and G153-G162 of
 [gotchas.md](../caligrafy/reference/gotchas.md). Snap needs Caligrafy Quill 2.23.0 or later
 (`php caligrafer.php version`): older, run the `update` skill first.
 

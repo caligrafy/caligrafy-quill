@@ -29,6 +29,18 @@ class Designer
     /** @var bool false: rules only, never the model (tests, and a design asked for while answering) */
     public static $model = true;
 
+    /**
+     * Tests fake Claude's design here (a callable that takes the request and returns the response), apart from the
+     * planner's: a test that fakes the planner never sees the designer's requests
+     */
+    public static $transport = null;
+
+    // Claude designs when a test fakes it, or with a key and the SDK (a faked planner alone is not a key)
+    private static function on()
+    {
+        return self::$transport !== null || (trim((string) getenv('ANTHROPIC_API_KEY')) !== '' && class_exists('Anthropic\\Client'));
+    }
+
     // ---- a record ----
 
     /**
@@ -113,7 +125,7 @@ class Designer
         if (is_array($kept)) {
             return $kept;
         }
-        $designed = self::$model && Planner::on() ? self::ask($name, $kind, $paths) : null;
+        $designed = self::$model && self::on() ? self::ask($name, $kind, $paths) : null;
         $spec = self::check($designed ?? self::rules($kind, $paths), $kind, $paths);
         // what Claude designed is kept for a month; what the rules gave, an hour (Claude may design it later)
         Cache::put($key, $spec, $designed ? self::CACHE_DAYS * 86400 : 3600);
@@ -174,7 +186,7 @@ class Designer
                 . json_encode($sample, JSON_PRETTY_PRINT | JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE))),
             'outputConfig' => array('effort' => 'low', 'format' => array('type' => 'json_schema', 'schema' => $schema)), 'betas' => array('server-side-fallback-2026-07-01'), 'fallbacks' => 'default');
         try {
-            $response = Planner::send($request);
+            $response = self::$transport !== null ? call_user_func(self::$transport, $request) : Planner::send($request);
             foreach ((array) ($response->content ?? array()) as $block) {
                 if (($block->type ?? '') === 'text') {
                     $design = json_decode((string) $block->text, true);

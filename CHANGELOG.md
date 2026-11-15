@@ -6,6 +6,11 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.24.1] - 2026-11-14
+
+### Fixed
+- An app's tests that fake the assistant's model with `Snap\Planner::$transport` pass again: the designer of Snap cards sent its own requests to that fake (and its answers were not a design), so the planner's last request and the cards were not what the test expected. The designer has its own fake, `Snap\Designer::$transport`, and otherwise asks Claude only when `ANTHROPIC_API_KEY` is set.
+
 ## [2.24.0] - 2026-11-14
 
 ### Added

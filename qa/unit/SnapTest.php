@@ -35,6 +35,7 @@ final class SnapTest extends TestCase
         Route::reset();
         Cards::$path = '/snap';
         Planner::$transport = null;
+        Designer::$transport = null;
         Designer::$model = true;
         putenv('CACHE_STORE');
     }
@@ -190,7 +191,7 @@ final class SnapTest extends TestCase
     {
         putenv('CACHE_STORE=off');
         $sent = null;
-        Planner::$transport = function ($request) use (&$sent) {
+        Designer::$transport = function ($request) use (&$sent) {
             $sent = $request;
             $design = array('title' => 'name', 'subtitle' => 'role', 'image' => '', 'meta' => array(array('path' => 'cases', 'label' => 'Cases', 'format' => 'number'),
                 array('path' => 'password', 'label' => 'Secret', 'format' => 'text')),   // not a field of the data: left out
