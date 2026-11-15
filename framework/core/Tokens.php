@@ -14,7 +14,8 @@ namespace Caligrafy;
  * with a name, an optional owner (users.id), its scopes, an optional expiry, the last use and a revocation date.
  *
  * Scopes are `<resource>:<action>` strings (books:read, books:write). A token scope `*` grants everything and
- * `books:*` grants every action on books. Tables: framework/settings/platform.sql (php caligrafer.php platform install).
+ * `books:*` grants every action on books. A capability's own name (create_book) is a scope too (2.26.0): the one a write
+ * capability declared without a scope needs (Capabilities::scopeOf()). Tables: framework/settings/platform.sql (php caligrafer.php platform install).
  */
 class Tokens
 {
@@ -188,7 +189,8 @@ class Tokens
     {
         $list = is_array($scopes) ? $scopes : preg_split('/[\s,]+/', (string) $scopes);
         $list = array_values(array_unique(array_filter(array_map('trim', $list), function ($scope) {
-            return $scope === '*' || preg_match('/^[a-z][a-z0-9_.-]*:([a-z][a-z0-9_.-]*|\*)$/', $scope);
+            return $scope === '*' || preg_match('/^[a-z][a-z0-9_.-]*:([a-z][a-z0-9_.-]*|\*)$/', $scope)
+                || preg_match('/^[a-z][a-z0-9_]{0,63}$/', $scope);   // a capability's name (2.26.0)
         })));
         sort($list);
         return $list;

@@ -19,7 +19,9 @@ final class TokensTest extends TestCase
     {
         $this->assertSame(['books:read', 'books:write'], Tokens::normalizeScopes('books:write, books:read books:read'));
         $this->assertSame(['*'], Tokens::normalizeScopes(['*']));
-        $this->assertSame(['authors:*'], Tokens::normalizeScopes('authors:* Books:read bad nope:'));
+        $this->assertSame(['authors:*'], Tokens::normalizeScopes('authors:* Books:read Bad nope: no-way 9lives'));
+        // a capability's name is a scope (2.26.0): the one a write capability declared without a scope needs
+        $this->assertSame(['books:read', 'create_book'], Tokens::normalizeScopes('create_book books:read'));
     }
 
     public function testAllows(): void
