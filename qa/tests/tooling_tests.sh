@@ -473,10 +473,12 @@ else
 fi
 # the index for coding agents (llms.txt, AGENTS.md, context7.json) names every gotcha, and llms-full.txt is the wiki
 LAST=$(grep -oE '^\*\*G[0-9]+' claude-plugin/skills/caligrafy/reference/gotchas.md | tr -dc '0-9\n' | sort -n | tail -1)
-if grep -q "G1-G$LAST" llms.txt && grep -q "G1-G$LAST" AGENTS.md && php -r 'exit(is_array(json_decode(file_get_contents("context7.json"), true)) ? 0 : 1);'; then
+# Context7 refuses the whole file when a rule is over 255 characters or the description over 500 (its schema)
+C7='$d = json_decode(file_get_contents("context7.json"), true); exit(is_array($d) && max(array_map("strlen", $d["rules"] ?? array(""))) <= 255 && strlen($d["description"] ?? "") <= 500 ? 0 : 1);'
+if grep -q "G1-G$LAST" llms.txt && grep -q "G1-G$LAST" AGENTS.md && php -r "$C7"; then
     ok "llms.txt and AGENTS.md name the gotchas G1-G$LAST, context7.json is valid JSON"
 else
-    ko "the index for coding agents is stale" "gotchas end at G$LAST: llms.txt and AGENTS.md must say G1-G$LAST; context7.json must be JSON"
+    ko "the index for coding agents is stale" "gotchas end at G$LAST: llms.txt and AGENTS.md must say G1-G$LAST; context7.json must be JSON, each rule at most 255 characters, the description 500"
 fi
 if [ -n "${QA_WIKI:-}" ]; then
     OUT=$(php qa/build-llms-full.php "$QA_WIKI" --check 2>&1) && ok "$OUT" || ko "llms-full.txt is stale" "$OUT"
