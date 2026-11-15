@@ -8,7 +8,7 @@
  */
 
 /**
- * The Watson class handles all exchanges with the OpenAI models
+ * The OpenAI class handles all exchanges with the OpenAI models (text and images)
  * @author Dory A.Azar
  * @version 1.0
  */

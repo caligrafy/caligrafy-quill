@@ -9,8 +9,8 @@
 */
 
 /**
- * Class Caligrafer that loads the entire framework 
- * Framework loader
+ * Class Caligrafer: the framework as the command line starts it (php caligrafer.php): settings, constants and the
+ * class map, without routes or a session cookie
  * @author Dory A
 */
 

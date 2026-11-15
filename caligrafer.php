@@ -1,8 +1,8 @@
 #!/usr/bin/env php
 <?php
 /**
- * index.php
- * Run time where all magic happens
+ * caligrafer.php
+ * The command line of Caligrafy Quill: php caligrafer.php <command> (php caligrafer.php alone lists them)
  * @author Dory A.Azar
  * @copyright 2019
  * @version 1.0

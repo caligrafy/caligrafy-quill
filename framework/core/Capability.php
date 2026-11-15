@@ -27,6 +27,7 @@ class Capability
      * @param bool $public true when anyone may call it without signing in or a token
      * @param bool $mcp false keeps it out of the MCP tools (one only a browser can use, such as a push subscription)
      * @param bool $webOnly true (2.21.0): only Route::action() reaches it: it may read the session and sign people in
+     * @param bool $async true (2.23.0): Snap cards run it in the background as a task; REST, MCP, pages and call run it directly
      * @param int $cache seconds (2.26.0): a GET of it over REST by a visitor with no session cookie and no token may be
      *                   kept by shared caches (the production image's own cache, a CDN) for that long; needs readOnly and
      *                   public, and an answer that is the same for every visitor

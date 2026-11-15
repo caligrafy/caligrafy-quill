@@ -1,7 +1,8 @@
 # Production image of a Caligrafy Quill project: Apache + PHP 8.5, the libraries of composer.lock, no development
-# packages. Hosts that build from a Dockerfile (Coolify, Caligrafy Cloud, Railway, Render...) use this file.
+# packages. Caligrafy Cloud and Coolify build from this file (any host that runs a Dockerfile with a mounted .env).
 # Settings are not in the image (Dockerfile.dockerignore leaves .env out): give the container its .env as a mounted
-# file at /var/www/html/.env. At start, `php caligrafer.php deploy` prepares the database, then Apache serves the app.
+# file at /var/www/html/.env. At start, docker/production/start.sh sizes Apache, prepares the database (deploy),
+# compiles the views (optimize), then serves the app.
 # (docker/Dockerfile is the development image of docker-compose.yaml.)
 FROM php:8.5-apache
 
