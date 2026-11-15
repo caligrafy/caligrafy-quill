@@ -405,6 +405,9 @@ class Route extends \stdClass
         $prefix = '/' . trim((string) $prefix, '/');
         self::get($prefix, function () { Rest::listing(); });
         self::post($prefix . '/{__capability}', function () { Rest::respond((string) (currentBind()['__capability'] ?? '')); });
+        // a read-only capability may also be called with a GET (2.26.0): its inputs in the query string, and a public
+        // one declared with cache can then be kept by shared caches; a GET of one that changes data answers 405
+        self::get($prefix . '/{__capability}', function () { Rest::respond((string) (currentBind()['__capability'] ?? '')); });
     }
 
     /**

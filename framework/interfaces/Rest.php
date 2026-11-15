@@ -60,6 +60,9 @@ class Rest
     {
         try {
             $entry = Capabilities::get($name);
+            if (strtoupper((string) $method) === 'GET' && $entry !== null && !$entry['capability']->readOnly) {
+                return array('status' => 405, 'body' => (new ServiceError('invalid', 'Changing data needs a POST'))->toArray());
+            }
             $caller = $context();
             if ($csrf !== null && !$csrf()) {
                 throw new ServiceError('forbidden', 'Missing or invalid CSRF token: send the X-CSRF-Token header');

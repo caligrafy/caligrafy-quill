@@ -32,7 +32,7 @@ foreach (array('vendor/vlucas/phpdotenv/src', 'vendor/graham-campbell/result-typ
     }
 }
 foreach ($files as $file) {
-    if (!is_file($file) || Caligrafy\ClassMap::declarations((string) file_get_contents($file))['eager']) {
+    if (!is_file($file) || basename($file) === 'ClassMap.php' || Caligrafy\ClassMap::declarations((string) file_get_contents($file))['eager']) {
         continue;
     }
     try {
