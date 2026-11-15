@@ -1,4 +1,6 @@
 {
+  "url": "https://context7.com/caligrafy/caligrafy-quill",
+  "public_key": "pk_9MZHoDObXi1ywgHgBJV5J",
   "$schema": "https://context7.com/schema/context7.json",
   "projectTitle": "Caligrafy Quill",
   "description": "PHP MVC framework (PHP 8.3+, MySQL, Pug views, Vue 3) made for coding agents: write each feature once as a capability (a Caligrafy\\Service with #[Capability]) and serve it to web pages, forms, a REST API, a JS client, AI agents over MCP and Snap Cards. Declarative routes (Route::page, form, auth, action), a query builder, migrations, queues, Stripe, OpenAI and a Claude Code plugin. Describe it. Approve it. Ship it.",
