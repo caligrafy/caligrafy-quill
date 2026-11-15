@@ -49,6 +49,8 @@ cat > /etc/apache2/conf-enabled/zz-caligrafy-processes.conf <<CONF
 </IfModule>
 KeepAlive $keep
 CONF
+preload=$(setting PRELOAD | tr '[:upper:]' '[:lower:]')
+case "$preload" in off|false|no|0) sed -i 's|^opcache.preload|;opcache.preload|' /usr/local/etc/php/conf.d/zz-caligrafy.ini ;; esac
 cache=$(setting CACHE | tr '[:upper:]' '[:lower:]')
 case "$cache" in off|false|no|0) a2disconf -q caligrafy-cache >/dev/null 2>&1 || true; cache=off ;; *) a2enconf -q caligrafy-cache >/dev/null 2>&1 || true; cache=on ;; esac
 echo "caligrafy: $n PHP processes, keep-alive $(echo $keep | tr '[:upper:]' '[:lower:]'), response cache $cache"
