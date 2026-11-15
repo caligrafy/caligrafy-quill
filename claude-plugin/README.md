@@ -51,6 +51,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.38.0** - Caligrafy Quill 2.26.0: the production image sized to its container (`PHP_PROCESSES`, persistent connections, preloading, `optimize`), the response cache (`cache:`), optional SDKs (`php caligrafer.php add <feature>`), N+1 prevention and token scopes on by default, the experimental async server (`ASYNC=on`, `async check`); the reference's Performance section, G164-G170.
 - **1.37.0** - Caligrafy Quill 2.25.0: card views (`application/views/snap/<capability>.pug`): the `assistant` skill writes one for each main list and record from the app's pages and look; `snap views`, the `card` hint, G163.
 - **1.36.1** - Caligrafy Quill 2.24.1: tests that fake the planner no longer feed the card designer (`Snap\Designer::$transport` fakes it; G162).
 - **1.36.0** - Caligrafy Quill 2.24.0: a Snap card shows the page made for its capability (a part of it with `data-snap`), else a card designed for its data in the app's design system: the `assistant` skill marks views and writes `view` and `design` hints, the API reference and G161; `server` and `quickstart` print the ports this computer uses (`docker-compose.override.yml` included) and `php caligrafer.php server` works by hand: the server skill, the API reference, G78 fixed and G160.

@@ -69,6 +69,7 @@ the declarative routes, G134-G135 for the rules `exists`, `unique` and `current_
      (the capability returns a list of rows).
    - Many files as one ZIP (2.22.0+): `Route::download('/photos.zip', '<read-only capability>', ['as' => 'zip', 'root' => 'public/uploads/photos']);`
      (the capability returns paths relative to `root`, or `['file' => ..., 'name' => 'folder/name']`; G151).
+   - Optional SDKs (2.26.0, G166): payments, push, passkeys, Groq and the assistant with Claude need `php caligrafer.php add <payments | push | passkeys | ai | snap>` first; a public read-only capability whose answer is the same for every visitor may declare `cache: <seconds>` (G168); a write one declares its `scope` (a token needs the capability's name otherwise, G164).
    - Events another service posts: `Route::webhook('/stripe/events', '<capability>', ['verify' => 'stripe']);` with
      `$rules = ['event' => 'required']`, idempotent, and `STRIPE_WEBHOOK_SECRET` (G132). Generate the guard as the
      first line of its `handle()`: `if ($context->actorType() !== 'webhook') { throw ServiceError::forbidden('Only the
