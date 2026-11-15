@@ -57,7 +57,9 @@ class Eligibility
         if (!is_string($file) || !is_file($file)) {
             return array_merge($reasons, array('its source cannot be read'));
         }
-        return array_merge($reasons, self::sourceReasons((string) file_get_contents($file)));
+        // the class's own lines only: other classes of the same file are not its code
+        $lines = array_slice(file($file), $class->getStartLine() - 1, $class->getEndLine() - $class->getStartLine() + 1);
+        return array_merge($reasons, self::sourceReasons("<?php\n" . implode('', $lines)));
     }
 
     /**
@@ -85,6 +87,10 @@ class Eligibility
             $text = is_array($t) ? $t[1] : $t;
             $prev = $i > 0 ? (is_array($tokens[$i - 1]) ? $tokens[$i - 1][0] : $tokens[$i - 1]) : null;
             $next = $i + 1 < $count ? (is_array($tokens[$i + 1]) ? $tokens[$i + 1][0] : $tokens[$i + 1]) : null;
+            // a keyword after const, ::, -> or function is a name (const ECHO = ..., self::PRINT, $x->exit())
+            if (in_array($prev, array(T_CONST, T_DOUBLE_COLON, T_OBJECT_OPERATOR, T_NULLSAFE_OBJECT_OPERATOR, T_FUNCTION), true) && $id !== T_VARIABLE) {
+                continue;
+            }
             if ($id === T_VARIABLE && in_array($text, self::SUPERGLOBALS, true)) {
                 $found[$text] = "uses $text";
             } elseif ($id === T_ECHO || $id === T_PRINT || ($id === T_INLINE_HTML && trim($text) !== '')) {

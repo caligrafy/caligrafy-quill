@@ -52,6 +52,7 @@ $defaultMsg = "\n Available Functions:
 				\n - update [<version>] [--check] [--yes] [--no-composer]: moves the project to another release of Caligrafy Quill (the latest by default) and applies everything: framework/, the release's other files (untouched ones replaced, changed ones kept with a .caligrafy-new), composer.json, .gitignore and new .env settings merged, then upgrade --apply; backups in backups/
 				\n - plugin: gives this project's Claude Code plugin its own source name and says where Claude Code reads it
 				\n - upgrade [--apply] [--local] [--force <application/path>] [--keep <application/path>]: brings the project up to date (dry run by default). When a newer release of Caligrafy Quill is out, it moves the project to it like update; otherwise (or with --local) it compares application/ with the framework templates and updates the untouched files; also reports .env settings and Bootstrap 3 classes
+				\n - async <check | start>: experimental async server (2.26.0): the capabilities channel answered from processes that keep the app in memory; check lists which capabilities it may run
 				\n - optimize: compiles every Pug view and builds the class map now (the production image runs it at start), so the first page of a new container compiles nothing
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - design <list [--json] | show <name> | use <name> | off | status>: picks a design style (DESIGN_STYLE in .env) (framework/design, application/design); empty = Caligrafy's own look
@@ -669,6 +670,34 @@ switch(strtolower($argv[1])) {
 			fwrite(STDERR, "\n cache: " . $e->getMessage() . "\n\n");
 			exit(1);
 		}
+
+	case 'async':
+		// The async server (2.26.0, experimental): the capabilities channel answered by processes that keep the app in
+		// memory (Caligrafy\Async). check lists which capabilities it may run and why the others may not; start runs it.
+		$sub = strtolower($argv[2] ?? '');
+		$opt = function ($name, $default) use ($argv) { $at = array_search("--$name", $argv); return $at !== false && isset($argv[$at + 1]) ? $argv[$at + 1] : $default; };
+		if ($sub === 'check') {
+			$names = array_keys(Caligrafy\Capabilities::all());
+			sort($names);
+			$yes = 0;
+			foreach ($names as $name) {
+				$reasons = Caligrafy\Async\Eligibility::reasons($name);
+				if (!$reasons) { $yes++; print("  async  $name\n"); continue; }
+				print("  web    $name: " . implode('; ', $reasons) . "\n");
+			}
+			print("\n $yes of " . count($names) . " capabilities run on the async server; the web server answers the others\n\n");
+			exit(0);
+		}
+		if ($sub === 'start') {
+			$cpus = (int) trim((string) @shell_exec('nproc 2>/dev/null')) ?: 1;
+			$backend = $opt('backend', null);
+			print(" Caligrafy async server on " . $opt('listen', 'http://0.0.0.0:8081') . ($backend ? ", everything else to $backend" : '') . "\n");
+			Caligrafy\Async\WorkermanServer::run($opt('listen', 'http://0.0.0.0:8081'), (int) $opt('workers', (string) $cpus), $backend, $opt('prefix', '/capabilities'));
+			exit(0);
+		}
+		print("\n Usage: php caligrafer.php async <check | start [--listen http://0.0.0.0:8081] [--workers <n>] [--backend 127.0.0.1:8080] [--prefix /capabilities]>\n"
+			. " Experimental (2.26.0): capabilities answered without starting the framework again; needs Workerman (php caligrafer.php add async)\n\n");
+		exit(1);
 
 	case 'optimize':
 		// What the production image runs at start, as the web server's user (2.26.0, docker/production/start.sh): every

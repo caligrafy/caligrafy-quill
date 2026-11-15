@@ -22,6 +22,9 @@ foreach (['Framework', 'Web', 'Action', 'Errors', 'Route', 'Request', 'Model', '
 foreach (glob($root . '/framework/core/Snap/*.php') as $file) {   // Snap Cards and the assistant (2.23.0)
     require_once $file;
 }
+foreach (glob($root . '/framework/core/Async/*.php') as $file) {   // the async server (2.26.0)
+    require_once $file;
+}
 foreach (['Rest', 'Mcp/Server', 'Mcp/Http', 'Client'] as $class) {
     require_once $root . "/framework/interfaces/$class.php";
 }
