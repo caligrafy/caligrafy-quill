@@ -43,6 +43,10 @@ class WorkermanServer
         $worker->name = 'caligrafy-async';
         $worker->count = max(1, (int) $workers);
         $worker->reusePort = true;
+        // started as root to listen on port 80, the processes then run as the web server's user (their files)
+        if (function_exists('posix_getuid') && posix_getuid() === 0) {
+            $worker->user = 'www-data';
+        }
         $worker->onWorkerStart = function () use ($prefix) {
             Kernel::boot($prefix);
         };

@@ -57,4 +57,20 @@ php caligrafer.php deploy --wait "${CALIGRAFY_DEPLOY_WAIT:-60}" || echo 'caligra
 # views compiled and the class map built as the web server's user (their folders belong to it): the first page of a
 # new container compiles nothing
 su -s /bin/sh www-data -c 'php caligrafer.php optimize' || echo 'caligrafer optimize: views will be compiled on first use (see above)'
+# ASYNC=on (2.26.0, experimental, needs php caligrafer.php add async): the async server listens on port 80, answers
+# the capabilities channel itself from processes that keep the app in memory, and passes every other request to Apache
+# on 127.0.0.1:8080
+async=$(setting ASYNC | tr '[:upper:]' '[:lower:]')
+if [ "$async" = "on" ] || [ "$async" = "true" ]; then
+  if [ ! -d vendor/workerman/workerman ]; then
+    echo "caligrafy: ASYNC=on but Workerman is not installed (php caligrafer.php add async): Apache serves everything"
+  else
+    sed -ri 's/^Listen 80$/Listen 127.0.0.1:8080/' /etc/apache2/ports.conf
+    sed -ri 's/<VirtualHost \*:80>/<VirtualHost *:8080>/' /etc/apache2/sites-available/000-default.conf
+    apache2ctl start
+    w=$(setting ASYNC_WORKERS); case "$w" in ''|*[!0-9]*) w=$(cpus) ;; esac
+    echo "caligrafy: async server on port 80 ($w processes), everything else to Apache on 127.0.0.1:8080"
+    exec php caligrafer.php async start --listen http://0.0.0.0:80 --workers "$w" --backend 127.0.0.1:8080
+  fi
+fi
 exec apache2-foreground

@@ -11,7 +11,7 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
     && rm -rf /var/lib/apt/lists/* \
     && a2enmod rewrite headers cache cache_socache socache_shmcb \
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j2 bcmath exif gd intl mysqli pdo_mysql zip \
+    && docker-php-ext-install -j2 bcmath exif gd intl mysqli pdo_mysql zip pcntl \
     && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
 # production settings (2.26.0): OPcache keeps the compiled code and stops checking files for changes
 COPY docker/production/php.ini /usr/local/etc/php/conf.d/zz-caligrafy.ini
