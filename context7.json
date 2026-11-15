@@ -57,8 +57,10 @@
     "58-release-notes-2.22.0.md"
   ],
   "rules": [
-    "Write each feature once as a capability: a class extending Caligrafy\\Service in application/services/ with a #[Capability(name:, description:, scope:)] attribute, every input declared in $rules, data returned from handle(array $input, Context $context), and refusals thrown as ServiceError.",
-    "Only capabilities touch models. Declare every request in application/config/routing/web.php with Route::page (data from capabilities), Route::form, Route::auth, Route::webhook, Route::download, Route::capability or Route::capabilities (REST), Route::mcp (agents), Route::snap (cards) or Route::action on a webOnly: true capability. Do not write new controllers.",
+    "Write each feature once as a capability: a class extending Caligrafy\\Service in application/services/ with #[Capability(name:, description:, scope:)], every input in $rules, data returned from handle(array $input, Context $context).",
+    "Refuse a call by throwing a ServiceError (invalid, unauthenticated, forbidden, not_found, conflict) from a capability: every channel turns it into the right status.",
+    "Only capabilities touch models. Declare every request in application/config/routing/web.php: Route::page (data from capabilities), Route::form, Route::auth, Route::webhook, Route::download. Never write new controllers.",
+    "For APIs and agents use Route::capability or Route::capabilities (REST), Route::mcp (AI agents over MCP) and Route::snap (Snap Cards); anything else is Route::action on a capability declared webOnly: true.",
     "Never render, redirect, print or read the session inside a capability. Only a webOnly: true capability reached through Route::action may read the session or sign people in.",
     "Read data with the query builder (Book::where('author_id', $id)->with('author')->paginate(20), Database::table()) or bound ? placeholders. Never concatenate request data into SQL, and load related rows with with() instead of a query per row.",
     "Change a table that already holds data with a migration (php caligrafer.php migrate make <name>, then php caligrafer.php migrate). Never edit a migration that already ran.",
