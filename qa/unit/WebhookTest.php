@@ -22,6 +22,12 @@ final class WebhookTest extends TestCase
         Webhook::$logger = function ($message) { $this->log .= $message . "\n"; };
     }
 
+    // stripe/stripe-php is optional since 2.26.0 (qa/run.sh adds it): without it these tests are skipped
+    private function needStripe(): void
+    {
+        if (!\Caligrafy\Features::installed('payments')) $this->markTestSkipped(\Caligrafy\Features::message('payments', 'This test'));
+    }
+
     protected function tearDown(): void
     {
         Route::reset();
@@ -61,6 +67,7 @@ final class WebhookTest extends TestCase
 
     public function testAStripeEventWithAGoodSignatureCallsTheCapabilityAsTheSystem(): void
     {
+        $this->needStripe();
         $payload = $this->payload();
         $this->assertSame(array(200, array('received' => true)), Webhook::process('/hooks/stripe', 'qa_record_event', $this->stripe(), $payload, array('Stripe-Signature' => $this->sign($payload))));
         $this->assertCount(1, QaRecordEvent::$seen);
@@ -70,6 +77,7 @@ final class WebhookTest extends TestCase
 
     public function testTheSecretComesFromTheEnvironment(): void
     {
+        $this->needStripe();
         putenv('QA_STRIPE_SECRET=' . self::SECRET);
         $payload = $this->payload();
         $this->assertSame(200, Webhook::process('/h', 'qa_record_event', array('verify' => 'stripe', 'secret_env' => 'QA_STRIPE_SECRET'), $payload, array('stripe-signature' => $this->sign($payload)))[0]);
@@ -83,6 +91,7 @@ final class WebhookTest extends TestCase
 
     public function testBadStripeSignaturesAnswer400(): void
     {
+        $this->needStripe();
         $payload = $this->payload();
         foreach (array(
             'another secret' => $this->sign($payload, 'whsec_other'),

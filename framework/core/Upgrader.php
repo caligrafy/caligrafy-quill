@@ -279,6 +279,7 @@ class Upgrader
         $this->clientApps();
         $this->bootstrap3($plan);
         $this->envReport();
+        $this->optionalSdks();
 
         if ($changing) {
             $kept = array_diff(array_merge($manifest['kept'] ?? [], $this->keep), (array) $this->force);
@@ -379,6 +380,42 @@ class Upgrader
             print("  obsolete   $key: " . self::OBSOLETE_SETTINGS[$key] . "\n");
         }
     }
+
+    /**
+     * The optional SDKs (2.26.0): the packages of the features the project uses stay in composer.json (update never
+     * removes a package); one the project uses but lacks is added back with --apply (composer require), else reported
+     */
+    private function optionalSdks()
+    {
+        if (!class_exists('Caligrafy\\Features')) require_once __DIR__ . '/Features.php';
+        $composer = json_decode((string) @file_get_contents($this->root . '/composer.json'), true);
+        if (!is_array($composer)) return;
+        $lines = [];
+        $add = [];
+        foreach (Features::used($this->root) as $feature => $reasons) {
+            $packages = Features::FEATURES[$feature]['packages'];
+            $required = array_intersect_key($packages, (array) ($composer['require'] ?? []));
+            $missing = Features::missing($feature);
+            if (count($required) === count($packages) && !$missing) {
+                $lines[] = sprintf("  %-10s %s: kept in composer.json (%s)", 'kept', implode(', ', array_keys($packages)), $reasons[0]);
+                continue;
+            }
+            $add[] = $feature;
+            $lines[] = sprintf("  %-10s %s: the project uses %s (%s)%s", $this->apply ? 'added' : 'missing', implode(', ', array_keys($packages)), $feature, $reasons[0],
+                $this->apply ? '' : ': php caligrafer.php add ' . $feature . ' (or upgrade --apply)');
+        }
+        if (!$lines) return;
+        print("\n Optional SDKs (not in Caligrafy's composer.json since " . Features::SINCE . ", php caligrafer.php add <feature>):\n" . implode("\n", $lines) . "\n");
+        if ($add && $this->apply) {
+            $cwd = getcwd();
+            chdir($this->root);
+            Features::add($add, '.', self::$composer, function ($line) { print(" $line\n"); });
+            chdir($cwd);
+        }
+    }
+
+    /** @var callable|null tests: fn(string $command): int, runs composer instead of the shell */
+    public static $composer = null;
 
     /**
      * Lists the client apps of public/ created from framework/plugins and the files that differ (report only)

@@ -33,8 +33,17 @@ class Planner
 
     public static function on()
     {
-        // a key, and the SDK (anthropic-ai/sdk, in Caligrafy's composer.json since 2.23.0)
-        return self::$transport !== null || (trim((string) getenv('ANTHROPIC_API_KEY')) !== '' && class_exists('Anthropic\\Client'));
+        // a key, and the SDK (anthropic-ai/sdk, optional since 2.26.0: php caligrafer.php add snap). A key without the
+        // SDK: the assistant answers from the cards' names, and the log says once how to add it
+        if (self::$transport !== null) return true;
+        if (trim((string) getenv('ANTHROPIC_API_KEY')) === '') return false;
+        if (\Caligrafy\Features::installed('snap')) return true;
+        static $logged = false;
+        if (!$logged) {
+            $logged = true;
+            error_log('Caligrafy Snap: ' . \Caligrafy\Features::message('snap', 'The Snap assistant with Claude (ANTHROPIC_API_KEY is set)'));
+        }
+        return false;
     }
 
     /**

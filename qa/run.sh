@@ -43,6 +43,7 @@ if [ -f .env ] && ! grep -q '^# QA-GENERATED' .env; then fail ".env exists and i
 cleanup() {
     if [ "$KEEP" = 1 ]; then echo "qa: --keep: stack and generated files left in place"; return; fi
     $COMPOSE down -v >/dev/null 2>&1
+    restore_composer
     rm -rf application public/qaapp public/qabot public/qaspa public/qafacelogin public/qafacedetect .env qa/tmp public/uploads/qa-zip
     for f in public/uploads/*; do
         [ -e "$f" ] || continue
@@ -50,7 +51,20 @@ cleanup() {
     done
 }
 UPLOADS_BEFORE=$(ls -d public/uploads/* 2>/dev/null)
+# the optional SDKs (2.26.0: not in composer.json, php caligrafer.php add <feature>): the suite covers every feature, so
+# they are added for the run; composer.json, composer.lock and vendor/ come back as they were at the end
+restore_composer() {
+    [ -f qa/composer.json.qa-backup ] || return 0
+    mv qa/composer.json.qa-backup composer.json
+    mv qa/composer.lock.qa-backup composer.lock
+    composer install --no-interaction --quiet >/dev/null 2>&1 || echo "qa: composer install did not restore vendor/: run it"
+}
+restore_composer   # a run that was stopped before its cleanup
 trap cleanup EXIT
+cp composer.json qa/composer.json.qa-backup && cp composer.lock qa/composer.lock.qa-backup || fail "could not save composer.json"
+SDKS=$(php -r 'require "framework/core/Features.php"; echo Caligrafy\Features::requireCommand(array_keys(Caligrafy\Features::FEATURES));')
+echo "== Optional SDKs for the suite: $SDKS"
+eval "$SDKS --quiet" || fail "could not install the optional SDKs"
 
 # --- .env -----------------------------------------------------------------------------
 KEYS=$(php caligrafer.php generatekeys 2>/dev/null)

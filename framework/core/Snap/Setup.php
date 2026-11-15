@@ -36,7 +36,9 @@ class Setup
             'Card hints' => array(is_file($root . self::CONFIG), self::CONFIG . ' (optional: cards work without it)'),
             'Background tasks' => array(strpos($schedule, "'queue_work'") !== false, "the queue runs them: array('name' => 'queue', 'capability' => 'queue_work', 'every' => '1m', 'timeout' => 55) in " . self::SCHEDULE),
             'Routines' => array(strpos($schedule, "'snap_routines_due'") !== false, "array('name' => 'snap-routines', 'capability' => 'snap_routines_due', 'every' => '1m', 'timeout' => 50) in " . self::SCHEDULE),
-            'Assistant model' => array(Planner::on(), Planner::on() ? (getenv('SNAP_MODEL') ?: Planner::MODEL) : 'ANTHROPIC_API_KEY in .env (without it the assistant answers from the cards\' names)'),
+            'Assistant model' => array(Planner::on(), Planner::on() ? (getenv('SNAP_MODEL') ?: Planner::MODEL) : (trim((string) getenv('ANTHROPIC_API_KEY')) !== '' && !\Caligrafy\Features::installed('snap')
+                ? \Caligrafy\Features::message('snap', 'ANTHROPIC_API_KEY is set, but Claude') . ' (until then the assistant answers from the cards\' names)'
+                : 'ANTHROPIC_API_KEY in .env (without it the assistant answers from the cards\' names)')),
         );
     }
 

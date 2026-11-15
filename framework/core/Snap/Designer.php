@@ -38,7 +38,7 @@ class Designer
     // Claude designs when a test fakes it, or with a key and the SDK (a faked planner alone is not a key)
     private static function on()
     {
-        return self::$transport !== null || (trim((string) getenv('ANTHROPIC_API_KEY')) !== '' && class_exists('Anthropic\\Client'));
+        return self::$transport !== null || (trim((string) getenv('ANTHROPIC_API_KEY')) !== '' && \Caligrafy\Features::installed('snap'));
     }
 
     // ---- a record ----

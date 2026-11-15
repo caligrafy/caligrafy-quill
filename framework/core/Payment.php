@@ -55,6 +55,8 @@ class Payment extends \stdClass {
             $this->_private_key = PAY_PRIVATE_KEY_TEST;
         }
 
+		// stripe/stripe-php is optional since 2.26.0: php caligrafer.php add payments
+		Features::need('payments', 'Caligrafy\\Payment');
 		$this->_stripe = new \Stripe\StripeClient($this->_private_key);
         return $this;
 	}

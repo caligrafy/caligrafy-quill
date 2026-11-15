@@ -43,6 +43,8 @@ final class NotifyTest extends TestCase
 
     public function testKeysAreAWebPushPair(): void
     {
+        // minishlink/web-push is optional since 2.26.0 (qa/run.sh adds it)
+        if (!\Caligrafy\Features::installed('push')) $this->markTestSkipped(\Caligrafy\Features::message('push', 'This test'));
         $keys = Notify::keys();
         $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{86,88}$/', $keys['public']);   // 65 bytes, base64url
         $this->assertMatchesRegularExpression('/^[A-Za-z0-9_-]{42,44}$/', $keys['private']);  // 32 bytes

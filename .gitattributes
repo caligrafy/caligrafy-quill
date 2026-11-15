@@ -1,3 +1,7 @@
 # Left out of the release archives (Composer installs, php caligrafer.php update): for contributors to the framework only
 /.claude/skills/caligrafy-contributor export-ignore
 /.gitattributes export-ignore
+# FaceDetect (2.26.0): the face-api models and the pictures of the recognition example stay here for the framework's own
+# tests, but not in the release; php caligrafer.php add facedetect / facedetect <app> download them (pinned, SHA-256)
+/public/resources/models export-ignore
+/framework/plugins/facedetect/recognition export-ignore

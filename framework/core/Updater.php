@@ -240,6 +240,18 @@ class Updater
                 }
             }
         }
+        // the optional SDKs (2.26.0): a release that no longer requires one never removes it from the project's
+        // composer.json (above, only what the release asks for is merged), and a feature the project uses (its .env
+        // settings or its application/ code) gets its package back when composer.json lacks it
+        if (!class_exists('Caligrafy\\Features') && is_file(__DIR__ . '/Features.php')) require_once __DIR__ . '/Features.php';
+        if (class_exists('Caligrafy\\Features')) {
+            foreach (Features::toRestore($this->root, $mine) as $package => list($constraint, $feature, $reason)) {
+                $mine['require'][$package] = $constraint;
+                $packages[] = $package;
+                $changed = true;
+                $this->lines[] = "  kept        composer.json $package $constraint: the project uses $feature ($reason), optional since " . Features::SINCE . " (php caligrafer.php add $feature)";
+            }
+        }
         // config.allow-plugins (2.22.1): the same rule, a plugin the project did not set or left as the release had it
         $plugins = array();
         $allowed = $mine['config']['allow-plugins'] ?? array();
