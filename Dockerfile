@@ -36,7 +36,7 @@ RUN composer dump-autoload --optimize --no-dev --no-plugins \
     && chown -R www-data:www-data public/uploads
 
 EXPOSE 80
-# docker/production/start.sh: sizes Apache to the container (PHP_PROCESSES, 4 per CPU and at least 8 by default),
+# docker/production/start.sh: sizes Apache to the container (PHP_PROCESSES: 2 per CPU, or 6 per CPU for an app with an AI key),
 # turns keep-alive off (KEEP_ALIVE), prepares the database (it waits for it), then serves: a database that is not
 # ready does not keep the site down
 CMD ["sh", "docker/production/start.sh"]

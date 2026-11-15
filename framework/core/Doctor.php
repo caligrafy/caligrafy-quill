@@ -233,20 +233,20 @@ class Doctor
     }
 
     /**
-     * PHP processes of the production image (2.26.0, docker/production/start.sh): PHP_PROCESSES, by default 4 per CPU
-     * and at least 8. A request that waits on an outside service holds its process, so an app that calls an AI service
-     * needs more processes than requests waiting at the same time, or every page waits behind them.
+     * PHP processes of the production image (2.26.0, docker/production/start.sh): PHP_PROCESSES, by default 2 per CPU
+     * (at least 4), or 6 per CPU (at least 16) when an AI key is set. A request that waits on an outside service holds
+     * its process, so an app that calls an AI service needs more processes than requests waiting at the same time.
      */
     private function processes()
     {
         $set = trim((string) $this->env('PHP_PROCESSES'));
-        $ai = array_values(array_filter(['OPENAI_API_KEY', 'GROQ_API_KEY', 'ANTHROPIC_API_KEY', 'AGENT_API_KEY', 'TOGETHER_API_KEY', 'FIREWORKS_API_KEY', 'OPENROUTER_API_KEY'], function ($k) {
+        $ai = array_values(array_filter(['OPEN_AI_KEY', 'GROQ_API_KEY', 'ANTHROPIC_API_KEY', 'AGENT_API_KEY', 'TOGETHER_API_KEY', 'FIREWORKS_API_KEY', 'OPENROUTER_API_KEY', 'WATSON_API_KEY'], function ($k) {
             $v = trim((string) $this->env($k));
             return $v !== '' && !in_array($v, self::PLACEHOLDERS, true);
         }));
         if ($set === '') {
-            $this->add('project', 'PHP processes', 'OK', 'PHP_PROCESSES not set: the production image runs 4 per CPU, at least 8'
-                . ($ai ? ' (this app calls an AI service: raise PHP_PROCESSES above the AI requests that can wait at the same time)' : ''));
+            $this->add('project', 'PHP processes', 'OK', 'PHP_PROCESSES not set: the production image runs '
+                . ($ai ? '6 per CPU, at least 16 (this app calls an AI service: ' . implode(', ', $ai) . ')' : '2 per CPU, at least 4 (no AI key is set)'));
             return;
         }
         if (!ctype_digit($set) || (int) $set < 1) {
@@ -373,10 +373,10 @@ class Doctor
         $max = (int) $pdo->query('SELECT @@max_connections')->fetchColumn();
         $set = trim((string) $this->env('PHP_PROCESSES'));
         $processes = ctype_digit($set) && (int) $set > 0 ? (int) $set : null;
-        $need = $processes !== null ? $processes + 10 : 26;   // the default on 4 CPUs is 16 processes
+        $need = $processes !== null ? $processes + 10 : 34;   // the default for an AI app on 4 CPUs is 24 processes
         if ($max > 0 && $max < $need) {
             $this->add('database', 'Connections', 'WARN', "the database allows $max connections; persistent connections keep one per PHP process ("
-                . ($processes !== null ? "PHP_PROCESSES=$processes" : 'by default 4 per CPU') . ') plus the command line and the queue',
+                . ($processes !== null ? "PHP_PROCESSES=$processes" : 'by default 2 per CPU, 6 for an app that calls AI') . ') plus the command line and the queue',
                 'raise max_connections, lower PHP_PROCESSES, or set DB_PERSISTENT=false');
             return;
         }
