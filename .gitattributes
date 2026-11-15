@@ -1,3 +1,7 @@
 # Left out of the release archives (Composer installs, php caligrafer.php update): for contributors to the framework only
 /.claude/skills/caligrafy-contributor export-ignore
 /.gitattributes export-ignore
+# The framework's own index for coding agents and documentation indexes (llmstxt.org, Context7): not a project's
+/llms.txt export-ignore
+/llms-full.txt export-ignore
+/context7.json export-ignore

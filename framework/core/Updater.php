@@ -33,7 +33,8 @@ class Updater
     // and the plugin source files: each project names its source (PluginSource), ensureOwn() keeps them right
     const SKIP = array('/^qa\//', '/^tests\//', '/^\.github\//', '/^composer\.lock$/', '/^public\/uploads\//', '/^application\//',
         '/^\.claude\/settings\.json$/', '/^\.claude-plugin\/marketplace\.json$/',
-        '/^\.claude\/skills\/caligrafy-contributor\//', '/^\.gitattributes$/');   // contributors to the framework only
+        '/^\.claude\/skills\/caligrafy-contributor\//', '/^\.gitattributes$/',   // contributors to the framework only
+        '/^llms(-full)?\.txt$/', '/^context7\.json$/');   // the framework's own index for coding agents, not a project's
     // merged instead of compared
     const MERGED = array('composer.json', '.gitignore');
     // replaced when untouched, else left alone without a .caligrafy-new, never added (the project's own documents:

@@ -187,6 +187,16 @@ switch(strtolower($argv[1])) {
 			@rmdir('.claude/skills');
 			print("\n Contributor skill removed (.claude/skills/caligrafy-contributor: for the framework repository only)");
 		   }
+		   // the framework's own index for coding agents (llms.txt, llms-full.txt, context7.json) describes Caligrafy, not
+		   // this project: served at the project's /llms.txt it would tell agents the app is the framework. Only the
+		   // framework's copies go (recognized by their first line): a project's own index is never touched
+		   foreach (array('llms.txt' => '# Caligrafy Quill', 'llms-full.txt' => '# Caligrafy Quill', 'context7.json' => '{') as $frameworkIndex => $start) {
+			$head = is_file($frameworkIndex) ? (string) file_get_contents($frameworkIndex, false, null, 0, 4096) : '';
+			$framework = $frameworkIndex === 'context7.json' ? strpos($head, '"projectTitle": "Caligrafy Quill"') !== false : strpos($head, $start . "\n") === 0 || strpos($head, $start . ' ') === 0;
+			if ($framework && @unlink($frameworkIndex)) {
+				print("\n $frameworkIndex removed (the framework's index for coding agents: write your project's own if you want one)");
+			}
+		   }
 		   // the Claude Code plugin of this project gets its own source name (one shared name breaks every other project)
 		   if ($pluginSource = Caligrafy\PluginSource::ensureOwn('.')) {
 			print("\n Claude Code plugin source: $pluginSource (enable caligrafy-quill@$pluginSource when Claude Code asks)");

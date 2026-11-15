@@ -101,6 +101,7 @@ second, median and slowest response, memory, for plain text, JSON, a database qu
 | Build a feature | [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) |
 | Every command | [Caligrafer](https://github.com/caligrafy/caligrafy-quill/wiki/Caligrafer) |
 | Put it online | [Putting it online](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online): Caligrafy Cloud or your own server |
+| Give the docs to a coding agent (Cursor, Codex, Copilot, Gemini) | [AGENTS.md](AGENTS.md), [llms.txt](https://github.com/caligrafy/caligrafy-quill/blob/master/llms.txt) and [llms-full.txt](https://github.com/caligrafy/caligrafy-quill/blob/master/llms-full.txt): every wiki page in one file |
 | See what changed | [Changelog](CHANGELOG.md) |
 | Contribute | [Contributing](CONTRIBUTING.md) and [how the framework is built](ARCHITECTURE.md) |
 

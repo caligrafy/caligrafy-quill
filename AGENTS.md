@@ -10,11 +10,12 @@ Your code goes in `application/` (routes in `application/config/routing/web.php`
 ## Read before writing code
 - `claude-plugin/skills/caligrafy/SKILL.md`: the index of the framework knowledge and the workflow rules.
 - `claude-plugin/skills/caligrafy/reference/api-reference.md`: exact signatures, verified against the source.
-- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G148 (read the relevant ones).
+- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G163 (read the relevant ones).
 - `claude-plugin/skills/caligrafy/reference/13-build-once-services-capabilities-mcp.md`: capabilities, tokens, MCP.
 - `claude-plugin/skills/caligrafy/reference/ui-guidelines.md`: how every new page and client app looks (page components).
 - `ARCHITECTURE.md`: how a request runs and the build-once design.
-- Step-by-step procedures: `claude-plugin/skills/<new-resource | new-capability | new-app | server | db>/SKILL.md`.
+- `claude-plugin/skills/caligrafy/reference/59-snap-cards-and-the-assistant.md`: Snap Cards and the assistant (`Route::snap()`).
+- Step-by-step procedures: `claude-plugin/skills/<idea | new-resource | new-capability | new-app | assistant | server | db | design | ship | deploy | update>/SKILL.md`.
 
 ## Build once, experience everywhere
 A project that was never set up: `.bin/caligrafer quickstart` (database, framework tables, `/capabilities` and `/mcp`;
@@ -27,8 +28,9 @@ A feature that more than one channel needs (Pug pages, a Vue app, a REST API, AI
 (`Book::where(...)->with('author')->paginate(20, $input['page'] ?? 1)`, `Database::table()`, 2.19.0+). Expose it with
 `Route::page` (pages), `Route::form` (form posts), `Route::download` (CSV/JSON exports), `Route::webhook` (a
 service's events), `Route::action` with a `webOnly: true` capability for custom HTTP (2.21.0, no controller),
-`Route::capability()` (REST), `Route::capabilities()` + `php caligrafer.php client` (Vue apps) and `Route::mcp()`
-(agents). `php caligrafer.php capabilities` lists them.
+`Route::capability()` (REST), `Route::capabilities()` + `php caligrafer.php client` (Vue apps), `Route::mcp()`
+(agents) and `Route::snap()` (2.23.0+: every capability as a card, and an assistant that answers with them; `php caligrafer.php snap`
+checks it). `php caligrafer.php capabilities` lists them.
 
 ## Rules
 - Only capabilities touch models: pages use `Route::page` (with `data` from capabilities), forms `Route::form`, sign-in `Route::auth` (2.19.0+), webhooks `Route::webhook`, exports `Route::download`, anything else `Route::action` on a `webOnly: true` capability (2.21.0); no new controller (existing ones call `$this->call()`), never a model in a controller, a route or a view, and never data work in a closure route.
@@ -62,3 +64,12 @@ service's events), `Route::action` with a `webOnly: true` capability for custom 
 - After changing PHP, run `php -l <file>`; run the app's tests with `php caligrafer.php test` (`tests/`,
   `Caligrafy\Testing\TestCase`); check the project with `php caligrafer.php doctor` (read-only).
 - Framework changes need the QA suite: `vendor/bin/phpunit` and `./qa/run.sh` (see `CONTRIBUTING.md`).
+
+## Working on the framework itself
+Only in the framework repository (`github.com/caligrafy/caligrafy-quill`, no `application/` folder), never in a project:
+- `CONTRIBUTING.md` has the setup: `composer install`, `vendor/bin/phpunit` (unit tests) and `./qa/run.sh` (the whole QA
+  suite, with Docker; `QA_WIKI=../caligrafy-quill.wiki` also checks the wiki).
+- A change reaches the plugin, the README, the wiki, the version and the changelog: `.claude/skills/caligrafy-contributor/SKILL.md`
+  lists every step. `framework/settings/application` is the template that `initialize` copies to `application/`.
+- `llms.txt` (written by hand) and `llms-full.txt` (`php qa/build-llms-full.php ../caligrafy-quill.wiki`) describe the
+  framework to agents; `context7.json` tells Context7 what to index. `initialize` removes them from a project.

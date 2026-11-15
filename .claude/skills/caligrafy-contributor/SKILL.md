@@ -28,7 +28,7 @@ wiki page [Testing Caligrafy, release process](https://github.com/caligrafy/cali
 What projects' Claude knows comes from here, so it must describe the change:
 - `skills/caligrafy/reference/api-reference.md` and `gotchas.md` are written by hand from the source: a new or changed
   method, command or behavior goes in the API reference; a pitfall that was found (a bug fixed, a surprising behavior)
-  becomes the next `G<n>` gotcha, and the range in `skills/caligrafy/SKILL.md` ("G1-G<n>") follows.
+  becomes the next `G<n>` gotcha, and the range ("G1-G<n>") follows in `skills/caligrafy/SKILL.md`, `AGENTS.md` and `llms.txt`.
 - `skills/caligrafy/reference/ui-guidelines.md` when a page, a class or the look changes (the QA suite checks that every
   class it names exists in `tokens.css`, `layout.css`, `look.css` or `camera.css`).
 - every other skill (`idea`, `new-app`, `new-capability`, `new-resource`, `db`, `design`, `ship`, `deploy`, `update`,
@@ -73,12 +73,16 @@ what the change makes wrong or incomplete; no rewrite for its own sake.
 1. `framework/core/Framework.php` `VERSION` and a section at the top of `CHANGELOG.md` (semantic versioning: major when
    projects can break, minor for features, patch for fixes).
 2. A template of `framework/settings/application` changed: `php qa/build-template-history.php`.
-3. `QA_WIKI=../caligrafy-quill.wiki qa/run.sh` (run it in the background: it takes minutes). Before the tag exists the
+3. The index for coding agents: read `llms.txt` against the change (its rules, its example, its links: a new wiki page
+   that matters gets a line), then `php qa/build-llms-full.php ../caligrafy-quill.wiki` after the wiki is final (step 3)
+   so that `llms-full.txt` is every page of it; `--check` says whether it is current. `context7.json`'s `rules` follow
+   the same rules as `AGENTS.md`, and a new release-notes page of the plugin reference joins its `excludeFiles`.
+4. `QA_WIKI=../caligrafy-quill.wiki qa/run.sh` (run it in the background: it takes minutes). Before the tag exists the
    only expected failure is `caligrafer version` (it compares the version with the tag on the commit); after
    committing and tagging, `bash qa/tests/tooling_tests.sh` must pass entirely.
-4. Commit only the files of this change (`git status`; other sessions may share the folder), with the attribution
+5. Commit only the files of this change (`git status`; other sessions may share the folder), with the attribution
    lines of the conversation; tag `git tag -a vX.Y.Z -m "Caligrafy Quill X.Y.Z"`; push `master`, the tag and the wiki.
-5. The GitHub release (`gh release create vX.Y.Z --title "Caligrafy Quill X.Y.Z" --notes-file <its CHANGELOG
+6. The GitHub release (`gh release create vX.Y.Z --title "Caligrafy Quill X.Y.Z" --notes-file <its CHANGELOG
    section>`, `--latest` for the newest): it is public, so ask the maintainer first. Until it exists, projects running
    `php caligrafer.php update` without a version are not offered it.
 

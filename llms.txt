@@ -1,0 +1,80 @@
+# Caligrafy Quill
+
+> Caligrafy Quill is an open-source PHP MVC framework (PHP 8.3+, MySQL, Pug views, Vue 3 client apps, MIT) made for coding agents. You write each feature once as a capability (a `Caligrafy\Service` class with `#[Capability]`), and the framework serves it to web pages, forms, a REST API, a generated JS client for Vue apps, AI agents over MCP and Snap Cards. Its slogan is "Describe it. Approve it. Ship it.": with Claude Code, `/caligrafy-quill:idea` turns an idea into a complete app online at `https://<name>.caligrafy.com`.
+
+Rules an agent must follow in a Caligrafy project:
+
+- Only capabilities touch models. Requests are declared in `application/config/routing/web.php`: `Route::page()` (a page with data from capabilities), `Route::form()`, `Route::auth()`, `Route::webhook()`, `Route::download()`, `Route::capability()` / `Route::capabilities()` (REST), `Route::mcp()` (agents), `Route::snap()` (cards and the assistant), and `Route::action()` on a `webOnly: true` capability for anything else. Do not write new controllers.
+- In a capability, declare every input in `$rules`, return data from `handle(array $input, Context $context)`, and refuse with `ServiceError`. Never render, redirect, print or read the session there.
+- Read data with the query builder (`Book::where('author_id', $id)->with('author')->paginate(20)`, `Database::table()`) or with bound `?` queries. Never concatenate request data into SQL.
+- A change to a table that already holds data is a migration (`php caligrafer.php migrate make <name>`).
+- Pug views are compiled to PHP, so strings join with `.`, never `+`.
+- Never put API keys or tokens in pages or bundles. Never print or commit `.env` secrets.
+- Exact signatures are in the API reference, and the verified pitfalls (G1-G163) are in the gotchas. Read them before writing code.
+
+A minimal capability (`application/services/Bookshelf/ListBooks.php`):
+
+```php
+#[Capability(name: 'list_books', description: 'Lists the books, 20 per page, each with its author.', scope: 'books:read', readOnly: true, public: true)]
+class ListBooks extends Service
+{
+    public $rules = array('author_id' => 'integer', 'page' => 'integer');
+    public function handle(array $input, Context $context)
+    {
+        $query = Book::with('author')->orderBy('title');
+        if (!empty($input['author_id'])) { $query->where('author_id', $input['author_id']); }
+        return $query->paginate(20, $input['page'] ?? 1);
+    }
+}
+```
+
+Served everywhere from `web.php`: `Route::page('/books', 'Bookshelf/books', ['data' => ['books' => 'list_books']]);`, `Route::capability('GET', '/api/books', 'list_books');` and `Route::mcp('/mcp');`.
+
+## Start here
+
+- [Quickstart with Claude](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Quickstart-with-Claude.md): describe it, approve it, ship it with `/caligrafy-quill:idea`
+- [Quickstart](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Quickstart.md): the same steps by hand (`git clone`, `.bin/caligrafer quickstart`)
+- [How Caligrafy works](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/How-Caligrafy-Works.md): capabilities, channels and requests in 5 minutes
+- [Your first capability](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Your-First-Capability.md): models, four capabilities, pages, REST and MCP, step by step
+- [Getting started](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/1.-Getting-Started.md): installation, folders and settings
+
+## Capabilities: build once
+
+- [Capabilities, tokens and MCP](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/11.-Build-Once:-Services,-Capabilities-and-MCP.md): `#[Capability]`, rules, scopes, REST, the JS client, MCP, personal access tokens, the audit log
+- [Declarative routes](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Declarative-Routes.md): `Route::page`, `form`, `auth`, `webhook`, `download`, `action`
+- [Routing](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/2.-Routing.md): routes, route variables, levels
+- [Validation rules](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/6.-Validation.md): the rules of `$rules`
+- [Testing your app](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Testing-Your-App.md): `php caligrafer.php test`, `Caligrafy\Testing\TestCase`
+
+## Data
+
+- [Queries](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Queries.md): the query builder, filters, paging, eager loading with `with()`
+- [Models](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/4.-Models.md) and [relationships](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/5.-Relationships.md)
+- [Migrations](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Migrations.md): changes to tables, in order
+- [Sign-in, users and tokens](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/9.1-Authentication.md)
+
+## Experiences
+
+- [Views and page components](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/7.-Views.md): Pug layouts and the `cq-` page classes
+- [Snap Cards and the assistant](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Snap-Cards-and-the-Assistant.md): `Route::snap()`, every capability as a card
+- [Vue apps calling capabilities](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/9.7.3-Requests.md)
+- [Design styles](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Design-Styles.md): another look with one setting (`DESIGN_STYLE`)
+- [Putting it online](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Putting-it-Online.md): the production image, Caligrafy Cloud or your own server
+
+## For coding agents
+
+- [API reference](https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/claude-plugin/skills/caligrafy/reference/api-reference.md): exact signatures, verified against the source
+- [Gotchas](https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/claude-plugin/skills/caligrafy/reference/gotchas.md): verified pitfalls and the file that proves each one
+- [AGENTS.md](https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/AGENTS.md): the rules for any coding agent in a Caligrafy project
+- [Claude Code plugin](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/10.-Claude-Code-Plugin.md): the skills (`idea`, `new-capability`, `ship`...) and the reviewer agent
+- [UI guidelines](https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/claude-plugin/skills/caligrafy/reference/ui-guidelines.md): how every new page and client app looks
+- [Architecture](https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/ARCHITECTURE.md): how a request runs
+
+## Optional
+
+- [llms-full.txt](https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/llms-full.txt): every wiki page in one file
+- [Caligrafer, the command line](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Caligrafer.md)
+- [Background jobs](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Background-Jobs.md), [scheduled jobs](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Scheduled-Jobs.md), [notifications](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Notifications.md), [the cache](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Caching.md), [dependency injection](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Dependency-Injection.md)
+- [Payments: Stripe and crypto](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/9.2-Stripe-&-Cryptocurrency-Payment.md)
+- [Changelog](https://raw.githubusercontent.com/caligrafy/caligrafy-quill/master/CHANGELOG.md)
+- [Wiki home](https://github.com/caligrafy/caligrafy-quill/wiki) and [the marketplace of apps made with Caligrafy](https://caligrafy.com/marketplace)
