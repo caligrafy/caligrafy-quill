@@ -7,7 +7,7 @@
 #   2. keep-alive off (KEEP_ALIVE=on keeps it): with a fixed number of processes, an idle open connection would hold
 #      a process; the proxy in front (Traefik, Caddy, a load balancer) keeps visitors' connections open instead.
 #   3. the response cache (docker/production/cache.conf): on unless CACHE=off
-#   4. prepares the database (php caligrafer.php deploy), then serves.
+#   4. prepares the database (php caligrafer.php deploy), compiles the views (php caligrafer.php optimize), then serves.
 # PHP_PROCESSES and KEEP_ALIVE come from the environment or from the project's .env.
 set -e
 cd /var/www/html
@@ -54,4 +54,7 @@ case "$cache" in off|false|no|0) a2disconf -q caligrafy-cache >/dev/null 2>&1 ||
 echo "caligrafy: $n PHP processes, keep-alive $(echo $keep | tr '[:upper:]' '[:lower:]'), response cache $cache"
 
 php caligrafer.php deploy --wait "${CALIGRAFY_DEPLOY_WAIT:-60}" || echo 'caligrafer deploy: the database is not prepared (see above)'
+# views compiled and the class map built as the web server's user (their folders belong to it): the first page of a
+# new container compiles nothing
+su -s /bin/sh www-data -c 'php caligrafer.php optimize' || echo 'caligrafer optimize: views will be compiled on first use (see above)'
 exec apache2-foreground

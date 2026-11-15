@@ -52,6 +52,7 @@ $defaultMsg = "\n Available Functions:
 				\n - update [<version>] [--check] [--yes] [--no-composer]: moves the project to another release of Caligrafy Quill (the latest by default) and applies everything: framework/, the release's other files (untouched ones replaced, changed ones kept with a .caligrafy-new), composer.json, .gitignore and new .env settings merged, then upgrade --apply; backups in backups/
 				\n - plugin: gives this project's Claude Code plugin its own source name and says where Claude Code reads it
 				\n - upgrade [--apply] [--local] [--force <application/path>] [--keep <application/path>]: brings the project up to date (dry run by default). When a newer release of Caligrafy Quill is out, it moves the project to it like update; otherwise (or with --local) it compares application/ with the framework templates and updates the untouched files; also reports .env settings and Bootstrap 3 classes
+				\n - optimize: compiles every Pug view and builds the class map now (the production image runs it at start), so the first page of a new container compiles nothing
 				\n - doctor [--only openai,groq] [--json] [--env <file>]: read-only health check of the project and of the services configured in .env
 				\n - design <list [--json] | show <name> | use <name> | off | status>: picks a design style (DESIGN_STYLE in .env) (framework/design, application/design); empty = Caligrafy's own look
 				\n - server <start | stop | rebuild>: Starts a Caligrafy local LAMP server with phpmyadmin (requires PHP, Composer and Docker); rebuild updates the server image
@@ -666,6 +667,35 @@ switch(strtolower($argv[1])) {
 			exit(0);
 		} catch (Throwable $e) {
 			fwrite(STDERR, "\n cache: " . $e->getMessage() . "\n\n");
+			exit(1);
+		}
+
+	case 'optimize':
+		// What the production image runs at start, as the web server's user (2.26.0, docker/production/start.sh): every
+		// Pug view compiled and the class map built before the first visitor, so the first page of a new container does
+		// not compile anything (cold start). Safe to run again: views are compiled again, the map rebuilt.
+		try {
+			$folder = Caligrafy\View::cache();
+			$views = 0;
+			$failed = array();
+			if ($folder === null) {
+				print("\n optimize: the view cache is off (VIEW_CACHE=false) or its folder cannot be written: views are compiled on each request\n");
+			} elseif (is_dir(VIEW_PATH)) {
+				// View::cache() already gave Phug its cache folder: passing it again would merge both into an array
+				$result = Phug::cacheDirectory(VIEW_PATH);
+				$views = (int) ($result[0] ?? 0);
+				foreach ((array) ($result[2] ?? array()) as $detail) {   // [inputFile, error] per view that failed
+					$error = $detail['error'] ?? null;
+					$failed[] = str_replace(VIEW_PATH, '', (string) ($detail['inputFile'] ?? '?')) . ': ' . ($error instanceof Throwable ? $error->getMessage() : 'not compiled');
+				}
+			}
+			$map = Caligrafy\ClassMap::registered() ? Caligrafy\ClassMap::rebuild() : null;
+			print("\n Optimized: $views view(s) compiled" . ($map !== null ? ', class map of ' . count($map['classes']) . ' classes' : '') . "\n");
+			foreach ($failed as $line) fwrite(STDERR, "  view not compiled: $line\n");
+			print("\n");
+			exit($failed ? 1 : 0);
+		} catch (Throwable $e) {
+			fwrite(STDERR, "\n optimize: " . $e->getMessage() . "\n\n");
 			exit(1);
 		}
 

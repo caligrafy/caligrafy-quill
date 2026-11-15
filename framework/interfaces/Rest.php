@@ -30,24 +30,46 @@ class Rest
     public static function respond($name, $request = null)
     {
         $request = $request ?? request();
+        $entry = Capabilities::get($name);
+        $context = null;   // the caller, known once (a token is verified once)
+        $answer = self::answer($name,
+            function () use ($request, &$context) { return $context = Context::fromRequest($request, 'rest'); },
+            function () use ($request) { return self::input($request); }, $request->method,
+            function () use ($request, $entry, &$context) {
+                return !($entry !== null && !$entry['capability']->readOnly && self::needsCsrf($request, $context) && !self::validCsrf($request));
+            }, new Uploads($_FILES ?? array()));
+        // cache (2.26.0): a public, read-only capability's answer to a visitor may be kept by shared caches
+        if ($answer['status'] === 200 && $entry !== null && $entry['capability']->cache > 0 && $request->bearer() === null) {
+            HttpCache::publicFor($entry['capability']->cache);
+        }
+        if ($answer['status'] === 401 && !headers_sent()) {
+            header('WWW-Authenticate: Bearer');
+        }
+        self::send($answer['status'], $answer['body']);
+    }
+
+    /**
+     * The answer to a call of a capability, without printing it (2.26.0: the web server prints it, the async server
+     * sends it): ['status' => 200|201|4xx, 'body' => ['data' => ...] or ['error' => ...]]
+     * @param callable $context returns the caller's Context
+     * @param callable $input returns the inputs
+     * @param string $method the HTTP method (a POST that creates answers 201)
+     * @param callable|null $csrf returns false when a session caller's write lacks its CSRF token
+     */
+    public static function answer($name, callable $context, callable $input, $method = 'POST', ?callable $csrf = null, ?Uploads $uploads = null)
+    {
         try {
             $entry = Capabilities::get($name);
-            $context = Context::fromRequest($request, 'rest');
-            if ($entry !== null && !$entry['capability']->readOnly && self::needsCsrf($request, $context) && !self::validCsrf($request)) {
+            $caller = $context();
+            if ($csrf !== null && !$csrf()) {
                 throw new ServiceError('forbidden', 'Missing or invalid CSRF token: send the X-CSRF-Token header');
             }
             // file inputs (the `file` rule, 2.19.0): the uploaded files are saved once the caller is allowed
-            $result = Capabilities::call($name, self::input($request), $context, new Uploads($_FILES ?? array()));
-            // cache (2.26.0): a public, read-only capability's answer to a visitor may be kept by shared caches
-            if ($entry !== null && $entry['capability']->cache > 0 && $request->bearer() === null) {
-                HttpCache::publicFor($entry['capability']->cache);
-            }
-            self::send($request->method === 'POST' && $entry !== null && !$entry['capability']->readOnly ? 201 : 200, array('data' => $result));
+            $result = Capabilities::call($name, $input(), $caller, $uploads ?? new Uploads(array()));
+            $creates = strtoupper((string) $method) === 'POST' && $entry !== null && !$entry['capability']->readOnly;
+            return array('status' => $creates ? 201 : 200, 'body' => array('data' => $result));
         } catch (ServiceError $e) {
-            if ($e->kind === 'unauthenticated' && !headers_sent()) {
-                header('WWW-Authenticate: Bearer');
-            }
-            self::send($e->status(), $e->toArray());
+            return array('status' => $e->status(), 'body' => $e->toArray());
         }
     }
 
