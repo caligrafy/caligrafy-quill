@@ -95,6 +95,8 @@
         $settings = $this->_settings;
         $this->_public_key = $apiKey != ""? $apiKey : $settings['key'];
         if ($settings['provider'] === 'groq') {
+            // groq-php is optional since 2.26.0 (php caligrafer.php add ai); the other providers need no SDK
+            Features::need('ai', 'new Agent() with Groq (AGENT_PROVIDER=groq, the default)');
             // groq-php reads GROQ_API_BASE itself; AGENT_API_BASE or the argument take precedence
             $this->_groq = new Groq($this->_public_key, $settings['baseOverride']? ['baseUrl' => rtrim($settings['base'], '/') . '/'] : []);
             return $this;

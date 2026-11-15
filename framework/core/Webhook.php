@@ -94,6 +94,8 @@ class Webhook
             if (is_array($signature)) {
                 $signature = (string) reset($signature);
             }
+            // stripe/stripe-php is optional since 2.26.0: php caligrafer.php add payments
+            Features::need('payments', "Route::webhook with 'verify' => 'stripe'");
             try {
                 \Stripe\Webhook::constructEvent((string) $raw, (string) $signature, $secret, (int) ($options['tolerance'] ?? \Stripe\Webhook::DEFAULT_TOLERANCE));
             } catch (\Stripe\Exception\SignatureVerificationException $e) {

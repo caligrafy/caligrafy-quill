@@ -33,6 +33,8 @@ final class PasskeyTest extends TestCase
 
     protected function setUp(): void
     {
+        // lbuchs/webauthn is optional since 2.26.0 (qa/run.sh adds it)
+        if (!\Caligrafy\Features::installed('passkeys')) $this->markTestSkipped(\Caligrafy\Features::message('passkeys', 'This test'));
         $_SESSION = [];
     }
 

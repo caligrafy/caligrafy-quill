@@ -66,6 +66,7 @@ class Passkey extends \stdClass {
     */
     protected function webauthn()
     {
+        Features::need('passkeys', 'Caligrafy\\Passkey');   // lbuchs/webauthn is optional since 2.26.0
         // formats that need no vendor root certificates: passkeys are trusted on first use
         return new WebAuthn($this->rpName, $this->rpId, ['none', 'packed', 'apple', 'android-key', 'tpm', 'fido-u2f'], true);
     }
@@ -226,6 +227,7 @@ class Passkey extends \stdClass {
         if ($type === 'create' && (string)$c['user'] !== (string)$userId) {
             throw new PasskeyException('The passkey request was started by another account', 401);
         }
+        Features::need('passkeys', 'Caligrafy\\Passkey');
         return new ByteBuffer(base64_decode($c['challenge']));
     }
 

@@ -50,6 +50,7 @@ $defaultMsg = "\n Available Functions:
 				\n - version: prints the version of Caligrafy Quill
 				\n - initialize: Initializes and signs your project
 				\n - update [<version>] [--check] [--yes] [--no-composer]: moves the project to another release of Caligrafy Quill (the latest by default) and applies everything: framework/, the release's other files (untouched ones replaced, changed ones kept with a .caligrafy-new), composer.json, .gitignore and new .env settings merged, then upgrade --apply; backups in backups/
+				\n - add [<payments | ai | push | passkeys | snap | facedetect> ...]: adds an optional feature: composer require of its SDK at the pinned version (Stripe, Groq, web push, passkeys, Claude for the Snap assistant), or the FaceDetect models (downloaded, SHA-256 checked); no feature lists them
 				\n - plugin: gives this project's Claude Code plugin its own source name and says where Claude Code reads it
 				\n - upgrade [--apply] [--local] [--force <application/path>] [--keep <application/path>]: brings the project up to date (dry run by default). When a newer release of Caligrafy Quill is out, it moves the project to it like update; otherwise (or with --local) it compares application/ with the framework templates and updates the untouched files; also reports .env settings and Bootstrap 3 classes
 				\n - async <check | start>: experimental async server (2.26.0): the capabilities channel answered from processes that keep the app in memory; check lists which capabilities it may run
@@ -81,7 +82,7 @@ $defaultMsg = "\n Available Functions:
 				\n - create <project_name>: scaffolds a Vue project
 				\n - app <project_name>: scaffolds a regular Client HTML/JS project
 				\n - bot <bot_name>: creates a bot application
-				\n - facedetect <app_name>: creates a face detection application
+				\n - facedetect <app_name>: creates a face detection application (downloads the face-api models first, like add facedetect)
 				\n - ml <app_name>: creates an ml powered application
 				
 				\n\n";
@@ -976,6 +977,11 @@ switch(strtolower($argv[1])) {
 		}
 		break;
 
+	case 'add':
+		// Optional features (2.26.0): the SDKs only some applications use (composer require at the pinned version) and
+		// the FaceDetect models (downloaded from a pinned source, SHA-256 checked)
+		exit(Caligrafy\Features::add(array_values(array_filter(array_slice($argv, 2), function ($a) { return $a !== '' && $a[0] !== '-'; })), '.'));
+
     case (strtolower($argv[1]) == 'bot' || strtolower($argv[1]) == 'ml' || strtolower($argv[1]) == 'facedetect' || strtolower($argv[1]) == 'app'):
 		if (isset($argv[2]) && file_exists('./public/' . $argv[2])) {
 			print("\n public/" . $argv[2] . " already exists: nothing was created. Choose another name, or remove the folder first.\n\n");
@@ -983,6 +989,20 @@ switch(strtolower($argv[1])) {
 		}
 		if (isset($argv[2]) && !in_array(strtolower($argv[2]), $restricted)) {
 			system('cp -r framework/plugins/' . $argv[1] .' ./public/' . $argv[2], $retValue);
+			if (strtolower($argv[1]) === 'facedetect') {
+				// the models (public/resources/models) and the pictures of the recognition example are not in the release
+				// (2.26.0): downloaded from pinned sources, SHA-256 checked; offline, nothing is created
+				try {
+					$lines = array_merge(Caligrafy\Features::download(Caligrafy\Features::modelFiles('.')),
+						Caligrafy\Features::download(Caligrafy\Features::pictureFiles('./public/' . $argv[2])));
+					foreach ($lines as $line) print("\n $line");
+					print("\n");
+				} catch (RuntimeException $e) {
+					system('rm -rf ' . escapeshellarg('./public/' . $argv[2]));
+					print("\n " . $e->getMessage() . "\n The app was not created: run php caligrafer.php facedetect " . $argv[2] . " again once online.\n\n");
+					exit(1);
+				}
+			}
 			print("\n Project created in the public folder.\n Type cd public/".$argv[2]. " to access it anytime\n\n");
 			chdir("public/".$argv[2]);
 		} else {

@@ -131,6 +131,7 @@ class Notify
      */
     public static function keys()
     {
+        Features::need('push', 'Web push (Caligrafy\\Notify)');   // minishlink/web-push is optional since 2.26.0
         $keys = VAPID::createVapidKeys();
         return array('public' => $keys['publicKey'], 'private' => $keys['privateKey']);
     }
@@ -174,6 +175,12 @@ class Notify
         if (!self::pushConfigured()) return 0;
         $rows = Database::toArray(Database::execute('SELECT * FROM ' . self::SUBSCRIPTIONS . ' WHERE user_id = ?', array((string) $userId))) ?: array();
         if (!$rows) return 0;
+        // minishlink/web-push is optional since 2.26.0: without it push is skipped (the email channel still works), the
+        // subscriptions are kept, and the log says how to add it
+        if (!self::$pushSender && !Features::installed('push')) {
+            error_log('Caligrafy\\Notify: ' . Features::message('push', 'Web push (Caligrafy\\Notify)'));
+            return 0;
+        }
         $payload = json_encode(array('title' => $message['title'], 'body' => $message['body'], 'url' => $message['url'] !== '' ? self::absolute($message['url']) : self::base(),
             'tag' => $message['tag'] !== '' ? $message['tag'] : null, 'icon' => self::base() . 'public/images/resources/caligrafy-mark.svg'), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
         if (strlen($payload) > self::PAYLOAD_BYTES) $payload = json_encode(array('title' => $message['title'], 'body' => mb_substr($message['body'], 0, 120), 'url' => self::base()), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);

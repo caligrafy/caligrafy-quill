@@ -186,6 +186,7 @@ class Doctor
             $this->add('project', 'Notifications', 'WARN', 'only ' . implode(', ', $vapid) . ' of the web push keys is set: push sends nothing',
                 'set all three, or empty them and run php caligrafer.php notify keys');
         }
+        $this->optionalFeatures();
         // two Pug mistakes that do not show until the page renders: a $ before digits is read as a variable and vanishes
         // ($40 shows as nothing), and code on the same line as a one-line - if / - foreach does not compile
         $pug = self::pugPitfalls($this->root);
@@ -549,7 +550,7 @@ class Doctor
         if (trim($public) !== '' && !in_array(trim($public), self::PLACEHOLDERS) && strpos(trim($public), 'pk_' . $mode . '_') !== 0) {
             $this->add('stripe', 'Mode', 'WARN', "PAY_PUBLIC_KEY_$suffix is not a pk_{$mode}_ key: public and secret keys come from different modes", 'copy both keys from the same mode in the Stripe dashboard');
         }
-        if (!class_exists('\Stripe\StripeClient')) { $this->add('stripe', 'Stripe', 'FAIL', 'stripe/stripe-php is not installed', 'composer install'); return; }
+        if (!class_exists('\Stripe\StripeClient')) { $this->add('stripe', 'Stripe', 'FAIL', 'stripe/stripe-php is not installed (optional since 2.26.0)', 'php caligrafer.php add payments'); return; }
         $options = ['api_key' => trim($secret)];
         if ($this->env('STRIPE_API_BASE')) $options['api_base'] = rtrim($this->env('STRIPE_API_BASE'), '/');
         $client = new \Stripe\HttpClient\CurlClient();
@@ -740,6 +741,29 @@ class Doctor
         } else {
             $this->add('project', 'Token scopes', 'WARN', count($unscoped) . ' write capability(ies) declared without a scope: a token now needs the scope named after each, or *: ' . implode(', ', $unscoped),
                 "declare scope: '<resource>:write' on each, or give the tokens that call them these scopes (php caligrafer.php token create <name> --scopes <scopes>); signed-in pages and the CLI are not affected");
+        }
+    }
+
+    // the optional features (2.26.0): configured in .env or used in application/ while their SDK is not installed, and
+    // FaceDetect apps without the face-api models
+    private function optionalFeatures()
+    {
+        if (!class_exists('Caligrafy\\Features')) require_once __DIR__ . '/Features.php';
+        foreach (Features::used($this->root, function ($name) { return $this->env($name); }) as $feature => $reasons) {
+            $missing = Features::missing($feature);
+            if (!$missing) continue;
+            $this->add('project', 'Optional SDK', $feature === 'snap' ? 'WARN' : 'FAIL', Features::FEATURES[$feature]['title'] . ': ' . implode(', ', array_keys($missing))
+                . ' not installed (' . implode('; ', array_slice($reasons, 0, 2)) . ')' . ($feature === 'snap' ? ': the assistant answers from the cards\' names' : ''),
+                'php caligrafer.php add ' . $feature);
+        }
+        $apps = array_filter(glob($this->root . '/public/*/{index.php,index.html,scripts/main.js}', GLOB_BRACE) ?: [], function ($file) {
+            $source = (string) @file_get_contents($file);
+            return strpos($source, 'new FaceDetector') !== false || strpos($source, 'face-api.min.js') !== false;
+        });
+        if ($apps && !Features::facedetectReady($this->root)) {
+            $names = array_unique(array_map(function ($file) { return preg_replace('#^.*/public/([^/]+)/.*$#', '$1', $file); }, $apps));
+            $this->add('project', 'FaceDetect models', 'FAIL', 'public/' . implode(', public/', $names) . ' use face-api, but ' . Features::MODELS_DIR . ' lacks its models (not in the release since 2.26.0)',
+                'php caligrafer.php add facedetect');
         }
     }
 

@@ -473,6 +473,11 @@ class AuthRoutes
         } catch (PasskeyException $e) {
             $status = (int) $e->getCode();
             return self::json($status >= 400 && $status < 600 ? $status : 400, array('error' => $e->getMessage()));
+        } catch (FeatureMissing $e) {
+            // lbuchs/webauthn is not installed (optional since 2.26.0): the message names php caligrafer.php add passkeys
+            error_log('Caligrafy Route::auth passkeys: ' . $e->getMessage());
+            $debug = filter_var(getenv('APP_DEBUG'), FILTER_VALIDATE_BOOLEAN) || (defined('APP_DEBUG') && filter_var(APP_DEBUG, FILTER_VALIDATE_BOOLEAN));
+            return self::json(503, array('error' => $debug ? $e->getMessage() : 'Passkeys are not available on this site yet'));
         }
     }
 

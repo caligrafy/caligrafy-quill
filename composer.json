@@ -30,17 +30,18 @@
     "minimum-stability": "stable",
     "require": {
         "php": "^8.3",
-        "pug-php/pug": "^3.6",
         "phug/phug": "^2.0",
         "vlucas/phpdotenv": "^5.8",
         "wixel/gump": "^2.3",
         "claviska/simpleimage": "^4.4",
-        "stripe/stripe-php": "^23.0",
-        "phpmailer/phpmailer": "^7.2",
-        "lucianotonet/groq-php": "^1.4",
-        "lbuchs/webauthn": "^2.2",
-        "minishlink/web-push": "^11.0",
-        "anthropic-ai/sdk": "^1.8"
+        "phpmailer/phpmailer": "^7.2"
+    },
+    "suggest": {
+        "stripe/stripe-php": "^23.0: Stripe payments (Caligrafy\\Payment, Route::webhook 'verify' => 'stripe'): php caligrafer.php add payments",
+        "lucianotonet/groq-php": "^1.4: Caligrafy\\Agent with Groq, the default provider: php caligrafer.php add ai",
+        "minishlink/web-push": "^11.0 (with guzzlehttp/guzzle ^7.9): web push notifications (Caligrafy\\Notify): php caligrafer.php add push",
+        "lbuchs/webauthn": "^2.2: passkeys (Caligrafy\\Passkey, Route::auth 'passkeys' => true): php caligrafer.php add passkeys",
+        "anthropic-ai/sdk": "^1.8 (with guzzlehttp/guzzle ^7.9): the Snap assistant with Claude (ANTHROPIC_API_KEY): php caligrafer.php add snap"
     },
     "config": {
         "allow-plugins": {
