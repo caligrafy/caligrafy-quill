@@ -42,7 +42,8 @@ class Controller extends \stdClass
         // instantiate the validator
         $this->validator = $this->validator?? new Validator();
         
-        $this->connection = connect()?? null;
+        // the open connection of this request, persistent between requests (2.26.0): before, every controller connected again
+        $this->connection = Database::connection() ?? null;
         
         // instantiate main connected modules
         $this->payment = $this->payment?? null;

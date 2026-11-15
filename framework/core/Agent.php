@@ -27,11 +27,7 @@
  use LucianoTonet\GroqPHP\Groq;
  use LucianoTonet\GroqPHP\GroqException;
 
- // Current Groq models (October 2026). Override them in .env with GROQ_MODEL and GROQ_VISION_MODEL (or AGENT_MODEL and AGENT_VISION_MODEL)
- define("GROQ_DEFAULT_MODEL", defined('GROQ_MODEL') && GROQ_MODEL !== ''? GROQ_MODEL : "openai/gpt-oss-120b");
- define("GROQ_SMALL_MODEL", "openai/gpt-oss-20b");
- define("GROQ_DEFAULT_VISION_MODEL", defined('GROQ_VISION_MODEL') && GROQ_VISION_MODEL !== ''? GROQ_VISION_MODEL : "qwen/qwen3.8-27b"); // preview model: Groq has no production vision model
- define("GROQ_TRANSCRIPTION_MODEL", "whisper-large-v3");
+// its constants (models, prompts) are in framework/settings/models.php, loaded at start (2.26.0)
 
 
  class Agent extends \stdClass {

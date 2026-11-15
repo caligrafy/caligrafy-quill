@@ -13,6 +13,8 @@ RUN sed -i 's|http://deb.debian.org|https://deb.debian.org|g' /etc/apt/sources.l
     && docker-php-ext-configure gd --with-freetype --with-jpeg \
     && docker-php-ext-install -j2 bcmath exif gd intl mysqli pdo_mysql zip \
     && cp "$PHP_INI_DIR/php.ini-production" "$PHP_INI_DIR/php.ini"
+# production settings (2.26.0): OPcache keeps the compiled code and stops checking files for changes
+COPY docker/production/php.ini /usr/local/etc/php/conf.d/zz-caligrafy.ini
 
 # sessions in their own folder: mount a volume there and a new deploy does not sign everyone out
 RUN mkdir -p /var/lib/php/sessions && chown www-data:www-data /var/lib/php/sessions \
@@ -31,5 +33,7 @@ RUN composer dump-autoload --optimize --no-dev --no-plugins \
     && chown -R www-data:www-data public/uploads
 
 EXPOSE 80
-# prepare the database (it waits for it), then serve: a database that is not ready does not keep the site down
-CMD ["sh", "-c", "php caligrafer.php deploy --wait ${CALIGRAFY_DEPLOY_WAIT:-60} || echo 'caligrafer deploy: the database is not prepared (see above)'; exec apache2-foreground"]
+# docker/production/start.sh: sizes Apache to the container (PHP_PROCESSES, 4 per CPU and at least 8 by default),
+# turns keep-alive off (KEEP_ALIVE), prepares the database (it waits for it), then serves: a database that is not
+# ready does not keep the site down
+CMD ["sh", "docker/production/start.sh"]

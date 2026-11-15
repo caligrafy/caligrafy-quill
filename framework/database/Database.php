@@ -41,12 +41,50 @@ class Database extends \stdClass {
         self::$connection = null;
         if (strtolower(self::$db_activate) == 'true') {
             $port = defined('DB_PORT')? DB_PORT : null;
-            self::$connection = new PDO(self::dsn(self::$db_adapter, self::$host, self::$db_name, $port), self::$username, self::$password);
+            $persistent = self::persistent(self::$db_adapter);
+            self::$connection = new PDO(self::dsn(self::$db_adapter, self::$host, self::$db_name, $port), self::$username, self::$password,
+                $persistent ? array(PDO::ATTR_PERSISTENT => true) : array());
+            if ($persistent) {
+                self::reset(self::$connection);
+            }
             self::$connection->setAttribute(PDO::ATTR_DEFAULT_FETCH_MODE, PDO::FETCH_OBJ);
             self::$connection->setAttribute(PDO::ATTR_EMULATE_PREPARES, false);
             self::alignTimeZone(self::$connection, self::$db_adapter);
         }
         return self::$connection;
+    }
+
+    /**
+     * Whether this process keeps its database connection between requests (2.26.0): DB_PERSISTENT, true by default for
+     * MySQL and PostgreSQL in a web server; never on the command line (tests, migrations, the queue: each run is fresh),
+     * never for SQLite. DB_PERSISTENT=false connects on every request, as before 2.26.0.
+     */
+    public static function persistent($adapter)
+    {
+        if (PHP_SAPI === 'cli' || PHP_SAPI === 'phpdbg' || !in_array(strtolower((string) $adapter), array('mysql', 'pgsql'), true)) {
+            return false;
+        }
+        $setting = getenv('DB_PERSISTENT');
+        if ($setting === false && defined('DB_PERSISTENT')) {
+            $setting = DB_PERSISTENT;
+        }
+        return !in_array(strtolower(trim((string) $setting)), array('false', '0', 'no', 'off'), true);
+    }
+
+    /**
+     * A reused connection starts clean: a transaction the previous request left open is rolled back (PHP rolls it back
+     * at the end of a request too; this is the second lock), and the session time zone is set again by alignTimeZone.
+     * PDO checks that a reused connection is alive and opens a new one if the database dropped it.
+     */
+    public static function reset($connection)
+    {
+        try {
+            if ($connection->inTransaction()) {
+                $connection->rollBack();
+            }
+        } catch (\Throwable $e) {
+            // no transaction to roll back
+        }
     }
 
 

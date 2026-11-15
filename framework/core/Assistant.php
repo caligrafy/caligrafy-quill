@@ -23,19 +23,7 @@
 namespace Caligrafy;
 use \Exception as Exception;
 
-define("ASSISTANT_GPT6_ASTRA", "gpt-6-astra");
-define("ASSISTANT_GPT6_SOL", "gpt-6.1-sol");
-define("ASSISTANT_GPT6_LUNA", "gpt-6-luna");
-define("ASSISTANT_DEFAULT_MODEL", defined('OPEN_AI_MODEL') && OPEN_AI_MODEL !== ''? OPEN_AI_MODEL : ASSISTANT_GPT6_LUNA);
-
-// Older model ids kept for backward compatibility (gpt-3.5-turbo, gpt-4, gpt-4-32k and gpt-4-vision-preview are shut down)
-define("ASSISTANT_GPT3", "gpt-3.5-turbo");
-define ("ASSISTANT_GPT4", "gpt-4");
-define ("ASSISTANT_GPT4O", "gpt-4o");
-define ("ASSISTANT_GPT4OMINI", "gpt-4o-mini");
-define ("ASSISTANT_GPT4_32", "gpt-4-32k");
-define ("ASSISTANT_GPT4_LATEST", ASSISTANT_GPT6_ASTRA);
-define ("ASSISTANT_GPT4_LATEST_VISION", ASSISTANT_GPT6_ASTRA);
+// its constants (models, prompts) are in framework/settings/models.php, loaded at start (2.26.0)
 
 
 class Assistant extends \stdClass {

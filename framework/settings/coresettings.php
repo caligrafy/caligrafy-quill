@@ -38,3 +38,5 @@ keywords("caligrafy, php, mvc, framework, mvc framework, php framework, model, v
 
 // Copyright notice
 copyright(date("Y")." - Company Name");
+// AI model and prompt constants (2.26.0: from the top of Agent.php, Assistant.php and OpenAI.php)
+require_once __DIR__ . '/models.php';

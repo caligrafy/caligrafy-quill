@@ -8,7 +8,7 @@
 
 namespace Caligrafy;
 
-require_once __DIR__ . '/Framework.php'; // Framework::VERSION on the first line of the report
+// Framework::VERSION on the first line of the report: Framework.php is always loaded (index.php, caligrafer.php)
 
 /**
  * Class Doctor
@@ -208,6 +208,7 @@ class Doctor
         else $this->add('project', 'public/uploads', 'OK', 'writable');
 
         $this->webApp();
+        $this->processes();
 
         // DESIGN_STYLE: the selected design style and its override stylesheet (php caligrafer.php design)
         list($status, $message, $fix) = Designs::status($this->root);
@@ -227,6 +228,35 @@ class Doctor
         } else {
             $this->add('project', 'Templates', 'OK', 'application/ is up to date with the framework templates' . (isset($statuses['customized'])? " ({$statuses['customized']} customized)" : ''));
         }
+    }
+
+    /**
+     * PHP processes of the production image (2.26.0, docker/production/start.sh): PHP_PROCESSES, by default 4 per CPU
+     * and at least 8. A request that waits on an outside service holds its process, so an app that calls an AI service
+     * needs more processes than requests waiting at the same time, or every page waits behind them.
+     */
+    private function processes()
+    {
+        $set = trim((string) $this->env('PHP_PROCESSES'));
+        $ai = array_values(array_filter(['OPENAI_API_KEY', 'GROQ_API_KEY', 'ANTHROPIC_API_KEY', 'AGENT_API_KEY', 'TOGETHER_API_KEY', 'FIREWORKS_API_KEY', 'OPENROUTER_API_KEY'], function ($k) {
+            $v = trim((string) $this->env($k));
+            return $v !== '' && !in_array($v, self::PLACEHOLDERS, true);
+        }));
+        if ($set === '') {
+            $this->add('project', 'PHP processes', 'OK', 'PHP_PROCESSES not set: the production image runs 4 per CPU, at least 8'
+                . ($ai ? ' (this app calls an AI service: raise PHP_PROCESSES above the AI requests that can wait at the same time)' : ''));
+            return;
+        }
+        if (!ctype_digit($set) || (int) $set < 1) {
+            $this->add('project', 'PHP processes', 'WARN', "PHP_PROCESSES=$set is not a positive number: the image uses its default", 'PHP_PROCESSES=16 (or remove it)');
+            return;
+        }
+        if ($ai && (int) $set < 16) {
+            $this->add('project', 'PHP processes', 'WARN', "PHP_PROCESSES=$set and this app calls an AI service (" . implode(', ', $ai) . '): '
+                . "$set requests waiting on it at once leave no process for other pages", 'PHP_PROCESSES=24 or more (each process uses about 3 MB when idle)');
+            return;
+        }
+        $this->add('project', 'PHP processes', 'OK', "PHP_PROCESSES=$set");
     }
 
     /**
@@ -299,6 +329,7 @@ class Doctor
             $missing ? $this->add('database', 'Framework tables', 'SKIP', implode(', ', $missing) . ' not installed (tokens, the audit log, MCP, scheduled and background jobs, the cache, migrations need them)', 'php caligrafer.php platform install')
                 : $this->add('database', 'Framework tables', 'OK', 'tokens, audit log, job runs, jobs, cache and migrations installed');
             $this->migrations($pdo);
+            $this->connections($pdo, $driver);
             // Snap (2.23.0): its tables matter only to an app that declares Route::snap()
             $routes = is_file($this->root . '/application/config/routing/web.php') ? (string) file_get_contents($this->root . '/application/config/routing/web.php') : '';
             if (preg_match('/Route::snap\s*\(/', $routes)) {
@@ -324,6 +355,30 @@ class Doctor
             }
             $this->add('database', 'Database', 'FAIL', "$where: $message", $fix);
         }
+    }
+
+    /**
+     * Persistent connections (2.26.0): each PHP process of the web server keeps one open, so the database must allow
+     * at least as many connections as processes, with room for the command line, the queue and other apps
+     */
+    private function connections(\PDO $pdo, $driver)
+    {
+        $persistent = !in_array(strtolower(trim((string) $this->env('DB_PERSISTENT'))), ['false', '0', 'no', 'off'], true);
+        if (!$persistent || $driver !== 'mysql') {
+            $this->add('database', 'Connections', 'OK', $persistent ? "persistent connections are for MySQL and PostgreSQL" : 'DB_PERSISTENT=false: one connection per request');
+            return;
+        }
+        $max = (int) $pdo->query('SELECT @@max_connections')->fetchColumn();
+        $set = trim((string) $this->env('PHP_PROCESSES'));
+        $processes = ctype_digit($set) && (int) $set > 0 ? (int) $set : null;
+        $need = $processes !== null ? $processes + 10 : 26;   // the default on 4 CPUs is 16 processes
+        if ($max > 0 && $max < $need) {
+            $this->add('database', 'Connections', 'WARN', "the database allows $max connections; persistent connections keep one per PHP process ("
+                . ($processes !== null ? "PHP_PROCESSES=$processes" : 'by default 4 per CPU') . ') plus the command line and the queue',
+                'raise max_connections, lower PHP_PROCESSES, or set DB_PERSISTENT=false');
+            return;
+        }
+        $this->add('database', 'Connections', 'OK', "persistent, one per PHP process (the database allows $max)");
     }
 
     private function openai()
