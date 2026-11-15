@@ -7,6 +7,8 @@
 
 ## Start here
 
+[Why Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Why-Caligrafy): the benefits, the measurements, and what it is not yet
+
 1. [Quickstart with Claude](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart-with-Claude): describe it, approve it, ship it
     > or the [Quickstart](https://github.com/caligrafy/caligrafy-quill/wiki/Quickstart): the same three steps by hand, in 5 minutes
 2. [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-Caligrafy-Works): the ideas in 5 minutes

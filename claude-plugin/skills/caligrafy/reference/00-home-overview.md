@@ -10,6 +10,11 @@
 plan, and Caligrafy ships it: the database, sign-in, web pages, a phone and tablet app, a REST API and tools for AI
 agents, online at `https://<name>.caligrafy.com`, with the code in your own GitHub repository.
 
+**Why developers choose it.** A feature is written once, as a capability, and served to pages, Vue apps, REST, AI agents over MCP
+and Snap Cards, with the same rules and audit log everywhere. The same app takes 471 lines in Caligrafy against 708 in Laravel
+and 1,076 in Symfony, 7 of 8 security defaults need no code, and a new project installs 16.6 MB. See
+[why Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Why-Caligrafy): the benefits, the measurements, and what it is not yet.
+
 ## Get started quickly
 
 With Claude Code, three steps take your idea to a complete app online:

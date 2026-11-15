@@ -93,6 +93,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | **Any new page or client app UI**: Caligrafy's look (2.11.0+): `extends ../default/master/site`, the classes of `layout.css` (`.cq-hero`, `.cq-band`, `.cq-auth`, `.cq-form-grid`, `.cq-rows`, `.cq-split`, `.cq-tiles`, `.cq-account`...), `look.css`, full-screen camera pages (`camera.css`), a worked example, the checklist | [ui-guidelines.md](reference/ui-guidelines.md), G98-G101 |
 | **Production and performance** (2.26.0): `PHP_PROCESSES` (follows the app), `DB_PERSISTENT`, preloading, `optimize`, the response cache (`cache:`), optional SDKs (`php caligrafer.php add`), the async server (`ASYNC=on`, `async check`) | [60-performance-and-deployment.md](reference/60-performance-and-deployment.md), [api-reference.md](reference/api-reference.md#performance), [62-release-notes-2.26.0.md](reference/62-release-notes-2.26.0.md), G164-G170 |
 | **Security defaults**: what is on with no code, token scopes and N+1 prevention by default (2.26.0) | [61-security-defaults.md](reference/61-security-defaults.md), G164-G165 |
+| **Why Caligrafy** (what to tell a developer who asks why: the benefits, the measurements, what it is not yet) | [63-why-caligrafy.md](reference/63-why-caligrafy.md) |
 | Wiki table of contents | [wiki-sidebar.md](reference/wiki-sidebar.md) |
 
 Online docs: https://github.com/caligrafy/caligrafy-quill/wiki

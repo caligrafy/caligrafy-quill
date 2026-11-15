@@ -5,6 +5,11 @@
 plan, and Caligrafy ships it online, with the code in your own GitHub repository. Or write it yourself: everything
 Claude writes is plain Caligrafy, documented step by step.
 
+**Why developers choose it.** A feature is written once, as a capability, and served to pages, Vue apps, REST, AI agents over MCP
+and Snap Cards, with the same rules and audit log everywhere. The same app takes 471 lines in Caligrafy against 708 in Laravel
+and 1,076 in Symfony, 7 of 8 security defaults need no code, and a new project installs 16.6 MB. See
+[why Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Why-Caligrafy): the benefits, the measurements, and what it is not yet.
+
 <br/>
 
 ## With Claude
@@ -99,6 +104,7 @@ its experimental async server answers capability calls at 113,700 a second. A ne
 
 | If you want to | Read |
 | --- | --- |
+| Know why to choose it | [Why Caligrafy](https://github.com/caligrafy/caligrafy-quill/wiki/Why-Caligrafy): benefits, measurements, and what it is not yet |
 | See everything Caligrafy does | [The documentation](https://github.com/caligrafy/caligrafy-quill/wiki/) |
 | Learn step by step, with Claude or by hand | [The Caligrafy course](https://github.com/caligrafy/caligrafy-quill-course) |
 | Build a feature | [Your first capability](https://github.com/caligrafy/caligrafy-quill/wiki/Your-First-Capability) |

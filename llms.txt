@@ -32,6 +32,7 @@ Served everywhere from `web.php`: `Route::page('/books', 'Bookshelf/books', ['da
 
 ## Start here
 
+- [Why Caligrafy](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Why-Caligrafy.md): the benefits for developers, with measurements, and what it is not yet
 - [Quickstart with Claude](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Quickstart-with-Claude.md): describe it, approve it, ship it with `/caligrafy-quill:idea`
 - [Quickstart](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Quickstart.md): the same steps by hand (`git clone`, `.bin/caligrafer quickstart`)
 - [How Caligrafy works](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/How-Caligrafy-Works.md): capabilities, channels and requests in 5 minutes
