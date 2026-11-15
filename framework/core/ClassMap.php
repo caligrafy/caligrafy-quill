@@ -23,11 +23,12 @@ namespace Caligrafy;
  */
 class ClassMap
 {
-    const VERSION = 2;
+    const VERSION = 3;                 // 3 (2.26.1): the map has an id, 'built', that changes each time it is rebuilt
     const PRODUCTION_CHECK = 60;       // seconds between checks of the files with APP_ENV=production
 
-    private static $map = null;        // ['classes' => [lower class => file], 'eager' => [files], 'capabilities' => [files], 'stamps' => [path => mtime]]
+    private static $map = null;        // ['classes' => [lower class => file], 'eager' => [files], 'capabilities' => [files], 'stamps' => [path => mtime], 'built' => id]
     private static $checked = false;
+    private static $scanned = false;   // this request compared the files with the map (not the production shortcut)
     private static $dirs = array();
     private static $skip = array();
     private static $file = null;
@@ -51,6 +52,7 @@ class ClassMap
         self::$skip = array_map(function ($d) { return rtrim($d, '/\\') . DIRECTORY_SEPARATOR; }, $skip);
         self::$map = null;
         self::$checked = false;
+        self::$scanned = false;
         self::$file = null;
         $folder = self::tempFolder('classes');
         if ($folder !== null) {
@@ -121,10 +123,20 @@ class ClassMap
         if ($production && self::$file !== null) {
             @touch(self::$file);
         }
+        self::$scanned = true;
         if (self::stale($map)) {
             return self::rebuild();
         }
         return $map;
+    }
+
+    /**
+     * Whether this request compared the files with the map (2.26.1): true once refresh() checked them, false while it
+     * trusts the map (in production, within a minute of the last check). Capabilities checks its own files then too.
+     */
+    public static function scanned()
+    {
+        return self::$scanned;
     }
 
     /**
@@ -157,7 +169,8 @@ class ClassMap
      */
     public static function rebuild()
     {
-        $map = array('version' => self::VERSION, 'classes' => array(), 'eager' => array(), 'capabilities' => array(), 'stamps' => array());
+        $map = array('version' => self::VERSION, 'classes' => array(), 'eager' => array(), 'capabilities' => array(), 'stamps' => array(),
+            'built' => bin2hex(random_bytes(8)));   // what the capability registry's cache is checked against (2.26.1)
         foreach (self::$dirs as $dir) {
             self::scan($dir, $map);
         }

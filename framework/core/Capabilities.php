@@ -19,11 +19,25 @@ namespace Caligrafy;
  * 4. runs handle()
  * 5. writes the audit log: every refusal, and every success of a capability that is not read-only
  * and returns plain data (models become arrays of their columns).
+ *
+ * The registry is built from the classes declared once the capability files are loaded. With the class map (2.26.1)
+ * a call by name (get(), so call(), REST, MCP, the JS client) reads a cache of it instead, kept next to the class map
+ * and out of date as soon as the class map is (a file added, removed or edited) or a file of framework/services
+ * changes: it saves finding and reflecting every service on every request. A name the cache does not have (a class
+ * declared elsewhere, registered by hand) builds the registry as before.
  */
 class Capabilities
 {
     /** @var array|null name => ['class' => ..., 'capability' => Capability] */
     private static $registry = null;
+
+    const CACHE_VERSION = 1;
+
+    /** @var array|false|null the registry's cache once read in this request (false: none, or out of date) */
+    private static $cache = null;
+
+    /** @var array name => entry: what get() took from the cache in this request */
+    private static $found = array();
 
     /** @var array extra classes registered by hand (tests, packages) */
     private static $extra = array();
@@ -76,6 +90,7 @@ class Capabilities
     {
         self::$extra[] = ltrim($class, '\\');
         self::$registry = null;
+        self::$found = array();
     }
 
     /**
@@ -87,14 +102,24 @@ class Capabilities
         if (self::$registry !== null) {
             return self::$registry;
         }
-        self::loadServices();
+        $files = self::loadServices();
         $registry = array();
-        $classes = array_unique(array_merge(get_declared_classes(), self::$extra));
+        $sources = array();   // name => the file of its class
+        // the services among every declared class, then sorted (only them: sorting every class cost more than the rest)
+        $classes = array();
+        foreach (get_declared_classes() as $class) {
+            if (is_subclass_of($class, Service::class)) {
+                $classes[] = $class;
+            }
+        }
+        foreach (self::$extra as $class) {
+            if (class_exists($class) && is_subclass_of($class, Service::class)) {
+                $classes[] = $class;
+            }
+        }
+        $classes = array_unique($classes);
         sort($classes);
         foreach ($classes as $class) {
-            if (!class_exists($class) || !is_subclass_of($class, Service::class)) {
-                continue;
-            }
             $reflection = new \ReflectionClass($class);
             if ($reflection->isAbstract()) {
                 continue;
@@ -108,8 +133,12 @@ class Capabilities
                 throw new \LogicException("Two services declare the capability '{$capability->name}': {$registry[$capability->name]['class']} and $class");
             }
             $registry[$capability->name] = array('class' => $class, 'capability' => $capability);
+            $sources[$capability->name] = $reflection->getFileName();
         }
         ksort($registry);
+        if ($files !== null && self::cache() === false) {
+            self::saveCache($registry, $sources, $files);
+        }
         return self::$registry = $registry;
     }
 
@@ -118,7 +147,132 @@ class Capabilities
      */
     public static function get($name)
     {
+        if (self::$registry === null && !self::$extra && is_string($name) && ($entry = self::cached($name)) !== null) {
+            return $entry;
+        }
         return self::all()[$name] ?? null;
+    }
+
+    /**
+     * A capability from the registry's cache (2.26.1): its file loaded as the registry would, its attribute as declared;
+     * null when the cache does not have it or cannot be used
+     */
+    private static function cached($name)
+    {
+        if (isset(self::$found[$name])) {
+            return self::$found[$name];
+        }
+        $cache = self::cache();
+        if ($cache === false || !isset($cache['entries'][$name])) {
+            return null;
+        }
+        $cached = $cache['entries'][$name];
+        if (!is_file($cached['file'])) {
+            return null;
+        }
+        // the framework's own capability files first, as loadServices() does: an app's service may extend one of theirs
+        foreach (array_keys($cache['services']) as $path) {
+            if (is_file($path)) {
+                require_once $path;
+            }
+        }
+        require_once $cached['file'];
+        if (!class_exists($cached['class'], false)) {
+            return null;
+        }
+        try {
+            $capability = new Capability(...$cached['capability']);
+        } catch (\Throwable $e) {
+            return null;
+        }
+        return self::$found[$name] = array('class' => $cached['class'], 'capability' => $capability);
+    }
+
+    /**
+     * The registry's cache when it is current, else false: it belongs to the class map as it is now (the class map
+     * checks its files first, as for a missing class) and to the same files of framework/services
+     */
+    private static function cache()
+    {
+        if (self::$cache !== null) {
+            return self::$cache;
+        }
+        $file = self::cacheFile();
+        if ($file === null || !is_file($file)) {
+            return self::$cache = false;
+        }
+        $cache = @include $file;
+        if (!is_array($cache) || ($cache['version'] ?? null) !== self::CACHE_VERSION || !isset($cache['map'], $cache['services'], $cache['entries'])) {
+            return self::$cache = false;
+        }
+        ClassMap::refresh();
+        if ($cache['map'] !== (ClassMap::map()['built'] ?? null)) {
+            return self::$cache = false;
+        }
+        // the framework's own capabilities are not in the class map: their files are compared whenever it compares its own
+        if (ClassMap::scanned() && $cache['services'] !== self::stamps(self::frameworkServiceFiles())) {
+            return self::$cache = false;
+        }
+        return self::$cache = $cache;
+    }
+
+    // where the cache is kept: next to the class map, only while the class map is on and has a folder
+    private static function cacheFile()
+    {
+        if (!class_exists('Caligrafy\\ClassMap', false) || !ClassMap::registered() || empty(ClassMap::map()['built'])) {
+            return null;
+        }
+        $folder = ClassMap::tempFolder('classes');
+        if ($folder === null) {
+            return null;
+        }
+        return $folder . DIRECTORY_SEPARATOR . 'capabilities-' . substr(md5((defined('APP_PATH') ? APP_PATH : '') . '|' . dirname(__DIR__)), 0, 12) . '.php';
+    }
+
+    // keeps the capabilities whose class is in a file the registry loads (not one declared elsewhere or registered by hand)
+    private static function saveCache(array $registry, array $sources, array $files)
+    {
+        $file = self::cacheFile();
+        if ($file === null) {
+            return;
+        }
+        $known = array();   // the real path (what reflection gives) => the path loaded
+        foreach ($files as $path) {
+            $known[realpath($path) ?: $path] = $path;
+        }
+        $entries = array();
+        foreach ($registry as $name => $entry) {
+            $source = is_string($sources[$name] ?? null) ? (realpath($sources[$name]) ?: $sources[$name]) : null;
+            if ($source !== null && isset($known[$source])) {
+                $entries[$name] = array('class' => $entry['class'], 'file' => $known[$source], 'capability' => get_object_vars($entry['capability']));
+            }
+        }
+        $cache = array('version' => self::CACHE_VERSION, 'map' => ClassMap::map()['built'],
+            'services' => self::stamps(self::frameworkServiceFiles()), 'entries' => $entries);
+        $tmp = $file . '.' . getmypid() . '.tmp';
+        if (@file_put_contents($tmp, '<?php return ' . var_export($cache, true) . ";\n") !== false) {
+            @chmod($tmp, 0600);
+            @rename($tmp, $file);
+            if (function_exists('opcache_invalidate')) @opcache_invalidate($file, true);
+        }
+        self::$cache = $cache;
+    }
+
+    // path => mtime
+    private static function stamps(array $files)
+    {
+        $stamps = array();
+        foreach ($files as $path) {
+            clearstatcache(true, $path);
+            $stamps[$path] = @filemtime($path);
+        }
+        return $stamps;
+    }
+
+    // the framework's own capabilities (framework/services: notifications, 2.15.0), in every project
+    private static function frameworkServiceFiles()
+    {
+        return glob(dirname(__DIR__) . '/services/*/*.php') ?: array();
     }
 
     /**
@@ -316,18 +470,21 @@ class Capabilities
     private static function loadServices()
     {
         // the framework's own capabilities (framework/services: notifications, 2.15.0), in every project
-        foreach (glob(dirname(__DIR__) . '/services/*/*.php') ?: array() as $path) {
+        $files = self::frameworkServiceFiles();
+        foreach ($files as $path) {
             require_once $path;
         }
+        $mapped = class_exists('Caligrafy\\ClassMap', false) && ClassMap::registered();
         if (!defined('APP_PATH') || !is_dir(APP_PATH . 'services')) {
-            return;
+            return $mapped ? $files : null;
         }
         // with the class map (2.18.0): only the files that mention #[Capability]; the classes they use load when used
-        if (class_exists('Caligrafy\\ClassMap', false) && ClassMap::registered()) {
+        if ($mapped) {
             foreach (ClassMap::capabilityFiles(true) as $path) {
                 require_once $path;
+                $files[] = $path;
             }
-            return;
+            return $files;
         }
         $skip = array(APP_PATH . 'config' . DIRECTORY_SEPARATOR, APP_PATH . 'views' . DIRECTORY_SEPARATOR);
         $files = new \RecursiveIteratorIterator(new \RecursiveDirectoryIterator(APP_PATH, \FilesystemIterator::SKIP_DOTS));
@@ -342,6 +499,7 @@ class Capabilities
         foreach ($paths as $path) {
             require_once $path;
         }
+        return null;   // no class map: no cache, the registry is built on every request as before
     }
 
     /**
@@ -351,5 +509,7 @@ class Capabilities
     {
         self::$registry = null;
         self::$extra = array();
+        self::$cache = null;
+        self::$found = array();
     }
 }
