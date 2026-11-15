@@ -35,6 +35,10 @@ class WorkermanServer
         if (!class_exists(Worker::class)) {
             throw new \RuntimeException('The async server needs Workerman: php caligrafer.php add async (composer require workerman/workerman)');
         }
+        if (!extension_loaded('pcntl') || !extension_loaded('posix')) {
+            throw new \RuntimeException('The async server needs the PHP extensions pcntl and posix (the production image has them; '
+                . 'elsewhere: docker-php-ext-install pcntl, or your system\'s php-pcntl package)');
+        }
         // uploads that go to the web server: as large as PHP accepts there
         TcpConnection::$defaultMaxPackageSize = 64 * 1024 * 1024;
         Worker::$pidFile = sys_get_temp_dir() . '/caligrafy-async-' . substr(md5(getcwd()), 0, 12) . '.pid';
