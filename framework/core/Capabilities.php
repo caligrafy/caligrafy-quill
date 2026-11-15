@@ -13,7 +13,8 @@ namespace Caligrafy;
  * A capability is a class of application/services/ that extends Service and carries #[Capability(...)].
  * Every channel calls it through call(), which always does the same, in order:
  * 1. finds it (not_found)
- * 2. checks the context: public, or signed in / a token (unauthenticated), with the scope and level (forbidden)
+ * 2. checks the context: public, or signed in / a token (unauthenticated), with the scope and level (forbidden); a token
+ *    needs the declared scope, or for a write capability that declares none its own name (scopeOf(), 2.26.0)
  * 3. keeps, filters and validates the declared inputs (invalid)
  * 4. runs handle()
  * 5. writes the audit log: every refusal, and every success of a capability that is not read-only
@@ -26,6 +27,47 @@ class Capabilities
 
     /** @var array extra classes registered by hand (tests, packages) */
     private static $extra = array();
+
+    /**
+     * @var bool|null whether a write capability declared without a scope needs the scope named after it from a token
+     * (2.26.0): null until the first use reads TOKEN_DEFAULT_SCOPES (false, deprecated: any token, as before)
+     */
+    public static $defaultScopes = null;
+
+    /**
+     * The scope a token needs to call a capability (2.26.0): the one it declares; for a write capability (not readOnly,
+     * not public) declared without one, its own name (create_book), which a token grants by that name or by *.
+     * Read-only and public capabilities without a scope need none. Signed-in users and the CLI never need a scope.
+     */
+    public static function scopeOf(Capability $capability)
+    {
+        if ($capability->scope !== '' || $capability->readOnly || $capability->public) {
+            return $capability->scope;
+        }
+        if (self::$defaultScopes === null) {
+            $setting = getenv('TOKEN_DEFAULT_SCOPES');
+            $setting = $setting === false ? ($_ENV['TOKEN_DEFAULT_SCOPES'] ?? (defined('TOKEN_DEFAULT_SCOPES') ? constant('TOKEN_DEFAULT_SCOPES') : '')) : $setting;
+            $setting = is_bool($setting) ? ($setting ? 'true' : 'false') : strtolower(trim((string) $setting));
+            self::$defaultScopes = !in_array($setting, array('false', '0', 'off', 'no'), true);
+        }
+        return self::$defaultScopes ? $capability->name : '';
+    }
+
+    /**
+     * The write capabilities declared without a scope, each with the scope a token now needs to call them (doctor)
+     * @return array name => scope
+     */
+    public static function unscopedWrites()
+    {
+        $list = array();
+        foreach (self::all() as $name => $entry) {
+            $capability = $entry['capability'];
+            if ($capability->scope === '' && !$capability->readOnly && !$capability->public && !$capability->webOnly) {
+                $list[$name] = $name;
+            }
+        }
+        return $list;
+    }
 
     /**
      * Registers a service class that is not in application/services/
@@ -86,7 +128,7 @@ class Capabilities
     {
         return array_filter(self::all(), function ($entry) use ($context) {
             $capability = $entry['capability'];
-            return !$capability->webOnly && ($capability->public || $context->allows($capability->scope, $capability->level));
+            return !$capability->webOnly && ($capability->public || $context->allows(self::scopeOf($capability), $capability->level));
         });
     }
 
@@ -115,8 +157,11 @@ class Capabilities
                 if (!$context->authenticated()) {
                     throw ServiceError::unauthenticated();
                 }
-                if (!$context->allows($capability->scope, $capability->level)) {
-                    throw ServiceError::forbidden($capability->scope !== '' ? "This needs the scope {$capability->scope}" . ($capability->level > 0 ? " and permission level {$capability->level}" : '') : 'You are not allowed to do this');
+                $scope = self::scopeOf($capability);
+                if (!$context->allows($scope, $capability->level)) {
+                    $shown = $context->token !== null ? $scope : $capability->scope;   // a scope only matters to a token
+                    throw ServiceError::forbidden($shown !== '' ? "This needs the scope $shown" . ($capability->level > 0 ? " and permission level {$capability->level}" : '')
+                        . ($shown !== $capability->scope ? ' (a write capability that declares no scope needs a token with the scope named after it, or *)' : '') : 'You are not allowed to do this');
                 }
             }
             $service = Container::make($entry['class']);   // its constructor gets what it needs (2.18.0)
@@ -233,7 +278,7 @@ class Capabilities
             if ($capability->webOnly) {
                 continue;   // Route::action only (2.21.0)
             }
-            $list[] = array('name' => $name, 'description' => $capability->description, 'scope' => $capability->scope,
+            $list[] = array('name' => $name, 'description' => $capability->description, 'scope' => self::scopeOf($capability),
                 'level' => $capability->level, 'readOnly' => $capability->readOnly, 'destructive' => $capability->destructive,
                 'public' => $capability->public, 'input' => self::schema($name));
         }

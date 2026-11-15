@@ -177,6 +177,7 @@ class Doctor
                 $this->add('project', 'Schedule', 'FAIL', str_replace("\n", ' ', $e->getMessage()), 'fix ' . Scheduler::FILE . ' (php caligrafer.php schedule list)');
             }
         }
+        $this->tokenScopes();
         // notifications: the web push keys come as a set (php caligrafer.php notify keys); half a set sends nothing
         $vapid = array_filter(array('VAPID_PUBLIC_KEY', 'VAPID_PRIVATE_KEY', 'VAPID_SUBJECT'), function ($k) { return trim((string) $this->env($k)) !== ''; });
         if (count($vapid) === 3) {
@@ -714,6 +715,32 @@ class Doctor
         $stale
             ? $this->add('project', 'Snap card views', 'WARN', count($stale) . ' of ' . count($files) . ' made from a page that changed since: ' . implode(', ', $stale), 'write them again (/caligrafy-quill:assistant), php caligrafer.php snap views')
             : $this->add('project', 'Snap card views', 'OK', count($files) . ' in application/views/snap, each up to date with its page');
+    }
+
+    // write capabilities of the application declared without a scope (2.26.0): a token needs the scope named after each
+    // (or *); the framework's own (notify_*, snap_*) serve signed-in pages, which need no scope
+    private function tokenScopes()
+    {
+        if (!class_exists(Capabilities::class) || !is_dir($this->root . '/application/services')) return;
+        $framework = dirname(__DIR__) . DIRECTORY_SEPARATOR;
+        $unscoped = [];
+        try {
+            foreach (Capabilities::unscopedWrites() as $name => $scope) {
+                $file = (string)(new \ReflectionClass(Capabilities::get($name)['class']))->getFileName();
+                if (strpos($file, $framework) !== 0) $unscoped[] = "$name (scope $scope)";
+            }
+        } catch (\Throwable $e) {
+            return;   // a capability that does not load: php caligrafer.php capabilities says why
+        }
+        if (!$unscoped) {
+            $this->add('project', 'Token scopes', 'OK', 'every write capability declares its scope');
+        } elseif (in_array(strtolower($this->env('TOKEN_DEFAULT_SCOPES')), ['false', '0', 'off', 'no'], true)) {
+            $this->add('project', 'Token scopes', 'WARN', 'TOKEN_DEFAULT_SCOPES=false (deprecated): any token may call ' . count($unscoped) . ' write capability(ies) declared without a scope: ' . implode(', ', $unscoped),
+                "declare scope: '<resource>:write' on each (or give the tokens the scopes shown), then remove TOKEN_DEFAULT_SCOPES from .env");
+        } else {
+            $this->add('project', 'Token scopes', 'WARN', count($unscoped) . ' write capability(ies) declared without a scope: a token now needs the scope named after each, or *: ' . implode(', ', $unscoped),
+                "declare scope: '<resource>:write' on each, or give the tokens that call them these scopes (php caligrafer.php token create <name> --scopes <scopes>); signed-in pages and the CLI are not affected");
+        }
     }
 
     private function add($check, $name, $status, $message, $fix = '')

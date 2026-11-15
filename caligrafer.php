@@ -454,7 +454,7 @@ switch(strtolower($argv[1])) {
 		$code = strtr($template, array('{{class}}' => $class, '{{name}}' => $name, '{{scope}}' => $scope, '{{readOnly}}' => $readOnly));
 		@mkdir(dirname($file), 0755, true);
 		file_put_contents($file, $code);
-		print("\n Created $file: capability '$name'" . ($scope ? " (scope $scope)" : '') . "\n Fill in \$rules and handle(), then serve it: a page (Route::page data), a form (Route::form), REST (Route::capability or Route::capabilities), MCP (Route::mcp)\n\n");
+		print("\n Created $file: capability '$name'" . ($scope ? " (scope $scope)" : ($readOnly === 'false' ? " (no scope: a token needs the scope $name, or *)" : '')) . "\n Fill in \$rules and handle(), then serve it: a page (Route::page data), a form (Route::form), REST (Route::capability or Route::capabilities), MCP (Route::mcp)\n\n");
 		break;
 
 	case 'client':

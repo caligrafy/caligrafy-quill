@@ -54,6 +54,43 @@ final class DoctorTest extends TestCase
         $this->assertStringContainsString('COINBASE_API_KEY_NAME', $results[0]['fix']);
     }
 
+    /**
+     * 2.26.0: the write capabilities without a scope (the test fixtures' qa_scope_write, qa_scope_admin_write) and the
+     * scope a token now needs for each; the framework's own (notify_*, snap_*) are left out
+     */
+    public function testUnscopedWriteCapabilitiesAreListed(): void
+    {
+        $root = sys_get_temp_dir() . '/caligrafy-doctor-scopes-' . getmypid();
+        @mkdir($root . '/application/services', 0777, true);
+        $run = function () use ($root) {
+            $doctor = new Doctor($root);
+            (new ReflectionMethod(Doctor::class, 'tokenScopes'))->invoke($doctor);
+            return $doctor->results();
+        };
+        try {
+            [$result] = $this->withEnv(['TOKEN_DEFAULT_SCOPES' => ''], $run);
+            $this->assertSame('Token scopes', $result['name']);
+            $this->assertSame('WARN', $result['status']);
+            $this->assertStringContainsString('a token now needs the scope named after each, or *: ', $result['message']);
+            $this->assertStringContainsString('qa_scope_write (scope qa_scope_write)', $result['message']);
+            $this->assertStringContainsString('qa_scope_admin_write (scope qa_scope_admin_write)', $result['message']);
+            $this->assertStringNotContainsString('notify_', $result['message']);
+            $this->assertStringNotContainsString('snap_', $result['message']);
+            $this->assertStringNotContainsString('qa_echo_note', $result['message'], 'it declares notes:write');
+            $this->assertStringContainsString("declare scope: '<resource>:write' on each", $result['fix']);
+
+            [$old] = $this->withEnv(['TOKEN_DEFAULT_SCOPES' => 'false'], $run);
+            $this->assertStringStartsWith('TOKEN_DEFAULT_SCOPES=false (deprecated): any token may call ', $old['message']);
+        } finally {
+            @rmdir($root . '/application/services');
+            @rmdir($root . '/application');
+            @rmdir($root);
+        }
+        $none = new Doctor(sys_get_temp_dir() . '/no-such-project');
+        (new ReflectionMethod(Doctor::class, 'tokenScopes'))->invoke($none);
+        $this->assertSame([], $none->results(), 'no application/services: nothing to say');
+    }
+
     private function projectResult(string $name, array $env): ?array
     {
         $results = $this->withEnv($env, function () {

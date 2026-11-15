@@ -21,6 +21,28 @@ class Model extends \stdClass {
     
     public $table;
     protected $__restricted;
+
+    /**
+     * Lazy loading of relations (2.26.0). A model the query builder read among several rows (Book::where(...)->get(),
+     * paginate(), chunk()) that runs a relation method (hasOne, hasMany, belongsTo, belongsToMany) would run one query
+     * per row (N+1): in development that throws [ERROR 2004]; in production (or with STRICT_RELATIONS=false) it logs a
+     * warning once per request and relation. $book->lazy()->author() allows one call, #[Caligrafy\Lazy] on the
+     * relation method allows it always. A model read alone (find(), first(), the instance find() and all()) is not guarded.
+     * @var bool|null null until the first guarded call decides it from APP_ENV and STRICT_RELATIONS (strictRelations())
+     */
+    public static $strictRelations = null;
+
+    /** @var \WeakMap|null model => the relations its query loaded with with(), for the models read among several rows */
+    private static $collected = null;
+
+    /** @var \WeakMap|null model => true: lazy() allows its next relation call */
+    private static $lazyOnce = null;
+
+    /** @var array Class::relation => true: warned already in this request */
+    private static $lazyWarned = array();
+
+    /** @var array Class::relation => bool: the relation method carries #[Caligrafy\Lazy] */
+    private static $lazyAllowed = array();
     
     public function __construct($table = null)
     {   
@@ -302,6 +324,7 @@ class Model extends \stdClass {
     public function hasOne($modelName, $joinedTableName, $foreignKey = null, $localKey = null, $functionName = null)
     {
         $functionName = $functionName?? debug_backtrace()[1]['function'];
+        $this->guardLazy($functionName, 'hasOne');
         $joinedTableName = strtolower($joinedTableName);
         $oneToOneModel = class_exists($modelName)? new $modelName($joinedTableName): null;
         $outcome = array();
@@ -332,6 +355,7 @@ class Model extends \stdClass {
     public function hasMany($modelName, $joinedTableName, $foreignKey = null, $localKey = null, $functionName = null)
     {
         $functionName = $functionName?? debug_backtrace()[1]['function'];
+        $this->guardLazy($functionName, 'hasMany');
         $joinedTableName = strtolower($joinedTableName);
         $oneToManyModel = class_exists($modelName)? new $modelName($joinedTableName): null;
         $outcome = array();
@@ -363,7 +387,8 @@ class Model extends \stdClass {
 
         // the calling function will become a property of the object
         $functionName = $functionName?? debug_backtrace()[1]['function'];
-        
+        $this->guardLazy($functionName, 'belongsToMany');
+
         // get the tables' names, foreign keys,  and create the pivot table name
         $table1 = $this->table;
         $table2 = $joinedTableName;
@@ -463,9 +488,121 @@ class Model extends \stdClass {
             }
         }
         $function = $this->pivot->$joinedTableName->functionName;
-        return $this->$function();      
+        return $this->lazy()->$function();      // reads the relation again after the write: one call, not a loop
     }
     
+    /**
+     * Allows the next relation call of this model to load lazily, once: $book->lazy()->author()
+     * (a relation read on purpose for one of several rows)
+     * @return $this
+     */
+    public function lazy()
+    {
+        self::$lazyOnce = self::$lazyOnce ?? new \WeakMap();
+        self::$lazyOnce[$this] = true;
+        return $this;
+    }
+
+    /**
+     * Marks the models a query read together (Query::get() with more than one row): their relation methods are then
+     * guarded against lazy loading. Called by the query builder.
+     * @param array $models the models of one result
+     * @param array $loaded the relations the query loaded with with()
+     */
+    public static function collected(array $models, array $loaded = array())
+    {
+        self::$collected = self::$collected ?? new \WeakMap();
+        foreach ($models as $model) {
+            if ($model instanceof Model) {
+                self::$collected[$model] = $loaded;
+            }
+        }
+    }
+
+    /**
+     * Whether a lazy relation call throws: false in production (APP_ENV=production) and with STRICT_RELATIONS=false,
+     * true otherwise. Decided once; Model::$strictRelations = true|false forces it, null decides again.
+     */
+    public static function strictRelations()
+    {
+        if (self::$strictRelations === null) {
+            $env = strtolower(trim((string) self::setting('APP_ENV')));
+            $strict = strtolower(trim((string) self::setting('STRICT_RELATIONS')));
+            self::$strictRelations = $env !== 'production' && !in_array($strict, array('false', '0', 'off', 'no'), true);
+        }
+        return self::$strictRelations;
+    }
+
+    /**
+     * Forgets the lazy loading warnings given so far (a new request: Query::forgetShapes() calls it)
+     */
+    public static function forgetLazyWarnings()
+    {
+        self::$lazyWarned = array();
+    }
+
+    private static function setting($name)
+    {
+        $value = getenv($name);
+        if ($value === false) {
+            $value = $_ENV[$name] ?? (defined($name) ? constant($name) : null);
+        }
+        return is_bool($value) ? ($value ? 'true' : 'false') : $value;
+    }
+
+    /**
+     * Stops (development) or reports (production) a relation method run on one of several models a query read
+     * @param string $relation the relation method's name (author)
+     * @param string $type hasOne, hasMany or belongsToMany (belongsTo runs hasMany)
+     */
+    private function guardLazy($relation, $type)
+    {
+        if (self::$lazyOnce !== null && isset(self::$lazyOnce[$this])) {
+            unset(self::$lazyOnce[$this]);
+            return;
+        }
+        if (self::$collected === null || !isset(self::$collected[$this])) {
+            return;
+        }
+        $class = static::class;
+        $key = $class . '::' . $relation;
+        if (!isset(self::$lazyAllowed[$key])) {
+            self::$lazyAllowed[$key] = method_exists($this, $relation)
+                && (new \ReflectionMethod($this, $relation))->getAttributes(Lazy::class) !== array();
+        }
+        if (self::$lazyAllowed[$key]) {
+            return;
+        }
+        $short = ($pos = strrpos($class, '\\')) === false ? $class : substr($class, $pos + 1);
+        $variable = '$' . lcfirst($short);
+        $with = $type === 'belongsToMany' ? "with(['$relation' => ['pivot' => true]])" : "with('$relation')";
+        $loaded = in_array($relation, self::$collected[$this], true);
+        $where = null;
+        foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 12) as $frame) {
+            if (($frame['function'] ?? '') === $relation && isset($frame['file'])) {
+                $where = $frame['file'] . ':' . ($frame['line'] ?? 0);    // the line that called $book->author()
+                break;
+            }
+        }
+        $where = $where ?? Query::caller();
+        if (self::strictRelations()) {
+            throw new LazyLoadingException(rtrim(Errors::get(2004)) . ': ' . ($loaded
+                ? "$short::$relation() was called on one of several $short rows that already have '$relation' from with(): read {$variable}->{$relation} instead, the call runs one more query per row (N+1)"
+                : "$short::$relation() was called on one of several $short rows read by a query: it runs one more query per row (N+1). Load the relation with the rows: {$short}::{$with}->get(), then read {$variable}->{$relation}")
+                . ". If this call is meant, allow it: {$variable}->lazy()->{$relation}(), or mark the method #[Caligrafy\\Lazy]. STRICT_RELATIONS=false makes this a warning. From $where", 2004);
+        }
+        if (isset(self::$lazyWarned[$key])) {
+            return;
+        }
+        if (count(self::$lazyWarned) >= 2000) {
+            self::$lazyWarned = array();      // a long-running worker: start again
+        }
+        self::$lazyWarned[$key] = true;
+        $message = "[Caligrafy] Lazy loading: $short::$relation() ran on one of several $short rows read by a query, one more query per row (N+1), from $where. "
+            . ($loaded ? "The rows already have '$relation' from with(): read {$variable}->{$relation}." : "Load it with the rows: {$short}::{$with}->get(), then read {$variable}->{$relation}.");
+        Query::$logger ? (Query::$logger)($message) : error_log($message);
+    }
+
     /**
      * Turns an array into a Model
      * @param array $array takes the array that needs to be converted to a model
@@ -551,4 +688,20 @@ class Model extends \stdClass {
         $parts = explode('\\', trim((string) $className, '\\'));
         return strtolower(end($parts));
     }
+}
+
+
+/**
+ * Thrown in development when a relation loads lazily on one of several models a query read ([ERROR 2004], 2.26.0)
+ */
+class LazyLoadingException extends \LogicException
+{
+}
+
+/**
+ * #[Caligrafy\Lazy] on a relation method of a model (2.26.0): it may load lazily, without [ERROR 2004] or a warning
+ */
+#[\Attribute(\Attribute::TARGET_METHOD)]
+class Lazy
+{
 }

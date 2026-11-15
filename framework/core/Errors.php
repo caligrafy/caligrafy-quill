@@ -37,6 +37,7 @@ class Errors extends \stdClass
         2001 => '[ERROR 2001] Database Security Error - Not allowed to perform such an operation ',
         2002 => '[ERROR 2002] Database Query Error ',
         2003 => '[ERROR 2003] Database Query Error - Something went wrong in executing the query',
+        2004 => '[ERROR 2004] Lazy loading prevented',
         
         
         //3xxx: Request Errors

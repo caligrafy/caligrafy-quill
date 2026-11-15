@@ -23,6 +23,8 @@ use LogicException;
  * and attaches its rows under the relation's name; it never joins in a way that repeats the main rows.
  * In development (APP_ENV other than production) the same SELECT shape run 10 times in one request is logged once
  * as a probable N+1 query (error_log), with the file and line that ran it.
+ * The models of a result of several rows are guarded (2.26.0): a relation method run on one of them throws [ERROR 2004]
+ * in development and logs a warning in production (Model::strictRelations(), STRICT_RELATIONS=false, $model->lazy()).
  */
 class Query
 {
@@ -119,6 +121,7 @@ class Query
         self::$watching = $on === null ? null : (bool) $on;
         self::$shapes = array();
         self::$warned = array();
+        Model::forgetLazyWarnings();
     }
 
     /**
@@ -129,6 +132,7 @@ class Query
     {
         self::$shapes = array();
         self::$warned = array();
+        Model::forgetLazyWarnings();
     }
 
     /**
@@ -170,7 +174,10 @@ class Query
         )));
     }
 
-    private static function caller()
+    /**
+     * The file and line of the first frame outside framework/ ("the framework" when there is none)
+     */
+    public static function caller()
     {
         $framework = dirname(__DIR__) . DIRECTORY_SEPARATOR;
         foreach (debug_backtrace(DEBUG_BACKTRACE_IGNORE_ARGS, 40) as $frame) {
@@ -742,6 +749,9 @@ class Query
             $prototype = new $class($this->name);
             foreach ($rows as $i => $row) {
                 $rows[$i] = $prototype->arrayToModel($row);
+            }
+            if (isset($rows[1])) {
+                Model::collected($rows, array_keys($this->eager));   // their relation methods would be N+1 (2.26.0)
             }
         }
         return $rows;

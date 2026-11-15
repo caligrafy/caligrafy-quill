@@ -19,7 +19,8 @@ class Capability
     /**
      * @param string $name snake_case, unique in the application (create_book)
      * @param string $description one or two sentences: what it does and returns (shown to agents as the tool description)
-     * @param string $scope the token scope it needs (books:write); '' = any token
+     * @param string $scope the token scope it needs (books:write); '' = none for a read-only one, its own name for a write
+     *                      one (2.26.0: a token needs the scope create_book, or *; TOKEN_DEFAULT_SCOPES=false, deprecated: none)
      * @param int $level the minimum value of the users permission column (0 = any signed-in user)
      * @param bool $readOnly true when it changes nothing (not audited when it succeeds; agents may call it freely)
      * @param bool $destructive true when it deletes or overwrites data (agents ask before calling it)
