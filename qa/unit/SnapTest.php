@@ -130,23 +130,73 @@ final class SnapTest extends TestCase
         $this->assertSame(array('a' => 'b'), Input::decode((object) array('a' => 'b')));
     }
 
-    public function testACardShowsThePageMadeForItsCapability(): void
+    // application/views for one test: VIEW_PATH is a folder of the temporary directory
+    private function views(array $files)
     {
+        if (!defined('VIEW_PATH')) {
+            define('VIEW_PATH', sys_get_temp_dir() . '/caligrafy-snap-views-' . getmypid() . '/');
+        }
+        foreach ($files as $path => $pug) {
+            @mkdir(dirname(VIEW_PATH . $path), 0777, true);
+            file_put_contents(VIEW_PATH . $path, $pug);
+        }
+    }
+
+    public function testACardShowsOnlyThePartOfAPageMarkedForIt(): void
+    {
+        $this->views(array(
+            'Notes/index.pug' => "section.hero\n  h1 Notes\nsection(data-snap='qa_list_notes')\n  ul\n",
+            'Notes/show.pug' => "section(data-snap='qa_echo_note other')\n  p= \$note\n",
+            'Notes/new.pug' => "form(data-snap='qa_export_rows')\n",
+            'Notes/plain.pug' => "section\n  p A page with no mark\n",
+        ));
         Route::reset();
         Route::page('/notes', 'Notes/index', array('data' => array('notes' => 'qa_list_notes'), 'query' => array('tag')));
         Route::page('/notes/{id}', 'Notes/show', array('data' => array('note' => 'qa_echo_note', 'all' => 'qa_list_notes')));
         Route::page('/notes/new', 'Notes/new', array('data' => array('notes' => 'qa_export_rows')));
+        Route::page('/plain', 'Notes/plain', array('data' => array('rows' => 'qa_purge_notes')));
         $this->assertSame('/notes', Route::pages()[0]['route'], 'Route::page keeps its pages for Snap');
-        $this->assertSame('/notes?snap-embed=qa_list_notes', Views::embed('qa_list_notes', array()), 'the page whose first data it is');
+        $this->assertSame('/notes?snap-embed=qa_list_notes', Views::embed('qa_list_notes', array()), 'the page whose first data it is, when it marks a part');
         $this->assertSame('/notes?tag=work&snap-embed=qa_list_notes', Views::embed('qa_list_notes', array('tag' => 'work', 'x' => 1)), 'with the inputs the page reads from its address');
-        $this->assertSame('/notes/7?snap-embed=qa_echo_note', Views::embed('qa_echo_note', array('id' => 7)), 'the route variables filled from the inputs');
+        $this->assertSame('/notes/7?snap-embed=qa_echo_note', Views::embed('qa_echo_note', array('id' => 7)), 'the route variables filled from the inputs; several names in a mark');
         $this->assertNull(Views::embed('qa_echo_note', array()), 'not without them');
         $this->assertNull(Views::embed('qa_export_rows', array()), 'never a page made to create something');
-        $this->assertNull(Views::embed('qa_purge_notes', array()), 'none: a card designed from its data');
+        $this->assertNull(Views::embed('qa_purge_notes', array()), 'never a whole page: a page without a mark gives a designed card');
 
         $this->hints("array('qa_list_notes' => array('view' => false), 'qa_export_rows' => array('view' => 'Notes/new'))");
         $this->assertNull(Views::embed('qa_list_notes', array()), "the hint 'view' => false keeps it a designed card");
         $this->assertSame('/notes/new?snap-embed=qa_export_rows', Views::embed('qa_export_rows', array()), "and 'view' names the page");
+    }
+
+    public function testACardViewIsTheAppsOwnMarkupMadeForTheCard(): void
+    {
+        $this->views(array('Notes/index.pug' => "section(data-snap='qa_list_notes')\n  ul\n"));
+        $print = Views::fingerprint('Notes/index');
+        $this->assertMatchesRegularExpression('/^[0-9a-f]{8}$/', $print);
+        $this->views(array(
+            'snap/qa_list_notes.pug' => "//- snap card of qa_list_notes, from Notes/index.pug $print\nul.notes\n  each \$note in \$rows\n    li\n      a(href='#', data-snap-open='qa_echo_note', data-snap-input=json_encode(array('title' => \$note['title'])))= \$note['title']\nif \$page\n  p.pages= \$page['total'] . ' notes'\n",
+            'snap/qa_web_action.pug' => "//- snap card of qa_web_action, from Notes/gone.pug 00000000\np= \$record['message']\n",
+            'snap/qa_export_rows.pug' => "p= \$undefined_function_on_purpose()\n",
+        ));
+        $html = Views::card('qa_list_notes', array('data' => array(array('title' => 'Dune'), array('title' => '<b>Kindred</b>')), 'page' => 1, 'pages' => 1, 'total' => 2), array());
+        $this->assertStringContainsString('<ul class="notes">', $html, 'rendered on the server from views/snap/<capability>.pug');
+        $this->assertStringContainsString('data-snap-open="qa_echo_note"', $html, 'a link opens another card');
+        $this->assertStringContainsString('&lt;b&gt;Kindred&lt;/b&gt;', $html, 'values are escaped as in any view');
+        $this->assertStringContainsString('2 notes', $html, '$rows and $page for a list');
+        $this->assertSame('<p>Sent</p>', Views::card('qa_web_action', array('message' => 'Sent'), array()), '$record for one record');
+        $log = ini_set('error_log', '/dev/null');   // it is logged; not on the test's output
+        $this->assertNull(Views::card('qa_export_rows', array(), array()), 'a card view that fails gives a designed card (and is logged)');
+        ini_set('error_log', (string) $log);
+        $this->assertNull(Views::card('qa_purge_notes', array(), array()), 'none without its file');
+        $this->hints("array('qa_list_notes' => array('card' => false))");
+        $this->assertNull(Views::card('qa_list_notes', array(), array()), "the hint 'card' => false");
+
+        $cards = Views::cards();
+        $this->assertSame(array('from' => 'Notes/index', 'stale' => false), array('from' => $cards['qa_list_notes']['from'], 'stale' => $cards['qa_list_notes']['stale']));
+        $this->assertTrue($cards['qa_web_action']['stale'], 'stale: its page changed or is gone');
+        $this->assertNull($cards['qa_export_rows']['stale'], 'unknown: its first line names no page');
+        $this->views(array('Notes/index.pug' => "section(data-snap='qa_list_notes')\n  ol\n"));
+        $this->assertTrue(Views::cards()['qa_list_notes']['stale'], 'the page changed since the card view was made');
     }
 
     public function testThePageInACardIsThePageAloneAndItsHeight(): void
@@ -205,5 +255,13 @@ final class SnapTest extends TestCase
 
         $this->hints("array('qa_team' => array('design' => array('title' => 'role')))");
         $this->assertSame('Engineer', Designer::rows('qa_team', array(array('name' => 'Grace', 'role' => 'Engineer')))[0]['title'], "the hint 'design' comes first");
+    }
+
+    public function testACardIsNamedByItsOwnNameThenWhatItIsAboutThenItsPeople(): void
+    {
+        $this->assertSame('Pediatric Brain Cancer', Cards::name(array('id' => 1, 'code' => 'Pediatric Brain Cancer', 'owner' => array('name' => 'John Doe'))), 'a code names it before its owner');
+        $this->assertSame('Kindred', Cards::name(array('id' => 4, 'borrower' => array('name' => 'Sam'), 'book' => array('title' => 'Kindred'))), 'the thing it is about before the people around it');
+        $this->assertSame('Sam', Cards::name(array('id' => 4, 'borrower' => array('name' => 'Sam'))), 'the people when nothing else names it');
+        $this->assertSame('#9', Cards::name(array('id' => 9)));
     }
 }

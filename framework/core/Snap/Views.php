@@ -11,14 +11,16 @@ use Caligrafy\Route;
 
 /**
  * Class Views
- * A Snap card of a capability that already has a page (Route::page with the capability as its data) shows that page:
- * the real view, with its own design, scripts and data, embedded in the card and sized to it. The page is rendered as the
- * person, in embed mode (?snap-embed): no top bar, no footer. A view marks the part that shows one capability with
- * data-snap="<capability>" (for example section(data-snap='get_book')): the card then shows only that part.
- * A page is about its first data capability: one it only also reads is not shown through it. Without a mark, the card of
- * a capability that only reads shows the page without its forms that change things (those are the card's actions).
- * A capability without a page gets a card designed from its data (Snap\Designer).
- * The hint 'view' => false keeps a capability out of it; 'view' => 'Bookshelf/book' picks one of its pages.
+ * How a Show card looks, best first (2.25.0):
+ *  1. its card view: application/views/snap/<capability>.pug, a Pug view made for the card, in the app's own markup and
+ *     classes, rendered on the server into the card (the hint 'card' => 'Folder/view' names another, false none). It gets
+ *     $result (what the capability returned), $rows and $page for a list, $record for one record, $input, $card,
+ *     $home, $authorized and $user. A link with data-snap-open="<capability>" and data-snap-input='{"id":7}' opens that
+ *     card in the conversation. Written by Claude from the app's views (the assistant skill); its first line names the
+ *     page it was made from and that page's fingerprint, so `php caligrafer.php snap views` says when it is stale.
+ *  2. the part of its page marked data-snap="<capability>" (a Route::page whose first data it is), embedded in the card
+ *     (?snap-embed: no frame, sized to it); a whole page only when the hint 'view' names it
+ *  3. a card designed for its data in the app's design system (Snap\Designer)
  */
 class Views
 {
@@ -34,6 +36,10 @@ class Views
         }
         $best = null;
         foreach (Route::pages() as $page) {
+            // only the part made for it: a page that marks it (data-snap), or the page the hint names
+            if (!is_string($hint) && !self::marks($page['view'], $name)) {
+                continue;
+            }
             if (is_string($hint) && $page['view'] !== $hint) {
                 continue;
             }
@@ -99,6 +105,103 @@ class Views
         $js = '<script src="' . htmlspecialchars($home . 'public/snap/snap-embed.js?v=' . $version('snap-embed.js'), ENT_QUOTES) . '"' . $reads . '></script>';
         $html = stripos($html, '</head>') !== false ? preg_replace_callback('#</head>#i', function () use ($css) { return $css . '</head>'; }, $html, 1) : $css . $html;
         return stripos($html, '</body>') !== false ? preg_replace_callback('#</body>(?!.*</body>)#is', function () use ($js) { return $js . '</body>'; }, $html, 1) : $html . $js;
+    }
+
+    /**
+     * The HTML of a capability's card view, or null when it has none (or it failed: the card is then designed)
+     * @param mixed $result what the capability returned, as plain arrays
+     */
+    public static function card($name, $result, array $input, array $card = array())
+    {
+        $file = self::cardFile($name);
+        if ($file === null) {
+            return null;
+        }
+        $data = array('result' => $result, 'input' => $input, 'card' => $card, 'home' => (string) ($_SESSION['home'] ?? '/'),
+            'rows' => null, 'page' => null, 'record' => null);
+        $list = $result;
+        if (is_array($result) && isset($result['data'], $result['total'], $result['pages']) && is_array($result['data'])) {
+            $data['page'] = array('page' => (int) ($result['page'] ?? 1), 'pages' => (int) $result['pages'], 'total' => (int) $result['total']);
+            $list = $result['data'];
+        }
+        if (is_array($list) && array_is_list($list)) {
+            $data['rows'] = $list;
+        } elseif (is_array($result)) {
+            $data['record'] = $result;
+        }
+        if (class_exists('Caligrafy\\PageController')) {
+            $data += \Caligrafy\PageController::identity();
+        }
+        $level = ob_get_level();
+        ob_start();
+        try {
+            \Caligrafy\View::display($file, $data);
+            return trim((string) ob_get_clean());
+        } catch (\Throwable $e) {
+            while (ob_get_level() > $level) {
+                ob_end_clean();
+            }
+            error_log("Snap card view of $name: " . $e->getMessage());
+            return null;
+        }
+    }
+
+    /**
+     * The card view file of a capability, or null: the hint 'card' (a view name, or false), else views/snap/<name>.pug
+     */
+    public static function cardFile($name)
+    {
+        $hint = Hints::for($name)['card'] ?? null;
+        if ($hint === false || !defined('VIEW_PATH')) {
+            return null;
+        }
+        $file = VIEW_PATH . (is_string($hint) && $hint !== '' ? $hint : 'snap/' . $name) . '.pug';
+        return is_file($file) ? $file : null;
+    }
+
+    /**
+     * What the first line of a card view says it was made from: array('view' => 'Bookshelf/books', 'print' => '1a2b3c4d')
+     * (//- snap card of list_books, from Bookshelf/books.pug 1a2b3c4d), or null
+     */
+    public static function source($file)
+    {
+        $line = (string) strtok((string) @file_get_contents($file), "\n");
+        return preg_match('#from\s+([\w./-]+?)(?:\.pug)?\s+([0-9a-f]{8})\b#', $line, $m) ? array('view' => $m[1], 'print' => $m[2]) : null;
+    }
+
+    /**
+     * A view's fingerprint, written in the card views made from it: when the view changes, they are stale
+     */
+    public static function fingerprint($view)
+    {
+        $file = (defined('VIEW_PATH') ? VIEW_PATH : 'application/views/') . $view . '.pug';
+        return is_file($file) ? substr(sha1_file($file), 0, 8) : null;
+    }
+
+    /**
+     * Every card view of the app, with what it was made from and whether it is stale:
+     * [name => ['file', 'from', 'stale' (true, false, or null when its first line names no view)]]
+     */
+    public static function cards()
+    {
+        $out = array();
+        $folder = (defined('VIEW_PATH') ? VIEW_PATH : 'application/views/') . 'snap/';
+        foreach (glob($folder . '*.pug') ?: array() as $file) {
+            $source = self::source($file);
+            $now = $source ? self::fingerprint($source['view']) : null;
+            $out[basename($file, '.pug')] = array('file' => $file, 'from' => $source['view'] ?? null,
+                'stale' => $source ? $now !== $source['print'] : null);
+        }
+        ksort($out);
+        return $out;
+    }
+
+    // a view that marks the part showing a capability: data-snap='list_books' (several names: data-snap='a b')
+    private static function marks($view, $name)
+    {
+        $file = (defined('VIEW_PATH') ? VIEW_PATH : 'application/views/') . $view . '.pug';
+        $source = is_file($file) ? (string) file_get_contents($file) : '';
+        return (bool) preg_match('#data-snap\s*=\s*["\'][^"\']*\b' . preg_quote($name, '#') . '\b#', $source);
     }
 
     // '/books/{id}' with array('id' => 7) -> 'books/7'; null when a variable is missing

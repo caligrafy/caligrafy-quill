@@ -23,7 +23,8 @@ namespace Caligrafy\Snap;
  * A file that returns the cards alone (no 'cards' key) works too. The keys of a card are in the wiki page
  * "Snap Cards and the Assistant": title, lead, submit, columns, labels, hide, values, choices, open, full, empty,
  * variant, noun, icon, done, undo, next, applies, empty_next, alert, insight, discover, working, async, consequence,
- * confirm, view (2.24.0: the page that shows it, or false) and design (2.24.0: how its data is shown when it has no page).
+ * confirm, card (2.25.0: its card view, 'Folder/view' under application/views, or false), view (2.24.0: the page whose
+ * part marked data-snap shows it, or false) and design (2.24.0: how its data is shown without a card view or a page).
  * A capability is async when #[Capability(async: true)] says so, or its hint does.
  */
 class Hints

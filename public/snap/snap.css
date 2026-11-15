@@ -342,3 +342,12 @@ snap-card.is-busy .snap-body > :not(.snap-actions), snap-card.is-busy .snap-acti
 .snap-row-sub { font-size: 13px; color: var(--design-muted, var(--snap-muted)); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .snap-row-side { display: flex; flex-direction: column; align-items: flex-end; gap: 4px; flex: 0 0 auto; text-align: right; }
 .snap-row-side .snap-row-meta { font-size: 12.5px; font-variant-numeric: tabular-nums; }
+
+/* ---- A card view (2.25.0): application/views/snap/<capability>.pug, the app's own markup made for the card. It keeps
+   the app's classes and look; the card only gives it its width and keeps its first and last margins inside. ---- */
+.snap-view { min-width: 0; overflow-wrap: anywhere; }
+.snap-view > :first-child { margin-top: 0; }
+.snap-view > :last-child { margin-bottom: 0; }
+.snap-view img, .snap-view video, .snap-view svg { max-width: 100%; height: auto; }
+.snap-view table { width: 100%; }
+.snap-view [data-snap-open] { cursor: pointer; }

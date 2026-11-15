@@ -101,6 +101,7 @@ class Cards
         if (is_array($plain) && isset($plain['snap'], $plain['family'])) {
             return $plain;   // a capability that answers with a card already (snap_task)
         }
+        $whole = $plain;   // what the capability returned, pages included: what its card view gets as $result
         $page = null;
         if (is_array($plain) && isset($plain['data'], $plain['total'], $plain['pages']) && is_array($plain['data'])) {
             $page = array('page' => (int) ($plain['page'] ?? 1), 'pages' => (int) $plain['pages'], 'total' => (int) $plain['total']);
@@ -120,9 +121,10 @@ class Cards
             $count = $page ? $page['total'] : count($rows);
             $card['glance'] = $count . ' ' . (isset($hints['noun']) ? ($count === 1 ? self::singular($hints['noun']) : $hints['noun']) : self::noun($name, $count));
             $card['empty'] = $hints['empty'] ?? 'Nothing here yet.';
-            // its own page when it has one (Snap\Views), else each row designed (Snap\Designer), never the raw data
-            $card['embed'] = $rows ? Views::embed($name, $input) : null;
-            $card['design'] = $card['embed'] === null ? Designer::rows($name, $rows) : null;
+            // its card view, else the part of its page marked for it (Snap\Views), else each row designed (Snap\Designer)
+            $card['html'] = $rows ? Views::card($name, $whole, $input, array('capability' => $name, 'title' => $title)) : null;
+            $card['embed'] = $rows && $card['html'] === null ? Views::embed($name, $input) : null;
+            $card['design'] = $rows && $card['html'] === null && $card['embed'] === null ? Designer::rows($name, $rows) : null;
             return $card;
         }
         $card = self::base('show', 'answer', $name, $title, $hints['lead'] ?? null, $input);
@@ -132,9 +134,10 @@ class Cards
             $card['fields'] = self::record($plain, $hints, $card['heading']);
             $card['glance'] = $card['heading'];
             $card['actions'] = self::actions($name, $plain, $context);
-            // its own page when it has one (Snap\Views), else designed blocks (Snap\Designer), never the raw data
-            $card['embed'] = Views::embed($name, $input);
-            $card['blocks'] = $card['embed'] === null ? Designer::record($name, $plain) : null;
+            // its card view, else the part of its page marked for it (Snap\Views), else designed blocks (Snap\Designer)
+            $card['html'] = Views::card($name, $whole, $input, array('capability' => $name, 'title' => $title));
+            $card['embed'] = $card['html'] === null ? Views::embed($name, $input) : null;
+            $card['blocks'] = $card['html'] === null && $card['embed'] === null ? Designer::record($name, $plain) : null;
         } else {
             $card['variant'] = 'fact';
             $card['heading'] = is_bool($plain) ? ($plain ? 'Yes' : 'No') : (string) ($plain ?? 'Done');
@@ -596,13 +599,18 @@ class Cards
      */
     public static function name(array $record)
     {
-        foreach (array('title', 'name') as $key) {
+        // its own name first (a case's code too), then the thing it is about (a loan's book); the people around it
+        // (its owner, its author) name it only when nothing else does (2.25.0)
+        foreach (array('title', 'name', 'label', 'subject', 'headline', 'code') as $key) {
             if (isset($record[$key]) && is_scalar($record[$key]) && $record[$key] !== '') return (string) $record[$key];
         }
-        foreach ($record as $value) {
-            if (is_array($value) && !array_is_list($value)) {
-                foreach (array('title', 'name') as $key) {
-                    if (isset($value[$key]) && is_scalar($value[$key]) && $value[$key] !== '') return (string) $value[$key];
+        $people = '/^(owner|user|author|assignee|creator|reviewer|customer|borrower|member|person)$/';
+        foreach (array(false, true) as $person) {
+            foreach ($record as $field => $value) {
+                if (is_array($value) && !array_is_list($value) && (bool) preg_match($people, (string) $field) === $person) {
+                    foreach (array('title', 'name') as $key) {
+                        if (isset($value[$key]) && is_scalar($value[$key]) && $value[$key] !== '') return (string) $value[$key];
+                    }
                 }
             }
         }

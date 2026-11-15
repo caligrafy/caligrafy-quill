@@ -1,7 +1,7 @@
 ---
 name: assistant
-description: Give a Caligrafy Quill project Snap Cards and the assistant (2.23.0, Route::snap()) end to end - every capability becomes a card a person can use (an Ask card: Form, Choice or Confirm; a Show card: Answer or List; a Go card: Shortcut; a Track card: Task; an Offer card: Suggestion or Routine), and /assistant gives each signed-in person a Home that shows what needs them and a conversation that answers with those cards. Adds Route::snap(); to web.php, runs php caligrafer.php snap install, writes application/config/snap.php hints from the app's own capabilities, adds the queue and routines jobs, marks slow capabilities async, asks for an Anthropic API key, and checks /assistant and /snap.
-when_to_use: The user asks for an assistant, Snap, Snap Cards, cards for their capabilities, a Home that shows what needs them, "let people ask the app in their own words", Route::snap, php caligrafer.php snap, or follows the wiki page "Snap Cards and the Assistant" ("/caligrafy-quill:assistant").
+description: Give a Caligrafy Quill project Snap Cards and the assistant (2.23.0, Route::snap()) end to end - every capability becomes a card a person can use (an Ask card: Form, Choice or Confirm; a Show card: Answer or List; a Go card: Shortcut; a Track card: Task; an Offer card: Suggestion or Routine), and /assistant gives each signed-in person a Home that shows what needs them and a conversation that answers with those cards. Adds Route::snap(); to web.php, runs php caligrafer.php snap install, writes application/config/snap.php hints from the app's own capabilities, writes a card view (application/views/snap/<capability>.pug, 2.25.0) for each main list and record from the app's own pages and look, adds the queue and routines jobs, marks slow capabilities async, asks for an Anthropic API key, and checks /assistant and /snap.
+when_to_use: The user asks for an assistant, Snap, Snap Cards, cards for their capabilities, card views, better-looking cards, a Home that shows what needs them, "let people ask the app in their own words", Route::snap, php caligrafer.php snap, or follows the wiki page "Snap Cards and the Assistant" ("/caligrafy-quill:assistant").
 argument-hint: "[what the app is about, in a few words]"
 ---
 
@@ -9,7 +9,7 @@ argument-hint: "[what the app is about, in a few words]"
 
 What the app is about: `$ARGUMENTS` (else read it from the README, `APP_NAME` and the capabilities). Read the wiki page
 [Snap Cards and the Assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant), the
-Snap section of [api-reference.md](../caligrafy/reference/api-reference.md#snap) and G153-G162 of
+Snap section of [api-reference.md](../caligrafy/reference/api-reference.md#snap) and G153-G163 of
 [gotchas.md](../caligrafy/reference/gotchas.md). Snap needs Caligrafy Quill 2.23.0 or later
 (`php caligrafer.php version`): older, run the `update` skill first.
 
@@ -59,20 +59,47 @@ the hints that help:
 
 `php -l application/config/snap.php` after writing it.
 
-## 3b. How the cards look (2.24.0)
+## 3b. Card views: how the cards look (2.25.0)
 
-A card shows the page made for its capability (the `Route::page` whose first data it is), else a card designed for
-its data in the app's design system (Claude designs it when the key is set, rules otherwise). Never a list of fields.
-For each main capability (the lists and records people open):
+A Show card (a list, a record) shows its **card view** when it has one: `application/views/snap/<capability>.pug`, a
+small Pug view made for the card, in the app's own markup and classes, rendered by the server inside the card. Without
+one it shows the part of a page marked `data-snap="<capability>"`, else a card designed from the data. Never a whole
+page. Write a card view for every read-only capability people open (the main lists and records):
 
-+ Its page shows more than the capability (a list with a create form, a dashboard): add `data-snap='<capability>'`
-  to the element of the view that shows it (`section.cq-band(data-snap='list_books')`, several names separated by
-  spaces). Only add the attribute; change nothing else in the view.
-+ It picks the wrong page, or none while one fits: the hint `'view' => 'Folder/view'`; a page that should not be used:
-  `'view' => false`.
-+ Without a page, its designed card misses what matters (check it at `/snap/c/<capability>`): a `design` hint naming
-  the fields (`'design' => array('title' => 'name', 'subtitle' => 'role', 'meta' => array('email'))`; the wiki page
-  lists the keys). Do not write one when the card already reads well.
+1. **Start from the page that shows it** (the `Route::page` whose `data` gives it, its view, and the scripts that draw it
+   when the page is drawn by JavaScript). Keep only what the card needs: a list's rows, a record's header and summary.
+   Leave out page titles, breadcrumbs, tabs, filters, toolbars and every form that changes data: the card has its own
+   actions (Change, Delete...) under the view.
+2. **The file** is a partial (no `extends`, no `block`). Its first line names the page and that page's fingerprint, so
+   `php caligrafer.php snap views` and `doctor` know when the page changed:
+
+   ```pug
+   //- snap card of list_books, from Bookshelf/books.pug 5fb9e0cf
+   ul.cq-rows
+       each $b in $rows
+           li.cq-row
+               .cq-row-main
+                   p.cq-row-title
+                       a(href="{$home}books/{$b['id']}", data-snap-open='get_book', data-snap-input=json_encode(array('id' => $b['id'])))= $b['title']
+                   p.cq-row-meta= $b['author']['name'] . ', ' . $b['published_year']
+   ```
+
+   The fingerprint is `shasum application/views/Bookshelf/books.pug | cut -c1-8`. A card view with no page names none:
+   `//- snap card of list_authors (no page: ...)`.
+3. **Its variables**: `$rows` (the list) and `$page` (`page`, `pages`, `total`, or null) for a list, `$record` for one
+   record, `$result` (what the capability returned, as is), `$input`, `$card` (`capability`, `title`), `$home`,
+   `$authorized`, `$user`. Use `array(...)` in Pug expressions.
+4. **The app's look**: the same elements and classes as its pages (Caligrafy's `cq-*` components, or the app's own).
+   With a built stylesheet (Tailwind and the like), use only classes that exist in it: copy them from the views and
+   scripts, then check every class of the card view is in the built CSS. No `<script>`: a card view is inserted as HTML.
+5. **Links**: `data-snap-open="<capability>"` with `data-snap-input='{"id": 7}'` (from `json_encode`) opens that card in
+   the conversation; keep an `href` to the page too. Other links go where they point.
+6. **Same shape, one view**: a capability whose result looks like another's uses its card view with the hint
+   `'card' => 'snap/list_books'` (`search_books` shows the catalog's rows). `'card' => false` turns a card view off.
+
+Check: `php caligrafer.php snap views` shows `[ok]` for each card view (`[!!]`: its page changed, write it again), then
+open `/snap/c/<capability>` signed in for each one (with `?in={"id":1}` for a record) and look at it: the app's look,
+sized as a card, nothing that belongs to the page around it.
 
 ## 4. Slow work: `async: true`
 
@@ -114,8 +141,8 @@ php caligrafer.php snap
 ```
 
 Every line `[ok]` that the app needs. Then, signed in, open `/assistant` (Home greets the person, its sections show
-what the hints describe), type the name of a card ("the catalog": it shows its page, or a designed card, never
-a list of raw fields), open a record, try an action up to its Confirm
+what the hints describe), type the name of a card ("the catalog": it shows its card view, never a page or a list of raw
+fields), open a record, try an action up to its Confirm
 (stop there unless the user asked to change data), and open `/snap` (one card per capability the person may use).
-A page that says "Snap is almost ready" means the tables are missing (G153). Report the addresses, the `data-snap` marks and hints written,
+A page that says "Snap is almost ready" means the tables are missing (G153). Report the addresses, the card views and hints written,
 what is async, and whether the model is on.

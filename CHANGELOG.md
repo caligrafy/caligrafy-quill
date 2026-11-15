@@ -6,6 +6,17 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.25.0] - 2026-11-15
+
+### Added
+- **Card views** (`application/views/snap/<capability>.pug`): a Show card (a list, a record) shows its card view, a small Pug view made for the card in the app's own markup and classes, rendered by the server inside the card (`Snap\Views::card()`). It gets `$rows` and `$page` for a list, `$record` for one record, `$result`, `$input`, `$card`, `$home`, `$authorized` and `$user`; a link with `data-snap-open="<capability>"` and `data-snap-input` opens that card in the conversation. A card view that fails to render is logged and the card is designed instead. The hint `'card' => 'snap/list_books'` gives a capability another card view (the same rows for a search), `'card' => false` none.
+  - Its first line names the page it was made from and that page's fingerprint (`//- snap card of list_books, from Bookshelf/books.pug 5fb9e0cf`): `php caligrafer.php snap views` lists each card that shows data with its card view, the stale ones (exit 1) and the designed ones; `doctor` warns about stale card views.
+  - The `assistant` skill of the Claude Code plugin writes them from the app's pages and the scripts that draw them, keeping only what a card needs, with the app's classes only.
+
+### Changed
+- A card never shows a whole page: without a card view, it shows the part of a page marked `data-snap="<capability>"`, else a card designed from its data. A page without a mark is used whole only when the hint `view` names it.
+- A card is named by its record's own title, name, label, subject, headline or code before a related record, and by the people around it (owner, author, borrower...) only when nothing else names it: a case is "Pediatric Brain Cancer", not its owner's name.
+
 ## [2.24.1] - 2026-11-14
 
 ### Fixed

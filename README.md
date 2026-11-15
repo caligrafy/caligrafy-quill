@@ -66,7 +66,7 @@ included.
 Every feature is written once, as a **capability** (its inputs, rules and permissions), and served everywhere:
 **web pages**, **Vue apps** on desktop, tablet and phone, a **REST API**, **AI agents** such as Claude or Cursor
 over MCP, and **Snap Cards** with an assistant: `Route::snap();` turns every capability into a card a person can use,
-shown through your own page or designed on the spot in your design system, and gives them a Home that shows what needs them and an assistant that answers with those cards
+shown with card views in your app's own look (Claude writes them from your pages), and gives them a Home that shows what needs them and an assistant that answers with those cards
 ([Snap Cards and the assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant)).
 Same rules, same permissions, same audit log, whichever way it is called. A capability can also run on a
 timer ([scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)), reach your users with the
@@ -78,7 +78,7 @@ with retries).
 | --- | --- |
 | **Data** | [models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models), [queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) (filters, paging, related rows, every value bound), [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), [the cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching) |
 | **Pages** | [Pug views and page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views), [declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes), [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles), install to home screen |
-| **Assistant** | [Snap Cards](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant): every capability as a card (Ask, Show, Go, Track, Offer) that shows your own page or a card designed in your design system, a Home that orchestrates what needs you, an assistant (Claude) that keeps the conversation's context; changes only from a Confirm |
+| **Assistant** | [Snap Cards](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant): every capability as a card (Ask, Show, Go, Track, Offer) in your app's own look (card views written from your pages), a Home that orchestrates what needs you, an assistant (Claude) that keeps the conversation's context; changes only from a Confirm |
 | **People** | [sign-in with a username or an email, passkeys, permissions and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) |
 | **In the box** | [payments](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment), AI (OpenAI, open models, Watson), face detection, machine learning, [social cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards), a production `Dockerfile` |
 | **Quality** | [tests](https://github.com/caligrafy/caligrafy-quill/wiki/Testing-Your-App) that call capabilities the way every channel does, `php caligrafer.php doctor` |

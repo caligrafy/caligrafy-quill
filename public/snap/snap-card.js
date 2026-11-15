@@ -586,8 +586,10 @@
         return
       }
       if (c.variant === 'fact' && !c.done) { body.appendChild(el('p', 'snap-fact', c.heading)); return }
-      if (c.embed) {
-        body.appendChild(this.embedded(c.embed, c.heading || c.title))   // its own page, as the app designed it
+      if (c.html) {
+        body.appendChild(this.view(c.html, c))   // its card view: the app's own markup, made for the card
+      } else if (c.embed) {
+        body.appendChild(this.embedded(c.embed, c.heading || c.title))   // the part of its page marked for it
       } else if ((c.blocks || []).length) {
         body.appendChild(this.blocks(c.blocks))   // designed from its data, with the app's design tokens
       } else {
@@ -609,6 +611,23 @@
         body.appendChild(row)
       }
     }
+    // ---- a card view (application/views/snap/<capability>.pug, rendered by the server): the app's own markup in the
+    // card; a link with data-snap-open opens that card here, the others go where they point ----
+    view (html, c) {
+      var self = this
+      var wrap = el('div', 'snap-view')
+      wrap.innerHTML = html
+      wrap.addEventListener('click', function (e) {
+        var link = e.target.closest('[data-snap-open]')
+        if (!link || !wrap.contains(link) || e.metaKey || e.ctrlKey || e.shiftKey) return
+        e.preventDefault()
+        var inputs = {}
+        try { inputs = JSON.parse(link.getAttribute('data-snap-input') || '{}') } catch (err) { inputs = {} }
+        self.act(link.getAttribute('data-snap-open'), inputs, null, (link.getAttribute('data-snap-label') || link.textContent || '').trim())
+      })
+      return wrap
+    }
+
     // ---- a capability's own page, embedded (Snap\\Views): sized to its content, scrolling past 760px ----
     embedded (src, title) {
       var wrap = el('div', 'snap-embed is-loading')
@@ -697,8 +716,10 @@
         body.appendChild(empty)
         return
       }
-      if (c.embed) {
-        body.appendChild(this.embedded(c.embed, c.title))   // its own page, as the app designed it
+      if (c.html || c.embed) {
+        // its card view (the app's own markup, made for the card), else the part of its page marked for it
+        body.appendChild(c.html ? this.view(c.html, c) : this.embedded(c.embed, c.title))
+        if (c.html) this.pager(c, body)
         return
       }
       var list = el('ul', 'snap-rows' + (c.design ? ' snap-rows--designed' : ''))
@@ -733,6 +754,12 @@
         list.appendChild(li)
       })
       body.appendChild(list)
+      this.pager(c, body)
+    }
+
+    // pages of a list: Previous and Next ask the capability for that page
+    pager (c, body) {
+      var self = this
       if (c.page && c.page.pages > 1) {
         var pager = el('div', 'snap-pager')
         pager.appendChild(el('span', 'snap-muted', 'Page ' + c.page.page + ' of ' + c.page.pages))

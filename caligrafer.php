@@ -62,7 +62,7 @@ $defaultMsg = "\n Available Functions:
 				\n - cache clear: empties the cache (Caligrafy\Cache, CACHE_STORE), the compiled views and the class map
 				\n - test [<filter>] | test make <Name>: runs the tests of tests/ (PHPUnit, Caligrafy\Testing\TestCase); make writes one
 				\n - platform install: creates the framework tables (personal access tokens, audit log, jobs, cache)
-				\n - snap [install | status]: Snap Cards and the assistant (Route::snap()): install creates its tables and application/config/snap.php, status says what is ready
+				\n - snap [install | status | views]: Snap Cards and the assistant (Route::snap()): install creates its tables and application/config/snap.php, status says what is ready, views lists the card views (application/views/snap) and the stale ones
 				\n - token <create | list | revoke>: personal access tokens for REST and MCP clients (scoped, revocable)
 				\n - audit [--limit 50] [--capability <name>]: the latest capability calls
 				\n - service <Name> [--scope books:write] [--read-only]: creates a capability in application/services/
@@ -277,9 +277,35 @@ switch(strtolower($argv[1])) {
 
 	case 'snap':
 		$sub = strtolower($argv[2] ?? 'status');
-		if (!in_array($sub, array('install', 'status'), true)) {
-			print("\n Usage: php caligrafer.php snap [install | status]\n install: Snap's tables and a starter application/config/snap.php; status: what is ready\n\n");
+		if (!in_array($sub, array('install', 'status', 'views'), true)) {
+			print("\n Usage: php caligrafer.php snap [install | status | views]\n install: Snap's tables and a starter application/config/snap.php; status: what is ready;\n views: how each card that shows data looks, and the card views to write again\n\n");
 			exit(1);
+		}
+		if ($sub === 'views') {
+			// how each Show card looks (2.25.0): its card view, else a designed card; a card view whose page changed is stale
+			$views = Caligrafy\Snap\Views::cards();
+			$stale = 0;
+			print("\n Card views (application/views/snap/<capability>.pug)\n");
+			foreach (Caligrafy\Capabilities::describe() as $c) {
+				if (!$c['readOnly'] || preg_match(Caligrafy\Snap\Cards::HIDDEN, $c['name'])) {
+					continue;
+				}
+				$v = $views[$c['name']] ?? null;
+				unset($views[$c['name']]);
+				if ($v === null) {
+					printf("  [--] %-26s no card view: a card designed from its data\n", $c['name']);
+				} elseif ($v['stale']) {
+					$stale++;
+					printf("  [!!] %-26s %s changed since its card view was made: write it again\n", $c['name'], $v['from'] . '.pug');
+				} else {
+					printf("  [ok] %-26s %s\n", $c['name'], $v['from'] ? 'from ' . $v['from'] . '.pug' : 'made for the card (no page)');
+				}
+			}
+			foreach ($views as $name => $v) {
+				printf("  [??] %-26s no read-only capability of that name: the file is not used\n", $name);
+			}
+			print("\n " . ($stale ? "$stale stale. " : '') . "The assistant skill of the Claude Code plugin writes them (/caligrafy-quill:assistant).\n\n");
+			exit($stale ? 1 : 0);
 		}
 		try {
 			caligrafyConnect();

@@ -235,6 +235,7 @@ class Doctor
      */
     private function webApp()
     {
+        $this->cardViews();
         $public = $this->root . '/public/';
         $name = 'public/manifest.webmanifest';
         if (!is_file($public . 'manifest.webmanifest')) {
@@ -640,6 +641,25 @@ class Doctor
     }
 
     // --- helpers ----------------------------------------------------------------------------------
+
+    // Snap card views (2.25.0): each names the page it was made from and that page's fingerprint; a page that changed
+    // since makes it stale
+    private function cardViews()
+    {
+        $views = $this->root . '/application/views/';
+        $files = glob($views . 'snap/*.pug') ?: [];
+        if (!$files) return;
+        $stale = [];
+        foreach ($files as $file) {
+            $line = (string)strtok((string)file_get_contents($file), "\n");
+            if (!preg_match('#from\s+([\w./-]+?)(?:\.pug)?\s+([0-9a-f]{8})\b#', $line, $m)) continue;
+            $page = $views . $m[1] . '.pug';
+            if (!is_file($page) || substr(sha1_file($page), 0, 8) !== $m[2]) $stale[] = basename($file, '.pug');
+        }
+        $stale
+            ? $this->add('project', 'Snap card views', 'WARN', count($stale) . ' of ' . count($files) . ' made from a page that changed since: ' . implode(', ', $stale), 'write them again (/caligrafy-quill:assistant), php caligrafer.php snap views')
+            : $this->add('project', 'Snap card views', 'OK', count($files) . ' in application/views/snap, each up to date with its page');
+    }
 
     private function add($check, $name, $status, $message, $fix = '')
     {
