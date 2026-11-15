@@ -224,6 +224,19 @@ class Database extends \stdClass {
     }
 
     /**
+     * The end of a request in a process that serves many (2.26.0, the async server): a transaction left open is rolled
+     * back, the counters forgotten; the connection stays open for the next request
+     */
+    public static function endRequest()
+    {
+        if (self::$connection) {
+            self::reset(self::$connection);
+        }
+        self::$depth = 0;
+        self::$rowCount = 0;
+    }
+
+    /**
      * Uses this PDO connection (a test's in-memory SQLite, a worker's own connection); null connects again on next use
      */
     public static function useConnection($connection = null)

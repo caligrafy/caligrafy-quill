@@ -30,6 +30,7 @@ class Container
     private static $instances = array();   // id => object
     private static $resolving = array();
     private static $booted = false;
+    private static $kept = null;           // instances to keep between requests of the async server (keepInstances)
 
     /**
      * A new object each time: $factory is a callable returning it, or a class name (an interface bound to a class)
@@ -140,6 +141,25 @@ class Container
     }
 
     /**
+     * Forgets the objects made so far, keeping the bindings (2.26.0: between two requests of the async server, so no
+     * shared instance carries one caller's state to the next)
+     */
+    public static function forgetInstances()
+    {
+        self::$instances = self::$kept ?? array();
+        self::$resolving = array();
+    }
+
+    /**
+     * Keeps the instances made so far (the ones application/config/container.php registered at boot): forgetInstances()
+     * goes back to them
+     */
+    public static function keepInstances()
+    {
+        self::$kept = self::$instances;
+    }
+
+    /**
      * Forgets every binding and instance (tests); the bindings file is read again on next use
      */
     public static function reset()
@@ -148,6 +168,7 @@ class Container
         self::$instances = array();
         self::$resolving = array();
         self::$booted = false;
+        self::$kept = null;
     }
 
     private static function register($id, $factory, $shared)
