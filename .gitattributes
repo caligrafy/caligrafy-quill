@@ -5,3 +5,7 @@
 # tests, but not in the release; php caligrafer.php add facedetect / facedetect <app> download them (pinned, SHA-256)
 /public/resources/models export-ignore
 /framework/plugins/facedetect/recognition export-ignore
+# The framework's own index for coding agents and documentation indexes (llmstxt.org, Context7): not a project's
+/llms.txt export-ignore
+/llms-full.txt export-ignore
+/context7.json export-ignore

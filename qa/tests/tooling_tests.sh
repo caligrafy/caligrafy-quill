@@ -201,10 +201,12 @@ fi
 # --- initialize keeps a .git folder unless --yes (it used to delete it without asking) ---------------------------
 mkdir -p "$TMP/initgit" && cd "$TMP/initgit"
 cp -r "$ROOT/framework" "$ROOT/caligrafer.php" . && ln -s "$ROOT/vendor" vendor && mkdir -p public/uploads .git
-cp -r "$ROOT/.claude" "$ROOT/.claude-plugin" .
+cp -r "$ROOT/.claude" "$ROOT/.claude-plugin" "$ROOT/llms.txt" "$ROOT/context7.json" .
 cp framework/settings/.env.example .env
 php caligrafer.php initialize < /dev/null >/dev/null 2>&1
 KEPT=$([ -d .git ] && echo yes || echo no)
+INDEX=$([ -e llms.txt ] || [ -e context7.json ] && echo kept || echo removed)
+printf '# My app\n\n> What my app does.\n' > llms.txt
 php caligrafer.php initialize --yes < /dev/null >/dev/null 2>&1
 if [ "$KEPT" = yes ] && [ ! -d .git ] && [ -d application ]; then
     ok "caligrafer initialize keeps .git without --yes, and deletes it with --yes"
@@ -229,6 +231,14 @@ if [ -f "$ROOT/.claude/skills/caligrafy-contributor/SKILL.md" ] && [ ! -e .claud
     ok "caligrafer initialize deletes the contributor skill (.claude/skills/caligrafy-contributor), releases leave it out"
 else
     ko "the contributor skill reached a project" "in the project: $([ -e .claude/skills/caligrafy-contributor ] && echo yes || echo no)"
+fi
+# the framework's index for coding agents describes Caligrafy, not a project: initialize removes it, archives and update
+# leave it out, and a project's own llms.txt survives initialize
+if [ "$INDEX" = removed ] && grep -q '^# My app' llms.txt 2>/dev/null && grep -q '^/llms.txt export-ignore$' "$ROOT/.gitattributes" \
+    && grep -q '^/context7.json export-ignore$' "$ROOT/.gitattributes" && grep -q 'llms(-full)?' "$ROOT/framework/core/Updater.php"; then
+    ok "caligrafer initialize removes the framework's llms.txt and context7.json, keeps a project's own; releases leave them out"
+else
+    ko "the framework's index for agents and projects" "after initialize: $INDEX; project's own llms.txt: $(head -1 llms.txt 2>/dev/null || echo gone)"
 fi
 cd "$ROOT"
 
@@ -460,6 +470,16 @@ if [ -n "${QA_WIKI:-}" ]; then
     OUT=$(python3 claude-plugin/scripts/sync-wiki.py "$QA_WIKI" --check 2>&1) && ok "plugin wiki mirrors are up to date with $QA_WIKI" || ko "plugin wiki mirrors are stale" "$OUT"
 else
     echo "  SKIP plugin wiki mirror check (set QA_WIKI=<wiki clone>)"
+fi
+# the index for coding agents (llms.txt, AGENTS.md, context7.json) names every gotcha, and llms-full.txt is the wiki
+LAST=$(grep -oE '^\*\*G[0-9]+' claude-plugin/skills/caligrafy/reference/gotchas.md | tr -dc '0-9\n' | sort -n | tail -1)
+if grep -q "G1-G$LAST" llms.txt && grep -q "G1-G$LAST" AGENTS.md && php -r 'exit(is_array(json_decode(file_get_contents("context7.json"), true)) ? 0 : 1);'; then
+    ok "llms.txt and AGENTS.md name the gotchas G1-G$LAST, context7.json is valid JSON"
+else
+    ko "the index for coding agents is stale" "gotchas end at G$LAST: llms.txt and AGENTS.md must say G1-G$LAST; context7.json must be JSON"
+fi
+if [ -n "${QA_WIKI:-}" ]; then
+    OUT=$(php qa/build-llms-full.php "$QA_WIKI" --check 2>&1) && ok "$OUT" || ko "llms-full.txt is stale" "$OUT"
 fi
 OUT=$(sh -n claude-plugin/scripts/php-lint.sh 2>&1) && ok "php-lint hook script syntax" || ko "php-lint hook" "$OUT"
 echo '{"tool_input":{"file_path":"'"$ROOT"'/qa/fixtures/outside/marker.php"}}' | sh claude-plugin/scripts/php-lint.sh >/dev/null 2>&1 && ok "php-lint hook passes a valid file" || ko "php-lint hook rejects a valid file"

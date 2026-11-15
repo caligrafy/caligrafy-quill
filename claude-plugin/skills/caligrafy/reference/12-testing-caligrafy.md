@@ -213,13 +213,18 @@ With [Claude Code](https://claude.com/claude-code) in the framework repository, 
 The wiki clone is `../caligrafy-quill.wiki`, next to the framework checkout (`git clone https://github.com/caligrafy/caligrafy-quill.wiki.git ../caligrafy-quill.wiki`).
 
 1. **Claude plugin.** Update what the change touches in `claude-plugin/`: `skills/caligrafy/reference/api-reference.md` and `gotchas.md` (written by hand from the source: a new behavior goes in the API reference, a pitfall found becomes the next `G<n>`, and the range `G1-G<n>` of `skills/caligrafy/SKILL.md` follows), `ui-guidelines.md` when the look changes, every other skill and the `caligrafy-reviewer` agent, read in full against the change.
-2. **README and root documents.** `README.md` (keep its banner), `ARCHITECTURE.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `claude-plugin/README.md`: change what the change makes wrong or incomplete.
+2. **README and root documents.** `README.md` (keep its banner), `ARCHITECTURE.md`, `AGENTS.md`, `CLAUDE.md`, `CONTRIBUTING.md`, `llms.txt` and `context7.json` (the index for coding agents and Context7: its rules, its links), `claude-plugin/README.md`: change what the change makes wrong or incomplete.
 3. **Wiki.** Every page the change affects, read in full. A minor or major release gets a page `Release-notes:-X.Y.0.md`, linked in `_Sidebar.md`; a patch release gets a short `Release-notes:-X.Y.Z.md` too (`php caligrafer.php update` links to the release notes of the exact version it installs). The banner image is only on `Home.md`. Then refresh the plugin's mirrors of the wiki:
     ```bash
     python3 claude-plugin/scripts/sync-wiki.py ../caligrafy-quill.wiki            # rewrite the mirrors
     python3 claude-plugin/scripts/sync-wiki.py ../caligrafy-quill.wiki --check    # exit 1 when a mirror is stale
     ```
     A new wiki page needs a line in the `PAGES` table of `sync-wiki.py` and a row in the reference map of `skills/caligrafy/SKILL.md`.
+    Then rebuild `llms-full.txt` (every wiki page but the release notes, in the order of the sidebar, for coding agents):
+    ```bash
+    php qa/build-llms-full.php ../caligrafy-quill.wiki            # rewrite it
+    php qa/build-llms-full.php ../caligrafy-quill.wiki --check    # exit 1 when it is stale (the suite runs this with QA_WIKI)
+    ```
 4. **Plugin version.** Bump `version` in `claude-plugin/.claude-plugin/plugin.json` (minor with a framework minor, patch otherwise), add a line at the top of the changelog of `claude-plugin/README.md`, update the "Current version" line of the [Claude Code plugin](https://github.com/caligrafy/caligrafy-quill/wiki/10.-Claude-Code-Plugin) page, and validate:
     ```bash
     claude plugin validate ./claude-plugin --strict
