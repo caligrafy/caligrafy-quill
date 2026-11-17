@@ -6,6 +6,13 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.26.2] - 2026-11-17
+
+### Fixed
+- **Two apps on one host no longer sign each other out**: `SESSION_NAME` names the session cookie (letters, digits and underscores, with at least one letter; empty keeps `PHPSESSID`, so nothing changes for a project that does not set it). Browsers share cookies between the ports of a host: with two Caligrafy apps on `localhost`, signing in to one replaced the other's session, and a sign-in through another app (caligrafy.com through Caligrafy Cloud) came back with "This sign-in expired or did not start here" (G173).
+- **`doctor` warns about settings that silently do nothing**: a `SESSION_NAME` PHP refuses (the cookie stays `PHPSESSID`), a `GOOGLE_ANALYTICS_ID` that is an old Universal Analytics id (`UA-`, which Google stopped collecting in 2023), and a `GOOGLE_ANALYTICS_ID` set while `APP_ENV` is not `production`, where the layout never prints the tag (G174). Nothing is printed when these settings are fine.
+- **Documentation**: an app on the marketplace now gives its visitors 15-minute trials on Caligrafy Cloud, its own users included; its owner, maker, buyers and the administrators are never limited (G172). The marketplace skill, the wiki pages "Putting it Online" and "Deploying to Caligrafy Cloud" and the gotchas say so.
+
 ## [2.26.1] - 2026-11-15
 
 ### Fixed

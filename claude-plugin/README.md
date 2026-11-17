@@ -51,6 +51,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.38.2** - Caligrafy Quill 2.26.2: `SESSION_NAME` (G173), doctor's Google tag and session cookie warnings (G174), 15-minute trials on marketplace apps in the marketplace skill (G172).
 - **1.38.1** - Caligrafy Quill 2.26.1: capability calls read a cached registry (1.75-1.9x faster on the web server); G171.
 - **1.38.0** - Caligrafy Quill 2.26.0: the production image sized to its container (`PHP_PROCESSES`, persistent connections, preloading, `optimize`), the response cache (`cache:`), optional SDKs (`php caligrafer.php add <feature>`), N+1 prevention and token scopes on by default, the experimental async server (`ASYNC=on`, `async check`); the reference's Performance section, G164-G170.
 - **1.37.0** - Caligrafy Quill 2.25.0: card views (`application/views/snap/<capability>.pug`): the `assistant` skill writes one for each main list and record from the app's pages and look; `snap views`, the `card` hint, G163.

@@ -207,6 +207,11 @@ database, its keys and an address: `https://<name>.caligrafy.com`.
   visitors to `https://deploy.caligrafy.com/unlock/<name>`, API and agent calls get `401`, and `cloud apps` and
   `cloud status` print `[password protected]`. Locking or unlocking restarts the app (2 to 5 minutes). Offering the app
   to the marketplace removes the password for good.
++ **On the marketplace: 15-minute trials.** Once its listing is published, visitors try the app for 15 minutes (one
+  try per browser without an account, 3 per account, then the app's page on caligrafy.com with its Buy panel open).
+  Its owner, its maker, its buyers and the administrators are never limited. The limit applies to everyone else who
+  opens the app, its own users included (G172): an app people really use belongs on the marketplace only if that is
+  what you want for them. Webhooks, REST clients and agents are not limited.
 + **AI agents.** Caligrafy Cloud is itself a Caligrafy application: an agent connects to
   `https://deploy.caligrafy.com/mcp` with a token of the dashboard (*Command line and AI agents*) and can list, deploy
   and extend your apps.
@@ -227,6 +232,8 @@ Caligrafy sells a prompt that recreates it with Caligrafy, using Claude, and you
 3. Caligrafy reviews the listing, sets the final price and publishes it, or turns it down with a reason (offer it again
    after the changes). On caligrafy.com, **Listings** follows each listing (offered, to fix, published), **Earnings** its
    sales and your payouts (from 50 USD, once a month, 14 days after each sale), and **Tasks** what waits for you.
+4. Once published, the app's own address is limited to 15-minute trials for everyone but you, its buyers and the
+   administrators: **Try the app free · 15 min** on its page starts one (G172).
 
 Each app on Explore comes three ways: its **prompt**, which recreates it with Caligrafy, using Claude; its **code**,
 reproduced from the prompt into a private GitHub repository of the buyer; or **managed for you**, online at

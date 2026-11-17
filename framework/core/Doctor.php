@@ -211,6 +211,7 @@ class Doctor
 
         $this->webApp();
         $this->processes();
+        $this->settingsTraps();
 
         // DESIGN_STYLE: the selected design style and its override stylesheet (php caligrafer.php design)
         list($status, $message, $fix) = Designs::status($this->root);
@@ -259,6 +260,28 @@ class Doctor
             return;
         }
         $this->add('project', 'PHP processes', 'OK', "PHP_PROCESSES=$set");
+    }
+
+    /**
+     * Settings that silently do nothing (2.26.2), reported only when one is wrong: a SESSION_NAME PHP refuses (the cookie
+     * stays PHPSESSID), and a Google tag that can never print (a Universal Analytics id, or APP_ENV is not production)
+     */
+    private function settingsTraps()
+    {
+        $session = $this->env('SESSION_NAME');
+        if ($session !== '' && !preg_match('/^(?=.*[A-Za-z])[A-Za-z0-9_]{1,64}$/', $session)) {
+            $this->add('project', 'Session cookie', 'WARN', "SESSION_NAME=$session is not a cookie name PHP accepts: the session cookie stays PHPSESSID",
+                'letters, digits and underscores, with at least one letter, like SESSION_NAME=myapp_session');
+        }
+        $tag = $this->env('GOOGLE_ANALYTICS_ID');
+        if ($tag === '') return;
+        if (stripos($tag, 'UA-') === 0) {
+            $this->add('project', 'Google tag', 'WARN', "GOOGLE_ANALYTICS_ID=$tag is a Universal Analytics id: Google stopped collecting them in 2023",
+                'GOOGLE_ANALYTICS_ID=G-... (the measurement id of a Google Analytics 4 web stream), or empty');
+        } elseif (strtolower($this->env('APP_ENV')) !== 'production') {
+            $this->add('project', 'Google tag', 'WARN', 'GOOGLE_ANALYTICS_ID is set, but the layout prints the tag only when APP_ENV=production (now ' . ($this->env('APP_ENV') ?: 'empty') . ')',
+                'nothing to do on a computer used for development; on the live server, APP_ENV=production');
+        }
     }
 
     /**

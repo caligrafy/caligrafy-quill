@@ -24,6 +24,15 @@ setlocale(LC_MONETARY, getenv('APP_LOCALE'));
 // session_regenerate_id() or writes $_SESSION finds it active.
 // The session cookie is out of reach of the page's JavaScript, and only travels over HTTPS when the site is on HTTPS
 // (directly, or behind a load balancer that says so): a script injected in a page cannot read the session (2.19.8)
+// SESSION_NAME (2.26.2): the name of the session cookie, PHPSESSID when empty. Browsers share cookies between the ports
+// of one host: two apps on localhost (8101 and 8102) under the same name overwrite each other's session, so signing in
+// to one signs the other out. Letters, digits and underscores, with at least one letter; anything else keeps PHPSESSID
+// (php caligrafer.php doctor says so). Changing it signs everyone out once.
+$sessionName = trim((string) getenv('SESSION_NAME'));
+if ($sessionName !== '' && preg_match('/^(?=.*[A-Za-z])[A-Za-z0-9_]{1,64}$/', $sessionName)) {
+    session_name($sessionName);
+}
+unset($sessionName);
 ini_set('session.cookie_httponly', '1');
 if (strtolower((string) ($_SERVER['HTTP_X_FORWARDED_PROTO'] ?? '')) === 'https' || (!empty($_SERVER['HTTPS']) && $_SERVER['HTTPS'] !== 'off')) {
     ini_set('session.cookie_secure', '1');
