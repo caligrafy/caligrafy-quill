@@ -6,6 +6,11 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.26.3] - 2026-11-23
+
+### Fixed
+- **Dependencies**: vlucas/phpdotenv 5.8.1 (reads `.env` faster: nested variables resolved without repeated copying, multi-line values collected in linear time; values are read the same way), PHPUnit 12.5.45 (fixes to baselines and to JUnit output on the standard output), and symfony/polyfill-mbstring 1.43.3 with them. `composer audit` finds no advisory.
+
 ## [2.26.2] - 2026-11-17
 
 ### Fixed
