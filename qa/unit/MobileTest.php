@@ -43,6 +43,16 @@ final class MobileTest extends TestCase
         }
     }
 
+    public function testAnAppWithoutAccountsGetsTheCorsOnly(): void
+    {
+        \Caligrafy\Route::reset();
+        $o = Mobile::register(['scheme' => 'com.example.bingo'], false);
+        $this->assertFalse($o['accounts']);
+        $this->assertTrue(Mobile::allowedOrigin('capacitor://localhost'), 'its apps may call');
+        $this->assertNull(\Caligrafy\Route::handler('GET', '/mobile/authorize'), 'no sign-in addresses');
+        \Caligrafy\Route::reset();
+    }
+
     public function testOnlyTheAppsAndTheNamedOriginsGetCors(): void
     {
         foreach (['capacitor://localhost', 'https://localhost', 'http://localhost', 'http://localhost:5173', 'http://127.0.0.1:8080', 'https://admin.example.com'] as $origin) {

@@ -548,13 +548,12 @@ class Route extends \stdClass
      * Declares /mobile/authorize (GET, POST), /mobile/token, /mobile/session and /mobile/signout, and CORS for the app.
      * Options: scheme (required: the app id of capacitor.config.json, or a list), scopes (['*']), days (90), prefix
      * ('/mobile'), origins (more origins allowed to call with a token), name (the app's name on the consent page)
+     * An app without accounts (no Auth::authentication, 2.27.2): only the CORS of its apps, so they call the public
+     * capabilities; no sign-in addresses
      */
     public static function mobile(array $options = array())
     {
-        if (!Auth::active()) {
-            throw new \LogicException('Route::mobile needs Auth::authentication(...) and Route::auth() before it: the app signs people in through the site');
-        }
-        return Mobile::register($options);
+        return Mobile::register($options, Auth::active());
     }
 
     /**

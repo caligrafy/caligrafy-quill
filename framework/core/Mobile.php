@@ -25,6 +25,8 @@ namespace Caligrafy;
  * The app sends Authorization: Bearer cq_... to /capabilities (Route::capabilities) like any program; no cookie and no
  * CSRF token. The browsers of the app (capacitor://localhost, https://localhost, http://localhost[:port]) and the
  * 'origins' option get CORS headers, never Access-Control-Allow-Credentials: the session cookie never leaves the site.
+ * A project without accounts (no Auth::authentication, 2.27.2) gets the CORS only: its apps call the public
+ * capabilities, with no sign-in and no token.
  * Codes: PKCE S256 (RFC 7636), the challenge given to /authorize, the verifier only to /token. Tables
  * caligrafy_mobile_codes (php caligrafer.php platform install; the deploy step creates them).
  */
@@ -104,10 +106,14 @@ class Mobile
     /**
      * Registers the routes (Route::mobile)
      */
-    public static function register(array $options)
+    public static function register(array $options, $accounts = true)
     {
         $o = self::options($options);
+        $o['accounts'] = (bool) $accounts;
         self::$options = $o;
+        if (!$o['accounts']) {
+            return $o;      // an app without accounts (2.27.2): its phone apps call the public capabilities, CORS only
+        }
         $p = $o['prefix'];
         Route::get("$p/authorize", function () { self::authorizePage(); });
         Route::post("$p/authorize", function () { self::authorize(); });
@@ -156,7 +162,7 @@ class Mobile
         if ($method === 'OPTIONS' && $origin !== '') {
             if ($allowed) {
                 $headers['Access-Control-Allow-Methods'] = 'GET, POST, PUT, DELETE, OPTIONS';
-                $headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type, Accept';
+                $headers['Access-Control-Allow-Headers'] = 'Authorization, Content-Type, Accept, X-CSRF-Token';   // the JS client sends the last one (2.27.2)
                 $headers['Access-Control-Max-Age'] = '600';
             }
             self::send($allowed ? 204 : 403, $headers);

@@ -25,8 +25,10 @@ php caligrafer.php version          # 2.27.0+ (else /caligrafy-quill:update)
 node -v                             # v22+ on this computer (the Docker dev-box has no Node.js)
 grep -n "Route::auth\|Route::capabilities\|Route::mobile" application/config/routing/web.php
 ```
-The project needs `Auth::authentication(...)` and `Route::auth()` (people sign in to the app with their site account)
-and `Route::capabilities('/capabilities')` (what the app calls).
+The project needs `Route::capabilities('/capabilities')` (what the app calls). With `Auth::authentication(...)` and
+`Route::auth()`, people sign in to the app with their site account; without accounts (2.27.2+), `Route::mobile` only
+lets the apps call the public capabilities (CORS). When the site's pages already exist and are not a Vue app (a game),
+the app can bundle them instead of the template's `src/` (G183).
 
 ## 2. Create it
 

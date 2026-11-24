@@ -10,7 +10,7 @@ Your code goes in `application/` (routes in `application/config/routing/web.php`
 ## Read before writing code
 - `claude-plugin/skills/caligrafy/SKILL.md`: the index of the framework knowledge and the workflow rules.
 - `claude-plugin/skills/caligrafy/reference/api-reference.md`: exact signatures, verified against the source.
-- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G182 (read the relevant ones).
+- `claude-plugin/skills/caligrafy/reference/gotchas.md`: verified pitfalls G1-G183 (read the relevant ones).
 - `claude-plugin/skills/caligrafy/reference/13-build-once-services-capabilities-mcp.md`: capabilities, tokens, MCP.
 - `claude-plugin/skills/caligrafy/reference/ui-guidelines.md`: how every new page and client app looks (page components).
 - `ARCHITECTURE.md`: how a request runs and the build-once design.

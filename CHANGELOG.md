@@ -6,6 +6,13 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.27.2] - 2026-11-24
+
+### Fixed
+- **`Route::mobile` in a project without accounts**: it threw unless `Auth::authentication(...)` was set up, so an app whose capabilities are public (a game, a catalog) could not have a phone app. Without accounts it now declares no sign-in address and only lets the project's phone apps call it (CORS): they call the public capabilities with no sign-in and no token. With accounts nothing changes.
+- **Phone apps that use the JS client** (`public/js/capabilities.js`): it sends `X-CSRF-Token`, which the CORS answer to the browser's preflight did not allow, so every call from the app failed ("Could not reach the site"). The preflight now allows it, with `Authorization`, `Content-Type` and `Accept`.
+- Found while turning Holiday Bingo into an iOS and Android app (its own pages bundled in the app, tested in one game hosted on an iPhone simulator and played on an Android emulator): G183. Plugin 1.39.2.
+
 ## [2.27.1] - 2026-11-24
 
 ### Fixed
