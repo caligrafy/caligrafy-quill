@@ -20,7 +20,9 @@ const KEY = 'caligrafy.session'
 const PENDING = 'caligrafy.signin'
 const native = Capacitor.isNativePlatform()
 
+// the site: on the Android emulator this computer is 10.0.2.2, not localhost (the iOS simulator shares this computer's)
 export const apiRoute = (import.meta.env.VITE_API_ROUTE || '').replace(/\/+$/, '')
+  .replace(/^http:\/\/(localhost|127\.0\.0\.1)(?=[:/]|$)/, Capacitor.getPlatform() === 'android' ? 'http://10.0.2.2' : 'http://$1')
 const capabilitiesRoute = import.meta.env.VITE_CAPABILITIES_ROUTE || '/capabilities'
 const mobileRoute = import.meta.env.VITE_MOBILE_ROUTE || '/mobile'
 const scheme = capacitor.appId.toLowerCase()

@@ -6,7 +6,7 @@ Gives Claude Code full knowledge of [Caligrafy Quill](https://github.com/caligra
 
 | Component | Name | What it does |
 | - | - | - |
-| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (its 82 mirrored pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G180) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
+| Skill (auto) | `caligrafy` | Index of the complete Caligrafy wiki (its 82 mirrored pages in `skills/caligrafy/reference/`), UI guidelines for every new page, a source-verified API reference and a list of verified gotchas/wiki errata (G1-G182) and end-to-end recipes (OpenAI/Groq chat apps, face login). Loads whenever Claude works in a Quill project |
 | Skill | `/caligrafy-quill:new-resource <Entity> [field:type ...]` | SQL `create_db.sql` + Model + the CRUD capabilities + REST routes + pages with `Route::page` and forms with `Route::form` (no controller) |
 | Skill | `/caligrafy-quill:idea <your idea>` | The Quickstart with Claude: describe it, approve it, ship it. Your idea turned into a complete app online, with one confirmation. Plans it with the user, builds every feature once (tables, capabilities, sign-in, a page, REST, MCP and a token page for agents), checks every experience, then ships it with the `ship` skill |
 | Skill | `/caligrafy-quill:ship [app-name] [--public]` | Puts the project online without handing work to the user: commits, creates the GitHub repository and pushes (SSH first, then HTTPS, then a browser approval of the GitHub CLI), signs in to Caligrafy Cloud by a browser approval, creates the app, adds its deploy key, deploys and checks it. Asks only before spending credits (`scripts/github.sh`) |
@@ -52,7 +52,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
-- **1.39.0** - Caligrafy Quill 2.27.0: phone and tablet apps. The `mobile` skill (`php caligrafer.php mobile`, `Route::mobile`, push to phones, store builds and the owner's accounts); the `ship` skill sends the store builds; the API reference's Phone and tablet apps section and Notify's phones; G175-G180.
+- **1.39.0** - Caligrafy Quill 2.27.0: phone and tablet apps. The `mobile` skill (`php caligrafer.php mobile`, `Route::mobile`, push to phones, store builds and the owner's accounts); the `ship` skill sends the store builds; the API reference's Phone and tablet apps section and Notify's phones; G175-G182 (what the iPhone simulator and the Android emulator showed).
 - **1.38.3** - Caligrafy Quill 2.26.3: vlucas/phpdotenv 5.8.1 and PHPUnit 12.5.45; test outputs in the docs show PHPUnit 12.5.45.
 - **1.38.2** - Caligrafy Quill 2.26.2: `SESSION_NAME` (G173), doctor's Google tag and session cookie warnings (G174), 15-minute trials on marketplace apps in the marketplace skill (G172).
 - **1.38.1** - Caligrafy Quill 2.26.1: capability calls read a cached registry (1.75-1.9x faster on the web server); G171.

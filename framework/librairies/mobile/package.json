@@ -9,11 +9,11 @@
     "preview": "vite preview",
     "lint": "eslint . --fix",
     "native": "node scripts/native.mjs",
-    "sync": "node scripts/native.mjs && vite build && cap sync",
-    "sync:ios": "node scripts/native.mjs && vite build && cap sync ios",
-    "sync:android": "node scripts/native.mjs && vite build && cap sync android",
-    "ios": "npm run sync:ios && cap open ios",
-    "android": "npm run sync:android && cap open android",
+    "sync": "node scripts/native.mjs --dev && vite build --mode development && cap sync",
+    "ios": "node scripts/native.mjs --dev && vite build --mode development && cap sync ios && cap open ios",
+    "android": "node scripts/native.mjs --dev && vite build --mode development && cap sync android && cap open android",
+    "release:ios": "node scripts/native.mjs && vite build && cap sync ios",
+    "release:android": "node scripts/native.mjs && vite build && cap sync android",
     "icons": "capacitor-assets generate --ios --android --iconBackgroundColor '#ffffff' --splashBackgroundColor '#ffffff'"
   },
   "dependencies": {

@@ -19019,9 +19019,18 @@ needs the browser's session, so the app cannot call it: give the app a capabilit
 
 ```bash
 npm run dev        # in a browser, against the Docker server (sign-in works the same, on this computer only)
-npm run ios        # Xcode: run it on a simulator or a plugged-in iPhone
-npm run android    # Android Studio: an emulator or a phone
+npm run ios        # a development build, then Xcode: run it on an iPhone simulator
+npm run android    # the same in Android Studio: an Android emulator
 ```
+
+These development builds call your local site (`.env.development`, `http://localhost:8080`): the iPhone simulator
+reaches it at `localhost`, the Android emulator at `10.0.2.2` (the app switches by itself), and plain http is allowed
+to this computer's addresses only. The store builds, `npm run release:ios` and `npm run release:android`, call the site
+online (`.env.production`, https); the workflow and fastlane use them. To try the app on a real phone, use a release
+build against the site online.
+
+Tested on an iPhone 18 Pro simulator (iOS 27.2) and a Pixel emulator (Android 16): sign-in through the site, the
+return to the app, a restart, notifications turned on and shown, and sign-out.
 
 ## Notifications
 

@@ -34,16 +34,21 @@ Node.js 22+. In this folder:
 ```bash
 npm install
 npm run dev            # the app in a browser, against the Docker server of the project (http://localhost:8080)
-npm run ios            # builds, copies into ios/ and opens Xcode: Run on a simulator or a plugged-in iPhone
-npm run android        # the same for Android Studio: an emulator or a phone
+npm run ios            # a development build, copied into ios/, then Xcode: Run on a simulator
+npm run android        # the same for Android Studio: an emulator
+npm run release:ios    # the build the stores get: it calls the site online (.env.production); fastlane uses it
+npm run release:android
 ```
+
+The development builds (`ios`, `android`, `sync`) call the local site over plain http: the iOS simulator at
+`localhost`, the Android emulator at `10.0.2.2` (the app swaps it by itself), and `scripts/native.mjs --dev` lets the Android
+web view make those calls. Plain http is allowed to this computer's addresses only. A real phone cannot reach this
+computer that way: try a phone with the release build against the site online.
 
 `npm run dev` signs in through the local site too: the sign-in page sends the code back to the browser, only while the
 site runs on this computer. Every change to the web code: `npm run sync` (or `npm run ios` / `android`) copies it into
 the native projects. `npm run icons` makes every icon and splash size from `assets/` (1024 px `icon-only.png`, 2732 px
 `splash.png`).
-
-On the iOS simulator `localhost` is this Mac; on the Android emulator it is `10.0.2.2` (`.env.development`).
 
 ## Notifications
 
@@ -96,5 +101,6 @@ testing track of Google Play; from there, the owner sends it to review in App St
 ### On a Mac instead of GitHub
 
 Xcode (App Store), Android Studio, Ruby 3.3 (`brew install ruby`), then in this folder, with the same names in the
-environment: `bundle install`, `npm run sync`, `bundle exec fastlane ios beta` or `bundle exec fastlane android beta`.
+environment: `bundle install`, `npm run release:ios` then `bundle exec fastlane ios beta`, or `npm run release:android`
+then `bundle exec fastlane android beta`.
 Never put those values in a file of the repository.

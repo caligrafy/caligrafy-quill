@@ -8,7 +8,7 @@ argument-hint: "[<name>] [--id com.example.app] [publish]"
 # A phone and tablet app of the project
 
 Target: `$ARGUMENTS` (the app folder, `public/<name>`; `publish` jumps to step 5). Read first:
-[gotchas.md](../caligrafy/reference/gotchas.md) G175-G180 and the API reference's Route::mobile and Notify sections.
+[gotchas.md](../caligrafy/reference/gotchas.md) G175-G182 and the API reference's Route::mobile and Notify sections.
 
 The app is the project's capabilities on a phone: never a second backend. Every screen reads and writes through
 `call('<capability>', input)` (`src/mobile/session.js`), as the signed-in person, under the same rules as the web pages,
@@ -59,9 +59,19 @@ Check it in a browser first: `php caligrafer.php server start`, then `cd public/
 site sends the code back to the browser only while it runs on this computer, G178). Drive it with a browser tool at a
 phone size (390x844), sign in, use every screen.
 
-On a simulator: `npm run ios` opens Xcode (Run), `npm run android` Android Studio. With this session's iOS simulator
-tool: build with `xcodebuild -project ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug
--derivedDataPath build/ios-sim`, then launch `build/ios-sim/Build/Products/Debug-iphonesimulator/App.app`.
+On a simulator (development builds call the local site over http, G181): `npm run ios` opens Xcode (Run),
+`npm run android` Android Studio. Without the IDEs:
++ iOS (Xcode, its license accepted, the iOS platform downloaded: G182): `npm run sync`, then `xcodebuild -project
+  ios/App/App.xcodeproj -scheme App -sdk iphonesimulator -configuration Debug -derivedDataPath build/ios-sim
+  -destination 'generic/platform=iOS Simulator' build`, and launch
+  `build/ios-sim/Build/Products/Debug-iphonesimulator/App.app` with this session's iOS simulator tool.
++ Android (an SDK with an emulator, `JAVA_HOME` on Java 21): `npm run sync`, `cd android && ./gradlew assembleDebug`,
+  start the emulator, `adb install -r app/build/outputs/apk/debug/app-debug.apk`, then drive it with `adb shell input`
+  and read it with `adb exec-out screencap -p` and `uiautomator dump`. A fresh emulator's Chrome shows a first-run
+  screen: start Chrome with `--disable-fre --no-first-run` (`/data/local/tmp/chrome-command-line` and
+  `am set-debug-app --persistent com.android.chrome`) rather than accepting its terms.
+Walk the whole sign-in on each: Sign in, the site's page, Allow, back in the app, a restart (still signed in), Sign out
+(the token revoked: `/mobile/session` answers 401).
 
 ## 4. Notifications (when the app sends any)
 
@@ -93,7 +103,8 @@ key, type a password) they do in their browser; open the page for them and say i
 5. **The first Android build is uploaded by hand** (Google needs one before its API takes any): build it once on the
    Mac (`bundle exec fastlane android beta` with the variables exported in the owner's terminal, or Android Studio,
    Generate Signed App Bundle) and upload it in Play Console, Internal testing.
-6. **Each release**: bump `version` in `public/<name>/package.json`, commit, push, then
+6. **Each release** (the workflow builds with `npm run release:ios` / `release:android`): bump `version` in
+   `public/<name>/package.json`, commit, push, then
    `gh workflow run mobile-<name>.yml -f platform=both` and follow it (`gh run watch`). iOS lands in TestFlight (a few
    minutes of processing), Android on the internal track. Sending a build to review (App Store, Production) is the
    owner's click in App Store Connect and Play Console: Apple needs screenshots, a privacy policy URL, the privacy

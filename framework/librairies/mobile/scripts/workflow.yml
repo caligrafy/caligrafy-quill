@@ -47,7 +47,7 @@ jobs:
           bundler-cache: true
           working-directory: public/__NAME__
       - run: npm ci
-      - run: npm run sync:ios
+      - run: npm run release:ios
       - run: bundle exec fastlane ios beta
 
   android:
@@ -87,5 +87,5 @@ jobs:
         run: |
           if [ -n "$GOOGLE_SERVICES_JSON" ]; then printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json; fi
       - run: npm ci
-      - run: npm run sync:android
+      - run: npm run release:android
       - run: bundle exec fastlane android beta

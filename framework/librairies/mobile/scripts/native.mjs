@@ -5,16 +5,29 @@
 //   - iOS push: the aps-environment entitlement and the two AppDelegate methods @capacitor/push-notifications needs
 //   - Android push: on only when android/app/google-services.json is there (src/mobile/features.json)
 //   - Android versions: android/app/build.gradle reads the ones fastlane gives
+//   - the local site while developing: --dev lets the Android web view call http (android.allowMixedContent, removed
+//     again for the store builds); plain http only to this computer's addresses on both (network security config, ATS)
 //   - the icon and splash pictures (assets/), from src/assets/caligrafy-mark.svg the first time: npm run icons
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from 'node:fs'
 import { dirname, join } from 'node:path'
 import { fileURLToPath } from 'node:url'
 
 const root = join(dirname(fileURLToPath(import.meta.url)), '..')
+// --dev: a build that calls the project's local site (http): the Android web view may then call http from its https page
+const development = process.argv.includes('--dev')
 const at = path => join(root, path)
 const config = JSON.parse(readFileSync(at('capacitor.config.json'), 'utf8'))
 const scheme = config.appId.toLowerCase()
 const done = []
+
+edit('capacitor.config.json', text => {
+  const value = JSON.parse(text)
+  value.android = value.android || {}
+  if (development) value.android.allowMixedContent = true
+  else delete value.android.allowMixedContent      // store builds never: they call https
+  if (!Object.keys(value.android).length) delete value.android
+  return JSON.stringify(value, null, 2) + '\n'
+})
 
 function edit (path, change) {
   if (!existsSync(at(path))) return
@@ -33,6 +46,14 @@ edit('ios/App/App/Info.plist', plist => {
     + `\t\t\t<key>CFBundleURLSchemes</key>\n\t\t\t<array>\n\t\t\t\t<string>${scheme}</string>\n\t\t\t</array>\n\t\t</dict>\n\t</array>\n`
   const end = plist.lastIndexOf('</dict>')
   return plist.slice(0, end) + types + plist.slice(end)
+})
+
+// the local site while developing (http://localhost): App Transport Security allows local addresses only
+edit('ios/App/App/Info.plist', plist => {
+  if (plist.includes('NSAllowsLocalNetworking')) return plist
+  const ats = `\t<key>NSAppTransportSecurity</key>\n\t<dict>\n\t\t<key>NSAllowsLocalNetworking</key>\n\t\t<true/>\n\t</dict>\n`
+  const end = plist.lastIndexOf('</dict>')
+  return plist.slice(0, end) + ats + plist.slice(end)
 })
 
 edit('ios/App/App/AppDelegate.swift', swift => {
@@ -74,6 +95,18 @@ edit('android/app/src/main/AndroidManifest.xml', manifest => {
   const end = manifest.indexOf('</intent-filter>')
   return end < 0 ? manifest : manifest.slice(0, end + '</intent-filter>'.length) + filter + manifest.slice(end + '</intent-filter>'.length)
 })
+
+// plain http only to this computer (the emulator's 10.0.2.2, localhost): the local site while developing
+if (existsSync(at('android/app/src/main/res')) && !existsSync(at('android/app/src/main/res/xml/network_security_config.xml'))) {
+  mkdirSync(at('android/app/src/main/res/xml'), { recursive: true })
+  writeFileSync(at('android/app/src/main/res/xml/network_security_config.xml'), '<?xml version="1.0" encoding="utf-8"?>\n'
+    + '<network-security-config>\n    <domain-config cleartextTrafficPermitted="true">\n'
+    + '        <domain includeSubdomains="false">10.0.2.2</domain>\n        <domain includeSubdomains="false">localhost</domain>\n'
+    + '        <domain includeSubdomains="false">127.0.0.1</domain>\n    </domain-config>\n</network-security-config>\n')
+  done.push('android/app/src/main/res/xml/network_security_config.xml')
+}
+edit('android/app/src/main/AndroidManifest.xml', manifest => manifest.includes('android:networkSecurityConfig')
+  ? manifest : manifest.replace('<application', '<application\n        android:networkSecurityConfig="@xml/network_security_config"'))
 
 // the version and build number the store builds give (fastlane: -PversionCode, -PversionName), 1 and 1.0 otherwise
 edit('android/app/build.gradle', gradle => gradle

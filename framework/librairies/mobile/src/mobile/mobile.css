@@ -1,6 +1,6 @@
 /* The phone frame: the content stays inside the notch, the rounded corners and the home bar (viewport-fit=cover) */
 body.cq-site { padding-bottom: env(safe-area-inset-bottom); -webkit-tap-highlight-color: transparent; }
-.cq-nav { padding-top: env(safe-area-inset-top); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
+.cq-nav { height: calc(var(--cq-nav-height) + env(safe-area-inset-top)); padding-top: env(safe-area-inset-top); padding-left: max(16px, env(safe-area-inset-left)); padding-right: max(16px, env(safe-area-inset-right)); }
 .cq-app-actions { display: grid; gap: 12px; margin-top: 24px; }
 .cq-app-note { margin-top: 16px; font-size: 14px; color: var(--cq-color-text-muted); }
 /* the app's top bar keeps Sign out visible on phones (the site's links fold under Menu there) */
