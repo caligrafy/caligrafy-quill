@@ -8,7 +8,7 @@ when_to_use: The working directory contains caligrafer.php, framework/core/Contr
 
 Caligrafy Quill is "Describe it. Approve it. Ship it.": an idea turned into a complete app, built once and experienced everywhere. It is a PHP MVC framework (PHP >= 8.3, MySQL via PDO) with Pug templates (Phug), GUMP validation,
 a REST API built into every route, and Vue 3 client apps. It covers the whole way from zero to one in one project:
-start (`quickstart`), data, capabilities written once, every experience (pages, Vue and phone apps, REST, MCP agents),
+start (`quickstart`), data, capabilities written once, every experience (pages, Vue apps, iOS and Android apps, REST, MCP agents),
 people and trust, ship (tests, `doctor`, review), online (`Dockerfile`, `caligrafer cloud deploy`). When a user
 describes an idea, take it along these steps (the `idea` skill does all of them); when a feature works locally, the next step is the `deploy` skill. This skill is an index: read the reference file
 for the topic before writing code, and check [gotchas.md](reference/gotchas.md) whenever behavior surprises you.
@@ -22,7 +22,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Learning Caligrafy from zero (a user asks for a tutorial or course): the Caligrafy course builds Bookshelf capabilities first in 15 lessons, up to putting it online, each with a manual track and a With Claude track (point the user to it; its lessons match these docs) | https://github.com/caligrafy/caligrafy-quill-course/wiki |
 | Every Caligrafer command for a user (what it does, options, examples): quickstart, initialize, server, service, client, apps, sql, token, mcp, audit, doctor, upgrade, deploy, cloud | [18-caligrafer.md](reference/18-caligrafer.md) (exact behavior: the CLI table of api-reference.md) |
 | Exact class/helper signatures, lifecycle, CLI, Docker | [api-reference.md](reference/api-reference.md) |
-| Verified pitfalls and wiki errata (G1-G174) | [gotchas.md](reference/gotchas.md) |
+| Verified pitfalls and wiki errata (G1-G180) | [gotchas.md](reference/gotchas.md) |
 | Overview / README | [00-home-overview.md](reference/00-home-overview.md) |
 | Install, MVC concepts, naming conventions, file structure, caligrafer | [01-getting-started.md](reference/01-getting-started.md) |
 | Routes, params, `Route::page` options, method spoofing | [02-routing.md](reference/02-routing.md) |
@@ -36,6 +36,7 @@ Signatures in [api-reference.md](reference/api-reference.md) are copied from the
 | Authentication module | [09.1-authentication.md](reference/09.1-authentication.md) |
 | Production checklist, server-file protection, upgrading old projects, behavior changes | [09.5-security-and-upgrading.md](reference/09.5-security-and-upgrading.md) |
 | Build once: services, `#[Capability]`, REST (`Route::capability`), the JS client, personal access tokens, MCP for agents, audit log, design tokens | [13-build-once-services-capabilities-mcp.md](reference/13-build-once-services-capabilities-mcp.md), [api-reference.md](reference/api-reference.md) (Build once section), G50-G58 |
+| Phone and tablet apps (2.27.0): `php caligrafer.php mobile <name>` (iOS and Android with Capacitor), `Route::mobile` (signing in through the site, a token, CORS), push to phones through `Notify`, store builds (fastlane, GitHub Actions); the `mobile` skill does it all | [09.9.7-phone-and-tablet-apps.md](reference/09.9.7-phone-and-tablet-apps.md), [api-reference.md](reference/api-reference.md) (Phone and tablet apps, Notify), G175-G180, the `mobile` skill |
 | This Claude Code plugin (commands, agent, install) | [10-claude-code-plugin.md](reference/10-claude-code-plugin.md) |
 | Upgrading a project to 2.1 (build once): checklist, what is new, behavior changes, the legacy API key | [14-release-notes-2.1.0.md](reference/14-release-notes-2.1.0.md) |
 | **A user describes an application to build** (an idea, "build me an app that..."): describe it, approve it, ship it with the `idea` skill (the Quickstart with Claude) | [22-quickstart-with-claude.md](reference/22-quickstart-with-claude.md), the `idea` skill |

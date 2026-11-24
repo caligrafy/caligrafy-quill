@@ -1,0 +1,54 @@
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+lerna-debug.log*
+
+node_modules
+.DS_Store
+# dist/ is committed: the production image (Dockerfile) does not run npm, it serves the built app
+dist-ssr
+coverage
+*.local
+
+/cypress/videos/
+/cypress/screenshots/
+
+# Editor directories and files
+.vscode/*
+!.vscode/extensions.json
+.idea
+*.suo
+*.ntvs*
+*.njsproj
+*.sln
+*.sw?
+
+# The native projects (npx cap add ios / android) are committed; what their builds make and the signing secrets never are
+ios/App/build/
+ios/App/Pods/
+ios/DerivedData/
+android/.gradle/
+android/build/
+android/app/build/
+android/local.properties
+*.keystore
+*.jks
+*.p8
+*.p12
+*.mobileprovision
+*.ipa
+*.aab
+*.apk
+# Firebase's files of the app: written by the build from secrets (GOOGLE_SERVICES_JSON), kept out of git
+google-services.json
+GoogleService-Info.plist
+fastlane/report.xml
+fastlane/README.md
+fastlane/test_output/
+vendor/bundle/
+.bundle/
+build/

@@ -1,0 +1,91 @@
+# The store builds of public/__NAME__ (Caligrafy 2.27.0): iOS to TestFlight on a Mac of GitHub, Android to the
+# internal testing track of Google Play. Started by /caligrafy-quill:ship (gh workflow run mobile-__NAME__.yml) or from
+# the Actions tab. The secrets are the repository's (Settings, Secrets and variables, Actions): see the README of
+# public/__NAME__, Publishing.
+name: mobile-__NAME__
+
+on:
+  workflow_dispatch:
+    inputs:
+      platform:
+        description: 'ios, android or both'
+        required: true
+        default: both
+        type: choice
+        options: [both, ios, android]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: mobile-__NAME__
+  cancel-in-progress: false
+
+jobs:
+  ios:
+    if: inputs.platform != 'android'
+    runs-on: macos-15
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: public/__NAME__
+    env:
+      APPLE_TEAM_ID: ${{ secrets.APPLE_TEAM_ID }}
+      ASC_KEY_ID: ${{ secrets.ASC_KEY_ID }}
+      ASC_ISSUER_ID: ${{ secrets.ASC_ISSUER_ID }}
+      ASC_KEY_P8: ${{ secrets.ASC_KEY_P8 }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: public/__NAME__/package-lock.json
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: public/__NAME__
+      - run: npm ci
+      - run: npm run sync:ios
+      - run: bundle exec fastlane ios beta
+
+  android:
+    if: inputs.platform != 'ios'
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    defaults:
+      run:
+        working-directory: public/__NAME__
+    env:
+      ANDROID_KEYSTORE: ${{ secrets.ANDROID_KEYSTORE }}
+      ANDROID_KEYSTORE_PASSWORD: ${{ secrets.ANDROID_KEYSTORE_PASSWORD }}
+      ANDROID_KEY_ALIAS: ${{ secrets.ANDROID_KEY_ALIAS }}
+      ANDROID_KEY_PASSWORD: ${{ secrets.ANDROID_KEY_PASSWORD }}
+      PLAY_SERVICE_ACCOUNT: ${{ secrets.PLAY_SERVICE_ACCOUNT }}
+      PLAY_RELEASE_STATUS: ${{ vars.PLAY_RELEASE_STATUS }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: public/__NAME__/package-lock.json
+      - uses: actions/setup-java@v4
+        with:
+          distribution: temurin
+          java-version: '21'
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: '3.3'
+          bundler-cache: true
+          working-directory: public/__NAME__
+      # Firebase's file of the app (push on Android), when the repository has it as a secret
+      - name: google-services.json
+        env:
+          GOOGLE_SERVICES_JSON: ${{ secrets.GOOGLE_SERVICES_JSON }}
+        run: |
+          if [ -n "$GOOGLE_SERVICES_JSON" ]; then printf '%s' "$GOOGLE_SERVICES_JSON" > android/app/google-services.json; fi
+      - run: npm ci
+      - run: npm run sync:android
+      - run: bundle exec fastlane android beta

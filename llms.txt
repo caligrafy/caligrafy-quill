@@ -1,6 +1,6 @@
 # Caligrafy Quill
 
-> Caligrafy Quill is an open-source PHP MVC framework (PHP 8.3+, MySQL, Pug views, Vue 3 client apps, MIT) made for coding agents. You write each feature once as a capability (a `Caligrafy\Service` class with `#[Capability]`), and the framework serves it to web pages, forms, a REST API, a generated JS client for Vue apps, AI agents over MCP and Snap Cards. Its slogan is "Describe it. Approve it. Ship it.": with Claude Code, `/caligrafy-quill:idea` turns an idea into a complete app online at `https://<name>.caligrafy.com`.
+> Caligrafy Quill is an open-source PHP MVC framework (PHP 8.3+, MySQL, Pug views, Vue 3 client apps, MIT) made for coding agents. You write each feature once as a capability (a `Caligrafy\Service` class with `#[Capability]`), and the framework serves it to web pages, forms, a REST API, a generated JS client for Vue apps, iOS and Android apps (`php caligrafer.php mobile`, `Route::mobile`), AI agents over MCP and Snap Cards. Its slogan is "Describe it. Approve it. Ship it.": with Claude Code, `/caligrafy-quill:idea` turns an idea into a complete app online at `https://<name>.caligrafy.com`.
 
 Rules an agent must follow in a Caligrafy project:
 
@@ -10,7 +10,7 @@ Rules an agent must follow in a Caligrafy project:
 - A change to a table that already holds data is a migration (`php caligrafer.php migrate make <name>`).
 - Pug views are compiled to PHP, so strings join with `.`, never `+`.
 - Never put API keys or tokens in pages or bundles. Never print or commit `.env` secrets.
-- Exact signatures are in the API reference, and the verified pitfalls (G1-G174) are in the gotchas. Read them before writing code.
+- Exact signatures are in the API reference, and the verified pitfalls (G1-G180) are in the gotchas. Read them before writing code.
 
 A minimal capability (`application/services/Bookshelf/ListBooks.php`):
 
@@ -58,6 +58,7 @@ Served everywhere from `web.php`: `Route::page('/books', 'Bookshelf/books', ['da
 
 - [Views and page components](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/7.-Views.md): Pug layouts and the `cq-` page classes
 - [Snap Cards and the assistant](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Snap-Cards-and-the-Assistant.md): `Route::snap()`, every capability as a card
+- [Phone and tablet apps](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/9.9.7-Phone-and-Tablet-Apps.md): `php caligrafer.php mobile`, `Route::mobile`, push to phones, the App Store and Google Play
 - [Vue apps calling capabilities](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/9.7.3-Requests.md)
 - [Design styles](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Design-Styles.md): another look with one setting (`DESIGN_STYLE`)
 - [Putting it online](https://raw.githubusercontent.com/wiki/caligrafy/caligrafy-quill/Putting-it-Online.md): the production image, Caligrafy Cloud or your own server

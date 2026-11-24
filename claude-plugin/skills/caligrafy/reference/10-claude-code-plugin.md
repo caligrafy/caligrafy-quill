@@ -5,7 +5,7 @@
 
 Caligrafy Quill ships with its own **[Claude Code](https://code.claude.com) plugin**, `caligrafy-quill`, in the [`claude-plugin/`](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin) folder of every project. When you open a project in Claude Code, Claude knows the framework from its source: capabilities, the declarative routes, the query builder, models, Pug views, authentication, payments, Vue apps, bots, face detection, machine learning and the AI integrations. It builds the Caligrafy way, **build once, experience everywhere**: a feature becomes a capability, and every experience (pages, Vue apps, REST, AI agents) calls it. With `/caligrafy-quill:idea` it goes from your idea to an app online: **Describe it. Approve it. Ship it.**
 
-Current version: **1.38.3**, for Caligrafy Quill v2.26.3.
+Current version: **1.39.0**, for Caligrafy Quill v2.27.0.
 
 ## What the plugin gives Claude
 
@@ -19,6 +19,7 @@ Current version: **1.38.3**, for Caligrafy Quill v2.26.3.
 | Command | `/caligrafy-quill:new-app` | A client app in `public/<name>` (Vue as a library, a Vite SPA, a Watson bot, face detection, machine learning) and its routes |
 | Command | `/caligrafy-quill:server` | Starts, stops or checks the Docker development server |
 | Command | `/caligrafy-quill:db` | Runs SQL scripts and migrations, lists tables, runs queries |
+| Command | `/caligrafy-quill:mobile` | An iOS and Android app of the project (2.27.0): created, signed in through the site, with notifications, checked on a simulator, and published to TestFlight and Google Play; it walks you through the Apple and Google accounts |
 | Command | `/caligrafy-quill:design` | Restyles every page after a design style (`DESIGN_STYLE`), with one stylesheet |
 | Command | `/caligrafy-quill:ship` | Puts the project on GitHub and Caligrafy Cloud by itself |
 | Command | `/caligrafy-quill:deploy` | Checks the project is ready for production, then deploys it to Caligrafy Cloud or prepares it for your own server |
@@ -157,6 +158,13 @@ First a read-only check, point by point: Caligrafy Quill 2.4.0 or later, `Docker
 For an app on Caligrafy Cloud that you offered on its page. Claude reads the whole code, runs the app on your computer as a separate Docker project with invented data, and takes screenshots of its key features (5 at most, all different, 1280x800). It writes the title, the description, the prompt that recreates the app with Caligrafy and an estimated price window from a short market study into one private file, `.caligrafy/marketplace.json`, then sends it with `php caligrafer.php cloud submit` and redeploys the app. It often takes 15 to 30 minutes. Caligrafy reviews the listing, sets the final price and publishes it; you earn 25% of every sale. See [the marketplace](https://github.com/caligrafy/caligrafy-quill/wiki/Putting-it-Online#marketplace).
 ```text
 /caligrafy-quill:marketplace myapp
+```
+
+### `/caligrafy-quill:mobile [name] [publish]`
+Gives the project its iOS and Android app (Caligrafy Quill 2.27.0+). Claude agrees the app id with you (it is for life), runs `php caligrafer.php mobile`, adds `Route::mobile` to `web.php`, builds the screens on your capabilities and checks them in a browser at phone size and on a simulator, then sets up notifications. With `publish` it goes through what the stores need with you, one step at a time: the Apple Developer and Google Play accounts, the apps in App Store Connect and Play Console, the keys, and the repository's secrets, which you type yourself. Then `/caligrafy-quill:ship` sends each release to TestFlight and Google Play. See [Phone and tablet apps](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.7-Phone-and-Tablet-Apps).
+```text
+/caligrafy-quill:mobile bingo
+/caligrafy-quill:mobile bingo publish
 ```
 
 ### `/caligrafy-quill:update [version]`

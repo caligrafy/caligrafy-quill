@@ -1,0 +1,10 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 203 203" role="img" aria-label="Caligrafy">
+  <rect width="203" height="203" fill="#000"/>
+  <g fill="#fff">
+    <rect x="50" y="39" width="63" height="17"/>
+    <rect x="50" y="39" width="16" height="119"/>
+    <rect x="50" y="141" width="63" height="17"/>
+    <rect x="81" y="88" width="56" height="18"/>
+    <rect x="137" y="39" width="16" height="119"/>
+  </g>
+</svg>

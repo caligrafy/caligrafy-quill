@@ -6,6 +6,8 @@
 **Notifications** reach your users when none of your pages are open: a book due tomorrow, a reservation ready, an
 order shipped. One call, `Caligrafy\Notify::user()`, sends the message on every channel the user turned on: **web push**
 (a notification on their phone or computer, browser closed) and **email** (an address they confirmed). Since 2.15.0.
+Since 2.27.0 it also reaches the person's iPhones, iPads and Android phones when the project has its own app: see
+[Phone and tablet apps](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.7-Phone-and-Tablet-Apps#notifications).
 
 **Since 2.26.0** web push needs `php caligrafer.php add push` once (web-push and an HTTP client); without it, emails still go out and push is skipped with a message in the log. `php caligrafer.php doctor` says when the VAPID keys are set but the SDK is missing.
 

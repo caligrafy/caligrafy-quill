@@ -22,7 +22,7 @@ abstract class CaligrafyNotifyService extends Service
     }
 }
 
-#[Capability(name: 'notify_status', description: 'Your notifications: the channels this app offers (push, email), the browsers you turned push on in, your email address and whether it is confirmed, and what is on.', readOnly: true, mcp: false)]
+#[Capability(name: 'notify_status', description: 'Your notifications: the channels this app offers (push, email), the browsers and phones you turned push on in, your email address and whether it is confirmed, and what is on.', readOnly: true, mcp: false)]
 class CaligrafyNotifyStatus extends CaligrafyNotifyService
 {
     public function handle(array $input, Context $context)
@@ -57,6 +57,39 @@ class CaligrafyNotifyUnsubscribe extends CaligrafyNotifyService
     {
         $me = $this->me($context);
         Notify::unsubscribe($me, $input['endpoint']);
+        return Notify::status($me);
+    }
+}
+
+#[Capability(name: 'notify_register_device', description: 'Turns push notifications on in this phone app (2.27.0): saves the token Apple (apns, iPhone and iPad) or Firebase (fcm, Android) gave the app, until you sign out of it.', mcp: false)]
+class CaligrafyNotifyRegisterDevice extends CaligrafyNotifyService
+{
+    public $rules = array('provider' => 'required|contains_list,apns;fcm', 'token' => 'required|max_len,512', 'name' => 'max_len,100');
+    public $descriptions = array('provider' => 'apns (iOS) or fcm (Android)', 'token' => 'The push token the phone gave the app', 'name' => 'The phone, as its owner calls it');
+
+    public function handle(array $input, Context $context)
+    {
+        $me = $this->me($context);
+        if (!Notify::deviceConfigured($input['provider'])) {
+            throw ServiceError::conflict($input['provider'] === 'apns' ? 'Push to iPhones is not set up on this app (APNS_KEY, APNS_KEY_ID, APNS_TEAM_ID, APNS_TOPIC)'
+                : 'Push to Android is not set up on this app (FCM_SERVICE_ACCOUNT)');
+        }
+        Notify::registerDevice($me, $input['provider'], $input['token'], $context->token['id'] ?? null, $input['name'] ?? '');
+        Notify::prefer($me, 'push', true);
+        return Notify::status($me);
+    }
+}
+
+#[Capability(name: 'notify_forget_device', description: 'Turns push notifications off in one phone app (its push token): your other phones and browsers keep them.', mcp: false)]
+class CaligrafyNotifyForgetDevice extends CaligrafyNotifyService
+{
+    public $rules = array('token' => 'required|max_len,512');
+    public $descriptions = array('token' => 'The push token the phone gave the app');
+
+    public function handle(array $input, Context $context)
+    {
+        $me = $this->me($context);
+        Notify::forgetDevice($me, $input['token']);
         return Notify::status($me);
     }
 }

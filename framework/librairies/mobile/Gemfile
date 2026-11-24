@@ -1,0 +1,4 @@
+# fastlane: the store builds of this app (fastlane/Fastfile). bundle install, then bundle exec fastlane ios beta
+source 'https://rubygems.org'
+
+gem 'fastlane', '~> 2.241'

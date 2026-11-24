@@ -1,5 +1,6 @@
 -- Framework tables of Caligrafy Quill: personal access tokens, the audit log, the runs of scheduled jobs and
--- notifications (push subscriptions, confirmed emails, choices, the log).
+-- notifications (push subscriptions, confirmed emails, choices, the log), the sign-in codes and push registrations of
+-- the phone apps (2.27.0).
 -- Created by `php caligrafer.php platform install` (safe to run again: IF NOT EXISTS).
 
 CREATE TABLE IF NOT EXISTS `caligrafy_tokens` (
@@ -211,4 +212,35 @@ CREATE TABLE IF NOT EXISTS `caligrafy_snap_turns` (
     `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
     PRIMARY KEY (`id`),
     KEY `caligrafy_snap_turns_user` (`user_id`, `conversation`, `id`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- The phone apps (2.27.0, Caligrafy\Mobile): a one-time sign-in code (its hash), for 5 minutes
+CREATE TABLE IF NOT EXISTS `caligrafy_mobile_codes` (
+    `code_hash` CHAR(64) NOT NULL,
+    `user_id` INT UNSIGNED NOT NULL,
+    `challenge` VARCHAR(64) NOT NULL,
+    `device` VARCHAR(100) NOT NULL DEFAULT '',
+    `created_at` DATETIME NOT NULL,
+    `expires_at` DATETIME NOT NULL,
+    PRIMARY KEY (`code_hash`),
+    KEY `caligrafy_mobile_codes_expiry` (`expires_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
+-- Push to the phone apps (2.27.0, Caligrafy\Notify): a device's token from Apple (apns) or Firebase (fcm), and the
+-- app token it signed in with (signing out forgets it)
+CREATE TABLE IF NOT EXISTS `caligrafy_push_devices` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` VARCHAR(64) NOT NULL,
+    `provider` VARCHAR(8) NOT NULL,
+    `device_token` VARCHAR(512) NOT NULL,
+    `token_hash` CHAR(64) NOT NULL,
+    `app_token_id` INT UNSIGNED NULL,
+    `name` VARCHAR(100) NULL,
+    `created_at` DATETIME NOT NULL,
+    `last_success_at` DATETIME NULL,
+    `failures` INT NOT NULL DEFAULT 0,
+    PRIMARY KEY (`id`),
+    UNIQUE KEY `caligrafy_push_devices_token` (`token_hash`),
+    KEY `caligrafy_push_devices_user` (`user_id`),
+    KEY `caligrafy_push_devices_app_token` (`app_token_id`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;

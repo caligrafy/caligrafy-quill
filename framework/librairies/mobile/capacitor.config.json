@@ -1,0 +1,17 @@
+{
+  "appId": "__APP_ID__",
+  "appName": "__APP_NAME__",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "PushNotifications": {
+      "presentationOptions": ["badge", "sound", "alert"]
+    },
+    "SplashScreen": {
+      "launchShowDuration": 500,
+      "backgroundColor": "#ffffff"
+    }
+  }
+}

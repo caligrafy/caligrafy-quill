@@ -1124,7 +1124,7 @@ qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per messag
 
 qa_test('the generated JS client calls the same capabilities from Node with a token', function () use ($WRITER, $BASE, $ROOT) {
     @mkdir("$ROOT/qa/tmp", 0777, true);
-    qa_contains('24 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));   // the app's 13, the 2 of the declarative routes' fixtures (2.19.0), qa_zip_files (2.22.0), the framework's 7 notify_* and queue_work (2.18.0)
+    qa_contains('26 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));   // the app's 13, the 2 of the declarative routes' fixtures (2.19.0), qa_zip_files (2.22.0), the framework's 9 notify_* (2 for the phone apps, 2.27.0) and queue_work (2.18.0)
     $script = "$ROOT/qa/tmp/client-check.mjs";
     file_put_contents($script, "import { configure, listBooks, createBook, getBook, CapabilityError } from './capabilities.mjs'\n"
         . "configure({ baseUrl: process.argv[2], token: process.argv[3] })\n"
@@ -1629,6 +1629,137 @@ qa_test('Route::download as zip: the files a capability lists, under its root on
     @unlink($file);
     qa_equals(404, $b->get('/qa/files.zip?none=1')['status'], 'no file: the missing page');
     qa_contains('/login', (new QaBrowser())->get('/qa/files.zip')['location'], 'a visitor signs in first');
+});
+
+// ---- the phone apps (2.27.0, Route::mobile) ----------------------------------------------------------------------
+
+// a PKCE pair: the verifier the app keeps, the challenge it gives the sign-in page
+function qa_pkce()
+{
+    $verifier = rtrim(strtr(base64_encode(random_bytes(32)), '+/', '-_'), '=');
+    return [$verifier, rtrim(strtr(base64_encode(hash('sha256', $verifier, true)), '+/', '-_'), '=')];
+}
+
+// signs a browser's user in to the app: the code the consent page sends back to the app, for a challenge
+function qa_mobile_code(QaBrowser $b, $challenge, $state = 'qa-state-0123456789')
+{
+    $query = http_build_query(['scheme' => 'com.caligrafy.qa', 'challenge' => $challenge, 'method' => 'S256', 'state' => $state, 'device' => 'QA Phone']);
+    $token = $b->token('/mobile/authorize?' . $query);
+    $r = $b->post('/mobile/authorize', ['_token' => $token, 'scheme' => 'com.caligrafy.qa', 'challenge' => $challenge, 'state' => $state, 'device' => 'QA Phone', 'decision' => 'allow']);
+    qa_equals(302, $r['status'], substr(strip_tags($r['body']), 0, 300));
+    qa_contains('com.caligrafy.qa://auth?state=' . $state . '&code=', $r['location']);
+    parse_str((string) parse_url($r['location'], PHP_URL_QUERY), $q);
+    return $q['code'] ?? '';
+}
+
+qa_test('Route::mobile: CORS for the app and the origins it names, never with credentials; another site\'s preflight fails', function () {
+    $b = new QaBrowser();
+    foreach (['capacitor://localhost', 'https://localhost', 'http://localhost:5173', 'https://app.quillqa.example'] as $origin) {
+        $r = $b->request('OPTIONS', '/capabilities/notify_status', ['headers' => ["Origin: $origin", 'Access-Control-Request-Method: POST', 'Access-Control-Request-Headers: authorization,content-type']]);
+        qa_equals(204, $r['status'], "preflight of $origin");
+        qa_assert(preg_match('#^Access-Control-Allow-Origin:\s*' . preg_quote($origin, '#') . '\s*$#mi', $r['headers']) === 1, $r['headers']);
+        qa_assert(stripos($r['headers'], 'Access-Control-Allow-Headers: Authorization') !== false, $r['headers']);
+        qa_assert(stripos($r['headers'], 'Access-Control-Allow-Credentials') === false, 'never with credentials');
+    }
+    $r = $b->request('OPTIONS', '/capabilities/notify_status', ['headers' => ['Origin: https://evil.example', 'Access-Control-Request-Method: POST']]);
+    qa_equals(403, $r['status'], 'a preflight that fails: the browser sends nothing');
+    qa_assert(stripos($r['headers'], 'Access-Control-Allow-Origin: https://evil.example') === false, 'never its origin');
+    qa_assert(stripos($r['headers'], 'Access-Control-Allow-Headers: Authorization') === false, 'never the Authorization header');
+    $r = $b->get('/capabilities', ['headers' => ['Accept: application/json', 'Origin: capacitor://localhost']]);
+    qa_assert(preg_match('#^Access-Control-Allow-Origin:\s*capacitor://localhost\s*$#mi', $r['headers']) === 1, 'a GET of the app gets it too');
+    qa_assert(preg_match('#^Vary:.*Origin#mi', $r['headers']) === 1, 'Vary: Origin');
+});
+
+qa_test('Route::mobile: the consent page needs a well-formed request, a signed-in person, and comes back to itself after signing in', function () {
+    list(, $challenge) = qa_pkce();
+    $good = http_build_query(['scheme' => 'com.caligrafy.qa', 'challenge' => $challenge, 'state' => 'qa-state-0123456789', 'device' => 'QA Phone']);
+    $b = new QaBrowser();
+    qa_equals(400, $b->get('/mobile/authorize?' . http_build_query(['scheme' => 'com.evil.app', 'challenge' => $challenge, 'state' => 'qa-state-0123456789']))['status'], 'another app scheme');
+    qa_equals(400, $b->get('/mobile/authorize?' . http_build_query(['scheme' => 'com.caligrafy.qa', 'challenge' => 'short', 'state' => 'qa-state-0123456789']))['status'], 'no PKCE challenge');
+    qa_equals(400, $b->get('/mobile/authorize?' . http_build_query(['redirect' => 'http://evil.example', 'challenge' => $challenge, 'state' => 'qa-state-0123456789']))['status'], 'a development redirect to another site');
+    $r = $b->get('/mobile/authorize?' . $good);
+    qa_equals(302, $r['status']);
+    qa_contains('/login?return=' . rawurlencode('/mobile/authorize?' . $good), $r['location'], 'a visitor signs in, then comes back');
+    $b = qa_auth_user('mobileqa');
+    $r = $b->get('/mobile/authorize?' . $good);
+    qa_equals(200, $r['status'], substr(strip_tags($r['body']), 0, 300));
+    qa_contains('Sign in on QA Phone?', $r['body']);
+    qa_contains('(mobileqa)', $r['body']);
+    qa_contains("name='_token'", $r['body']);
+    // the answer needs the session's CSRF token: a JSON post from another site cannot get a code
+    $r = qa_json('POST', '/mobile/authorize', ['scheme' => 'com.caligrafy.qa', 'challenge' => $challenge, 'state' => 'qa-state-0123456789', 'decision' => 'allow'], null, $b);
+    qa_equals(403, $r['status']);
+    $r = $b->post('/mobile/authorize', ['_token' => $b->token('/mobile/authorize?' . $good), 'scheme' => 'com.caligrafy.qa', 'challenge' => $challenge, 'state' => 'qa-state-0123456789', 'decision' => 'deny']);
+    qa_equals('com.caligrafy.qa://auth?state=qa-state-0123456789&error=access_denied', $r['location'], 'Not now');
+});
+
+qa_test('Route::mobile: a code is traded once, with its PKCE verifier only, for a token of that person; signing out revokes it', function () {
+    $b = qa_auth_user('mobileqa2');
+    list($verifier, $challenge) = qa_pkce();
+    $code = qa_mobile_code($b, $challenge);
+    qa_equals(1, (int) qa_sql("SELECT COUNT(*) FROM caligrafy_mobile_codes WHERE code_hash = '" . hash('sha256', $code) . "'"), 'only the hash is kept');
+    list($other) = qa_pkce();
+    $r = qa_json('POST', '/mobile/token', ['code' => $code, 'verifier' => $other]);
+    qa_equals(401, $r['status'], 'another verifier');
+    qa_equals(401, qa_json('POST', '/mobile/token', ['code' => $code, 'verifier' => $verifier])['status'], 'the code was used by the wrong try: gone');
+    $code = qa_mobile_code($b, $challenge);
+    $r = qa_json('POST', '/mobile/token', ['code' => $code, 'verifier' => $verifier]);
+    qa_equals(200, $r['status'], $r['body']);
+    $token = $r['json']['data']['token'] ?? '';
+    qa_assert(preg_match('/^cq_\d+_[0-9a-f]{40}$/', $token) === 1, 'a personal access token');
+    qa_equals('mobileqa2', $r['json']['data']['user']['username']);
+    // the site's own time zone: within a day of 30 days from now (90 by default)
+    qa_assert(abs(strtotime($r['json']['data']['expires_at']) - (time() + 30 * 86400)) < 86400, "the 'days' option: " . $r['json']['data']['expires_at']);
+    qa_equals('Mobile: QA Phone', qa_sql("SELECT name FROM caligrafy_tokens WHERE id = " . (int) explode('_', $token)[1]));
+    qa_equals(401, qa_json('POST', '/mobile/token', ['code' => $code, 'verifier' => $verifier])['status'], 'a code works once');
+    // the app calls as that person, with no cookie and no CSRF token
+    $r = qa_json('GET', '/mobile/session', null, $token);
+    qa_equals('mobileqa2', $r['json']['data']['user']['username'] ?? null, $r['body']);
+    $r = qa_json('POST', '/capabilities/notify_status', [], $token, null, ['Origin: capacitor://localhost']);
+    qa_equals(200, $r['status'], $r['body']);
+    qa_equals(true, $r['json']['data']['push']['apns'], 'Apple push is set up in the QA run');
+    $r = qa_json('POST', '/mobile/signout', [], $token);
+    qa_equals(true, $r['json']['data']['signed_out'] ?? null);
+    qa_equals(401, qa_json('GET', '/mobile/session', null, $token)['status'], 'signed out: the token no longer works');
+    qa_equals(401, qa_json('POST', '/capabilities/notify_status', [], $token)['status']);
+});
+
+qa_test('Notify to phones: a device registers through the app, Apple and Firebase get the message, a gone device is forgotten, signing out forgets it', function () {
+    $b = qa_auth_user('pushphoneqa');
+    list($verifier, $challenge) = qa_pkce();
+    $token = qa_json('POST', '/mobile/token', ['code' => qa_mobile_code($b, $challenge), 'verifier' => $verifier])['json']['data']['token'] ?? '';
+    qa_assert($token !== '', 'signed in');
+    $user = qa_sql("SELECT id FROM users WHERE username = 'pushphoneqa'");
+    $apple = str_repeat('ab', 32);
+    $r = qa_json('POST', '/capabilities/notify_register_device', ['provider' => 'apns', 'token' => strtoupper($apple), 'name' => 'QA iPhone'], $token);
+    qa_assert(in_array($r['status'], [200, 201], true), $r['status'] . ' ' . $r['body']);
+    qa_equals(1, $r['json']['data']['push']['devices']);
+    qa_json('POST', '/capabilities/notify_register_device', ['provider' => 'fcm', 'token' => 'fcm-qa-token:APA91bQAQAQAQAQAQAQAQ'], $token);
+    qa_json('POST', '/capabilities/notify_register_device', ['provider' => 'apns', 'token' => 'dead' . str_repeat('0', 60)], $token);
+    $bad = qa_json('POST', '/capabilities/notify_register_device', ['provider' => 'apns', 'token' => 'not-hex'], $token);
+    qa_equals(422, $bad['status'], $bad['body']);
+    qa_equals(3, (int) qa_sql("SELECT COUNT(*) FROM caligrafy_push_devices WHERE user_id = '$user'"));
+    qa_in_web('@unlink("/tmp/qa-pushes.log");');
+    $sent = qa_cli("notify test $user");
+    qa_contains('"push": 2', $sent, 'Apple and Firebase took it, the gone iPhone did not');
+    qa_equals(2, (int) qa_sql("SELECT COUNT(*) FROM caligrafy_push_devices WHERE user_id = '$user'"), 'the gone device is forgotten');
+    $log = array_map('json_decode', array_filter(explode("\n", qa_in_web('echo @file_get_contents("/tmp/qa-pushes.log");'))));
+    $apns = array_values(array_filter($log, function ($e) { return strpos($e->path, '/3/device/') === 0; }))[0] ?? null;
+    qa_assert($apns !== null, 'Apple got it');
+    qa_equals('/3/device/' . $apple, $apns->path, 'the token, in lowercase');
+    qa_equals('com.caligrafy.qa', $apns->headers->{'apns-topic'});
+    qa_equals('alert', $apns->headers->{'apns-push-type'});
+    $jwt = explode('.', substr($apns->headers->authorization, 7));
+    qa_equals(['alg' => 'ES256', 'kid' => 'QAKEY12345'], json_decode(base64_decode(strtr($jwt[0], '-_', '+/')), true));
+    qa_equals(64, strlen(base64_decode(strtr($jwt[2], '-_', '+/') . '==')), 'an ES256 signature: R and S, 32 bytes each');
+    qa_equals('Notifications work', $apns->body->aps->alert->title);
+    $fcm = array_values(array_filter($log, function ($e) { return strpos($e->path, '/v1/projects/quillqa/') === 0; }))[0] ?? null;
+    qa_assert($fcm !== null, 'Firebase got it');
+    qa_equals('Bearer qa-google-token', $fcm->headers->authorization, 'the access token of the service account');
+    qa_equals('fcm-qa-token:APA91bQAQAQAQAQAQAQAQ', $fcm->body->message->token);
+    qa_equals('Notifications work', $fcm->body->message->notification->title);
+    qa_json('POST', '/mobile/signout', [], $token);
+    qa_equals(0, (int) qa_sql("SELECT COUNT(*) FROM caligrafy_push_devices WHERE user_id = '$user'"), 'signing out forgets the phones of that sign-in');
 });
 
 qa_summary();

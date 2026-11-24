@@ -212,6 +212,7 @@ class Doctor
         $this->webApp();
         $this->processes();
         $this->settingsTraps();
+        $this->mobileApps();
 
         // DESIGN_STYLE: the selected design style and its override stylesheet (php caligrafer.php design)
         list($status, $message, $fix) = Designs::status($this->root);
@@ -281,6 +282,47 @@ class Doctor
         } elseif (strtolower($this->env('APP_ENV')) !== 'production') {
             $this->add('project', 'Google tag', 'WARN', 'GOOGLE_ANALYTICS_ID is set, but the layout prints the tag only when APP_ENV=production (now ' . ($this->env('APP_ENV') ?: 'empty') . ')',
                 'nothing to do on a computer used for development; on the live server, APP_ENV=production');
+        }
+    }
+
+    /**
+     * The phone apps (2.27.0, php caligrafer.php mobile): each public/<name>/capacitor.config.json has a Route::mobile
+     * whose scheme is its appId (else its sign-in has nowhere to come back), Route::capabilities (what it calls), and
+     * its store builds call https. Reported only when the project has one
+     */
+    private function mobileApps()
+    {
+        $web = (string) @file_get_contents($this->root . '/application/config/routing/web.php');
+        $active = preg_replace('#^\s*(//|\#).*$#m', '', $web);   // commented-out lines declare nothing
+        foreach (glob($this->root . '/public/*/capacitor.config.json') ?: array() as $file) {
+            $folder = 'public/' . basename(dirname($file));
+            $config = json_decode((string) file_get_contents($file), true);
+            $id = strtolower((string) ($config['appId'] ?? ''));
+            if ($id === '') {
+                $this->add('project', "Phone app $folder", 'WARN', 'capacitor.config.json has no appId', 'php caligrafer.php mobile <name> writes it: the app id, such as com.example.books');
+                continue;
+            }
+            if (!preg_match('/Route::mobile\s*\(/', $active)) {
+                $this->add('project', "Phone app $folder", 'WARN', "no Route::mobile in web.php: the app ($id) cannot sign anyone in",
+                    "after Route::auth(): Route::mobile(['scheme' => '$id']);");
+                continue;
+            }
+            if (stripos($active, "'$id'") === false && stripos($active, "\"$id\"") === false) {
+                $this->add('project', "Phone app $folder", 'WARN', "Route::mobile does not name $id: the sign-in page refuses this app",
+                    "Route::mobile(['scheme' => '$id']) (or a list with it)");
+                continue;
+            }
+            if (!preg_match('/Route::capabilities\s*\(/', $active)) {
+                $this->add('project', "Phone app $folder", 'WARN', 'no Route::capabilities in web.php: the app has nothing to call', "Route::capabilities('/capabilities');");
+                continue;
+            }
+            $production = (string) @file_get_contents(dirname($file) . '/.env.production');
+            if (preg_match('/^VITE_API_ROUTE=(.*)$/m', $production, $m) && !preg_match('#^https://#', trim($m[1]))) {
+                $this->add('project', "Phone app $folder", 'WARN', 'its store builds call ' . (trim($m[1]) ?: 'no address') . ': Apple and Google refuse plain http',
+                    "VITE_API_ROUTE=https://<the site online> in $folder/.env.production");
+                continue;
+            }
+            $this->add('project', "Phone app $folder", 'OK', "$id signs in through Route::mobile");
         }
     }
 

@@ -19,6 +19,10 @@ use Minishlink\WebPush\WebPush;
  * - push: each browser the user subscribed (caligrafy_push_subscriptions), with the VAPID keys of .env (php caligrafer.php
  *   notify keys), 5 seconds per push service, the message kept 24 hours for a device that is off; a 404 or 410 deletes
  *   the subscription, so do 5 failures in a row
+ * - push to the phone apps (2.27.0, php caligrafer.php mobile): each iPhone or iPad the user turned it on in, through
+ *   Apple (APNS_KEY, APNS_KEY_ID, APNS_TEAM_ID, APNS_TOPIC), and each Android device through Firebase
+ *   (FCM_SERVICE_ACCOUNT), registered in caligrafy_push_devices (notify_register_device); a device Apple or Firebase
+ *   says is gone is deleted, so is one after 5 failures in a row. Signing out of the app (/mobile/signout) forgets it
  * - email: the user's confirmed address only (caligrafy_notify_emails), through MAIL_*, with a one-click unsubscribe link
  *   (a signed URL) and the List-Unsubscribe headers
  * A delivery failure never throws; a bad message throws ServiceError::invalid. At most NOTIFY_RATE_PER_HOUR messages per
@@ -29,6 +33,8 @@ class Notify
 {
     const CHANNELS = array('push', 'email');
     const SUBSCRIPTIONS = 'caligrafy_push_subscriptions';
+    const DEVICES = 'caligrafy_push_devices';
+    const PROVIDERS = array('apns', 'fcm');
     const EMAILS = 'caligrafy_notify_emails';
     const PREFS = 'caligrafy_notify_prefs';
     const LOG = 'caligrafy_notifications';
@@ -44,6 +50,9 @@ class Notify
 
     /** @var callable|null replaces the mail sender in tests: fn($to, $subject, $html, array $headers) => bool */
     public static $mailSender = null;
+
+    /** @var callable|null replaces the phone sender in tests: fn(array $device, array $message) => [int status, string reason] */
+    public static $deviceSender = null;
 
     // ---------------------------------------------------------------------------------------------------------------
     // Sending
@@ -73,7 +82,7 @@ class Notify
         $offered = self::offered();
         $email = 'off';
         if (in_array('push', $offered, true) && self::enabled($userId, 'push')) {
-            $result['push'] = self::push($userId, $message);
+            $result['push'] = self::push($userId, $message) + self::pushDevices($userId, $message);
         }
         if (in_array('email', $offered, true) && self::enabled($userId, 'email')) {
             $email = self::email($userId, $message);
@@ -89,7 +98,7 @@ class Notify
      */
     public static function forget($userId)
     {
-        foreach (array(self::SUBSCRIPTIONS, self::EMAILS, self::PREFS, self::LOG) as $table) {
+        foreach (array(self::SUBSCRIPTIONS, self::DEVICES, self::EMAILS, self::PREFS, self::LOG) as $table) {
             try { Database::execute("DELETE FROM $table WHERE user_id = ?", array((string) $userId)); } catch (\Throwable $e) {}
         }
     }
@@ -215,6 +224,271 @@ class Notify
             $statuses[$report->getEndpoint()] = $response ? $response->getStatusCode() : 0;
         }
         return $statuses;
+    }
+
+    // ---------------------------------------------------------------------------------------------------------------
+    // Push to the phone apps (2.27.0)
+
+    /**
+     * Whether a phone provider is set up: apns (APNS_KEY, APNS_KEY_ID, APNS_TEAM_ID, APNS_TOPIC) or fcm (FCM_SERVICE_ACCOUNT)
+     */
+    public static function deviceConfigured($provider)
+    {
+        if ($provider === 'apns') {
+            foreach (array('APNS_KEY', 'APNS_KEY_ID', 'APNS_TEAM_ID', 'APNS_TOPIC') as $name) {
+                if (trim((string) getenv($name)) === '') return false;
+            }
+            return true;
+        }
+        return $provider === 'fcm' && self::serviceAccount() !== null;
+    }
+
+    /**
+     * Saves a phone's push token for a user (one token belongs to one user): apns (an iPhone, iPad) or fcm (Android)
+     * @param int|null $appTokenId the app token it signed in with (Context::$token['id']): signing out forgets the device
+     */
+    public static function registerDevice($userId, $provider, $deviceToken, $appTokenId = null, $name = '')
+    {
+        $provider = strtolower(trim((string) $provider));
+        $deviceToken = trim((string) $deviceToken);
+        $fields = array();
+        if (!in_array($provider, self::PROVIDERS, true)) $fields['provider'] = 'apns (iOS) or fcm (Android)';
+        elseif ($provider === 'apns' && !preg_match('/^[0-9a-fA-F]{64,200}$/', $deviceToken)) $fields['token'] = 'The device token Apple gave the app (hexadecimal)';
+        elseif ($provider === 'fcm' && !preg_match('/^[A-Za-z0-9_:\-.]{20,4096}$/', $deviceToken)) $fields['token'] = 'The registration token Firebase gave the app';
+        if (strlen($deviceToken) > 512) $fields['token'] = 'At most 512 characters';
+        if ($fields) throw ServiceError::invalid($fields);
+        if ($provider === 'apns') $deviceToken = strtolower($deviceToken);
+        Database::execute('INSERT INTO ' . self::DEVICES . ' (user_id, provider, device_token, token_hash, app_token_id, name, created_at, failures) VALUES (?, ?, ?, ?, ?, ?, ?, 0) '
+            . 'ON DUPLICATE KEY UPDATE user_id = VALUES(user_id), provider = VALUES(provider), app_token_id = VALUES(app_token_id), name = VALUES(name), failures = 0',
+            array((string) $userId, $provider, $deviceToken, hash('sha256', $deviceToken), $appTokenId !== null ? (int) $appTokenId : null,
+                mb_substr(trim((string) $name), 0, 100) ?: null, date('Y-m-d H:i:s')));
+        return true;
+    }
+
+    /**
+     * Deletes one of the user's phones (only theirs): whether one was deleted
+     */
+    public static function forgetDevice($userId, $deviceToken)
+    {
+        $token = trim((string) $deviceToken);
+        Database::execute('DELETE FROM ' . self::DEVICES . ' WHERE user_id = ? AND token_hash IN (?, ?)', array((string) $userId, hash('sha256', $token), hash('sha256', strtolower($token))));
+        return Database::rowCount() > 0;
+    }
+
+    /**
+     * Forgets the phones that signed in with an app token (its sign-out)
+     */
+    public static function forgetDevicesOfToken($appTokenId)
+    {
+        try { Database::execute('DELETE FROM ' . self::DEVICES . ' WHERE app_token_id = ?', array((int) $appTokenId)); } catch (\Throwable $e) {}
+    }
+
+    /**
+     * Sends the message to each of the user's phones: how many accepted it
+     */
+    private static function pushDevices($userId, array $message)
+    {
+        try {
+            $rows = Database::toArray(Database::execute('SELECT * FROM ' . self::DEVICES . ' WHERE user_id = ?', array((string) $userId))) ?: array();
+        } catch (\Throwable $e) {
+            return 0;     // a project created before 2.27.0 without the table: php caligrafer.php platform install
+        }
+        $sent = 0;
+        foreach ($rows as $row) {
+            if (!self::$deviceSender && !self::deviceConfigured($row['provider'])) continue;
+            list($status, $reason) = self::$deviceSender ? call_user_func(self::$deviceSender, $row, $message) : self::sendDevice($row, $message);
+            if ($status >= 200 && $status < 300) {
+                $sent++;
+                Database::execute('UPDATE ' . self::DEVICES . ' SET last_success_at = ?, failures = 0 WHERE id = ?', array(date('Y-m-d H:i:s'), $row['id']));
+            } elseif (self::deviceGone($row['provider'], (int) $status, (string) $reason) || (int) $row['failures'] + 1 >= self::MAX_FAILURES) {
+                Database::execute('DELETE FROM ' . self::DEVICES . ' WHERE id = ?', array($row['id']));
+            } else {
+                Database::execute('UPDATE ' . self::DEVICES . ' SET failures = failures + 1 WHERE id = ?', array($row['id']));
+                error_log("Caligrafy\\Notify: {$row['provider']} answered $status $reason");
+            }
+        }
+        return $sent;
+    }
+
+    /**
+     * Whether Apple or Firebase said the device no longer takes notifications (the app was removed, the token changed)
+     */
+    public static function deviceGone($provider, $status, $reason)
+    {
+        if ($provider === 'apns') {
+            return $status === 410 || ($status === 400 && in_array($reason, array('BadDeviceToken', 'DeviceTokenNotForTopic'), true));
+        }
+        return $status === 404 || in_array($reason, array('UNREGISTERED', 'NOT_FOUND'), true)
+            || ($status === 400 && strpos($reason, 'registration token') !== false);
+    }
+
+    /**
+     * What Apple or Firebase receives for a message (their JSON), for a device
+     */
+    public static function devicePayload($provider, array $message)
+    {
+        $url = $message['url'] !== '' ? self::absolute($message['url']) : (string) self::base();
+        if ($provider === 'apns') {
+            $aps = array('alert' => array('title' => $message['title'], 'body' => $message['body']), 'sound' => 'default');
+            if ($message['tag'] !== '') $aps['thread-id'] = $message['tag'];
+            return array('aps' => $aps, 'url' => $url, 'tag' => $message['tag']);
+        }
+        $android = array('priority' => $message['urgency'] === 'high' ? 'HIGH' : 'NORMAL', 'ttl' => self::TTL . 's');
+        if ($message['tag'] !== '') $android['collapse_key'] = substr($message['tag'], 0, 64);
+        return array('notification' => array('title' => $message['title'], 'body' => $message['body']),
+            'data' => array('url' => $url, 'tag' => $message['tag']), 'android' => $android);
+    }
+
+    private static function sendDevice(array $row, array $message)
+    {
+        try {
+            return $row['provider'] === 'apns' ? self::sendApns($row, $message) : self::sendFcm($row, $message);
+        } catch (\Throwable $e) {
+            error_log('Caligrafy\\Notify: ' . $e->getMessage());
+            return array(0, 'error');
+        }
+    }
+
+    private static function sendApns(array $row, array $message)
+    {
+        // APNS_ENVIRONMENT=sandbox: the builds Xcode runs on a phone (development); TestFlight and the App Store are production.
+        // APNS_URL replaces the address (a proxy, the tests)
+        $base = rtrim(trim((string) getenv('APNS_URL')), '/')
+            ?: (strtolower((string) getenv('APNS_ENVIRONMENT')) === 'sandbox' ? 'https://api.sandbox.push.apple.com' : 'https://api.push.apple.com');
+        $headers = array('authorization: bearer ' . self::apnsJwt(), 'apns-topic: ' . trim((string) getenv('APNS_TOPIC')), 'apns-push-type: alert',
+            'apns-priority: ' . ($message['urgency'] === 'low' ? '5' : '10'), 'apns-expiration: ' . (time() + self::TTL), 'content-type: application/json');
+        if ($message['tag'] !== '') $headers[] = 'apns-collapse-id: ' . substr($message['tag'], 0, 64);
+        list($status, $body) = self::post("$base/3/device/" . rawurlencode($row['device_token']), $headers,
+            json_encode(self::devicePayload('apns', $message), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE), true);
+        $reason = (string) (json_decode($body, true)['reason'] ?? '');
+        if ($status === 403 && in_array($reason, array('ExpiredProviderToken', 'InvalidProviderToken'), true)) {
+            Cache::forget('caligrafy.notify.apns-jwt');
+        }
+        return array($status, $reason);
+    }
+
+    private static function sendFcm(array $row, array $message)
+    {
+        $account = self::serviceAccount();
+        $body = json_encode(array('message' => array('token' => $row['device_token']) + self::devicePayload('fcm', $message)), JSON_UNESCAPED_SLASHES | JSON_UNESCAPED_UNICODE);
+        $base = rtrim(trim((string) getenv('FCM_URL')), '/') ?: 'https://fcm.googleapis.com';    // FCM_URL: a proxy, the tests
+        list($status, $answer) = self::post("$base/v1/projects/" . rawurlencode($account['project_id']) . '/messages:send',
+            array('authorization: Bearer ' . self::fcmAccessToken($account), 'content-type: application/json'), $body, false);
+        $error = json_decode($answer, true)['error'] ?? array();
+        $reason = '';
+        foreach ((array) ($error['details'] ?? array()) as $detail) {
+            if (!empty($detail['errorCode'])) $reason = (string) $detail['errorCode'];
+        }
+        if ($status === 401) Cache::forget('caligrafy.notify.fcm-token');
+        return array($status, $reason !== '' ? $reason : (string) ($error['message'] ?? ''));
+    }
+
+    /**
+     * The Firebase service account of FCM_SERVICE_ACCOUNT (its JSON, or that JSON in base64): project_id, client_email,
+     * private_key, or null
+     */
+    public static function serviceAccount()
+    {
+        $raw = trim((string) getenv('FCM_SERVICE_ACCOUNT'));
+        if ($raw === '') return null;
+        $json = json_decode($raw[0] === '{' ? $raw : (string) base64_decode($raw, true), true);
+        return is_array($json) && !empty($json['project_id']) && !empty($json['client_email']) && !empty($json['private_key']) ? $json : null;
+    }
+
+    /**
+     * The token APNs takes from this app (ES256, APNS_KEY: the .p8 file's text or that text in base64), kept 50
+     * minutes: Apple refuses one older than an hour and one renewed more than every 20 minutes
+     */
+    public static function apnsJwt()
+    {
+        return Cache::remember('caligrafy.notify.apns-jwt', 3000, function () {
+            $key = self::pem((string) getenv('APNS_KEY'));
+            $header = self::base64url(json_encode(array('alg' => 'ES256', 'kid' => trim((string) getenv('APNS_KEY_ID')))));
+            $claims = self::base64url(json_encode(array('iss' => trim((string) getenv('APNS_TEAM_ID')), 'iat' => time())));
+            $private = openssl_pkey_get_private($key);
+            if ($private === false || !openssl_sign("$header.$claims", $der, $private, OPENSSL_ALGO_SHA256)) {
+                throw new \RuntimeException('APNS_KEY is not the .p8 key of Apple Developer (Keys, Apple Push Notifications service)');
+            }
+            return "$header.$claims." . self::base64url(self::derToJose($der, 32));
+        });
+    }
+
+    /**
+     * The OAuth access token of the service account for Firebase Cloud Messaging (RS256), kept 50 minutes
+     */
+    private static function fcmAccessToken(array $account)
+    {
+        return Cache::remember('caligrafy.notify.fcm-token', 3000, function () use ($account) {
+            $now = time();
+            $header = self::base64url(json_encode(array('alg' => 'RS256', 'typ' => 'JWT')));
+            $claims = self::base64url(json_encode(array('iss' => $account['client_email'], 'scope' => 'https://www.googleapis.com/auth/firebase.messaging',
+                'aud' => $account['token_uri'] ?? 'https://oauth2.googleapis.com/token', 'iat' => $now, 'exp' => $now + 3600)));
+            $private = openssl_pkey_get_private((string) $account['private_key']);
+            if ($private === false || !openssl_sign("$header.$claims", $signature, $private, OPENSSL_ALGO_SHA256)) {
+                throw new \RuntimeException('FCM_SERVICE_ACCOUNT has no valid private_key: download the service account key of the Firebase project again');
+            }
+            list($status, $body) = self::post($account['token_uri'] ?? 'https://oauth2.googleapis.com/token', array('content-type: application/x-www-form-urlencoded'),
+                http_build_query(array('grant_type' => 'urn:ietf:params:oauth:grant-type:jwt-bearer', 'assertion' => "$header.$claims." . self::base64url($signature))), false);
+            $token = json_decode($body, true)['access_token'] ?? null;
+            if ($status !== 200 || !is_string($token)) {
+                throw new \RuntimeException("Google refused the Firebase service account ($status)");
+            }
+            return $token;
+        });
+    }
+
+    /**
+     * An ECDSA signature in DER (openssl_sign) as the R || S of JWS (ES256: 32 bytes each)
+     */
+    public static function derToJose($der, $size)
+    {
+        $offset = 2 + (ord($der[1]) & 0x80 ? ord($der[1]) & 0x7f : 0);
+        $parts = array();
+        for ($i = 0; $i < 2; $i++) {
+            $length = ord($der[$offset + 1]);
+            $parts[] = str_pad(ltrim(substr($der, $offset + 2, $length), "\x00"), $size, "\x00", STR_PAD_LEFT);
+            $offset += 2 + $length;
+        }
+        return $parts[0] . $parts[1];
+    }
+
+    private static function pem($key)
+    {
+        $key = trim($key);
+        if ($key !== '' && strpos($key, '-----BEGIN') === false) {
+            $decoded = base64_decode($key, true);
+            $key = $decoded !== false && strpos($decoded, '-----BEGIN') !== false ? $decoded
+                : "-----BEGIN PRIVATE KEY-----\n" . chunk_split($key, 64, "\n") . "-----END PRIVATE KEY-----\n";
+        }
+        return str_replace('\n', "\n", $key);    // a key pasted in one line of .env
+    }
+
+    private static function base64url($data)
+    {
+        return rtrim(strtr(base64_encode($data), '+/', '-_'), '=');
+    }
+
+    /**
+     * A POST with curl (HTTP/2 for Apple, which accepts nothing else): [status, body]
+     */
+    private static function post($url, array $headers, $body, $http2)
+    {
+        if (!function_exists('curl_init')) throw new \RuntimeException('Push to phones needs the curl extension of PHP');
+        $curl = curl_init($url);
+        $options = array(CURLOPT_POST => true, CURLOPT_POSTFIELDS => $body, CURLOPT_HTTPHEADER => $headers, CURLOPT_RETURNTRANSFER => true,
+            CURLOPT_TIMEOUT => self::PUSH_TIMEOUT, CURLOPT_CONNECTTIMEOUT => self::PUSH_TIMEOUT);
+        if ($http2) {
+            if (!defined('CURL_HTTP_VERSION_2_0')) throw new \RuntimeException('Apple push needs HTTP/2: the curl of this PHP has none');
+            $options[CURLOPT_HTTP_VERSION] = CURL_HTTP_VERSION_2_0;
+        }
+        curl_setopt_array($curl, $options);
+        $answer = curl_exec($curl);
+        $status = (int) curl_getinfo($curl, CURLINFO_RESPONSE_CODE);
+        if ($answer === false) {
+            $error = curl_error($curl);
+            throw new \RuntimeException("push: $error");
+        }
+        return array($status, (string) $answer);
     }
 
     // ---------------------------------------------------------------------------------------------------------------
@@ -442,7 +716,9 @@ class Notify
         return array(
             'channels' => self::offered(),
             'push' => array('configured' => self::pushConfigured(), 'public_key' => self::pushConfigured() ? getenv('VAPID_PUBLIC_KEY') : null,
-                'browsers' => self::count(self::SUBSCRIPTIONS, $userId), 'enabled' => self::enabled($userId, 'push')),
+                'browsers' => self::count(self::SUBSCRIPTIONS, $userId), 'enabled' => self::enabled($userId, 'push'),
+                // the phone apps (2.27.0): Apple and Firebase set up, and the user's phones
+                'devices' => self::countDevices($userId), 'apns' => self::deviceConfigured('apns'), 'fcm' => self::deviceConfigured('fcm')),
             'email' => array('configured' => self::emailConfigured(), 'address' => $email[0]['email'] ?? null,
                 'confirmed' => !empty($email[0]['confirmed_at']), 'enabled' => self::enabled($userId, 'email')),
         );
@@ -464,6 +740,11 @@ class Notify
             if (random_int(1, 50) === 1) Database::execute('DELETE FROM ' . self::LOG . ' WHERE created_at < ?', array(date('Y-m-d H:i:s', time() - self::KEEP_DAYS * 86400)));
         } catch (\Throwable $e) {
         }
+    }
+
+    private static function countDevices($userId)
+    {
+        try { return self::count(self::DEVICES, $userId); } catch (\Throwable $e) { return 0; }
     }
 
     private static function count($table, $userId)

@@ -79,6 +79,7 @@ $defaultMsg = "\n Available Functions:
 				\n - mcp [--token <token>]: MCP server over stdio for local AI agents (Claude Code, Cursor...): php caligrafer.php mcp
 				\n - generatekeys: generates an APP and an API pair of keys that you can put in your app's environment variable 
 				\n - generateapikey: generates an API key that you can provide to any third party desiring to access your services
+				\n - mobile <name> [--id com.example.books] [--display \"Books\"] [--url https://...]: an iOS and Android app of the project (Capacitor), signing in through Route::mobile, with push and the store builds (2.27.0)
 				\n - create <project_name>: scaffolds a Vue project
 				\n - app <project_name>: scaffolds a regular Client HTML/JS project
 				\n - bot <bot_name>: creates a bot application
@@ -281,7 +282,7 @@ switch(strtolower($argv[1])) {
 		try {
 			caligrafyConnect();
 			caligrafySqlFile('framework/settings/platform.sql');
-			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, the notifications tables, caligrafy_jobs, caligrafy_cache, caligrafy_migrations and Snap's tables\n\n");
+			print("\n Framework tables ready: caligrafy_tokens, caligrafy_audit, caligrafy_job_runs, the notifications tables, caligrafy_jobs, caligrafy_cache, caligrafy_migrations, the phone apps' tables and Snap's tables\n\n");
 		} catch (Throwable $e) {
 			print("\n The framework tables could not be created: " . $e->getMessage() . "\n Check DB_ACTIVATE and the DB_* settings in .env (php caligrafer.php doctor --only database)\n\n");
 			exit(1);
@@ -986,6 +987,21 @@ switch(strtolower($argv[1])) {
 			print("\n The project could not be created. Please make sure you have node.js with npm installed and that the name does not conflict with existing public folders. \n\n");
 		}
 		break;
+
+	case 'mobile':
+		// A phone and tablet app (2.27.0, framework/core/MobileApp.php): public/<name> with Capacitor (iOS and Android),
+		// signing in through Route::mobile, push through Notify, store builds through fastlane and GitHub Actions
+		$name = $argv[2] ?? '';
+		if ($name === '' || $name[0] === '-') {
+			print("\n Usage: php caligrafer.php mobile <name> [--id com.example.books] [--display \"Books\"] [--url https://books.caligrafy.com]\n"
+				. " Creates public/<name>: an iOS and Android app of this project (Node.js 22+ installs it and adds ios/ and android/)\n\n");
+			exit(1);
+		}
+		$option = function ($flag) use ($argv) { $at = array_search($flag, $argv); return $at !== false ? ($argv[$at + 1] ?? '') : ''; };
+		print("\n");
+		$status = (new Caligrafy\MobileApp('.'))->create($name, array('id' => $option('--id'), 'display' => $option('--display'), 'url' => $option('--url')));
+		print("\n");
+		exit($status);
 
 	case 'add':
 		// Optional features (2.26.0): the SDKs only some applications use (composer require at the pinned version) and

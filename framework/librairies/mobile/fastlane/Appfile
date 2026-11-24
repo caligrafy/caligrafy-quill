@@ -1,0 +1,4 @@
+# The app's id comes from capacitor.config.json (appId): one name for the App Store, Google Play and the sign-in
+require 'json'
+app_identifier(JSON.parse(File.read(File.expand_path('../capacitor.config.json', __dir__)))['appId'])
+package_name(JSON.parse(File.read(File.expand_path('../capacitor.config.json', __dir__)))['appId'])

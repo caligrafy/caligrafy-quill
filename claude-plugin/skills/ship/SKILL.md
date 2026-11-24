@@ -130,6 +130,13 @@ Online, the legacy API key is off (`LEGACY_API_KEY=false`): a page that still se
 the legacy API key is turned off` (G87). Pages call their routes with `apiHeaders()` (the session and its CSRF token)
 or the generated JS client; programs and agents with personal access tokens. Fix, push, deploy again.
 
+**Phone apps** (2.27.0: a `public/<app>/capacitor.config.json` and `.github/workflows/mobile-<app>.yml`): once the
+site is online, the store builds call it. When the repository has the store secrets (`gh secret list` shows
+`ASC_KEY_P8` for iOS, `PLAY_SERVICE_ACCOUNT` for Android), ask once "Send <app> <version> to TestFlight and Google
+Play?" and on yes run `gh workflow run mobile-<app>.yml -f platform=both` (or `ios` / `android`: only what has its
+secrets), then `gh run watch` in the background, and report the run's link. Without the secrets, say in one line that
+`/caligrafy-quill:mobile publish` sets up the stores with them; never ask for a store secret.
+
 Report, with the real addresses: the site, the repository, the time left (`cloud status <name>`), and what the user
 approved in the browser. After a change later: commit, `github.sh push`, `caligrafer cloud deploy <name>`.
 When the project has scheduled jobs (`php caligrafer.php schedule list` lists some), check them once it is online:

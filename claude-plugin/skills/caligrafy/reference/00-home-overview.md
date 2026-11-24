@@ -52,6 +52,7 @@ that same capability to every way people and machines reach your application:
 | --- | --- |
 | **Web pages** | a page calls it and shows the result |
 | **Vue apps** on desktop, tablet and phone | a generated JavaScript function: `await createTask({ title })` |
+| **iOS and Android apps** in the App Store and Google Play | the same function, signed in through the site: `await call('create_task', { title })` ([more](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.7-Phone-and-Tablet-Apps)) |
 | **REST API** for other applications | `POST /api/tasks` |
 | **AI agents** such as Claude or Cursor | an MCP tool: `create_task` |
 | **Snap Cards and the assistant** | a card a person uses, and an assistant that answers with it: `Route::snap();` ([more](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant)) |
@@ -150,7 +151,8 @@ feature step by step: the table, the model, the page, a form and sign-in.
 ## What comes in the box
 
 + **Every experience:** server-rendered pages (Pug), Vue apps and a Vite single page application, installable mobile
-  web apps, REST, and an MCP server for AI agents.
+  web apps, iOS and Android apps for the App Store and Google Play (`php caligrafer.php mobile`), REST, and an MCP
+  server for AI agents.
 + **One rule:** only capabilities touch your data. Pages get their data from capabilities in one line
   (`Route::page('/books/{id}', 'Bookshelf/book', ['data' => ['book' => 'get_book']])`), so a page, the API and an agent
   never follow different rules. Forms, sign-in, webhooks, downloads and anything else a browser asks are one line each too

@@ -62,9 +62,9 @@ $areas = array(
         array('Service', 'Capability', 'Capabilities', 'ServiceError', 'Container', 'Tokens', 'Audit')),
     'API-Data' => array('Data', 'Models, the query builder, the database connection, migrations, validation and the cache.',
         array('Model', 'Query', 'Database', 'Migrations', 'Validator', 'Cache', 'Lazy', 'LazyLoadingException')),
-    'API-Auth' => array('Sign-in', 'Users and sessions, passkeys and face login.',
-        array('Auth', 'Passkey', 'PasskeyException', 'FaceLogin', 'FaceLoginException')),
-    'API-Jobs' => array('Jobs, notifications and mail', 'Scheduled jobs, background jobs, web push and email notifications, mail.',
+    'API-Auth' => array('Sign-in', 'Users and sessions, passkeys, face login and the sign-in of the phone apps.',
+        array('Auth', 'Passkey', 'PasskeyException', 'FaceLogin', 'FaceLoginException', 'Mobile')),
+    'API-Jobs' => array('Jobs, notifications and mail', 'Scheduled jobs, background jobs, notifications (web push, phones, email), mail.',
         array('Scheduler', 'Queue', 'Notify', 'Mail')),
     'API-Payments' => array('Payments', 'Stripe and cryptocurrency payments.',
         array('Payment', 'CryptoPayment')),
@@ -78,7 +78,7 @@ $areas = array(
     'API-Testing' => array('Testing', 'The base class of the tests of an application (tests/, php caligrafer.php test).',
         array('Testing\\TestCase')),
     'API-Tooling' => array('Framework and tooling', 'The framework bootstrap and what the caligrafer command runs: the CLI, doctor, update, upgrade, deploy, Cloud, quickstart and the plugin copy.',
-        array('Features', 'FeatureMissing', 'Framework', 'Loader', 'ClassMap', 'Caligrafer', 'Doctor', 'Updater', 'Upgrader', 'Deployer', 'CloudClient', 'Quickstart', 'PluginSource')),
+        array('Features', 'FeatureMissing', 'Framework', 'Loader', 'ClassMap', 'Caligrafer', 'Doctor', 'Updater', 'Upgrader', 'Deployer', 'CloudClient', 'Quickstart', 'PluginSource', 'MobileApp')),
 );
 
 $sources = array();

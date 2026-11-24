@@ -1,0 +1,80 @@
+# The store builds of this app (Caligrafy 2.27.0, php caligrafer.php mobile <name>): the same lanes run on a Mac and on
+# GitHub Actions (.github/workflows/mobile-<name>.yml). Every secret comes from the environment, never from git:
+#   iOS      APPLE_TEAM_ID, ASC_KEY_ID, ASC_ISSUER_ID, ASC_KEY_P8 (the App Store Connect API key, its .p8 in base64)
+#   Android  ANDROID_KEYSTORE (the upload key, in base64), ANDROID_KEYSTORE_PASSWORD, ANDROID_KEY_ALIAS,
+#            ANDROID_KEY_PASSWORD, PLAY_SERVICE_ACCOUNT (the Google Play service account's JSON, or that JSON in base64)
+# The version is package.json's; the build number is one more than the last one the store has.
+require 'base64'
+require 'json'
+require 'tmpdir'
+
+APP = File.expand_path('..', __dir__)
+CONFIG = JSON.parse(File.read(File.join(APP, 'capacitor.config.json')))
+VERSION = JSON.parse(File.read(File.join(APP, 'package.json')))['version']
+
+def secret(name)
+  value = ENV[name].to_s.strip
+  UI.user_error!("#{name} is not set: see the Publishing section of the README") if value.empty?
+  value
+end
+
+def secret_file(name, extension)
+  path = File.join(Dir.tmpdir, "caligrafy-#{name.downcase}#{extension}")
+  File.binwrite(path, Base64.decode64(secret(name)))
+  File.chmod(0o600, path)
+  path
+end
+
+def json_secret(name)
+  value = secret(name)
+  value.start_with?('{') ? value : Base64.decode64(value)
+end
+
+platform :ios do
+  desc 'Builds the iOS app and sends it to TestFlight'
+  lane :beta do
+    setup_ci if ENV['CI']
+    key = app_store_connect_api_key(key_id: secret('ASC_KEY_ID'), issuer_id: secret('ASC_ISSUER_ID'),
+                                    key_content: secret('ASC_KEY_P8'), is_key_content_base64: true)
+    key_path = secret_file('ASC_KEY_P8', '.p8')
+    project = File.join(APP, 'ios/App/App.xcodeproj')
+    increment_version_number(xcodeproj: project, version_number: VERSION)
+    build = latest_testflight_build_number(api_key: key, app_identifier: CONFIG['appId'], version: VERSION, initial_build_number: 0) + 1
+    increment_build_number(xcodeproj: project, build_number: build)
+    # Xcode signs by itself with the API key (cloud-managed certificates): no certificate or profile to keep anywhere
+    signing = "-allowProvisioningUpdates -authenticationKeyPath #{key_path} -authenticationKeyID #{secret('ASC_KEY_ID')} -authenticationKeyIssuerID #{secret('ASC_ISSUER_ID')}"
+    build_app(project: project, scheme: 'App', configuration: 'Release', export_method: 'app-store',
+              output_directory: File.join(APP, 'build/ios'), export_team_id: secret('APPLE_TEAM_ID'),
+              xcargs: "#{signing} DEVELOPMENT_TEAM=#{secret('APPLE_TEAM_ID')} CODE_SIGN_STYLE=Automatic",
+              export_xcargs: signing)
+    upload_to_testflight(api_key: key, skip_waiting_for_build_processing: true)
+    UI.success("#{CONFIG['appName']} #{VERSION} (#{build}) is on TestFlight: App Store Connect shows it once Apple has processed it")
+  end
+end
+
+platform :android do
+  desc 'Builds the Android app bundle and sends it to the internal testing track of Google Play'
+  lane :beta do
+    play = json_secret('PLAY_SERVICE_ACCOUNT')
+    codes = %w[internal alpha beta production].flat_map do |track|
+      google_play_track_version_codes(package_name: CONFIG['appId'], track: track, json_key_data: play)
+    rescue StandardError
+      []
+    end
+    code = (codes.map(&:to_i).max || 0) + 1
+    gradle(task: 'bundle', build_type: 'Release', project_dir: File.join(APP, 'android'),
+           properties: {
+             'versionCode' => code, 'versionName' => VERSION,
+             'android.injected.signing.store.file' => secret_file('ANDROID_KEYSTORE', '.jks'),
+             'android.injected.signing.store.password' => secret('ANDROID_KEYSTORE_PASSWORD'),
+             'android.injected.signing.key.alias' => secret('ANDROID_KEY_ALIAS'),
+             'android.injected.signing.key.password' => secret('ANDROID_KEY_PASSWORD')
+           })
+    # draft until the app is published on Google Play (a new app's releases cannot be anything else): PLAY_RELEASE_STATUS=completed then
+    upload_to_play_store(package_name: CONFIG['appId'], track: 'internal', json_key_data: play,
+                         aab: lane_context[SharedValues::GRADLE_AAB_OUTPUT_PATH],
+                         release_status: ENV['PLAY_RELEASE_STATUS'].to_s.empty? ? 'draft' : ENV['PLAY_RELEASE_STATUS'],
+                         skip_upload_metadata: true, skip_upload_images: true, skip_upload_screenshots: true)
+    UI.success("#{CONFIG['appName']} #{VERSION} (#{code}) is on the internal testing track of Google Play")
+  end
+end

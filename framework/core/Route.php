@@ -106,6 +106,11 @@ class Route extends \stdClass
             Flash::age();
         }
 
+        // the apps of Route::mobile call from their own origin with a token (2.27.0): CORS headers, preflights answered
+        if (Mobile::cors()) {
+            return;
+        }
+
         //fetch the request
         self::$_request = request();
 
@@ -537,6 +542,22 @@ class Route extends \stdClass
     }
 
     /**
+     * Phone and tablet apps (2.27.0, Caligrafy\Mobile): the app made by php caligrafer.php mobile <name> signs its user in
+     * through the site's own sign-in page and calls the capabilities with that user's token. After Route::auth():
+     *   Route::mobile(['scheme' => 'com.example.books']);
+     * Declares /mobile/authorize (GET, POST), /mobile/token, /mobile/session and /mobile/signout, and CORS for the app.
+     * Options: scheme (required: the app id of capacitor.config.json, or a list), scopes (['*']), days (90), prefix
+     * ('/mobile'), origins (more origins allowed to call with a token), name (the app's name on the consent page)
+     */
+    public static function mobile(array $options = array())
+    {
+        if (!Auth::active()) {
+            throw new \LogicException('Route::mobile needs Auth::authentication(...) and Route::auth() before it: the app signs people in through the site');
+        }
+        return Mobile::register($options);
+    }
+
+    /**
      * Events another service posts (2.19.0, Caligrafy\Webhook): POST only, no CSRF token, the signature checked
      *   Route::webhook('/stripe/events', 'record_payment', ['verify' => 'stripe', 'secret_env' => 'STRIPE_WEBHOOK_SECRET']);
      *   Route::webhook('/hooks/github', 'record_push', ['verify' => fn ($raw, $headers) => hash_equals(...)]);
@@ -668,6 +689,7 @@ class Route extends \stdClass
     {
         self::$_httpMethods = self::$_routes = self::$_routesComponents = self::$_methods = self::$_webhooks = self::$_mcp = self::$_pages = array();
         AuthRoutes::$signUp = null;
+        Mobile::$options = null;
     }
 
     /**

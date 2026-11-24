@@ -69,13 +69,15 @@ included.
 ## A complete app
 
 Every feature is written once, as a **capability** (its inputs, rules and permissions), and served everywhere:
-**web pages**, **Vue apps** on desktop, tablet and phone, a **REST API**, **AI agents** such as Claude or Cursor
-over MCP, and **Snap Cards** with an assistant: `Route::snap();` turns every capability into a card a person can use,
+**web pages**, **Vue apps** on desktop, tablet and phone, **iOS and Android apps** for the App Store and Google Play
+([phone and tablet apps](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.7-Phone-and-Tablet-Apps): `php caligrafer.php
+mobile`, signed in through your site), a **REST API**, **AI agents** such as Claude or Cursor over MCP, and
+**Snap Cards** with an assistant: `Route::snap();` turns every capability into a card a person can use,
 shown with card views in your app's own look (Claude writes them from your pages), and gives them a Home that shows what needs them and an assistant that answers with those cards
 ([Snap Cards and the assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant)).
 Same rules, same permissions, same audit log, whichever way it is called. A capability can also run on a
 timer ([scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)), reach your users with the
-app closed ([notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications): web push and email), or
+app closed ([notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications): web push, phones and email), or
 run later, outside the request ([background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs),
 with retries).
 

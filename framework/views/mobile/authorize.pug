@@ -1,0 +1,27 @@
+extends ../../../application/views/default/master/site
+
+//- The consent page of a phone app (2.27.0, Route::mobile): the person signed in on the site's own page, the app
+//- opened this one in the system browser; Allow sends a one-time code back to the app (<scheme>://auth).
+
+block title
+  | Sign in to the app · #{$mobile['app']}
+
+block content
+  main.cq-auth
+    h1 Sign in on #{$mobile['device']}?
+    p.cq-lead
+      | The app of #{$mobile['app']} asks to use your account
+      if !empty($user['username'])
+        |  (#{$user['username']})
+      | . It can do what you can do in #{$mobile['app']}, until you sign out in the app.
+    form#mobile_authorize(method='POST', action="{$home}{$mobile['action']}")
+      =csrf()
+      input(type='hidden', name='scheme', value=$mobile['scheme'])
+      input(type='hidden', name='redirect', value=$mobile['redirect'])
+      input(type='hidden', name='state', value=$mobile['state'])
+      input(type='hidden', name='challenge', value=$mobile['challenge'])
+      input(type='hidden', name='device', value=$mobile['device'])
+      button.btn.btn-primary.cq-btn-block(type='submit', name='decision', value='allow') Allow
+      .cq-or Or
+      button.btn.btn-secondary.cq-btn-block(type='submit', name='decision', value='deny') Not now
+    p.cq-auth-note Not you? #[a(href="{$home}logout") Sign out] first, then open the app again.
