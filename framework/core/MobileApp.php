@@ -56,6 +56,20 @@ class MobileApp
     }
 
     /**
+     * The project's name for the defaults: its folder, or in the Docker server (where the folder is /var/www/html) its
+     * database name when that is not a placeholder; null when unknown
+     */
+    public static function projectName($root)
+    {
+        $folder = basename(realpath($root) ?: $root);
+        if ($folder !== 'html') {
+            return $folder;
+        }
+        $database = strtolower(trim((string) getenv('DB_DATABASE')));
+        return $database !== '' && !in_array($database, array('caligrafy', 'databasename', 'html'), true) ? $database : null;
+    }
+
+    /**
      * The app id when none is given: com.<project folder>.<name>, kept to what Apple and Google take
      */
     public static function defaultId($project, $name)
@@ -97,7 +111,11 @@ class MobileApp
         if (!is_dir("$this->root/" . self::TEMPLATE)) {
             return $this->fail(self::TEMPLATE . ' is missing: php caligrafer.php update brings it (Caligrafy Quill 2.27.0+)');
         }
-        $project = basename(realpath($this->root) ?: $this->root);
+        $project = self::projectName($this->root);
+        if ($project === null && (trim((string) ($options['id'] ?? '')) === '' || trim((string) ($options['url'] ?? '')) === '')) {
+            return $this->fail("In the Docker server the project's folder is /var/www/html: say the app id and the site online, "
+                . "--id com.<you>.$name --url https://<your app>.caligrafy.com (or run the command on your computer)");
+        }
         $id = strtolower(trim((string) ($options['id'] ?? ''))) ?: self::defaultId($project, $name);
         if (!self::validId($id)) {
             return $this->fail("'$id' is not an app id: two or more parts separated by dots, lowercase letters and digits, each starting with a letter (com.example.books)");

@@ -58,26 +58,26 @@ async function save (value) {
   changed()
 }
 
-// The session kept on this device, still valid: called once when the app starts. Offline, the kept session is used;
-// a token the site no longer accepts (revoked, expired, account deleted) signs the app out
+// The session kept on this device, still valid: called once when the app starts, it answers at once (the app draws
+// without waiting for the network). The site is then asked in the background: a token it no longer accepts (revoked,
+// expired, account deleted) signs the app out (onSessionChange); offline, the kept session is used
 export async function restore () {
   if (!native) await finishInBrowser()
-  const kept = await Preferences.get({ key: KEY })
-  let value = null
-  try { value = kept.value ? JSON.parse(kept.value) : null } catch { value = null }
+  let value = parse((await Preferences.get({ key: KEY })).value)
   if (value && value.expires_at && new Date(value.expires_at.replace(' ', 'T')) <= new Date()) value = null
   session = value
   if (session) {
-    try {
-      const answer = await request('GET', mobileRoute + '/session')
-      session.user = answer.user
-      await save(session)
-    } catch (error) {
-      if (error.status === 401) await save(null)
-    }
+    request('GET', mobileRoute + '/session')
+      .then(answer => { if (session) { session.user = answer.user; return save(session) } })
+      .catch(error => { if (error.status === 401) return save(null) })
   }
   changed()
   return currentUser()
+}
+
+// a value kept on this device, or null when there is none or it is not JSON
+function parse (text) {
+  try { return text ? JSON.parse(text) : null } catch { return null }
 }
 
 // ---- signing in and out ------------------------------------------------------------------------------------------
@@ -121,10 +121,8 @@ export async function signIn () {
 
 // <app id>://auth?state=...&code=... (or &error=access_denied): the site sending the person back to the app
 async function finish (params) {
-  const kept = await Preferences.get({ key: PENDING })
+  const pending = parse((await Preferences.get({ key: PENDING })).value)
   await Preferences.remove({ key: PENDING })
-  let pending = null
-  try { pending = kept.value ? JSON.parse(kept.value) : null } catch { pending = null }
   if (!pending || params.get('state') !== pending.state) throw new Error('This sign-in is not the one this app started: try again')
   if (params.get('error')) throw new Error(params.get('error') === 'access_denied' ? 'Sign-in cancelled' : params.get('error'))
   const answer = await request('POST', mobileRoute + '/token', { code: params.get('code'), verifier: pending.verifier }, false)

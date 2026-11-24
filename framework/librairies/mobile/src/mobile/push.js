@@ -26,20 +26,25 @@ export async function enablePush () {
   if (!pushAvailable()) {
     throw new Error(Capacitor.isNativePlatform() ? 'Notifications are not set up in this build (google-services.json)' : 'Notifications work in the phone app')
   }
+  // the site first: without Apple's or Firebase's settings it cannot send any, so the person is not asked for nothing
+  const provider = platform === 'ios' ? 'apns' : 'fcm'
+  const status = await call('notify_status')
+  if (!status.push || !status.push[provider]) {
+    throw new Error('This app does not send notifications to ' + (platform === 'ios' ? 'iPhones' : 'Android phones') + ' yet')
+  }
   let permission = await PushNotifications.checkPermissions()
   if (permission.receive === 'prompt' || permission.receive === 'prompt-with-rationale') {
     permission = await PushNotifications.requestPermissions()
   }
   if (permission.receive !== 'granted') throw new Error('Notifications are off for this app in the phone\'s settings')
   const token = await new Promise((resolve, reject) => {
-    const timer = setTimeout(() => reject(new Error('The phone did not answer: try again')), 20000)
+    const timer = setTimeout(() => reject(new Error((platform === 'ios' ? 'Apple' : 'Google') + ' did not answer: check the connection and try again')), 20000)
     PushNotifications.addListener('registration', ({ value }) => { clearTimeout(timer); resolve(value) })
     PushNotifications.addListener('registrationError', ({ error }) => { clearTimeout(timer); reject(new Error(error || 'Registration failed')) })
     PushNotifications.register().catch(reject)
   })
-  let name = ''
-  try { const info = await Device.getInfo(); name = info.name || info.model || '' } catch { name = '' }
-  return call('notify_register_device', { provider: platform === 'ios' ? 'apns' : 'fcm', token, name: name.slice(0, 100) })
+  const name = await Device.getInfo().then(info => info.name || info.model || '').catch(() => '')
+  return call('notify_register_device', { provider, token, name: name.slice(0, 100) })
 }
 
 // Turns them off on this phone (the site forgets it; signing out does it too)

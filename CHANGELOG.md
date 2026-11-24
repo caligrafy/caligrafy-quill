@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.27.1] - 2026-11-24
+
+### Fixed
+- **`php caligrafer.php mobile` in the Docker server**: the project's folder there is `/var/www/html`, so the default app id and address came out as `com.html.<name>` and `https://html.caligrafy.com`. The defaults now use the project's database name (`DB_DATABASE`) when it is the project's own, and otherwise the command asks for `--id` and `--url` and says why. On the computer nothing changes.
+- **Phone apps start at once**: the app drew nothing until the site had confirmed its session; it now opens on the session kept on the phone and asks the site in the background (a revoked token still signs it out).
+- **Notifications on phones**: *Turn on notifications* first asks the site whether it sends to iPhones (Apple) or Android phones (Firebase): when it does not, the app says *This app does not send notifications to iPhones yet* instead of asking the person's permission for nothing; when Apple or Google does not answer, it says which.
+- **The template**: `npm run lint` passes on a new app (three values were assigned and never read); `npm run native` names each file it changed once.
+- **Documentation**: a *Phone and tablet apps* section in the README, and the course's lesson 18, *Bookshelf in the stores*: the Bookshelf app built, checked in a browser, on an iPhone simulator and on an Android emulator, step by step. Plugin 1.39.1.
+
 ## [2.27.0] - 2026-11-24
 
 ### Added

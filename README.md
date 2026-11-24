@@ -86,6 +86,7 @@ with retries).
 | **Data** | [models](https://github.com/caligrafy/caligrafy-quill/wiki/4.-Models), [queries](https://github.com/caligrafy/caligrafy-quill/wiki/Queries) (filters, paging, related rows, every value bound), [migrations](https://github.com/caligrafy/caligrafy-quill/wiki/Migrations), [the cache](https://github.com/caligrafy/caligrafy-quill/wiki/Caching) |
 | **Pages** | [Pug views and page components](https://github.com/caligrafy/caligrafy-quill/wiki/7.-Views), [declarative routes](https://github.com/caligrafy/caligrafy-quill/wiki/Declarative-Routes), [design styles](https://github.com/caligrafy/caligrafy-quill/wiki/Design-Styles), install to home screen |
 | **Assistant** | [Snap Cards](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant): every capability as a card (Ask, Show, Go, Track, Offer) in your app's own look (card views written from your pages), a Home that orchestrates what needs you, an assistant (Claude) that keeps the conversation's context; changes only from a Confirm |
+| **Phone apps** | [iOS and Android apps](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.7-Phone-and-Tablet-Apps) signed in through your site, with push notifications, built for TestFlight and Google Play |
 | **People** | [sign-in with a username or an email, passkeys, permissions and tokens](https://github.com/caligrafy/caligrafy-quill/wiki/9.1-Authentication) |
 | **In the box** | [payments](https://github.com/caligrafy/caligrafy-quill/wiki/9.2-Stripe-&-Cryptocurrency-Payment), AI (OpenAI, open models, Watson), face detection, machine learning, [social cards](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards), a production `Dockerfile` |
 | **Production** | a [production image](https://github.com/caligrafy/caligrafy-quill/wiki/Performance-and-Deployment) that sizes itself to its container, keeps database connections, preloads the framework and keeps public answers in memory; an experimental async server for the API and AI agents; a 15 MB install, with each optional SDK added by `php caligrafer.php add <feature>` |
@@ -99,6 +100,30 @@ See [How Caligrafy works](https://github.com/caligrafy/caligrafy-quill/wiki/How-
 its experimental async server answers capability calls at 113,700 a second. A new project installs 13 packages and
 16.6 MB, and a container uses about 35 MB
 ([release notes](https://github.com/caligrafy/caligrafy-quill/wiki/Release-notes:-2.26.0)).
+
+<br/>
+
+## Phone and tablet apps
+
+Your project can have its own **iOS and Android app**, for the App Store and Google Play, with the same capabilities,
+accounts and notifications as its web pages:
+
+```bash
+php caligrafer.php mobile books --id com.example.books
+```
+
++ **One command** creates `public/books`: a Vue app that [Capacitor](https://capacitorjs.com) turns into an Xcode and an
+  Android Studio project, in your app's look. `npm run ios` and `npm run android` run it on a simulator.
++ **One line** of `web.php`, `Route::mobile(['scheme' => 'com.example.books'])`, lets people sign in to it through your
+  site's own sign-in page. The app gets a token of that person and calls your capabilities with it: never a password
+  in the app, never a second backend.
++ **Notifications**: the `Notify::user()` you already send reaches their iPhones and Android phones too.
++ **Publishing**: fastlane and a GitHub workflow send each version to TestFlight and Google Play; with Claude,
+  `/caligrafy-quill:mobile` walks you through the Apple and Google accounts.
+
+Tested on an iPhone simulator (iOS 27.2) and an Android emulator (Android 16). Read
+[Phone and tablet apps](https://github.com/caligrafy/caligrafy-quill/wiki/9.9.7-Phone-and-Tablet-Apps), or build one
+step by step in the course: [Lesson 18 - Bookshelf in the stores](https://github.com/caligrafy/caligrafy-quill-course/wiki/18-Bookshelf-in-the-Stores).
 
 <br/>
 

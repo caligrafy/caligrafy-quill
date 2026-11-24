@@ -167,6 +167,13 @@ final class MobileTest extends TestCase
         $this->assertFalse(MobileApp::validName('css'), 'a folder of public/');
         $this->assertSame('https://books.example.com', MobileApp::defaultUrl('books', 'https://books.example.com/'));
         $this->assertSame('https://holiday-bingo.caligrafy.com', MobileApp::defaultUrl('Holiday Bingo', 'http://localhost:8080'));
+        // the Docker server: /var/www/html is no name; its database is, unless a placeholder
+        putenv('DB_DATABASE=bookshelf');
+        $this->assertSame('bookshelf', MobileApp::projectName('/var/www/html'));
+        putenv('DB_DATABASE=caligrafy');
+        $this->assertNull(MobileApp::projectName('/var/www/html'));
+        putenv('DB_DATABASE');
+        $this->assertSame('books', MobileApp::projectName('/Users/maya/code/books'));
     }
 
     public function testMobileCreatesTheAppAndItsWorkflow(): void

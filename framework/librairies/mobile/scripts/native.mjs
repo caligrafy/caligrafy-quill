@@ -35,7 +35,7 @@ function edit (path, change) {
   const after = change(before)
   if (after !== before) {
     writeFileSync(at(path), after)
-    done.push(path)
+    if (!done.includes(path)) done.push(path)
   }
 }
 

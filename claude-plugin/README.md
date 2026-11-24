@@ -52,6 +52,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.39.1** - Caligrafy Quill 2.27.1: `mobile` in the Docker server needs `--id` and `--url` when the project's name is unknown; the phone app's start and notification set-up as the template now does them; the course has 18 lessons (lesson 18: Bookshelf's iOS and Android app).
 - **1.39.0** - Caligrafy Quill 2.27.0: phone and tablet apps. The `mobile` skill (`php caligrafer.php mobile`, `Route::mobile`, push to phones, store builds and the owner's accounts); the `ship` skill sends the store builds; the API reference's Phone and tablet apps section and Notify's phones; G175-G182 (what the iPhone simulator and the Android emulator showed).
 - **1.38.3** - Caligrafy Quill 2.26.3: vlucas/phpdotenv 5.8.1 and PHPUnit 12.5.45; test outputs in the docs show PHPUnit 12.5.45.
 - **1.38.2** - Caligrafy Quill 2.26.2: `SESSION_NAME` (G173), doctor's Google tag and session cookie warnings (G174), 15-minute trials on marketplace apps in the marketplace skill (G172).
