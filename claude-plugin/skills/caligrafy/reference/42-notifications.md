@@ -174,6 +174,8 @@ $result = Caligrafy\Notify::user($userId, array(
 + `push` is how many browsers got it; `email` whether an email was sent.
 + A delivery failure never throws. A bad message throws `ServiceError::invalid` with the fields.
 + At most `NOTIFY_RATE_PER_HOUR` messages per user and hour (30): above it nothing is sent (`'skipped' => 'rate'`).
++ At most `MAIL_RATE_PER_HOUR` emails for the whole app per hour (2.30.0, empty = no limit): above it the email is
+  not sent (its status is `rate-limited`) and the push still goes.
 + Every call is logged in `caligrafy_notifications` (who, the title, the tag, what each channel did; never the body),
   kept 30 days.
 + Without the tables (`platform install`) nothing is sent and nothing fails.
@@ -188,6 +190,7 @@ $result = Caligrafy\Notify::user($userId, array(
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | empty | Written by `notify keys`; never replaced (new keys cut off every subscribed browser) |
 | `APP_URL` | empty | The app's address, for the links of emails sent by jobs and the command line (Caligrafy Cloud sets it) |
 | `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | | The emails' server and sender; without them email reports `not-configured` and push still works. Caligrafy Cloud sets them for an app that has no `MAIL_HOST` of its own (sender `<name>-app@caligrafy.com`) |
+| `MAIL_RATE_PER_HOUR` | empty | 2.30.0: the most emails the app sends in an hour, counted in the cache; empty or 0 = no limit. Caligrafy Cloud sets it with the mail it gives |
 
 On **Caligrafy Cloud** each app gets its web push keys at its first deploy, kept across deploys.
 
@@ -248,7 +251,8 @@ device that is off gets the message when it comes back, within 24 hours. Push ne
 + **`"push": 0` for everyone.** No browser turned push on yet, or the VAPID keys changed (`notify keys` was run on a new
   `.env`): every browser must turn it on again.
 + **Emails from a job have no links.** `APP_URL` is empty: set it to the app's address.
-+ **`"email": false`.** The user has no confirmed address, or `MAIL_*` is not set.
++ **`"email": false`.** The user has no confirmed address, `MAIL_*` is not set, or the app reached
+  `MAIL_RATE_PER_HOUR` this hour (2.30.0).
 + **Nothing on iPhone.** The app must be added to the Home Screen, and served over HTTPS.
 
 ## Related pages

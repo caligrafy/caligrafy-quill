@@ -6,6 +6,18 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.30.0] - 2026-11-25
+
+### Added
+- **`MAIL_RATE_PER_HOUR`**: the most emails an app sends in an hour. Every email goes through `Mail::sendMail()` (sign-up confirmations, password resets, notifications, an app's own), which counts them per clock hour in the cache (shared by the web server, the queue and the scheduler). Over the limit nothing is sent, the log says so and `sendMail()` returns `false`; `Mail::limited()` says the last email was held back, `Mail::rate()` and `Mail::sentThisHour()` read the limit and the count. Notifications report the email as `rate-limited` and still send the push. Empty or 0 (the default): no limit, as before. With `CACHE_STORE=off` there is nowhere to count and nothing is held back.
+- Asked for so that apps sharing a mail account cannot stop email for each other: Caligrafy Cloud now gives every hosted app without its own `MAIL_HOST` its mail, from `<name>-app@caligrafy.com`, and sets this limit with it.
+
+### Fixed
+- **`new Mail()`** in a command, a job or a test that did not load the settings no longer stops with *Undefined constant MAIL_HOST*: it reads `MAIL_*` from the environment.
+
+### How to update
+`php caligrafer.php update`. Nothing changes until `MAIL_RATE_PER_HOUR` is set. Claude Code plugin 1.42.0: G186 (a sign-in page shows a waiting message once), G187 (the hourly limit).
+
 ## [2.29.0] - 2026-11-25
 
 ### Added

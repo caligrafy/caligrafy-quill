@@ -341,7 +341,7 @@ jwt($method, $path)   // per-request JWT: EdDSA (Ed25519 base64 secret) or ES256
 ```
 Errors (missing keys, API errors) come back as `['action_success' => false, 'error' => message]`. Create/refund send an `X-Idempotency-Key` UUID.
 
-## Mail (`Caligrafy\Mail`) - PHPMailer over SMTP with `MAIL_HOST`, `MAIL_PORT` (465 => ssl, else tls), `MAIL_USERNAME`, `MAIL_PASSWORD`; `sendMail()` returns bool. SMTP debug output only when `APP_DEBUG` parses as true (`filter_var(..., FILTER_VALIDATE_BOOLEAN)`).
+## Mail (`Caligrafy\Mail`) - PHPMailer over SMTP with `MAIL_HOST`, `MAIL_PORT` (465 => ssl, else tls), `MAIL_USERNAME`, `MAIL_PASSWORD`; `sendMail()` returns bool. SMTP debug output only when `APP_DEBUG` parses as true (`filter_var(..., FILTER_VALIDATE_BOOLEAN)`). 2.30.0: `MAIL_RATE_PER_HOUR` (empty or 0 = no limit) caps the emails per clock hour, counted in the cache: over it `sendMail()` sends nothing and returns false; `Mail::limited()` (the last call was held back), `Mail::rate()` (int or null), `Mail::sentThisHour()`. `new Mail()` reads `MAIL_*` from the environment when the constants are not defined (G187).
 
 ## OpenAI (`Caligrafy\OpenAI`, key `OPEN_AI_KEY`)
 ```php

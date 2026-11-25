@@ -876,3 +876,15 @@ the element's attributes or `offsetWidth`, and give it the video's `object-fit`.
 **G184 (2.28.0). GUMP has no Arabic: an Arabic app writes its form messages itself.** The capabilities' validator speaks the visitor's language only when GUMP ships it (`vendor/wixel/gump/lang`: fr, es, de, it, pt-br, tr, fa, he, ru... not ar); otherwise its messages stay English. Put them in `application/lang/ar.json` under `validation`, keyed by rule (`required`, `valid_email`, `max_len`, `min_len`, `min_numeric`, `integer`...), with `{field}` and `{param}`, and name the fields under `fields`. The messages of the framework's own checks (a file field, a number field given a list) and of `ServiceError` refusals the app throws are not translated: pass `t(...)` to the refusals you write.
 
 **G185 (2.28.0). A project made before 2.28.0 stays left to right until its layout says otherwise.** `update` does not overwrite a project's `application/views/default/master/site.pug` (it is the project's own): change `html(lang="en")` to `html(lang=locale(), dir=lang_dir())` there, and in any other master. A page's own CSS with `margin-left`, `padding-right`, `left:` or `text-align: left` does not mirror either: use logical properties (`margin-inline-start`, `padding-inline-end`, `inset-inline-start`, `text-align: start`).
+
+**G186 (2.19.0). A sign-in page shows a waiting message by itself: print it once.** `Route::auth`'s `/login` reads a
+success message left by the previous request (a `Route::form` `'flash'`, such as "Your password is changed" after a
+password reset, or sign-up's `registered`) and gives it to the view as `$error`, `$status = 'success'` and `$message`.
+A login view that also prints `flash('success')` shows it twice: keep only the `$message` alert there. Other pages
+(`Route::page`) do not get it and print `flash('success')` themselves. Proof: `AuthRoutes::loginPage()`.
+
+**G187 (2.30.0). `MAIL_RATE_PER_HOUR` holds emails back, it never queues them.** Over the hour's limit `sendMail()`
+returns `false` and the email is not sent later: show the person what to do (try again in a while) where an email
+matters, such as a password reset, and keep the limit well above the app's normal hour. The count is per clock hour
+(UTC) in the cache: with `CACHE_STORE=off` nothing is counted or held back. On Caligrafy Cloud the limit comes with
+the mail Cloud gives; an app with its own `MAIL_HOST` sets its own, or none. Proof: `Mail::allow()`, `Mail::limited()`.

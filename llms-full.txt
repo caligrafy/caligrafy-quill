@@ -1,4 +1,4 @@
-# Caligrafy Quill 2.29.0: the complete documentation
+# Caligrafy Quill 2.30.0: the complete documentation
 
 > Every page of the Caligrafy Quill wiki (https://github.com/caligrafy/caligrafy-quill/wiki) in one file, for coding
 > agents. The short index is llms.txt; exact signatures are in claude-plugin/skills/caligrafy/reference/api-reference.md
@@ -3979,6 +3979,8 @@ $result = Caligrafy\Notify::user($userId, array(
 + `push` is how many browsers got it; `email` whether an email was sent.
 + A delivery failure never throws. A bad message throws `ServiceError::invalid` with the fields.
 + At most `NOTIFY_RATE_PER_HOUR` messages per user and hour (30): above it nothing is sent (`'skipped' => 'rate'`).
++ At most `MAIL_RATE_PER_HOUR` emails for the whole app per hour (2.30.0, empty = no limit): above it the email is
+  not sent (its status is `rate-limited`) and the push still goes.
 + Every call is logged in `caligrafy_notifications` (who, the title, the tag, what each channel did; never the body),
   kept 30 days.
 + Without the tables (`platform install`) nothing is sent and nothing fails.
@@ -3992,7 +3994,8 @@ $result = Caligrafy\Notify::user($userId, array(
 | `NOTIFY_RATE_PER_HOUR` | `30` | Messages per user and hour |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | empty | Written by `notify keys`; never replaced (new keys cut off every subscribed browser) |
 | `APP_URL` | empty | The app's address, for the links of emails sent by jobs and the command line (Caligrafy Cloud sets it) |
-| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | | The emails' server and sender; without them email reports `not-configured` and push still works |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | | The emails' server and sender; without them email reports `not-configured` and push still works. Caligrafy Cloud sets them for an app that has no `MAIL_HOST` of its own (sender `<name>-app@caligrafy.com`) |
+| `MAIL_RATE_PER_HOUR` | empty | 2.30.0: the most emails the app sends in an hour, counted in the cache; empty or 0 = no limit. Caligrafy Cloud sets it with the mail it gives |
 
 On **Caligrafy Cloud** each app gets its web push keys at its first deploy, kept across deploys.
 
@@ -4052,7 +4055,8 @@ device that is off gets the message when it comes back, within 24 hours. Push ne
 + **`"push": 0` for everyone.** No browser turned push on yet, or the VAPID keys changed (`notify keys` was run on a new
   `.env`): every browser must turn it on again.
 + **Emails from a job have no links.** `APP_URL` is empty: set it to the app's address.
-+ **`"email": false`.** The user has no confirmed address, or `MAIL_*` is not set.
++ **`"email": false`.** The user has no confirmed address, `MAIL_*` is not set, or the app reached
+  `MAIL_RATE_PER_HOUR` this hour (2.30.0).
 + **Nothing on iPhone.** The app must be added to the Home Screen, and served over HTTPS.
 ## Related pages
 
@@ -19892,6 +19896,13 @@ docker compose exec dev-box php caligrafer.php cloud secret list bookshelf
 
 Each one is stored encrypted, never shown again, and applied at the next deploy.
 
+**Email works out of the box.** An app with no `MAIL_HOST` of its own sends through Caligrafy Cloud's mail, from
+`<name>-app@caligrafy.com` with the app's name as the sender: sign-up confirmations, password resets, notifications and
+the emails of its jobs. Its page on Caligrafy Cloud says so under *Settings*. To send from your own domain, set
+`MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD` and `MAIL_FROM` with `cloud secret set`: your own mail
+then replaces Caligrafy Cloud's entirely. Cloud's mail comes with a limit of emails per hour for each app
+(`MAIL_RATE_PER_HOUR`, Caligrafy Quill 2.30.0+), so that one app cannot stop email for the others.
+
 **7. Deploy.**
 
 ```bash
@@ -19930,6 +19941,7 @@ docker compose exec dev-box php caligrafer.php cloud extend bookshelf month   # 
 | When the time ends | the app is paused (its address shows a paused page) and you get an email; its data is kept 7 days, then deleted |
 | Limits | 5 apps per account, 256 MB of memory and a quarter of a CPU per app |
 | Settings | `.env` written by Cloud, with your `cloud secret` values; yours cannot replace the database settings and keys |
+| Email | sent through Caligrafy Cloud from `<name>-app@caligrafy.com`, unless you set your own `MAIL_HOST` |
 | Scheduled jobs | read at each deploy from the `caligrafy-schedule` line of the deploy step; `cloud jobs` shows them |
 | Sign-in for the command line | `.caligrafy/cloud.json`, or `CALIGRAFY_CLOUD_TOKEN`; `CALIGRAFY_CLOUD_URL` for another service |
 | AI agents | `https://deploy.caligrafy.com/mcp` with a token of the dashboard (*Command line and AI agents*): list, deploy and extend your apps |
@@ -20680,7 +20692,7 @@ Each minor release has its release notes (linked from the sidebar), with what ch
 
 Caligrafy Quill ships with its own **[Claude Code](https://code.claude.com) plugin**, `caligrafy-quill`, in the [`claude-plugin/`](https://github.com/caligrafy/caligrafy-quill/tree/master/claude-plugin) folder of every project. When you open a project in Claude Code, Claude knows the framework from its source: capabilities, the declarative routes, the query builder, models, Pug views, authentication, payments, Vue apps, bots, face detection, machine learning and the AI integrations. It builds the Caligrafy way, **build once, experience everywhere**: a feature becomes a capability, and every experience (pages, Vue apps, REST, AI agents) calls it. With `/caligrafy-quill:idea` it goes from your idea to an app online: **Describe it. Approve it. Ship it.**
 
-Current version: **1.41.0**, for Caligrafy Quill v2.29.0.
+Current version: **1.42.0**, for Caligrafy Quill v2.30.0.
 ## <a name="whatyouget"></a>What the plugin gives Claude
 
 | Component | Name | What it does |

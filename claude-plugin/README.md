@@ -52,6 +52,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.42.0** - Caligrafy Quill 2.30.0: `MAIL_RATE_PER_HOUR` (the hourly email limit, `Mail::limited()`, `rate()`, `sentThisHour()`) in the API reference and the notifications page; G186 (a sign-in page shows a waiting message once), G187.
 - **1.41.1** - Email works out of the box on Caligrafy Cloud: an app without its own `MAIL_HOST` sends from `<name>-app@caligrafy.com` (ship, deploy, notifications, G110).
 - **1.41.0** - Caligrafy Quill 2.29.0: Stripe Connect transfers, `Payment::createTransfer()` (with an idempotency key), `retrieveTransfer()` and `reverseTransfer()`, in the API reference and the payments page.
 - **1.40.1** - Caligrafy Quill 2.28.1: one `APP_LOCALE` in the template (`en_US` is read as `en`), the sign-up's password mismatch in the app's language, the JS client's `not_json` error.

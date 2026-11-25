@@ -561,7 +561,8 @@ class Notify
     }
 
     /**
-     * Sends the message to the user's confirmed address: sent, failed, none (no confirmed address) or not-configured
+     * Sends the message to the user's confirmed address: sent, failed, none (no confirmed address), not-configured or
+     * rate-limited (MAIL_RATE_PER_HOUR reached, 2.30.0)
      */
     private static function email($userId, array $message)
     {
@@ -573,7 +574,7 @@ class Notify
             $message['url'] !== '' ? array('Open', self::absolute($message['url'])) : null,
             'You get this because you turned on email notifications of ' . htmlspecialchars(self::appName()) . '. <a href="' . htmlspecialchars($unsubscribe) . '">Unsubscribe</a>.');
         return self::mail($rows[0]['email'], $message['title'], $html,
-            array('List-Unsubscribe' => '<' . $unsubscribe . '>', 'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click')) ? 'sent' : 'failed';
+            array('List-Unsubscribe' => '<' . $unsubscribe . '>', 'List-Unsubscribe-Post' => 'List-Unsubscribe=One-Click')) ? 'sent' : (Mail::limited() ? 'rate-limited' : 'failed');
     }
 
     private static function mail($to, $subject, $html, array $headers)
