@@ -23435,7 +23435,9 @@ Route::mobile(['scheme' => 'com.example.books']);
 
 Declares /mobile/authorize (GET, POST), /mobile/token, /mobile/session and /mobile/signout, and CORS for the app.
 Options: scheme (required: the app id of capacitor.config.json, or a list), scopes (['\*']), days (90), prefix
-('/mobile'), origins (more origins allowed to call with a token), name (the app's name on the consent page)
+('/mobile'), origins (more origins allowed to call with a token), name (the app's name on the consent page),
+view (2.31.0: the consent page in the site's own look, a view of application/views such as 'Auth/mobile'; it
+keeps the form of framework/views/mobile/authorize, G188)
 An app without accounts (no Auth::authentication, 2.27.2): only the CORS of its apps, so they call the public
 capabilities; no sign-in addresses
 
@@ -23443,7 +23445,7 @@ capabilities; no sign-in addresses
 
 + `$options` `array`, default `array()`
 
-Source: [framework/core/Route.php:554](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L554)
+Source: [framework/core/Route.php:556](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L556)
 
 <a name="route-webhook"></a>
 ### `Route::webhook()`
@@ -23467,7 +23469,7 @@ The capability gets ['event' =&gt; the decoded JSON body] as the system (Context
 + `$capability`
 + `$options` `array`, default `array()`
 
-Source: [framework/core/Route.php:565](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L565)
+Source: [framework/core/Route.php:567](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L567)
 
 <a name="route-download"></a>
 ### `Route::download()`
@@ -23493,7 +23495,7 @@ cells that start with = + - @ as they are), 'signIn'. Refusals as Route::page; i
 + `$capability`
 + `$options` `array`, default `array()`
 
-Source: [framework/core/Route.php:583](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L583)
+Source: [framework/core/Route.php:585](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L585)
 
 <a name="route-redirect"></a>
 ### `Route::redirect()`
@@ -23518,7 +23520,7 @@ Route::redirect('/old/books/{id}', '/books/{id}', 301);
 + `$status` `int`, default `302`: 301, 302 (default), 303, 307 or 308
 + `$options` `array`, default `array()`: 'keepQuery' (2.20.0, true: the query string of the request goes along)
 
-Source: [framework/core/Route.php:598](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L598)
+Source: [framework/core/Route.php:600](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L600)
 
 <a name="route-withquery"></a>
 ### `Route::withQuery()`
@@ -23534,7 +23536,7 @@ An address with a query string added (2.20.0, 'keepQuery'); the server's rewrite
 + `$target`
 + `$query` `array`
 
-Source: [framework/core/Route.php:621](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L621)
+Source: [framework/core/Route.php:623](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L623)
 
 <a name="route-redirecttarget"></a>
 ### `Route::redirectTarget()`
@@ -23550,7 +23552,7 @@ Where a Route::redirect sends: $to with its {placeholders} filled from the route
 + `$to`
 + `$variables` `array`, default `array()`
 
-Source: [framework/core/Route.php:638](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L638)
+Source: [framework/core/Route.php:640](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L640)
 
 <a name="route-iswebhook"></a>
 ### `Route::isWebhook()`
@@ -23565,7 +23567,7 @@ Whether a uri is the address of a Route::webhook (no CSRF token: its signature i
 
 + `$uri`
 
-Source: [framework/core/Route.php:646](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L646)
+Source: [framework/core/Route.php:648](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L648)
 
 <a name="route-ismcp"></a>
 ### `Route::isMcp()`
@@ -23581,7 +23583,7 @@ Mcp\Http answers 401 to a request without a personal access token and never uses
 
 + `$uri`
 
-Source: [framework/core/Route.php:661](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L661)
+Source: [framework/core/Route.php:663](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L663)
 
 <a name="route-routes"></a>
 ### `Route::routes()`
@@ -23592,7 +23594,7 @@ public static function routes()
 
 The routes declared so far: [['method' =&gt; 'GET', 'route' =&gt; 'books/{id}'], ...]
 
-Source: [framework/core/Route.php:675](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L675)
+Source: [framework/core/Route.php:677](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L677)
 
 <a name="route-reset"></a>
 ### `Route::reset()`
@@ -23603,7 +23605,7 @@ public static function reset()
 
 Forgets every route (tests)
 
-Source: [framework/core/Route.php:687](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L687)
+Source: [framework/core/Route.php:689](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L689)
 
 <a name="route-handler"></a>
 ### `Route::handler()`
@@ -23619,7 +23621,7 @@ The closure (or Controller@action) of a declared route, without a request (tests
 + `$method`
 + `$route`
 
-Source: [framework/core/Route.php:697](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L697)
+Source: [framework/core/Route.php:699](https://github.com/caligrafy/caligrafy-quill/blob/v2.31.0/framework/core/Route.php#L699)
 
 
 ---

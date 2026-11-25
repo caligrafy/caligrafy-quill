@@ -116,8 +116,8 @@ php caligrafer.php mobile books --id com.example.books
 + **One command** creates `public/books`: a Vue app that [Capacitor](https://capacitorjs.com) turns into an Xcode and an
   Android Studio project, in your app's look. `npm run ios` and `npm run android` run it on a simulator.
 + **One line** of `web.php`, `Route::mobile(['scheme' => 'com.example.books'])`, lets people sign in to it through your
-  site's own sign-in page. The app gets a token of that person and calls your capabilities with it: never a password
-  in the app, never a second backend.
+  site's own sign-in page, then a consent page that can wear your site's look (`'view' => 'Auth/mobile'`). The app
+  gets a token of that person and calls your capabilities with it: never a password in the app, never a second backend.
 + **Notifications**: the `Notify::user()` you already send reaches their iPhones and Android phones too.
 + **Publishing**: fastlane and a GitHub workflow send each version to TestFlight and Google Play; with Claude,
   `/caligrafy-quill:mobile` walks you through the Apple and Google accounts.

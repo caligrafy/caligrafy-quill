@@ -547,7 +547,9 @@ class Route extends \stdClass
      *   Route::mobile(['scheme' => 'com.example.books']);
      * Declares /mobile/authorize (GET, POST), /mobile/token, /mobile/session and /mobile/signout, and CORS for the app.
      * Options: scheme (required: the app id of capacitor.config.json, or a list), scopes (['*']), days (90), prefix
-     * ('/mobile'), origins (more origins allowed to call with a token), name (the app's name on the consent page)
+     * ('/mobile'), origins (more origins allowed to call with a token), name (the app's name on the consent page),
+     * view (2.31.0: the consent page in the site's own look, a view of application/views such as 'Auth/mobile'; it
+     * keeps the form of framework/views/mobile/authorize, G188)
      * An app without accounts (no Auth::authentication, 2.27.2): only the CORS of its apps, so they call the public
      * capabilities; no sign-in addresses
      */
