@@ -513,7 +513,8 @@ browser stops getting messages. Proof: `public/js/notify.js`, `Notify::subscribe
 **G110. Emails sent by a job need `APP_URL`.** A job or the command line has no web request, so `Notify` cannot know
 the app's address for the email's links: without `APP_URL` the email channel says `not-configured` (push still
 works). Set `APP_URL=https://<the app's address>` in `.env`; Caligrafy Cloud sets it for its apps. Email also needs
-`MAIL_*`; the sender is `MAIL_FROM`, else `MAIL_USERNAME` when it is an address. Proof: `Notify::base()`,
+`MAIL_*`; the sender is `MAIL_FROM`, else `MAIL_USERNAME` when it is an address. Caligrafy Cloud sets `MAIL_*` too for
+an app without its own `MAIL_HOST`: it sends through the platform's mail from `<name>-app@caligrafy.com`. Proof: `Notify::base()`,
 `Notify::emailConfigured()`.
 
 **G111. Emails take their look from the design style's first `:root` rule.** `Notify::theme()` reads the custom

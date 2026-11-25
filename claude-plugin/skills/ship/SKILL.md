@@ -102,8 +102,10 @@ caligrafer cloud create <name> --repo https://github.com/<owner>/<name> --branch
   bash claude-plugin/skills/ship/scripts/github.sh deploy-key <owner>/<name> .caligrafy/<name>-deploy-key.pub
   ```
   It signs the GitHub CLI in first if needed (the same browser approval as step 2). `KEY added` or `KEY present`.
-+ **Settings the app needs** (`OPEN_AI_KEY`, `PAY_*`, `MAIL_*`...): name them to the user; they set each one with
++ **Settings the app needs** (`OPEN_AI_KEY`, `PAY_*`...): name them to the user; they set each one with
   `caligrafer cloud secret set <name> KEY=value` in their terminal (you never type a real secret), or skip that feature.
+  Email needs nothing: an app without its own `MAIL_HOST` sends through Caligrafy Cloud's mail from
+  `<name>-app@caligrafy.com`, with the app's name as the sender. Only an owner who wants their own domain sets `MAIL_*`.
 + **Time.** Every new app is free for its first 30 minutes online, from its first deploy (G90). Before deploying an app
   whose free minutes are used (`cloud status <name>` shows no time left, or `deploy` answers *has no time left*), ask
   once: "Keep <name> online for a week (2 credits, you have N)?". On yes: `caligrafer cloud extend <name> week`. Not

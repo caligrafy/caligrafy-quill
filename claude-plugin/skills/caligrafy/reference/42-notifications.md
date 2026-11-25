@@ -187,7 +187,7 @@ $result = Caligrafy\Notify::user($userId, array(
 | `NOTIFY_RATE_PER_HOUR` | `30` | Messages per user and hour |
 | `VAPID_PUBLIC_KEY`, `VAPID_PRIVATE_KEY`, `VAPID_SUBJECT` | empty | Written by `notify keys`; never replaced (new keys cut off every subscribed browser) |
 | `APP_URL` | empty | The app's address, for the links of emails sent by jobs and the command line (Caligrafy Cloud sets it) |
-| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | | The emails' server and sender; without them email reports `not-configured` and push still works |
+| `MAIL_HOST`, `MAIL_PORT`, `MAIL_USERNAME`, `MAIL_PASSWORD`, `MAIL_FROM` | | The emails' server and sender; without them email reports `not-configured` and push still works. Caligrafy Cloud sets them for an app that has no `MAIL_HOST` of its own (sender `<name>-app@caligrafy.com`) |
 
 On **Caligrafy Cloud** each app gets its web push keys at its first deploy, kept across deploys.
 

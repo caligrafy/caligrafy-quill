@@ -74,7 +74,8 @@ an account or type a password).
    (the GitHub CLI, signed in by a browser approval when needed), or on GitHub (*Settings, Deploy keys*, *Allow write
    access* off).
 3. **Settings.** The database and the keys are written for the app. For each service the project uses (`OPEN_AI_KEY`,
-   `PAY_*`, `MAIL_*`...), the user sets it; it is applied at the next deploy:
+   `PAY_*`...), the user sets it; it is applied at the next deploy (email works without `MAIL_*`: Cloud sends from
+   `<name>-app@caligrafy.com`, unless the user sets their own `MAIL_HOST`):
    ```bash
    php caligrafer.php cloud secret set <name> KEY=value   # the user runs it with their value; you never type a real secret
    php caligrafer.php cloud secret list <name>            # names only
