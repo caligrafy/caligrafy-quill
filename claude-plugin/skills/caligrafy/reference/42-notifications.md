@@ -166,20 +166,49 @@ $result = Caligrafy\Notify::user($userId, array(
     'url'     => '/books/3',               // opened on a tap: a path of the app, or an https:// address
     'tag'     => 'loan-17',                // optional: a new message with the same tag replaces the old one
     'urgency' => 'high',                   // optional: low, normal (default) or high
+    'inbox'   => true,                     // 2.32.0, optional: false sends it without keeping it in the inbox
 ));
-// array('push' => 1, 'email' => true, 'skipped' => null)
+// array('push' => 1, 'email' => true, 'inbox' => 42, 'skipped' => null)
 ```
 
 + `$userId` is the id `$context->userId()` gives (in a job, the id of each user it works for).
-+ `push` is how many browsers got it; `email` whether an email was sent.
++ `push` is how many browsers and phones got it; `email` whether an email was sent; `inbox` the id it is kept under
+  in the user's inbox (2.32.0, null when it is not kept).
 + A delivery failure never throws. A bad message throws `ServiceError::invalid` with the fields.
-+ At most `NOTIFY_RATE_PER_HOUR` messages per user and hour (30): above it nothing is sent (`'skipped' => 'rate'`).
++ At most `NOTIFY_RATE_PER_HOUR` messages per user and hour (30). Above it nothing is sent or kept
+  (`'skipped' => 'rate'`).
 + At most `MAIL_RATE_PER_HOUR` emails for the whole app per hour (2.30.0, empty = no limit): above it the email is
   not sent (its status is `rate-limited`) and the push still goes.
 + Every call is logged in `caligrafy_notifications` (who, the title, the tag, what each channel did; never the body),
   kept 30 days.
 + Without the tables (`platform install`) nothing is sent and nothing fails.
-+ When you delete a user, call `Caligrafy\Notify::forget($userId)`: their browsers, address, choices and log go.
++ When you delete a user, call `Caligrafy\Notify::forget($userId)`. Their browsers, address, choices, log and inbox go.
+
+### The inbox: notifications inside your app (2.32.0)
+
+Every message `Notify::user` sends is also kept for the user to read inside the app, whatever channels they turned
+on: a bell with a count, a list, the newest first. Nothing to set up beyond `platform install` (the deploy step runs it
+on Caligrafy Cloud).
+
+```php
+Caligrafy\Notify::inbox($userId, 30);          // items (id, title, body, url, tag, created_at, read), unread, more
+Caligrafy\Notify::inbox($userId, 30, $lastId); // the next page: the ones older than that id
+Caligrafy\Notify::unread($userId);             // how many are not read
+Caligrafy\Notify::read($userId, array(41, 42)); // marks these read (only the user's own); answers the unread count
+Caligrafy\Notify::read($userId);               // marks every one read
+```
+
++ Each user keeps their newest 200 messages, for 90 days.
++ A message sent with `'inbox' => false` is not kept: a test, a one-time code. `notify_test` sends that way.
++ The page draws the bell and the list itself, in its own look: the framework gives the data, never the design.
+
+From a page, the two capabilities through `notify.js`:
+
+```js
+const box = await Notify.inbox({ limit: 20 })   // { items, unread, more }
+await Notify.read(box.items.filter(n => !n.read).map(n => n.id))
+await Notify.read('all')
+```
 
 ### Settings
 
@@ -211,6 +240,8 @@ On **Caligrafy Cloud** each app gets its web push keys at its first deploy, kept
 | `Notify.email(address)` | sets the address and emails a link to confirm it (24 hours) |
 | `Notify.channel('email', false)` | turns a channel off (or on) |
 | `Notify.info()` | what `notify_status` answers |
+| `Notify.inbox({ limit, before })` | 2.32.0: the signed-in user's inbox, newest first: `items`, `unread`, `more` |
+| `Notify.read(ids)` | 2.32.0: marks these ids read (`Notify.read('all')`: every one); answers `{ unread }` |
 
 It registers `public/sw.js`, which shows the message with the browser closed and, on a tap, focuses a tab of its
 address or opens one. Keep an in-page banner for when a page is open: notifications are for when it is not.
@@ -237,7 +268,9 @@ signed-in user's own data; none is an MCP tool (only a browser can subscribe or 
 | `notify_email_set` | `email` (sends the confirmation) |
 | `notify_email_confirm` | `token` (public: the email's link) |
 | `notify_preferences` | `channel`, `enabled` |
-| `notify_test` | none |
+| `notify_inbox` | 2.32.0: `limit` (1-100, 30), `before` (an id, for the next page) |
+| `notify_read` | 2.32.0: `ids` (separated by commas) or `all: true` |
+| `notify_test` | none (not kept in the inbox) |
 
 ### Where push works
 

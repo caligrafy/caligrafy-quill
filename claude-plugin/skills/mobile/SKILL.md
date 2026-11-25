@@ -79,8 +79,9 @@ Walk the whole sign-in on each: Sign in, the site's page, Allow, back in the app
 
 ## 4. Notifications (when the app sends any)
 
-Server side, one call: `Notify::user($userId, ['title' => ..., 'body' => ..., 'url' => ...])` (browsers, email and
-phones). The phones need the site's settings (the owner sets them: `.env` locally, `php caligrafer.php cloud secret set
+Server side, one call: `Notify::user($userId, ['title' => ..., 'body' => ..., 'url' => ...])` (browsers, email,
+phones, and the in-app inbox since 2.32.0: a bell in the app reads it with `call('notify_inbox')` and marks it with
+`call('notify_read', { ids })`). The phones need the site's settings (the owner sets them: `.env` locally, `php caligrafer.php cloud secret set
 <app> NAME=value` online) and the app's set-up; the README of `public/<name>`, Notifications, lists each one and where
 it comes from (Apple: `APNS_KEY`, `APNS_KEY_ID`, `APNS_TEAM_ID`, `APNS_TOPIC`; Firebase: `FCM_SERVICE_ACCOUNT` and
 `android/app/google-services.json`). In Xcode, once: Signing & Capabilities, + Capability, Push Notifications.

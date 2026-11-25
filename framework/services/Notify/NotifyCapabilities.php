@@ -134,11 +134,40 @@ class CaligrafyNotifyPreferences extends CaligrafyNotifyService
     }
 }
 
+#[Capability(name: 'notify_inbox', description: 'Your notifications inside the app (2.32.0), newest first: each one\'s title, text, link and whether you read it, and how many are unread.', readOnly: true, mcp: false)]
+class CaligrafyNotifyInbox extends CaligrafyNotifyService
+{
+    public $rules = array('limit' => 'integer|min_numeric,1|max_numeric,100', 'before' => 'integer|min_numeric,1');
+    public $descriptions = array('limit' => 'How many, 1 to 100 (30)', 'before' => 'An id: the notifications older than it (the next page)');
+
+    public function handle(array $input, Context $context)
+    {
+        return Notify::inbox($this->me($context), (int) ($input['limit'] ?? 30), isset($input['before']) && $input['before'] !== '' ? (int) $input['before'] : null);
+    }
+}
+
+#[Capability(name: 'notify_read', description: 'Marks your notifications read (2.32.0): the ids given, or all of them. Answers how many are still unread.', mcp: false)]
+class CaligrafyNotifyRead extends CaligrafyNotifyService
+{
+    public $rules = array('ids' => 'max_len,2000', 'all' => 'boolean');
+    public $descriptions = array('ids' => 'The ids to mark read, separated by commas', 'all' => 'true marks every notification read');
+
+    public function handle(array $input, Context $context)
+    {
+        $me = $this->me($context);
+        $all = filter_var($input['all'] ?? false, FILTER_VALIDATE_BOOLEAN);
+        $ids = $input['ids'] ?? array();
+        if (!is_array($ids)) $ids = preg_split('/\s*,\s*/', (string) $ids, -1, PREG_SPLIT_NO_EMPTY);
+        if (!$all && !$ids) throw ServiceError::invalid(array('ids' => 'Give the ids to mark read, or all: true'));
+        return array('unread' => Notify::read($me, $all ? null : $ids));
+    }
+}
+
 #[Capability(name: 'notify_test', description: 'Sends you a test notification on every channel you turned on.', mcp: false)]
 class CaligrafyNotifyTest extends CaligrafyNotifyService
 {
     public function handle(array $input, Context $context)
     {
-        return Notify::user($this->me($context), array('title' => 'Notifications work', 'body' => 'You will get the notifications of this app here.', 'url' => '/', 'tag' => 'notify-test'));
+        return Notify::user($this->me($context), array('title' => 'Notifications work', 'body' => 'You will get the notifications of this app here.', 'url' => '/', 'tag' => 'notify-test', 'inbox' => false));
     }
 }

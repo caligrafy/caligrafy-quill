@@ -25,8 +25,13 @@ use Minishlink\WebPush\WebPush;
  *   says is gone is deleted, so is one after 5 failures in a row. Signing out of the app (/mobile/signout) forgets it
  * - email: the user's confirmed address only (caligrafy_notify_emails), through MAIL_*, with a one-click unsubscribe link
  *   (a signed URL) and the List-Unsubscribe headers
+ * - the inbox (2.32.0): every message is also kept for the user to read inside the app, whatever their channels
+ *   (caligrafy_inbox: title, body, url, tag, read or not; the newest 200 per user, 90 days). Notify::inbox() and
+ *   Notify::read(), or the notify_inbox and notify_read capabilities (the JS client: Notify.inbox(), Notify.read()).
+ *   'inbox' => false in the message sends it without keeping it (a test, a code)
  * A delivery failure never throws; a bad message throws ServiceError::invalid. At most NOTIFY_RATE_PER_HOUR messages per
- * user and hour (30): above it nothing is sent ('skipped' => 'rate'). In-page alerts stay the app's job.
+ * user and hour (30): above it nothing is sent nor kept ('skipped' => 'rate'). How the app shows its inbox (a bell, a
+ * list, a count) stays the app's job.
  * Without the tables (php caligrafer.php platform install) nothing is sent and nothing fails.
  */
 class Notify
@@ -38,6 +43,9 @@ class Notify
     const EMAILS = 'caligrafy_notify_emails';
     const PREFS = 'caligrafy_notify_prefs';
     const LOG = 'caligrafy_notifications';
+    const INBOX = 'caligrafy_inbox';
+    const INBOX_KEEP = 200;
+    const INBOX_DAYS = 90;
     const TTL = 86400;
     const PUSH_TIMEOUT = 5;
     const MAX_FAILURES = 5;
@@ -60,14 +68,17 @@ class Notify
     /**
      * Sends a message to a user on every channel they turned on
      * @param int|string $userId the id Context::userId() returns
-     * @param array $message title (80), body (300), url (https or a path of the app), tag, urgency (low, normal, high)
-     * @return array push (how many browsers got it), email (whether it was sent), skipped (null, or 'rate')
+     * @param array $message title (80), body (300), url (https or a path of the app), tag, urgency (low, normal, high),
+     *        inbox (2.32.0, true: kept in the user's in-app inbox; false: sent only)
+     * @return array push (how many browsers and phones got it), email (whether it was sent), inbox (the id kept, or
+     *         null), skipped (null, or 'rate')
      * @throws ServiceError invalid, on a bad message
      */
     public static function user($userId, array $message)
     {
+        $keep = !array_key_exists('inbox', $message) || filter_var($message['inbox'], FILTER_VALIDATE_BOOLEAN);
         $message = self::message($message);
-        $result = array('push' => 0, 'email' => false, 'skipped' => null);
+        $result = array('push' => 0, 'email' => false, 'inbox' => null, 'skipped' => null);
         try {
             $recent = Database::toArray(Database::execute('SELECT COUNT(*) AS n FROM ' . self::LOG . ' WHERE user_id = ? AND created_at > ? AND skipped IS NULL',
                 array((string) $userId, date('Y-m-d H:i:s', time() - 3600))));
@@ -79,6 +90,7 @@ class Notify
             self::log($userId, $message, 0, 'off', 'rate');
             return $result;
         }
+        if ($keep) $result['inbox'] = self::keep($userId, $message);
         $offered = self::offered();
         $email = 'off';
         if (in_array('push', $offered, true) && self::enabled($userId, 'push')) {
@@ -98,7 +110,7 @@ class Notify
      */
     public static function forget($userId)
     {
-        foreach (array(self::SUBSCRIPTIONS, self::DEVICES, self::EMAILS, self::PREFS, self::LOG) as $table) {
+        foreach (array(self::SUBSCRIPTIONS, self::DEVICES, self::EMAILS, self::PREFS, self::LOG, self::INBOX) as $table) {
             try { Database::execute("DELETE FROM $table WHERE user_id = ?", array((string) $userId)); } catch (\Throwable $e) {}
         }
     }
@@ -711,6 +723,66 @@ class Notify
     /**
      * What a user sees about their notifications: the channels, their state and the push public key
      */
+    // ---------------------------------------------------------------------------------------------------------------
+    // The inbox (2.32.0): what the app shows inside itself
+
+    /**
+     * The user's inbox, newest first
+     * @param int $limit 1 to 100
+     * @param int|null $before an id: the messages older than it (the next page)
+     * @return array items [id, title, body, url, tag, created_at, read], unread (how many are not read), more (older ones)
+     */
+    public static function inbox($userId, $limit = 30, $before = null)
+    {
+        $limit = max(1, min(100, (int) $limit));
+        try {
+            $where = 'user_id = ?' . ($before ? ' AND id < ?' : '');
+            $params = $before ? array((string) $userId, (int) $before) : array((string) $userId);
+            $rows = Database::toArray(Database::execute('SELECT id, title, body, url, tag, created_at, read_at FROM ' . self::INBOX . " WHERE $where ORDER BY id DESC LIMIT " . ($limit + 1), $params));
+        } catch (\Throwable $e) {
+            return array('items' => array(), 'unread' => 0, 'more' => false);
+        }
+        $more = count($rows) > $limit;
+        $items = array_map(function ($r) {
+            return array('id' => (int) $r['id'], 'title' => $r['title'], 'body' => $r['body'], 'url' => $r['url'] !== '' ? $r['url'] : null,
+                'tag' => $r['tag'], 'created_at' => $r['created_at'], 'read' => $r['read_at'] !== null);
+        }, array_slice($rows, 0, $limit));
+        return array('items' => $items, 'unread' => self::unread($userId), 'more' => $more);
+    }
+
+    /**
+     * How many messages of the inbox the user has not read
+     */
+    public static function unread($userId)
+    {
+        try {
+            return (int) (Database::toArray(Database::execute('SELECT COUNT(*) AS n FROM ' . self::INBOX . ' WHERE user_id = ? AND read_at IS NULL', array((string) $userId)))[0]['n'] ?? 0);
+        } catch (\Throwable $e) {
+            return 0;
+        }
+    }
+
+    /**
+     * Marks messages read: these ids (only the user's own), or every one when $ids is null
+     * @return int how many are still unread
+     */
+    public static function read($userId, ?array $ids = null)
+    {
+        try {
+            if ($ids === null) {
+                Database::execute('UPDATE ' . self::INBOX . ' SET read_at = ? WHERE user_id = ? AND read_at IS NULL', array(date('Y-m-d H:i:s'), (string) $userId));
+            } else {
+                $ids = array_values(array_unique(array_filter(array_map('intval', $ids), function ($id) { return $id > 0; })));
+                if ($ids) {
+                    Database::execute('UPDATE ' . self::INBOX . ' SET read_at = ? WHERE user_id = ? AND read_at IS NULL AND id IN (' . implode(',', array_fill(0, count($ids), '?')) . ')',
+                        array_merge(array(date('Y-m-d H:i:s'), (string) $userId), $ids));
+                }
+            }
+        } catch (\Throwable $e) {
+        }
+        return self::unread($userId);
+    }
+
     public static function status($userId)
     {
         $email = Database::toArray(Database::execute('SELECT email, confirmed_at FROM ' . self::EMAILS . ' WHERE user_id = ?', array((string) $userId)));
@@ -740,6 +812,22 @@ class Notify
                 array((string) $userId, $message['title'], $message['tag'] !== '' ? $message['tag'] : null, (int) $push, $email, $skipped, date('Y-m-d H:i:s')));
             if (random_int(1, 50) === 1) Database::execute('DELETE FROM ' . self::LOG . ' WHERE created_at < ?', array(date('Y-m-d H:i:s', time() - self::KEEP_DAYS * 86400)));
         } catch (\Throwable $e) {
+        }
+    }
+
+    // keeps a message in the user's inbox: the newest INBOX_KEEP, INBOX_DAYS at most
+    private static function keep($userId, array $message)
+    {
+        try {
+            Database::execute('INSERT INTO ' . self::INBOX . ' (user_id, title, body, url, tag, created_at) VALUES (?, ?, ?, ?, ?, ?)',
+                array((string) $userId, $message['title'], $message['body'], $message['url'], $message['tag'] !== '' ? $message['tag'] : null, date('Y-m-d H:i:s')));
+            $id = (int) Database::lastInsertId();
+            $old = Database::toArray(Database::execute('SELECT id FROM ' . self::INBOX . ' WHERE user_id = ? ORDER BY id DESC LIMIT 1 OFFSET ' . self::INBOX_KEEP, array((string) $userId)));
+            if ($old) Database::execute('DELETE FROM ' . self::INBOX . ' WHERE user_id = ? AND id <= ?', array((string) $userId, (int) $old[0]['id']));
+            if (random_int(1, 50) === 1) Database::execute('DELETE FROM ' . self::INBOX . ' WHERE created_at < ?', array(date('Y-m-d H:i:s', time() - self::INBOX_DAYS * 86400)));
+            return $id ?: null;
+        } catch (\Throwable $e) {
+            return null;
         }
     }
 

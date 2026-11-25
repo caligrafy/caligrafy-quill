@@ -5,6 +5,8 @@
 // Notify.disable()  unsubscribes this browser
 // Notify.test()     sends a test message to the signed-in user
 // Notify.email(address), Notify.channel('email', false): the email channel; Notify.info(): what notify_status says
+// Notify.inbox({ limit, before })   the signed-in user's notifications inside the app (2.32.0): items, unread, more
+// Notify.read(ids)                  marks these ids read (a list), or every one with Notify.read('all'); answers unread
 (function () {
   var script = document.currentScript && document.currentScript.src
   var base = script ? script.replace(/public\/js\/notify\.js(\?.*)?$/, '') : '/'
@@ -91,6 +93,8 @@
     test: function () { return call('notify_test') },
     info: function () { return call('notify_status') },
     email: function (address) { return call('notify_email_set', { email: address }) },
-    channel: function (channel, enabled) { return call('notify_preferences', { channel: channel, enabled: enabled }) }
+    channel: function (channel, enabled) { return call('notify_preferences', { channel: channel, enabled: enabled }) },
+    inbox: function (options) { return call('notify_inbox', options || {}) },
+    read: function (ids) { return call('notify_read', ids === 'all' ? { all: true } : { ids: [].concat(ids).join(',') }) }
   }
 })()

@@ -87,6 +87,21 @@ CREATE TABLE IF NOT EXISTS `caligrafy_notifications` (
     KEY `caligrafy_notifications_user` (`user_id`, `created_at`)
 ) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
 
+-- The inbox (Caligrafy\Notify, 2.32.0): every notification, kept for the user to read inside the app
+CREATE TABLE IF NOT EXISTS `caligrafy_inbox` (
+    `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,
+    `user_id` VARCHAR(64) NOT NULL,
+    `title` VARCHAR(80) NOT NULL,
+    `body` VARCHAR(300) NOT NULL,
+    `url` VARCHAR(2000) NOT NULL DEFAULT '',
+    `tag` VARCHAR(64) NULL,
+    `created_at` DATETIME NOT NULL,
+    `read_at` DATETIME NULL,
+    PRIMARY KEY (`id`),
+    KEY `caligrafy_inbox_user` (`user_id`, `id`),
+    KEY `caligrafy_inbox_unread` (`user_id`, `read_at`)
+) ENGINE = InnoDB DEFAULT CHARSET = utf8mb4;
+
 -- Background jobs (Caligrafy\Queue, 2.18.0): a capability and its input, run later by a worker
 CREATE TABLE IF NOT EXISTS `caligrafy_jobs` (
     `id` BIGINT UNSIGNED NOT NULL AUTO_INCREMENT,

@@ -52,6 +52,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.44.0** - Caligrafy Quill 2.32.0: Notify's in-app inbox (`Notify::inbox`, `unread`, `read`, `'inbox' => false`, the `notify_inbox` and `notify_read` capabilities, `Notify.inbox()` and `Notify.read()`) in the API reference and the notifications page; G189.
 - **1.43.0** - Caligrafy Quill 2.31.0: Route::mobile's `view` (the consent page in the site's own look) in the API reference, the phone apps page and the mobile skill; G188.
 - **1.42.0** - Caligrafy Quill 2.30.0: `MAIL_RATE_PER_HOUR` (the hourly email limit, `Mail::limited()`, `rate()`, `sentThisHour()`) in the API reference and the notifications page; G186 (a sign-in page shows a waiting message once), G187.
 - **1.41.1** - Email works out of the box on Caligrafy Cloud: an app without its own `MAIL_HOST` sends from `<name>-app@caligrafy.com` (ship, deploy, notifications, G110).

@@ -171,7 +171,9 @@ is signed in, G108), named in `application/config/schedule.php` (reference/39-sc
 `Caligrafy\Notify::user($userId, [...])` call from a capability (reference/42-notifications.md), never an email sender
 of your own. Then `Route::notifications();` next to `Route::capabilities(...)`, `php caligrafer.php platform install`,
 `php caligrafer.php notify keys --subject http://localhost:8080` locally (Caligrafy Cloud makes the keys online), and
-the **Turn on alerts** button (`script(src=$home . 'public/js/notify.js')`, `Notify.enable()` from its click, G109).
+the **Turn on alerts** button (`script(src=$home . 'public/js/notify.js')`, `Notify.enable()` from its click, G109). Every
+alert is also kept in the person's inbox (2.32.0): a bell on the page with `Notify.inbox()` and `Notify.read()` shows
+them inside the app (G189).
 Check: `schedule list`, `schedule run <job>` prints `ok`, `notify status <user>`.
 
 **Slow work** (2.18.0+, only when the plan has it: an AI call, an email to many, a report): the capability the page

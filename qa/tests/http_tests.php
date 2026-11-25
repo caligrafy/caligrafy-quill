@@ -1124,7 +1124,7 @@ qa_test('MCP over stdio: php caligrafer.php mcp answers one JSON line per messag
 
 qa_test('the generated JS client calls the same capabilities from Node with a token', function () use ($WRITER, $BASE, $ROOT) {
     @mkdir("$ROOT/qa/tmp", 0777, true);
-    qa_contains('26 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));   // the app's 13, the 2 of the declarative routes' fixtures (2.19.0), qa_zip_files (2.22.0), the framework's 9 notify_* (2 for the phone apps, 2.27.0) and queue_work (2.18.0)
+    qa_contains('28 capabilities', qa_cli('client qa/tmp/capabilities.mjs'));   // the app's 13, the 2 of the declarative routes' fixtures (2.19.0), qa_zip_files (2.22.0), the framework's 11 notify_* (2 for the phone apps, 2.27.0; notify_inbox and notify_read, 2.32.0) and queue_work (2.18.0)
     $script = "$ROOT/qa/tmp/client-check.mjs";
     file_put_contents($script, "import { configure, listBooks, createBook, getBook, CapabilityError } from './capabilities.mjs'\n"
         . "configure({ baseUrl: process.argv[2], token: process.argv[3] })\n"

@@ -77,7 +77,7 @@ shown with card views in your app's own look (Claude writes them from your pages
 ([Snap Cards and the assistant](https://github.com/caligrafy/caligrafy-quill/wiki/Snap-Cards-and-the-Assistant)).
 Same rules, same permissions, same audit log, whichever way it is called. A capability can also run on a
 timer ([scheduled jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Scheduled-Jobs)), reach your users with the
-app closed ([notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications): web push, phones and email), or
+app closed ([notifications](https://github.com/caligrafy/caligrafy-quill/wiki/Notifications): web push, phones, email, and an inbox inside the app), or
 run later, outside the request ([background jobs](https://github.com/caligrafy/caligrafy-quill/wiki/Background-Jobs),
 with retries).
 

@@ -63,7 +63,7 @@ final class NotifyTest extends TestCase
 
     public function testTheCapabilitiesShipWithTheFrameworkAndAreNotMcpTools(): void
     {
-        $names = ['notify_email_confirm', 'notify_email_set', 'notify_forget_device', 'notify_preferences', 'notify_register_device', 'notify_status', 'notify_subscribe', 'notify_test', 'notify_unsubscribe'];
+        $names = ['notify_email_confirm', 'notify_email_set', 'notify_forget_device', 'notify_inbox', 'notify_preferences', 'notify_read', 'notify_register_device', 'notify_status', 'notify_subscribe', 'notify_test', 'notify_unsubscribe'];
         foreach ($names as $name) {
             $this->assertNotNull(Capabilities::get($name), "$name is registered");
             $this->assertFalse(Capabilities::get($name)['capability']->mcp);

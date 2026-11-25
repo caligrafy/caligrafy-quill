@@ -896,3 +896,10 @@ so a site with its own layout shows a stranger's page at the moment it asks for 
 `scheme`, `redirect`, `state`, `challenge` and `device`, and two submit buttons named `decision` valued `allow` and
 `deny`. A field left out makes the sign-in fail with "This sign-in link does not work". Proof: `Mobile::authorizePage()`,
 `Mobile::authorize()`.
+
+**G189 (2.32.0). Notify::user's result has a fourth key, and a test message should not fill the inbox.** Since 2.32.0
+every `Notify::user()` call is also kept in the user's in-app inbox (`caligrafy_inbox`) and its result is
+`['push', 'email', 'inbox', 'skipped']`: code or tests comparing the whole array with three keys now fail; read the keys
+you need. A message that is not for later reading (a test, a one-time code) is sent with `'inbox' => false`. The page
+draws the bell and the list itself from `notify_inbox` / `Notify.inbox()`; mark them read with `notify_read` when the
+list is opened. The table comes with `platform install`, which the deploy step runs.

@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.32.0] - 2026-11-26
+
+### Added
+- **Notifications inside the app (the inbox)**: every `Notify::user()` message is also kept for the user to read inside the app, whatever channels they turned on (table `caligrafy_inbox`, with `platform install`; the newest 200 per user, 90 days). `Notify::inbox($userId, $limit, $before)` lists them newest first with the unread count, `Notify::unread($userId)` counts them, `Notify::read($userId, $ids)` marks them read (every one without ids). Two capabilities in every project, `notify_inbox` and `notify_read` (not MCP tools), and `notify.js` gains `Notify.inbox()` and `Notify.read()`. A message sent with `'inbox' => false` is not kept (`notify_test` sends that way). The page draws its own bell and list.
+
+### Changed
+- `Notify::user()` returns `inbox` (the id kept, or null) beside `push`, `email` and `skipped` (G189). `Notify::forget()` deletes the inbox too.
+- The documentation of `Route::mobile`'s `view` option (2.31.0) in the README and the API reference.
+
 ## [2.31.0] - 2026-11-25
 
 ### Added

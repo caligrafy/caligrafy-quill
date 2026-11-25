@@ -1089,7 +1089,7 @@ function qa_browser_keys()
     $b64 = function ($raw) { return rtrim(strtr(base64_encode($raw), '+/', '-_'), '='); };
     return array('p256dh' => $b64("\x04" . str_pad($d['x'], 32, "\0", STR_PAD_LEFT) . str_pad($d['y'], 32, "\0", STR_PAD_LEFT)), 'auth' => $b64(random_bytes(16)));
 }
-foreach (array('caligrafy_push_subscriptions', 'caligrafy_notify_emails', 'caligrafy_notify_prefs', 'caligrafy_notifications') as $t) Database::execute("DELETE FROM $t");
+foreach (array('caligrafy_push_subscriptions', 'caligrafy_notify_emails', 'caligrafy_notify_prefs', 'caligrafy_notifications', 'caligrafy_inbox') as $t) Database::execute("DELETE FROM $t");
 @unlink('/tmp/qa-pushes.log');
 $qaKeys = Notify::keys();
 putenv('VAPID_PUBLIC_KEY=' . $qaKeys['public']);
@@ -1105,6 +1105,8 @@ qa_test('a push reaches every browser of the user, encrypted and signed; an expi
     Notify::subscribe(1, array('endpoint' => 'http://127.0.0.1:8770/gone/old-phone', 'keys' => qa_browser_keys()), 'Safari');
     Notify::subscribe(2, array('endpoint' => 'http://127.0.0.1:8770/ok/someone-else', 'keys' => qa_browser_keys()), 'Chrome');
     $result = Notify::user(1, array('title' => 'Your price hit: $42', 'body' => 'Trail shoes at Shop A.', 'url' => '/watches/17', 'tag' => 'watch-17', 'urgency' => 'high'));
+    qa_assert(is_int($result['inbox']) && $result['inbox'] > 0, 'kept in the inbox: ' . json_encode($result));
+    unset($result['inbox']);
     qa_equals(array('push' => 1, 'email' => false, 'skipped' => null), $result);
     $push = json_decode(trim(file_get_contents('/tmp/qa-pushes.log')), true);
     qa_equals('/ok/laptop', $push['path'], 'only the user\'s own browsers');
@@ -1141,7 +1143,7 @@ qa_test('the message after the hourly limit is skipped, and the log keeps no bod
     Database::execute("DELETE FROM caligrafy_notifications");
     Notify::user(2, array('title' => 'One', 'body' => 'secret body'));
     Notify::user(2, array('title' => 'Two', 'body' => 'b'));
-    qa_equals(array('push' => 0, 'email' => false, 'skipped' => 'rate'), Notify::user(2, array('title' => 'Three', 'body' => 'b')));
+    qa_equals(array('push' => 0, 'email' => false, 'inbox' => null, 'skipped' => 'rate'), Notify::user(2, array('title' => 'Three', 'body' => 'b')));
     putenv('NOTIFY_RATE_PER_HOUR');
     $rows = Database::toArray(Database::execute("SELECT * FROM caligrafy_notifications WHERE user_id = '2' ORDER BY id"));
     qa_equals(array('One', 'Two', 'Three'), array_column($rows, 'title'));
@@ -1149,11 +1151,45 @@ qa_test('the message after the hourly limit is skipped, and the log keeps no bod
     qa_assert(strpos(json_encode($rows), 'secret body') === false, 'no body in the log');
 });
 
+qa_test('the inbox (2.32.0): every message kept for its user, newest first, read one by one or all, pages, inbox false', function () {
+    Database::execute("DELETE FROM caligrafy_inbox");
+    putenv('NOTIFY_RATE_PER_HOUR=100');
+    $a = Notify::user(3, array('title' => 'Table held', 'body' => 'Your code is YUM-4K7PQ.', 'url' => '/me', 'tag' => 'claim-1'))['inbox'];
+    $b = Notify::user(3, array('title' => 'You are at Zaatar', 'body' => 'Show your code.'))['inbox'];
+    Notify::user(4, array('title' => 'Someone else', 'body' => 'Not yours.'));
+    qa_equals(null, Notify::user(3, array('title' => 'A code', 'body' => 'Sent, not kept.', 'inbox' => false))['inbox'], 'inbox false keeps nothing');
+    $box = Notify::inbox(3);
+    qa_equals(array('You are at Zaatar', 'Table held'), array_column($box['items'], 'title'), 'only user 3, newest first');
+    qa_equals(array(2, false), array($box['unread'], $box['more']));
+    qa_equals(array('id' => $a, 'title' => 'Table held', 'body' => 'Your code is YUM-4K7PQ.', 'url' => '/me', 'tag' => 'claim-1', 'read' => false),
+        array_diff_key($box['items'][1], array('created_at' => 1)));
+    qa_equals(null, $box['items'][0]['url'], 'no link: null');
+    qa_equals(1, Notify::read(3, array($b, 999999)), 'one read, an unknown id ignored');
+    qa_equals(1, Notify::read(4, array($a)), 'user 4 cannot read user 3\'s message (user 4 still has one unread)');
+    qa_equals(1, Notify::unread(3));
+    qa_equals(0, Notify::read(3));
+    $page = Notify::inbox(3, 1);
+    qa_equals(array(1, true), array(count($page['items']), $page['more']));
+    qa_equals('Table held', Notify::inbox(3, 1, $page['items'][0]['id'])['items'][0]['title'], 'the next page');
+    putenv('NOTIFY_RATE_PER_HOUR');
+});
+
+qa_test('the inbox capabilities: notify_inbox lists the signed-in user\'s own, notify_read marks them', function () {
+    $ctx = new Caligrafy\Context('rest', (object) array('id' => 3));
+    $box = Caligrafy\Capabilities::call('notify_inbox', array('limit' => 5), $ctx);
+    qa_equals(2, count($box['items']));
+    Notify::user(3, array('title' => 'New', 'body' => 'Unread one.'));
+    qa_equals(array('unread' => 1), Caligrafy\Capabilities::call('notify_read', array('ids' => (string) Notify::inbox(3)['items'][1]['id']), $ctx), 'an id already read changes nothing');
+    qa_equals(array('unread' => 0), Caligrafy\Capabilities::call('notify_read', array('all' => true), $ctx));
+    try { Caligrafy\Capabilities::call('notify_read', array(), $ctx); qa_assert(false, 'nothing to mark is refused'); } catch (Caligrafy\ServiceError $e) { qa_equals('invalid', $e->kind); }
+    try { Caligrafy\Capabilities::call('notify_inbox', array(), Caligrafy\Context::guest()); qa_assert(false, 'a visitor has no inbox'); } catch (Caligrafy\ServiceError $e) { qa_equals('unauthenticated', $e->kind); }
+});
+
 qa_test('one user cannot remove another user\'s browser; forget deletes everything about a user', function () {
     qa_equals(false, Notify::unsubscribe(2, 'http://127.0.0.1:8770/ok/laptop'), 'user 2 cannot unsubscribe user 1');
     qa_equals(1, (int) Database::toArray(Database::execute("SELECT COUNT(*) AS n FROM caligrafy_push_subscriptions WHERE user_id = '1'"))[0]['n']);
     Notify::forget(1);
-    foreach (array('caligrafy_push_subscriptions', 'caligrafy_notify_emails', 'caligrafy_notify_prefs', 'caligrafy_notifications') as $t) {
+    foreach (array('caligrafy_push_subscriptions', 'caligrafy_notify_emails', 'caligrafy_notify_prefs', 'caligrafy_notifications', 'caligrafy_inbox') as $t) {
         qa_equals(0, (int) Database::toArray(Database::execute("SELECT COUNT(*) AS n FROM $t WHERE user_id = '1'"))[0]['n'], "$t of user 1");
     }
 });
