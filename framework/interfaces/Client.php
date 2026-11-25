@@ -77,8 +77,12 @@ async function request (method, path, body) {
   const response = await fetch(settings.baseUrl + settings.prefix + path, {
     method, headers, credentials: settings.credentials, body: body === undefined ? undefined : JSON.stringify(body)
   })
-  const json = await response.json().catch(() => null)
+  const text = await response.text()
+  let json = null
+  try { json = text ? JSON.parse(text) : null } catch (e) { json = null }
   if (!response.ok) throw new CapabilityError(response.status, json && json.error)
+  // a 2xx that is not JSON: often a PHP warning printed before the answer while developing (2.28.1)
+  if (json === null) throw new CapabilityError(response.status, { code: 'not_json', message: 'The answer is not JSON: ' + text.replace(/<[^>]*>/g, '').trim().slice(0, 200) })
   return json
 }
 

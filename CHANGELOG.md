@@ -6,6 +6,14 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.28.1] - 2026-11-25
+
+### Fixed
+- **`APP_LOCALE`**: the `.env` template had it twice (its old, unused `en_US` and a new empty line); it now has one, `APP_LOCALE=en`, documented. A value with a region (`en_US`, `fr_CA`) is read as its language (`en`, `fr`), by `Lang` and by `doctor`.
+- **Sign-up in other languages**: when the two passwords differ, the message under the password field is `Route::auth`'s `mismatch` message (translatable with `t()`), not an English sentence.
+- **The JS client** (`php caligrafer.php client`): a successful answer that is not JSON (a PHP warning printed before it while developing, a proxy's page) is a `CapabilityError` with the code `not_json` and the start of the answer, instead of a `TypeError` (*Cannot read properties of null*).
+- Found while building an app in English, French and Arabic. Plugin 1.40.1.
+
 ## [2.28.0] - 2026-11-25
 
 ### Added

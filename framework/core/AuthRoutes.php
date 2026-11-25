@@ -294,7 +294,7 @@ class AuthRoutes
         $old['username'] = is_scalar($old['username'] ?? '') ? (string) ($old['username'] ?? '') : '';
         $page = array('error' => true, 'status' => 'danger', 'message_header' => 'Whoops, something is not right', 'user' => (object) $old);
         if (array_key_exists('confirmpasscode', $p) && (string) ($p['passcode'] ?? '') !== (string) $p['confirmpasscode']) {
-            $error = ServiceError::invalid(array('passcode' => 'passwords don\'t match'), $o['messages']['mismatch']);
+            $error = ServiceError::invalid(array('passcode' => $o['messages']['mismatch']), $o['messages']['mismatch']);
             return $json ? array('status' => 422, 'json' => $error->toArray())
                 : array('view' => $o['views']['register'], 'data' => $page + array('message' => $error->getMessage(), 'errors' => $error->fields));
         }

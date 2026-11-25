@@ -338,7 +338,10 @@ class Doctor
             return;
         }
         $codes = array_values(array_unique(array_filter(array_map(function ($c) { return strtolower(str_replace('_', '-', trim($c))); }, explode(',', $setting)))));
-        $default = strtolower(trim((string) $this->env('APP_LOCALE'))) ?: $codes[0];
+        $default = strtolower(str_replace('_', '-', trim((string) $this->env('APP_LOCALE')))) ?: $codes[0];
+        if (!in_array($default, $codes, true) && in_array(explode('-', $default)[0], $codes, true)) {
+            $default = explode('-', $default)[0];   // en_US is en
+        }
         if (!in_array($default, $codes, true)) {
             $this->add('project', 'Languages', 'WARN', "APP_LOCALE=$default is not in APP_LOCALES ($setting): " . $codes[0] . ' is used', 'set APP_LOCALE to one of APP_LOCALES, or empty');
             $default = $codes[0];

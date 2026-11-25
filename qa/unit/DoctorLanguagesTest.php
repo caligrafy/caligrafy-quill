@@ -60,6 +60,15 @@ final class DoctorLanguagesTest extends TestCase
         $this->assertSame(['WARN Languages: fr lacks 1 (home.cta)'], $this->check());
     }
 
+    public function testTheTemplatesEnUsIsEn(): void
+    {
+        putenv('APP_LOCALES=en,fr');
+        putenv('APP_LOCALE=en_US');
+        $this->write('en', ['a' => 'A']);
+        $this->write('fr', ['a' => 'A']);
+        $this->assertSame(['OK Languages: en, fr: 1 words each, en by default'], $this->check());
+    }
+
     public function testTheDefaultMustBeOneOfThem(): void
     {
         putenv('APP_LOCALES=en,fr');

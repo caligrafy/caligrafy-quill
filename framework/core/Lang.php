@@ -62,7 +62,11 @@ class Lang
     {
         $default = self::normalize((string) self::setting('APP_LOCALE'));
         $locales = self::locales();
-        return in_array($default, $locales, true) ? $default : $locales[0];
+        if (in_array($default, $locales, true)) {
+            return $default;
+        }
+        $base = explode('-', $default)[0];          // en_US (the template's value before 2.28.1) is en
+        return in_array($base, $locales, true) ? $base : $locales[0];
     }
 
     /**

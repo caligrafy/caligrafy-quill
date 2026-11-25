@@ -63,6 +63,8 @@ final class LangTest extends TestCase
         $this->assertSame('fr', Lang::fallback());
         putenv('APP_LOCALE=de');
         $this->assertSame('en', Lang::fallback(), 'a language the app does not have is not used');
+        putenv('APP_LOCALE=fr_CA');
+        $this->assertSame('fr', Lang::fallback(), 'fr_CA is fr (the template said en_US before 2.28.1)');
         putenv('APP_LOCALES');
         $this->assertSame(array('en'), Lang::locales(), 'en when nothing is set');
     }
