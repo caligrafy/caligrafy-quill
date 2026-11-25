@@ -46,12 +46,14 @@ class Mobile
 
     /**
      * The options with their defaults: scheme (required: the app's URL scheme, its bundle id is a good one), scopes
-     * (['*']), days (90), prefix ('/mobile'), origins (more origins allowed to call with a token), name (APP_NAME, else the site's address)
+     * (['*']), days (90), prefix ('/mobile'), origins (more origins allowed to call with a token), name (APP_NAME, else the site's address),
+     * view (2.31.0: the consent page in the app's own look, a view of application/views such as 'Auth/mobile'; it gets
+     * the same $mobile and $user as framework/views/mobile/authorize.pug, which stays the default)
      */
     public static function options(array $options)
     {
         $o = array_merge(array('scheme' => null, 'scopes' => array('*'), 'days' => self::DEFAULT_DAYS, 'prefix' => '/mobile',
-            'origins' => array(), 'name' => null), $options);
+            'origins' => array(), 'name' => null, 'view' => null), $options);
         $schemes = array_values(array_filter(array_map('strtolower', array_map('trim', (array) $o['scheme'])), 'strlen'));
         if (!$schemes) {
             throw new \InvalidArgumentException("Route::mobile: 'scheme' is required: the URL scheme of the app (its app id, such as 'com.example.books'), the one capacitor.config.json declares");
@@ -83,6 +85,14 @@ class Mobile
             $origins[] = $origin;
         }
         $o['origins'] = $origins;
+        // the consent page: the app's own view (a path under application/views, no .. and no extension), else the default
+        if ($o['view'] !== null) {
+            $view = trim((string) $o['view'], " /");
+            if (!preg_match('#^[A-Za-z0-9_-]+(/[A-Za-z0-9_-]+)*$#', $view)) {
+                throw new \InvalidArgumentException("Route::mobile: 'view' is a view of application/views, such as 'Auth/mobile' (letters, digits, - _ and /, no extension)");
+            }
+            $o['view'] = $view;
+        }
         // the app's name on the consent page: the option, APP_NAME, else the site's address (Mobile::appName())
         $o['name'] = trim((string) ($o['name'] ?? '')) ?: trim((string) (defined('APP_NAME') && APP_NAME ? APP_NAME : getenv('APP_NAME')));
         return $o;
@@ -230,7 +240,7 @@ class Mobile
         if (is_string($input)) {
             return self::message(400, 'This sign-in link does not work', $input);
         }
-        (new PageController())->render(self::VIEW, array('signedIn' => true, 'comeBack' => true,
+        (new PageController())->render(self::$options['view'] ?? self::VIEW, array('signedIn' => true, 'comeBack' => true,
             'with' => array('mobile' => $input + array('app' => self::appName(), 'action' => ltrim(self::$options['prefix'], '/') . '/authorize'))));
     }
 

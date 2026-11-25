@@ -32,7 +32,9 @@ final class MobileTest extends TestCase
         $this->assertSame(['*'], $o['scopes']);
         $this->assertSame(90, $o['days']);
         $this->assertSame('/mobile', $o['prefix']);
-        foreach ([[], ['scheme' => 'https'], ['scheme' => 'ab'], ['scheme' => 'javascript'], ['scheme' => 'x.y', 'days' => 0],
+        $this->assertNull($o['view'], 'the framework\'s consent page by default');
+        $this->assertSame('Auth/mobile', Mobile::options(['scheme' => 'x.y', 'view' => '/Auth/mobile/'])['view'], 'the app\'s own view (2.31.0)');
+        foreach ([[], ['scheme' => 'https'], ['scheme' => 'x.y', 'view' => '../secret'], ['scheme' => 'x.y', 'view' => 'Auth/mobile.pug'], ['scheme' => 'x.y', 'view' => ''], ['scheme' => 'ab'], ['scheme' => 'javascript'], ['scheme' => 'x.y', 'days' => 0],
                   ['scheme' => 'x.y', 'scopes' => ['not a scope']], ['scheme' => 'x.y', 'origins' => ['https://a.example/path']], ['scheme' => 'x.y', 'prefix' => '/']] as $bad) {
             try {
                 Mobile::options($bad);

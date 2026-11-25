@@ -48,7 +48,9 @@ Then in `web.php`, after `Route::auth(...)` and `Route::capabilities(...)`:
 Route::mobile(['scheme' => '<app id>']);
 ```
 Options: `scopes` (`['*']`: narrow it, `['books:read', 'books:write']`, when the app needs less than the person may do),
-`days` (90), `origins` (another origin that calls with a token), `name` (on the consent page).
+`days` (90), `origins` (another origin that calls with a token), `name` (on the consent page), `view` (2.31.0+: the
+consent page in the site's own look, a copy of `framework/views/mobile/authorize.pug` in `application/views/Auth/mobile.pug`
+that extends the site's layout and keeps its form: G188).
 
 ## 3. Build its screens
 

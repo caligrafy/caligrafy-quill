@@ -888,3 +888,11 @@ returns `false` and the email is not sent later: show the person what to do (try
 matters, such as a password reset, and keep the limit well above the app's normal hour. The count is per clock hour
 (UTC) in the cache: with `CACHE_STORE=off` nothing is counted or held back. On Caligrafy Cloud the limit comes with
 the mail Cloud gives; an app with its own `MAIL_HOST` sets its own, or none. Proof: `Mail::allow()`, `Mail::limited()`.
+
+**G188 (2.31.0). A phone app's consent page in the site's look: copy it, keep its form.** The page that asks to allow
+a phone (`/mobile/authorize`) is `framework/views/mobile/authorize.pug` on Caligrafy's layout (`default/master/site`),
+so a site with its own layout shows a stranger's page at the moment it asks for trust. Give Route::mobile a `view`
+(`'Auth/mobile'`): a copy of that file extending the site's layout, with its form unchanged: `=csrf()`, the hidden
+`scheme`, `redirect`, `state`, `challenge` and `device`, and two submit buttons named `decision` valued `allow` and
+`deny`. A field left out makes the sign-in fail with "This sign-in link does not work". Proof: `Mobile::authorizePage()`,
+`Mobile::authorize()`.

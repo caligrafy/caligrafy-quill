@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.31.0] - 2026-11-25
+
+### Added
+- **The consent page of a phone app in the site's own look**: `Route::mobile(['scheme' => ..., 'view' => 'Auth/mobile'])` shows the page that asks "Sign in on this phone?" (`/mobile/authorize`) with the site's own view, a copy of `framework/views/mobile/authorize.pug` that extends the site's layout. It gets the same `$mobile` and `$user`; its form must keep `=csrf()`, the five hidden fields and the two `decision` buttons (G188). A name outside `application/views` (`..`, an extension) is refused. Without `view`, the framework's page, as before.
+- Asked for by an app with its own design system, whose phone app showed Caligrafy's page at the moment it asks for trust.
+
+### How to update
+`php caligrafer.php update`. Nothing changes until `view` is set. Claude Code plugin 1.43.0: G188.
+
 ## [2.30.0] - 2026-11-25
 
 ### Added
