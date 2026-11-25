@@ -492,7 +492,8 @@ proc_terminate($echo);
 qa_section('Stripe payment');
 
 class QaFakeSessions { public $params; public $opts; public function create($p, $o = []) { $this->params = $p; $this->opts = $o; return (object)['id' => 'cs_test_qa']; } }
-class QaFakeStripe { public $checkout; public function __construct() { $this->checkout = (object)['sessions' => new QaFakeSessions()]; } }
+class QaFakeTransfers { public $params; public $opts; public $reversal; public function create($p, $o = []) { $this->params = $p; $this->opts = $o; return (object)['id' => 'tr_test_qa']; } public function createReversal($id, $p = []) { $this->reversal = [$id, $p]; return (object)['id' => 'trr_test_qa']; } }
+class QaFakeStripe { public $checkout; public $transfers; public function __construct() { $this->checkout = (object)['sessions' => new QaFakeSessions()]; $this->transfers = new QaFakeTransfers(); } }
 
 function qa_payment_with_fake()
 {
@@ -523,6 +524,30 @@ qa_test('createCheckout() with the defaults is unchanged', function () {
     $params = $fake->checkout->sessions->params;
     qa_assert(!isset($params['locale']) && !isset($params['customer_email']));
     qa_assert(!isset($params['payment_method_types']), 'payment methods come from the dashboard by default');
+});
+
+qa_test('createTransfer() sends the amount, the destination and the idempotency key', function () {
+    [$p, $fake] = qa_payment_with_fake();
+    $r = $p->createTransfer(1250, 'usd', 'acct_ambassador', ['ambassador' => '7', 'month' => '2026-11'], 'commission-2026-11', 'November commission', 'commission-2026-11-7');
+    qa_equals(true, $r['action_success'], json_encode($r));
+    qa_equals('tr_test_qa', $r['data']->id);
+    qa_equals(['amount' => 1250, 'currency' => 'usd', 'destination' => 'acct_ambassador', 'metadata' => ['ambassador' => '7', 'month' => '2026-11'], 'transfer_group' => 'commission-2026-11', 'description' => 'November commission'], $fake->transfers->params);
+    qa_equals(['idempotency_key' => 'commission-2026-11-7'], $fake->transfers->opts);
+});
+
+qa_test('createTransfer() without the optional fields sends only what Stripe needs', function () {
+    [$p, $fake] = qa_payment_with_fake();
+    qa_equals(true, $p->createTransfer(500, 'usd', 'acct_ambassador')['action_success']);
+    qa_equals(['amount' => 500, 'currency' => 'usd', 'destination' => 'acct_ambassador'], $fake->transfers->params);
+    qa_equals([], $fake->transfers->opts, 'no idempotency key, no request options');
+});
+
+qa_test('reverseTransfer() reverses all or part of a transfer', function () {
+    [$p, $fake] = qa_payment_with_fake();
+    qa_equals(true, $p->reverseTransfer('tr_1')['action_success']);
+    qa_equals(['tr_1', []], $fake->transfers->reversal);
+    qa_equals(true, $p->reverseTransfer('tr_1', 300)['action_success']);
+    qa_equals(['tr_1', ['amount' => 300]], $fake->transfers->reversal);
 });
 
 qa_section('Stripe payment against stripe-mock (stripe-php ' . \Stripe\Stripe::VERSION . ')');
@@ -561,6 +586,17 @@ qa_test('createTransaction() with a token and the Connect helpers', function () 
     qa_equals(true, $p->retrieve($account['data']->id)['action_success']);
 });
 
+qa_test('createTransfer(), retrieveTransfer() and reverseTransfer() over the Stripe API', function () {
+    $p = qa_payment_mock();
+    $r = $p->createTransfer(1250, 'usd', 'acct_1032D82eZvKYlo2C', ['month' => '2026-11'], 'commission-2026-11', 'November commission', 'qa-' . bin2hex(random_bytes(4)));
+    qa_equals(true, $r['action_success'], json_encode($r));
+    qa_assert(str_starts_with($r['data']->id, 'tr_'), 'transfer id');
+    $again = $p->retrieveTransfer($r['data']->id);
+    qa_equals(true, $again['action_success'], json_encode($again));
+    $reversal = $p->reverseTransfer($r['data']->id, 250);
+    qa_equals(true, $reversal['action_success'], json_encode($reversal));
+});
+
 qa_test('Stripe errors are returned, not thrown', function () {
     $p = new Payment();
     $prop = new ReflectionProperty($p, '_stripe');
@@ -568,6 +604,9 @@ qa_test('Stripe errors are returned, not thrown', function () {
     $r = $p->createPaymentIntent(1000, 'usd');
     qa_equals(false, $r['action_success']);
     qa_assert(!empty($r['error']));
+    $t = $p->createTransfer(1000, 'usd', 'acct_x');
+    qa_equals(false, $t['action_success']);
+    qa_assert(!empty($t['error']));
 });
 
 qa_section('Crypto payment: Coinbase Business Checkouts API (mock server, real JWT signatures)');

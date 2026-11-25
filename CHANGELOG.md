@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.29.0] - 2026-11-25
+
+### Added
+- **Stripe Connect transfers** (`Caligrafy\Payment`): `createTransfer($amount, $currency, $destination, $metadata = array(), $transferGroup = null, $description = null, $idempotencyKey = null)` sends money from the platform's Stripe balance to a connected account (`acct_...`), the amount in the smallest currency unit like the other methods; `$idempotencyKey` is sent as Stripe's `Idempotency-Key`, so a payout run can be retried without paying anyone twice. `retrieveTransfer($transferId)` reads one back and `reverseTransfer($transferId, $amount = null)` takes all or part of it back. Each returns `array('action_success' => true, 'data' => <Stripe object>)` or `array('action_success' => false, 'error' => <message>)`, like the rest of the class.
+- Asked for to pay an app's ambassadors their monthly commission share. Claude Code plugin 1.41.0: the API reference and the payments page.
+
+### How to update
+`php caligrafer.php update`. Nothing changes for an app that does not call the new methods.
+
 ## [2.28.1] - 2026-11-25
 
 ### Fixed

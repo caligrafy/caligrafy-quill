@@ -374,6 +374,73 @@ class Payment extends \stdClass {
 		return $result;
 	}
     
+	/**
+	 * Sends money from the platform's Stripe balance to a connected account (Stripe Connect transfer)
+	 * The platform's available balance must cover the amount, and the connected account needs the 'transfers' capability
+	 * (createAccount requests it by default)
+	 * @param integer $amount the amount in the smallest currency unit (cents for usd: 1250 is $12.50), like createPaymentIntent and createCheckout
+	 * @param string $currency the currency of the transfer ('usd')
+	 * @param string $destination the id of the connected account that receives the money ('acct_...')
+	 * @param array $metadata key-value pairs kept on the transfer (an ambassador id, a month)
+	 * @param string $transferGroup a string that groups the transfer with related charges or transfers
+	 * @param string $description a description of the transfer
+	 * @param string $idempotencyKey sent as Stripe's Idempotency-Key: a retry with the same key returns the first transfer instead of sending the money twice (a monthly run can be run again safely)
+	 * @return array array('action_success' => true, 'data' => the Stripe Transfer) or array('action_success' => false, 'error' => the message)
+	 */
+	public function createTransfer($amount, $currency, $destination, $metadata = array(), $transferGroup = null, $description = null, $idempotencyKey = null)
+	{
+		$result = array('action_success' => false, 'error' => 'Transfer could not be created');
+		try {
+			$input = array('amount' => $amount, 'currency' => $currency, 'destination' => $destination);
+			if (!empty($metadata)) { $input['metadata'] = $metadata; }
+			if (isset($transferGroup) && trim($transferGroup) != '') { $input['transfer_group'] = $transferGroup; }
+			if (isset($description) && trim($description) != '') { $input['description'] = $description; }
+			$options = isset($idempotencyKey) && trim($idempotencyKey) != '' ? array('idempotency_key' => $idempotencyKey) : array();
+			$transfer = $this->_stripe->transfers->create($input, $options);
+			$result = $transfer? array('action_success' => true, 'data' => $transfer) : $result;
+		} catch(Exception $e) {
+			$result['error'] = $e->getMessage();
+		}
+		return $result;
+	}
+
+	/**
+	 * Retrieves a transfer to a connected account
+	 * @param string $transferId the id of the transfer ('tr_...')
+	 * @return array array('action_success' => true, 'data' => the Stripe Transfer) or array('action_success' => false, 'error' => the message)
+	 */
+	public function retrieveTransfer($transferId)
+	{
+		$result = array('action_success' => false, 'error' => 'Transfer could not be found');
+		try {
+			$transfer = $this->_stripe->transfers->retrieve($transferId, []);
+			$result = $transfer? array('action_success' => true, 'data' => $transfer) : $result;
+		} catch(Exception $e) {
+			$result['error'] = $e->getMessage();
+		}
+		return $result;
+	}
+
+	/**
+	 * Reverses a transfer: the money comes back from the connected account to the platform's balance
+	 * (the connected account's balance must still hold it)
+	 * @param string $transferId the id of the transfer ('tr_...')
+	 * @param integer $amount the amount to reverse in the smallest currency unit; null reverses the whole transfer
+	 * @return array array('action_success' => true, 'data' => the Stripe TransferReversal) or array('action_success' => false, 'error' => the message)
+	 */
+	public function reverseTransfer($transferId, $amount = null)
+	{
+		$result = array('action_success' => false, 'error' => 'Transfer could not be reversed');
+		try {
+			$input = isset($amount)? array('amount' => $amount) : array();
+			$reversal = $this->_stripe->transfers->createReversal($transferId, $input);
+			$result = $reversal? array('action_success' => true, 'data' => $reversal) : $result;
+		} catch(Exception $e) {
+			$result['error'] = $e->getMessage();
+		}
+		return $result;
+	}
+
     private function createStripeToken($card)
     {
         return $this->_stripe->tokens->create($card);

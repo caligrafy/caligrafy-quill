@@ -319,8 +319,13 @@ retrieveCheckout($sessionId)
 createAccount($email = null, $country = null, $type = 'express', $capabilities = array(), $accountInformation = array())   // Stripe Connect
 createAccountLink($accountId, $refreshUrl, $returnUrl, $type = 'account_onboarding'); createLoginLink($accountId)
 updateAccount($accountId, $updates); retrieve($accountId); getPublicKey()
+// 2.29.0, Stripe Connect transfers: money from the platform's Stripe balance to a connected account
+createTransfer($amount, $currency, $destination, $metadata = array(), $transferGroup = null, $description = null, $idempotencyKey = null)
+   // $destination 'acct_...'; empty metadata/transferGroup/description are not sent; $idempotencyKey is Stripe's Idempotency-Key request option (a retry with the same key returns the first transfer, never a second payment)
+retrieveTransfer($transferId)                   // 'tr_...'
+reverseTransfer($transferId, $amount = null)    // null reverses all; data is the TransferReversal ('trr_...')
 ```
-Results are arrays with `action_success` and `data` (Stripe object) or `error`. Amounts are in cents. stripe-php 22 (API version pinned by the SDK). `createPaymentIntent()` sets `automatic_payment_methods.enabled`. Client: `public/js/services/stripe_client.js` (Payment Element, `confirmPayment`, `redirect: 'if_required'`, return to the same page); `default/pages/checkout.pug` links to `$checkoutUrl`.
+Results are arrays with `action_success` and `data` (Stripe object) or `error`. Amounts are in the smallest currency unit (cents: `1250` is 12.50), transfers included. A transfer needs the platform's available balance to cover it and the connected account's `transfers` capability (`createAccount()` requests it); a run that pays several accounts gives each transfer a key made of the run and the account (`'commission-2026-11-' . $ambassadorId`). stripe-php 23 (API version pinned by the SDK). `createPaymentIntent()` sets `automatic_payment_methods.enabled`. Client: `public/js/services/stripe_client.js` (Payment Element, `confirmPayment`, `redirect: 'if_required'`, return to the same page); `default/pages/checkout.pug` links to `$checkoutUrl`.
 
 ## CryptoPayment (`Caligrafy\CryptoPayment`, Coinbase Business Checkouts API, keys `COINBASE_API_KEY_NAME` / `COINBASE_API_KEY_SECRET`)
 ```php

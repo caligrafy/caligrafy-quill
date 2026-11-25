@@ -52,6 +52,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.41.0** - Caligrafy Quill 2.29.0: Stripe Connect transfers, `Payment::createTransfer()` (with an idempotency key), `retrieveTransfer()` and `reverseTransfer()`, in the API reference and the payments page.
 - **1.40.1** - Caligrafy Quill 2.28.1: one `APP_LOCALE` in the template (`en_US` is read as `en`), the sign-up's password mismatch in the app's language, the JS client's `not_json` error.
 - **1.40.0** - Caligrafy Quill 2.28.0: languages (`APP_LOCALES`, `application/lang/<code>.json`, `t()`, right to left, form messages per language, `Lang::money()`); the reference page Languages; G184-G185.
 - **1.39.2** - Caligrafy Quill 2.27.2: `Route::mobile` in a project without accounts (CORS only, the apps call the public capabilities); the JS client's `X-CSRF-Token` allowed by the preflight; G183 (a phone app made of the site's own pages).
