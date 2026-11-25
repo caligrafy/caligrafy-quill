@@ -33,10 +33,28 @@ class Validator extends \GUMP
 
     private static $registered = false;
 
-    public function __construct(string $lang = 'en')
+    public function __construct(?string $lang = null)
     {
-        parent::__construct($lang);
+        // the visitor's language when GUMP has it (2.28.0, Caligrafy\Lang); en otherwise
+        parent::__construct($lang ?? Lang::validatorLanguage());
         self::registerRules();
+        // the app's own words for the fields ("fields" in application/lang/<code>.json)
+        $fields = Lang::group('fields');
+        if ($fields) {
+            self::set_field_names($fields);
+        }
+    }
+
+    /**
+     * GUMP's messages in its language, then the app's for the visitor's language ("validation" in
+     * application/lang/<code>.json, keyed by rule: required, valid_email, max_len...), so Arabic or any language GUMP
+     * lacks gets its messages from the app (2.28.0)
+     */
+    protected function get_messages()
+    {
+        $messages = parent::get_messages();
+        $own = Lang::group('validation');
+        return $own ? array_merge($messages, $own) : $messages;
     }
 
     /**

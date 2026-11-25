@@ -6,6 +6,19 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.28.0] - 2026-11-25
+
+### Added
+- **Languages** (`Caligrafy\Lang`): an app's pages, form messages, numbers, dates and amounts follow each visitor's language. `APP_LOCALES=en,fr,ar` lists the languages, `APP_LOCALE` the default; the words are in `application/lang/<code>.json` (nested objects, `{name}` variables, `"one|other"` or `"zero|one|other"` picked by a `count`). The visitor's language comes from `?lang=<code>` (remembered in the cookie `lang` for a year), the cookie, the browser's `Accept-Language` (`fr-CA` matches `fr`), then `APP_LOCALE`; only the app's languages are used. A missing word falls back to the default language, then to its key.
+- **Helpers for views**: `t('home.title', ['count' => 3])`, `locale()`, `locales()`, `lang_dir()` (`rtl` for Arabic, Hebrew, Persian, Urdu and a few others), `lang_url('fr')` (this page in another language) and `lang_json('app')` (the words a script needs, safe inside a `script` tag); each is defined only when the app has no function of that name. `Lang::money()`, `Lang::number()` and `Lang::date()` format in each language's way with `intl`.
+- **Right to left**: the master layouts set `html(lang=locale(), dir=lang_dir())`, and Caligrafy's stylesheets (`tokens.css`, `layout.css`, `look.css`) use logical properties (`margin-inline-start`...), so an Arabic page mirrors by itself.
+- **Form messages in the visitor's language**: the capabilities' validator uses GUMP's messages in that language when GUMP has it; the file's `validation` object (keyed by rule) replaces any of them, which is how Arabic gets its messages, and `fields` names the fields.
+- **`doctor`**: a *Languages* line when `APP_LOCALES` is set: a missing or broken file, a default that is not one of the languages, words missing in a language.
+- **Claude Code plugin 1.40.0**: the API reference, the wiki page *Languages*, G184-G185.
+
+### How to update
+`php caligrafer.php update`. Nothing changes for an app without `APP_LOCALES`: English, left to right, the same messages. A project made before 2.28.0 keeps its own `site.pug`: change `html(lang="en")` to `html(lang=locale(), dir=lang_dir())` there.
+
 ## [2.27.2] - 2026-11-24
 
 ### Fixed

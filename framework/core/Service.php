@@ -58,7 +58,7 @@ abstract class Service
     public function validate(array $input)
     {
         $data = array_intersect_key($input, $this->rules);
-        $validator = new Validator();
+        $validator = new Validator();   // speaks the visitor's language (2.28.0)
         // file inputs (2.19.0, Caligrafy\Uploads): GUMP never sees the file rules; the channel saved the file and sends
         // its URL, MCP and the command line a URL or a path, whose extension is checked here
         $files = Uploads::fields($this->rules);

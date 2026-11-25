@@ -237,7 +237,7 @@ html body .cq-badge { font-weight: 500; font-size: 12px; }
 
 /* 6. Phone width ---------------------------------------------------------------------------------------------- */
 @media (max-width: 575px) {
-  html body .cq-tabs { padding-left: 12px; padding-right: 12px; }
+  html body .cq-tabs { padding-inline: 12px; }
   html body .cq-tabs button { flex: 1; }
   html body .cq-title { font-size: 22px; }
   html body .cq-card > pre { margin: 0 20px 16px; }
@@ -252,4 +252,4 @@ html body .cq-badge { font-weight: 500; font-size: 12px; }
 /* 9. The Caligrafy mark next to the name (public/images/resources/caligrafy-mark.svg) ------------------------------ */
 html body .cq-nav-mark { width: 28px; height: 28px; }
 html body header h1.large-text a { display: inline-flex; align-items: center; }
-html body header .cq-nav-mark { width: 26px; height: 26px; margin-right: 10px; }
+html body header .cq-nav-mark { width: 26px; height: 26px; margin-inline-end: 10px; }

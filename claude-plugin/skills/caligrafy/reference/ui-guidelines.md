@@ -220,6 +220,14 @@ selectors. So:
   with the style on and off;
 - the application keeps its own name and logo; a style is inspiration, never another site's brand.
 
+## Languages and right to left (2.28.0)
+
+An app with `APP_LOCALES` writes every word of its views as `t('page.key')` (reference/09.9.8-languages.md) and its
+master keeps `html(lang=locale(), dir=lang_dir())`. Its own CSS uses logical properties so Arabic and Hebrew pages
+mirror: `margin-inline-start`, `padding-inline-end`, `inset-inline-start`, `border-inline-start`, `text-align: start`,
+never `margin-left`, `right:` or `text-align: left`. Icons that point a way (an arrow, a chevron) get
+`[dir=rtl] & { transform: scaleX(-1) }`.
+
 ## Checklist before you say a page is done
 
 - [ ] `extends ../default/master/site`, a `block title`, a title band (or a hero) then bands; nothing nested in cards

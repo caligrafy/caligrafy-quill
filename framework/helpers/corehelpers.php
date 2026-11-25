@@ -1065,3 +1065,67 @@ function arraySort($array, $attribute, $sort = SORT_DESC)
 	$columnSorter = array_column($array, $attribute);
 	return array_multisort($columnSorter,$sort,$array)? $array : false ;
 }
+
+
+/**
+ * The languages of the app (2.28.0, Caligrafy\Lang): a word of application/lang/<locale>.json in the visitor's
+ * language, {name} replaced by $vars, "one|other" picked by $vars['count']
+ */
+if (!function_exists('t')) {
+function t($key, $vars = array())
+{
+    return \Caligrafy\Lang::get($key, is_array($vars) ? $vars : array());
+}
+}
+
+/**
+ * The visitor's language (en, fr, ar...)
+ */
+if (!function_exists('locale')) {
+function locale()
+{
+    return \Caligrafy\Lang::locale();
+}
+}
+
+/**
+ * The languages of the app (APP_LOCALES)
+ */
+if (!function_exists('locales')) {
+function locales()
+{
+    return \Caligrafy\Lang::locales();
+}
+}
+
+/**
+ * rtl or ltr: how the visitor's language (or $code) is written, for html(dir=lang_dir())
+ */
+if (!function_exists('lang_dir')) {
+function lang_dir($code = null)
+{
+    return \Caligrafy\Lang::dir($code);
+}
+}
+
+/**
+ * This page in another language (?lang=<code>), for a language menu
+ */
+if (!function_exists('lang_url')) {
+function lang_url($code)
+{
+    return \Caligrafy\Lang::url($code);
+}
+}
+
+/**
+ * The visitor's words as JSON for a page's script: script window.LANG = !{lang_json('app')} (a prefix keeps it small)
+ */
+if (!function_exists('lang_json')) {
+function lang_json($prefix = null)
+{
+    $words = $prefix === null ? \Caligrafy\Lang::all() : \Caligrafy\Lang::group($prefix);
+    return json_encode($words ?: new \stdClass(), JSON_UNESCAPED_UNICODE | JSON_HEX_TAG | JSON_HEX_AMP | JSON_HEX_APOS | JSON_HEX_QUOT);
+}
+}
+

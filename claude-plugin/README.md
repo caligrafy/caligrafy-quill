@@ -52,6 +52,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.40.0** - Caligrafy Quill 2.28.0: languages (`APP_LOCALES`, `application/lang/<code>.json`, `t()`, right to left, form messages per language, `Lang::money()`); the reference page Languages; G184-G185.
 - **1.39.2** - Caligrafy Quill 2.27.2: `Route::mobile` in a project without accounts (CORS only, the apps call the public capabilities); the JS client's `X-CSRF-Token` allowed by the preflight; G183 (a phone app made of the site's own pages).
 - **1.39.1** - Caligrafy Quill 2.27.1: `mobile` in the Docker server needs `--id` and `--url` when the project's name is unknown; the phone app's start and notification set-up as the template now does them; the course has 18 lessons (lesson 18: Bookshelf's iOS and Android app).
 - **1.39.0** - Caligrafy Quill 2.27.0: phone and tablet apps. The `mobile` skill (`php caligrafer.php mobile`, `Route::mobile`, push to phones, store builds and the owner's accounts); the `ship` skill sends the store builds; the API reference's Phone and tablet apps section and Notify's phones; G175-G182 (what the iPhone simulator and the Android emulator showed).

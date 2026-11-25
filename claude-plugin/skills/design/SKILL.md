@@ -142,3 +142,5 @@ with `design use <name>`, then this skill again).
 `caligrafer doctor` must then report `OK Design style: <name>: public/css/designs/<name>.css loaded...`.
 Commit only when the user asks: the stylesheet, `.env` stays out of git (set `DESIGN_STYLE` on the production server
 or Caligrafy Cloud: `caligrafer cloud secret set <app> DESIGN_STYLE=<name>`).
+
+The override stylesheet uses logical properties (`margin-inline-start`, `padding-inline-end`, `text-align: start`), never `left`/`right`: in an app with Arabic or Hebrew (2.28.0, `lang_dir()` gives `rtl`) the pages must mirror.

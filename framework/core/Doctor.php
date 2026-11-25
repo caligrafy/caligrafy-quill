@@ -210,6 +210,7 @@ class Doctor
         else $this->add('project', 'public/uploads', 'OK', 'writable');
 
         $this->webApp();
+        $this->languages();
         $this->processes();
         $this->settingsTraps();
         $this->mobileApps();
@@ -324,6 +325,59 @@ class Doctor
             }
             $this->add('project', "Phone app $folder", 'OK', "$id signs in through Route::mobile");
         }
+    }
+
+    /**
+     * The languages (2.28.0, Caligrafy\Lang): each code of APP_LOCALES has a valid application/lang/<code>.json, and
+     * the words of APP_LOCALE's file are in the others
+     */
+    private function languages()
+    {
+        $setting = trim((string) $this->env('APP_LOCALES'));
+        if ($setting === '') {
+            return;
+        }
+        $codes = array_values(array_unique(array_filter(array_map(function ($c) { return strtolower(str_replace('_', '-', trim($c))); }, explode(',', $setting)))));
+        $default = strtolower(trim((string) $this->env('APP_LOCALE'))) ?: $codes[0];
+        if (!in_array($default, $codes, true)) {
+            $this->add('project', 'Languages', 'WARN', "APP_LOCALE=$default is not in APP_LOCALES ($setting): " . $codes[0] . ' is used', 'set APP_LOCALE to one of APP_LOCALES, or empty');
+            $default = $codes[0];
+        }
+        $words = array();
+        $problems = array();
+        foreach ($codes as $code) {
+            $file = 'application/lang/' . $code . '.json';
+            if (!is_file($this->root . '/' . $file)) {
+                $problems[] = "$file is missing";
+                continue;
+            }
+            $data = json_decode((string) file_get_contents($this->root . '/' . $file), true);
+            if (!is_array($data)) {
+                $problems[] = "$file is not valid JSON (" . json_last_error_msg() . ')';
+                continue;
+            }
+            $flat = array();
+            $walk = function ($node, $prefix) use (&$walk, &$flat) {
+                foreach ($node as $k => $v) {
+                    if (is_array($v) && $v && array_keys($v) !== range(0, count($v) - 1)) $walk($v, $prefix . $k . '.');
+                    elseif (is_scalar($v)) $flat[$prefix . $k] = true;
+                }
+            };
+            $walk($data, '');
+            $words[$code] = $flat;
+        }
+        if ($problems) {
+            $this->add('project', 'Languages', 'WARN', implode('; ', $problems), 'pages fall back to ' . $default . ' and then show the keys themselves');
+            return;
+        }
+        $gaps = array();
+        foreach ($codes as $code) {
+            if ($code === $default) continue;
+            $missing = array_diff_key($words[$default], $words[$code]);
+            if ($missing) $gaps[] = $code . ' lacks ' . count($missing) . ' (' . implode(', ', array_slice(array_keys($missing), 0, 3)) . (count($missing) > 3 ? '...' : '') . ')';
+        }
+        $gaps ? $this->add('project', 'Languages', 'WARN', implode('; ', $gaps), 'those words show in ' . $default . ' until they are translated')
+            : $this->add('project', 'Languages', 'OK', implode(', ', $codes) . ': ' . count($words[$default]) . ' words each, ' . $default . ' by default');
     }
 
     /**

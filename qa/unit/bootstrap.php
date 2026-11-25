@@ -16,7 +16,7 @@ foreach (['DB_ACTIVATE' => 'false', 'DB_CONNECTION' => 'mysql', 'DB_HOST' => 'lo
     defined($name) || define($name, $value);
 }
 defined('ROUTE_ARG_PATTERN') || define('ROUTE_ARG_PATTERN', '#\{+(.*?)\}+#');
-foreach (['Framework', 'Features', 'Web', 'Action', 'Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor', 'FaceLogin', 'Passkey', 'Auth', 'Tokens', 'Context', 'Audit', 'ServiceError', 'Capability', 'Service', 'Capabilities', 'Quickstart', 'Deployer', 'CloudClient', 'Designs', 'Updater', 'PluginSource', 'Scheduler', 'Notify', 'Mail', 'ClassMap', 'View', 'Migrations', 'Container', 'Cache', 'Query', 'PageController', 'Flash', 'Uploads', 'Form', 'Webhook', 'Download', 'Throttle', 'AuthRoutes', 'HttpCache', 'Mobile', 'MobileApp'] as $class) {
+foreach (['Framework', 'Features', 'Web', 'Action', 'Errors', 'Route', 'Request', 'Model', 'Validator', 'Controller', 'Upgrader', 'Agent', 'Doctor', 'FaceLogin', 'Passkey', 'Auth', 'Tokens', 'Context', 'Audit', 'ServiceError', 'Capability', 'Service', 'Capabilities', 'Quickstart', 'Deployer', 'CloudClient', 'Designs', 'Updater', 'PluginSource', 'Scheduler', 'Notify', 'Mail', 'ClassMap', 'View', 'Migrations', 'Container', 'Cache', 'Query', 'PageController', 'Flash', 'Uploads', 'Form', 'Webhook', 'Download', 'Throttle', 'AuthRoutes', 'HttpCache', 'Mobile', 'MobileApp', 'Lang'] as $class) {
     require_once $root . "/framework/core/$class.php";
 }
 foreach (glob($root . '/framework/core/Snap/*.php') as $file) {   // Snap Cards and the assistant (2.23.0)
