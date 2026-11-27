@@ -6,6 +6,14 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.33.1] - 2026-11-27
+
+### Fixed
+- **One import map per page**: a page that already had an import map of its own (a bare name such as `three` for a library it bundles) got a second one from `importmap()`, and browsers that do not merge import maps ignore the second, so its library was not found. `importmap()` now takes the page's own entries, `importmap(['three' => $home . 'public/js/vendor/three/three.module.js'])`, and prints one map with both; the page removes its own `script(type='importmap')` (G190). `Caligrafy\Modules::map()` and `tag()` take them as a third argument.
+
+### How to update
+`php caligrafer.php update`. A page with its own `script(type='importmap')` moves its entries into `importmap([...])`. Claude Code plugin 1.45.1.
+
 ## [2.33.0] - 2026-11-27
 
 ### Added

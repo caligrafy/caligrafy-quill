@@ -144,11 +144,13 @@ function design_stylesheet()
 /**
  * The import map of the site's script modules (2.33.0): every .js under public/js at an address versioned by its
  * modification time, so what a page's script imports ('./app.js', '../capabilities.js') is never an old copy a browser
- * kept. Printed in the head, before any module script: != importmap()
+ * kept. Printed in the head, before any module script: != importmap(). A page has one import map: its own entries (a
+ * bare name such as 'three' for a library it bundles) are given here, importmap(['three' => $home . 'public/js/three.js'])
+ * (2.33.1), never in a second script(type='importmap'), which browsers that do not merge maps ignore
  */
-function importmap()
+function importmap(array $own = array())
 {
-    return class_exists('Caligrafy\\Modules') && defined('PUBLIC_PATH') ? Caligrafy\Modules::tag($_SESSION['public'] ?? '', PUBLIC_PATH) : '';
+    return class_exists('Caligrafy\\Modules') && defined('PUBLIC_PATH') ? Caligrafy\Modules::tag($_SESSION['public'] ?? '', PUBLIC_PATH, $own) : '';
 }
 
 /**

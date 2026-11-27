@@ -910,5 +910,8 @@ plain address, and a browser may keep an old copy. After a release that adds a c
 writes a new `capabilities.js`), a page script importing the new function from an old cached client stops at load with
 "The requested module '../capabilities.js' does not provide an export named ...": nothing on the page answers (tabs,
 buttons) until a hard refresh. Caligrafy's layouts print `!= importmap()` in their head; a project's own layout adds it
-too, before any `script(type='module')`, so every `.js` under `public/js` is imported at its versioned address. Proof:
+too, before any `script(type='module')`, so every `.js` under `public/js` is imported at its versioned address. A page
+has one import map: entries of its own (a bare name such as `three` for a library it bundles) go into it,
+`!= importmap(['three' => $home . 'public/js/vendor/three/three.module.js'])` (2.33.1), never into a second
+`script(type='importmap')`, which browsers that do not merge maps ignore (the library is then not found). Proof:
 `Modules::map()`, `importmap()`.

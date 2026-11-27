@@ -52,6 +52,7 @@ written from the framework source: update them when `framework/` changes (and ru
 `version` in `.claude-plugin/plugin.json`.
 
 ## Changelog
+- **1.45.1** - Caligrafy Quill 2.33.1: `importmap(['three' => ...])`, a page's own import-map entries in the same map (G190, the views page).
 - **1.45.0** - Caligrafy Quill 2.33.0: `importmap()` (every script under `public/js` at a versioned address, so a page never imports an old cached copy) in the API reference, the views page and the skills that write layouts; G190.
 - **1.44.0** - Caligrafy Quill 2.32.0: Notify's in-app inbox (`Notify::inbox`, `unread`, `read`, `'inbox' => false`, the `notify_inbox` and `notify_read` capabilities, `Notify.inbox()` and `Notify.read()`) in the API reference and the notifications page; G189.
 - **1.43.0** - Caligrafy Quill 2.31.0: Route::mobile's `view` (the consent page in the site's own look) in the API reference, the phone apps page and the mobile skill; G188.

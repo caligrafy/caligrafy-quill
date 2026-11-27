@@ -43,6 +43,17 @@ final class ModulesTest extends TestCase
         $this->assertCount(2, $imports);
     }
 
+    public function testThePageOwnEntriesJoinTheSameMap(): void
+    {
+        $map = Modules::map('/p/', $this->root, array('three' => '/p/js/vendor/three.module.js', '/p/js/capabilities.js' => '/elsewhere/capabilities.js'));
+        $this->assertSame('/p/js/vendor/three.module.js', $map['imports']['three']);
+        $this->assertSame('/elsewhere/capabilities.js', $map['imports']['/p/js/capabilities.js']);   // the page's own entry wins
+        $this->assertSame('/p/js/yum/app.js?v=1700000123', $map['imports']['/p/js/yum/app.js']);
+        // only on that page: the next map has the versioned address again
+        $this->assertSame('/p/js/capabilities.js?v=1700000000', Modules::map('/p/', $this->root)['imports']['/p/js/capabilities.js']);
+        $this->assertSame(1, substr_count(Modules::tag('/p/', $this->root, array('three' => '/t.js')), '<script type="importmap">'));
+    }
+
     public function testTheTagIsAnImportMapAndNothingWithoutScripts(): void
     {
         $tag = Modules::tag('/p/', $this->root);

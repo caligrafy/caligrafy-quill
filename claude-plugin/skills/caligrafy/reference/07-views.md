@@ -502,6 +502,12 @@ head
   //- your stylesheets...
 ```
 
+A page has **one** import map. When it maps names of its own (a library it bundles, imported by a bare name such as `three`), it gives them to `importmap()` instead of writing a second `script(type='importmap')`, which browsers that do not merge maps ignore (2.33.1):
+
+```pug
+!= importmap(['three' => $home . 'public/js/vendor/three/three.module.js'])
+```
+
 **Pug in Caligrafy.** Pug writes HTML by indentation: `p.cq-lead Hello` is `<p class="cq-lead">Hello</p>`. Caligrafy runs Pug with **PHP expressions** ([Phug](https://phug-lang.com)):
 
 | Write | Not |
