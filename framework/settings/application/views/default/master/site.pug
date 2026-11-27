@@ -25,6 +25,8 @@ html(lang=locale(), dir=lang_dir())
     //- Caligrafy's look: white canvas, black primary actions, Inter, no shadows (a design style restyles it)
     link(rel="stylesheet", href=$home . 'public/css/look.css?v=' . @filemtime(PUBLIC_PATH . 'css/look.css'))
     block additional_css
+    //- the script modules at versioned addresses: what a page's script imports is never an old copy (2.33.0)
+    != importmap()
     //- DESIGN_STYLE in .env: the stylesheet of the selected design style (public/css/designs/<name>.css), loaded last
     - $design_css = design_stylesheet();
     if $design_css

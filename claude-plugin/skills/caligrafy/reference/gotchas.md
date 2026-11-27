@@ -903,3 +903,12 @@ every `Notify::user()` call is also kept in the user's in-app inbox (`caligrafy_
 you need. A message that is not for later reading (a test, a one-time code) is sent with `'inbox' => false`. The page
 draws the bell and the list itself from `notify_inbox` / `Notify.inbox()`; mark them read with `notify_read` when the
 list is opened. The table comes with `platform install`, which the deploy step runs.
+
+**G190 (2.33.0). A layout of its own prints the import map, or a release can stop its pages.** A page loads its script
+with `?v=<time>`, but what that script imports (`import ... from '../capabilities.js'`, `'./app.js'`) is fetched at its
+plain address, and a browser may keep an old copy. After a release that adds a capability (`php caligrafer.php client`
+writes a new `capabilities.js`), a page script importing the new function from an old cached client stops at load with
+"The requested module '../capabilities.js' does not provide an export named ...": nothing on the page answers (tabs,
+buttons) until a hard refresh. Caligrafy's layouts print `!= importmap()` in their head; a project's own layout adds it
+too, before any `script(type='module')`, so every `.js` under `public/js` is imported at its versioned address. Proof:
+`Modules::map()`, `importmap()`.

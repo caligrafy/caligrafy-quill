@@ -6,6 +6,15 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.33.0] - 2026-11-27
+
+### Added
+- **Script modules at versioned addresses (the import map)**: `importmap()` prints, in a layout's head, an import map that gives every `.js` file under `public/js` an address versioned by its modification time (`node_modules`, `dist` and `vendor` folders left out). What a page's script imports (`./app.js`, `../capabilities.js`) is then never an old copy a browser kept: after a release, an old `capabilities.js` without a capability the new page script imports used to stop that script with "does not provide an export named ..." (a page whose buttons and tabs do nothing until a hard refresh). Caligrafy's layouts (`site.pug`, `layoutblocks.pug`) print it; a project with its own layout adds `!= importmap()` to its head, before any module script (G190). `Caligrafy\Modules::map()` and `tag()` build it.
+- Found on an app whose admin page stopped answering after a release that added two capabilities: the page script was new, its cached `capabilities.js` was not.
+
+### How to update
+`php caligrafer.php update`. Caligrafy's layouts have it; a project's own layout (`application/views/**/layout.pug` or a master of its own) adds `!= importmap()` in its head, before any `script(type='module')`. Claude Code plugin 1.45.0: G190.
+
 ## [2.32.0] - 2026-11-26
 
 ### Added

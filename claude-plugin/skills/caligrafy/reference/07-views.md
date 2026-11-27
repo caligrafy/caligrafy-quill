@@ -493,6 +493,15 @@ New pages extend the master **`default/master/site`** (`application/views/defaul
 
 The master also links the web app manifest, the icons and the page's [social card](https://github.com/caligrafy/caligrafy-quill/wiki/9.3-Metadata-&-Social-Rich-Cards), sets `$home` (the application's address, ending with `/`), and links its stylesheets with their modification time (`?v=...`) so browsers fetch every change. Link your own files the same way: `script(src=$home . 'public/js/books.js?v=' . @filemtime(PUBLIC_PATH . 'js/books.js'))`.
 
+**What a page's script imports is versioned too** (2.33.0). A module script imports other files (`import { listBooks } from './capabilities.js'`), and those are fetched at their plain address, where a browser may keep an old copy. The master prints an **import map** in its head, `!= importmap()`: every `.js` under `public/js` (not `node_modules`, `dist` or `vendor`) is imported at `<file>?v=<its modification time>`, so a page never mixes a new script with an old `capabilities.js`. A layout of your own (a master that does not extend `site.pug`) prints it too, in its head, before any `script(type='module')`:
+
+```pug
+head
+  meta(charset="UTF-8")
+  != importmap()
+  //- your stylesheets...
+```
+
 **Pug in Caligrafy.** Pug writes HTML by indentation: `p.cq-lead Hello` is `<p class="cq-lead">Hello</p>`. Caligrafy runs Pug with **PHP expressions** ([Phug](https://phug-lang.com)):
 
 | Write | Not |
@@ -622,6 +631,7 @@ Pages written before 2.11.0 extend `default/master/layoutblocks`. It keeps worki
 + **A `form` without `method='POST'`**: when its script does not run, the browser sends the fields in the address. Give every form `method='POST'`.
 + **A changed view that does not show after a copy**: `php caligrafer.php cache clear` as the web server's user.
 + **`document.querySelector('button')`** finds the top bar's Menu button: use ids.
++ **A layout of your own without `!= importmap()`**: after a release that adds a capability, a browser that kept the old `capabilities.js` stops the page's script ("does not provide an export named ..."): its buttons and tabs do nothing until a hard refresh. Print the import map in the layout's head (2.33.0).
 
 ## Related pages
 

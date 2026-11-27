@@ -10,7 +10,7 @@ Rules an agent must follow in a Caligrafy project:
 - A change to a table that already holds data is a migration (`php caligrafer.php migrate make <name>`).
 - Pug views are compiled to PHP, so strings join with `.`, never `+`.
 - Never put API keys or tokens in pages or bundles. Never print or commit `.env` secrets.
-- Exact signatures are in the API reference, and the verified pitfalls (G1-G189) are in the gotchas. Read them before writing code.
+- Exact signatures are in the API reference, and the verified pitfalls (G1-G190) are in the gotchas. Read them before writing code.
 
 A minimal capability (`application/services/Bookshelf/ListBooks.php`):
 

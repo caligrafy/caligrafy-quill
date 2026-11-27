@@ -22,6 +22,8 @@ block headers
 		link(rel="stylesheet", type="text/css", href=scripts('animate'))
         include ../modules/touchicons
         link(rel="stylesheet", type="text/css", href=scripts('social_buttons_css'))
+        //- the script modules at versioned addresses: what a page's script imports is never an old copy (2.33.0)
+        != importmap()
         //- DESIGN_STYLE in .env: the override stylesheet of the selected style (public/css/designs/<name>.css), loaded last
         - $design_css = design_stylesheet();
         if $design_css

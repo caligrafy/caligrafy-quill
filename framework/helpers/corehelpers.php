@@ -142,6 +142,16 @@ function design_stylesheet()
 }
 
 /**
+ * The import map of the site's script modules (2.33.0): every .js under public/js at an address versioned by its
+ * modification time, so what a page's script imports ('./app.js', '../capabilities.js') is never an old copy a browser
+ * kept. Printed in the head, before any module script: != importmap()
+ */
+function importmap()
+{
+    return class_exists('Caligrafy\\Modules') && defined('PUBLIC_PATH') ? Caligrafy\Modules::tag($_SESSION['public'] ?? '', PUBLIC_PATH) : '';
+}
+
+/**
  * Gets the copyright signature from session
  * @author Dory A.Azar 
  * @version 1.0

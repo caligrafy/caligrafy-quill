@@ -120,6 +120,10 @@ block additional_scripts
   script(type='module', src="{$home}public/js/tasks.js")
 ```
 
+`site.pug` prints the import map in its head (2.33.0), so what `tasks.js` imports (`./capabilities.js`) is loaded at an
+address versioned like the page's own script. A layout of the project's own adds `!= importmap()` to its head, before
+any module script (G190).
+
 A row built by the script (plain DOM, or the same classes in a Vue template):
 ```js
 li.className = 'cq-row' + (done ? ' is-done' : '')
