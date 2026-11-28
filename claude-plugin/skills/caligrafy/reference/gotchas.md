@@ -915,3 +915,13 @@ has one import map: entries of its own (a bare name such as `three` for a librar
 `!= importmap(['three' => $home . 'public/js/vendor/three/three.module.js'])` (2.33.1), never into a second
 `script(type='importmap')`, which browsers that do not merge maps ignore (the library is then not found). Proof:
 `Modules::map()`, `importmap()`.
+
+**G191 (2.34.0). Checkout refuses `payment_method_types`, and a saved card is charged off session.** Current Stripe API
+versions answer `The payment_method_types parameter is no longer supported when creating a Checkout Session`: leave
+`createCheckout()`'s `$paymentType` empty (the methods come from the dashboard); `createSetupCheckout()` sends its
+`$paymentTypes` as `allowed_payment_method_types` (`array('card')` keeps bank debits, which settle in days, out of a
+one-tap payment). `chargeSavedCard()` charges without the customer: a bank that wants them answers
+`requires_action => true` (code `authentication_required`), and the payment is then taken on a page with them
+(`createCheckout()`); give each charge an idempotency key made of the order and its amount so a double tap never
+charges twice. Stripe's hosted pages may show an hCaptcha to automated browsers: test the setup page by hand, and the
+charges with Stripe's test payment methods (`pm_card_visa`, `pm_card_authenticationRequired`) attached to a test customer.

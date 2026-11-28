@@ -6,6 +6,12 @@ release is a git tag `v<version>` (on [GitHub](https://github.com/caligrafy/cali
 [Packagist](https://packagist.org/packages/caligrafy/caligrafy-quill)), and `Caligrafy\Framework::VERSION` holds the
 same number. Check the version of a project with `php caligrafer.php version`.
 
+## [2.34.0] - 2026-11-28
+
+### Added
+- **Saved cards in `Caligrafy\Payment`**: a customer saves a card once on a Stripe page and is charged later without being on the page (a meal approved after it is eaten, a renewal). `createCustomer($email, $name, $metadata)`; `createSetupCheckout($customerId, $successUrl, $cancelUrl, $currency, $locale, $metadata, $paymentTypes)`, Checkout in setup mode (nothing charged; `array('card')` keeps bank debits out); `savedCard($session)`, the card a finished setup saved, with a label to show ("Visa •••• 4242", "04/31"); `chargeSavedCard($amount, $currency, $customerId, $paymentMethodId, $metadata, $description, $transfer, $idempotencyKey)`, an off-session charge with Stripe Connect's fee and destination and an idempotency key, which says `requires_action` when the bank wants the cardholder (take the payment on a page then) and gives Stripe's `code` on a decline; `removeSavedCard($paymentMethodId)` (G191).
+- `new Payment($client)` takes a stand-in for Stripe's client, so a project's tests run without Stripe (stripe-php is not needed then).
+
 ## [2.33.1] - 2026-11-27
 
 ### Fixed

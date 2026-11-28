@@ -325,6 +325,15 @@ createTransfer($amount, $currency, $destination, $metadata = array(), $transferG
    // $destination 'acct_...'; empty metadata/transferGroup/description are not sent; $idempotencyKey is Stripe's Idempotency-Key request option (a retry with the same key returns the first transfer, never a second payment)
 retrieveTransfer($transferId)                   // 'tr_...'
 reverseTransfer($transferId, $amount = null)    // null reverses all; data is the TransferReversal ('trr_...')
+// 2.34.0, saved cards: saved once on a Stripe page, charged later without the customer on the page
+createCustomer($email = null, $name = null, $metadata = array())                  // data: the Customer ('cus_...')
+createSetupCheckout($customerId, $successUrl, $cancelUrl, $currency = 'usd', $locale = null, $metadata = array(), $paymentTypes = null)
+   // Checkout mode 'setup' (nothing charged), 'url' like createCheckout; $paymentTypes array('card') -> allowed_payment_method_types (payment_method_types is refused by current API versions); metadata also on the SetupIntent
+savedCard($session)          // session object or 'cs_...': false unless mode setup + status complete + SetupIntent succeeded; data: payment_method, customer, label ('Visa •••• 4242', a non-card: its type), brand, last4, expires ('04/31')
+chargeSavedCard($amount, $currency, $customerId, $paymentMethodId, $metadata = array(), $description = '', $transfer = array(), $idempotencyKey = null)
+   // PaymentIntent off_session + confirm; success only when status 'succeeded'; else 'requires_action' (true for authentication_required or an intent needing the customer), 'code' (Stripe's: card_declined...), 'data' (the intent when Stripe made one). $transfer: application_fee_amount, transfer_data
+removeSavedCard($paymentMethodId)    // detaches it from the customer
+new Payment($client = null)          // a stand-in for StripeClient (tests): used as is, stripe-php not required
 ```
 Results are arrays with `action_success` and `data` (Stripe object) or `error`. Amounts are in the smallest currency unit (cents: `1250` is 12.50), transfers included. A transfer needs the platform's available balance to cover it and the connected account's `transfers` capability (`createAccount()` requests it); a run that pays several accounts gives each transfer a key made of the run and the account (`'commission-2026-11-' . $ambassadorId`). stripe-php 23 (API version pinned by the SDK). `createPaymentIntent()` sets `automatic_payment_methods.enabled`. Client: `public/js/services/stripe_client.js` (Payment Element, `confirmPayment`, `redirect: 'if_required'`, return to the same page); `default/pages/checkout.pug` links to `$checkoutUrl`.
 

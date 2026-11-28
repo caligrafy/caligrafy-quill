@@ -45,7 +45,7 @@ class Payment extends \stdClass {
 	 * @version 1.0
 	 */
 
-	public function __construct()
+	public function __construct($client = null)
 	{
 		if (strtolower(APP_ENV) == 'production') {
             $this->_public_key = PAY_PUBLIC_KEY_PRODUCTION;
@@ -55,6 +55,11 @@ class Payment extends \stdClass {
             $this->_private_key = PAY_PRIVATE_KEY_TEST;
         }
 
+		// a client passed in (a test's stand-in for Stripe) is used as it is (2.34.0)
+		if ($client !== null) {
+			$this->_stripe = $client;
+			return $this;
+		}
 		// stripe/stripe-php is optional since 2.26.0: php caligrafer.php add payments
 		Features::need('payments', 'Caligrafy\\Payment');
 		$this->_stripe = new \Stripe\StripeClient($this->_private_key);
@@ -439,6 +444,166 @@ class Payment extends \stdClass {
 			$result['error'] = $e->getMessage();
 		}
 		return $result;
+	}
+
+	// ------------------------------------------------------------------ saved cards (2.34.0)
+
+	/**
+	 * Creates a Stripe customer, the one a saved card belongs to. Keep its id ('cus_...') with the person
+	 * @param string $email the customer's email (Stripe's receipts), or null
+	 * @param string $name the customer's name, or null
+	 * @param array $metadata key-value pairs kept on the customer (your user id)
+	 * @return array array('action_success' => true, 'data' => the Stripe Customer) or array('action_success' => false, 'error' => the message)
+	 */
+	public function createCustomer($email = null, $name = null, $metadata = array())
+	{
+		$result = array('action_success' => false, 'error' => 'Customer could not be created');
+		try {
+			$input = array();
+			if (isset($email) && trim($email) != '') { $input['email'] = $email; }
+			if (isset($name) && trim($name) != '') { $input['name'] = $name; }
+			if (!empty($metadata)) { $input['metadata'] = $metadata; }
+			$customer = $this->_stripe->customers->create($input);
+			$result = $customer? array('action_success' => true, 'data' => $customer) : $result;
+		} catch(Exception $e) {
+			$result['error'] = $e->getMessage();
+		}
+		return $result;
+	}
+
+	/**
+	 * A Stripe-hosted page where a customer saves a card without paying (Checkout in setup mode). Once they are back,
+	 * retrieveCheckout($id) gives the session; savedCard($session) gives the card saved and its label
+	 * @param string $customerId the customer the card is saved for ('cus_...', createCustomer)
+	 * @param string $successUrl where Stripe sends them once saved; put {CHECKOUT_SESSION_ID} in it to know the session
+	 * @param string $cancelUrl where Stripe's back arrow goes
+	 * @param string $currency the currency the card will be charged in ('usd'): Stripe shows the methods that take it
+	 * @param string $locale Stripe's language ('en', 'fr', 'auto'), or null
+	 * @param array $metadata key-value pairs kept on the session and its SetupIntent
+	 * @param array $paymentTypes the kinds it may save (array('card'): cards, Apple Pay and Google Pay included); null: every method on in the Stripe dashboard (bank debits too, which take days to settle)
+	 * @return array array('action_success' => true, 'data' => the Checkout Session, 'url' => the page) or array('action_success' => false, 'error' => the message)
+	 */
+	public function createSetupCheckout($customerId, $successUrl, $cancelUrl, $currency = 'usd', $locale = null, $metadata = array(), $paymentTypes = null)
+	{
+		$result = array('action_success' => false, 'error' => 'Session could not be created');
+		try {
+			$parameters = array('mode' => 'setup', 'customer' => $customerId, 'currency' => $currency,
+				'success_url' => $successUrl, 'cancel_url' => $cancelUrl);
+			if (isset($locale)) { $parameters['locale'] = $locale; }
+			if (!empty($metadata)) { $parameters['metadata'] = $metadata; $parameters['setup_intent_data'] = array('metadata' => $metadata); }
+			if (!empty($paymentTypes)) { $parameters['allowed_payment_method_types'] = $paymentTypes; }   // current API versions reject payment_method_types here
+			$checkout = $this->_stripe->checkout->sessions->create($parameters);
+			$result = $checkout? array('action_success' => true, 'data' => $checkout, 'url' => $checkout->url ?? null) : $result;
+		} catch(Exception $e) {
+			$result['error'] = $e->getMessage();
+		}
+		return $result;
+	}
+
+	/**
+	 * The card a setup Checkout session saved: its payment method id and a label to show ("Visa •••• 4242")
+	 * @param object|string $session the session (retrieveCheckout's data) or its id ('cs_...')
+	 * @return array array('action_success' => true, 'data' => array('payment_method' => 'pm_...', 'customer' => 'cus_...', 'label' => ..., 'brand' => ..., 'last4' => ..., 'expires' => 'MM/YY')) or array('action_success' => false, 'error' => the message)
+	 */
+	public function savedCard($session)
+	{
+		$result = array('action_success' => false, 'error' => 'No card was saved');
+		try {
+			if (is_string($session)) {
+				$session = $this->_stripe->checkout->sessions->retrieve($session);
+			}
+			if (!$session || ($session->mode ?? '') !== 'setup' || ($session->status ?? '') !== 'complete' || empty($session->setup_intent)) {
+				return $result;
+			}
+			$intentId = is_string($session->setup_intent) ? $session->setup_intent : $session->setup_intent->id;
+			$intent = $this->_stripe->setupIntents->retrieve($intentId, array());
+			if (($intent->status ?? '') !== 'succeeded' || empty($intent->payment_method)) {
+				return $result;
+			}
+			$methodId = is_string($intent->payment_method) ? $intent->payment_method : $intent->payment_method->id;
+			$method = $this->_stripe->paymentMethods->retrieve($methodId, array());
+			$result = array('action_success' => true, 'data' => array_merge(array('payment_method' => $methodId,
+				'customer' => is_string($session->customer) ? $session->customer : ($session->customer->id ?? null)), self::cardLabel($method)));
+		} catch(Exception $e) {
+			$result['error'] = $e->getMessage();
+		}
+		return $result;
+	}
+
+	/**
+	 * Charges a saved card without the customer on the page (off session): a meal after it is eaten, a subscription
+	 * renewed. Their bank may still ask the cardholder to confirm it (3-D Secure): then the result has
+	 * 'requires_action' => true and the payment must be made with the customer present (a Checkout page).
+	 * @param integer $amount the amount in the smallest currency unit (cents)
+	 * @param string $currency the currency ('usd')
+	 * @param string $customerId the customer ('cus_...')
+	 * @param string $paymentMethodId the saved card ('pm_...', savedCard)
+	 * @param array $metadata key-value pairs kept on the payment
+	 * @param string $description a description of the payment
+	 * @param array $transfer for a marketplace (Stripe Connect): 'application_fee_amount' and 'transfer_data' => array('destination' => 'acct_...')
+	 * @param string $idempotencyKey sent as Stripe's Idempotency-Key: the same key never charges twice
+	 * @return array array('action_success' => true, 'data' => the PaymentIntent) or array('action_success' => false, 'error' => the message, 'code' => Stripe's code, 'requires_action' => bool, 'data' => the PaymentIntent when Stripe made one)
+	 */
+	public function chargeSavedCard($amount, $currency, $customerId, $paymentMethodId, $metadata = array(), $description = '', $transfer = array(), $idempotencyKey = null)
+	{
+		$result = array('action_success' => false, 'error' => 'Transaction could not be completed', 'code' => null, 'requires_action' => false);
+		try {
+			$input = array('amount' => $amount, 'currency' => $currency, 'customer' => $customerId, 'payment_method' => $paymentMethodId,
+				'off_session' => true, 'confirm' => true);
+			if (!empty($metadata)) { $input['metadata'] = $metadata; }
+			if (isset($description) && trim($description) != '') { $input['description'] = $description; }
+			$input = !empty($transfer)? array_merge($input, $transfer) : $input;
+			$options = isset($idempotencyKey) && trim($idempotencyKey) != '' ? array('idempotency_key' => $idempotencyKey) : array();
+			$intent = $this->_stripe->paymentIntents->create($input, $options);
+			if ($intent && ($intent->status ?? '') === 'succeeded') {
+				return array('action_success' => true, 'data' => $intent);
+			}
+			$result['data'] = $intent;
+			$result['requires_action'] = $intent && in_array($intent->status ?? '', array('requires_action', 'requires_payment_method'), true);
+			$result['error'] = 'The payment needs the customer: ' . ($intent->status ?? 'unknown');
+		} catch(Exception $e) {
+			// Stripe's CardException: declined, or authentication_required (the bank wants the cardholder)
+			$result['error'] = $e->getMessage();
+			$result['code'] = method_exists($e, 'getStripeCode') ? $e->getStripeCode() : null;
+			$error = method_exists($e, 'getError') ? $e->getError() : null;
+			if ($error && !empty($error->payment_intent)) { $result['data'] = $error->payment_intent; }
+			$result['requires_action'] = $result['code'] === 'authentication_required';
+		}
+		return $result;
+	}
+
+	/**
+	 * Removes a saved card from its customer: it can never be charged again
+	 * @param string $paymentMethodId the saved card ('pm_...')
+	 * @return array array('action_success' => true, 'data' => the PaymentMethod) or array('action_success' => false, 'error' => the message)
+	 */
+	public function removeSavedCard($paymentMethodId)
+	{
+		$result = array('action_success' => false, 'error' => 'Card could not be removed');
+		try {
+			$method = $this->_stripe->paymentMethods->detach($paymentMethodId, array());
+			$result = $method? array('action_success' => true, 'data' => $method) : $result;
+		} catch(Exception $e) {
+			$result['error'] = $e->getMessage();
+		}
+		return $result;
+	}
+
+	/** A payment method as people read it: "Visa •••• 4242", or its type ("Link") when it is not a card */
+	private static function cardLabel($method)
+	{
+		$card = $method->card ?? null;
+		if ($card) {
+			$brand = (string) ($card->brand ?? 'card');
+			$names = array('amex' => 'American Express', 'diners' => 'Diners Club', 'mastercard' => 'Mastercard', 'unionpay' => 'UnionPay', 'jcb' => 'JCB', 'visa' => 'Visa', 'discover' => 'Discover', 'cartes_bancaires' => 'Cartes Bancaires');
+			$name = $names[$brand] ?? ucfirst($brand);
+			$month = (int) ($card->exp_month ?? 0);
+			$year = (int) ($card->exp_year ?? 0);
+			return array('label' => $name . ' •••• ' . ($card->last4 ?? ''), 'brand' => $brand, 'last4' => (string) ($card->last4 ?? ''),
+				'expires' => $month && $year ? sprintf('%02d/%02d', $month, $year % 100) : null);
+		}
+		$type = (string) ($method->type ?? 'card');
+		return array('label' => ucwords(str_replace('_', ' ', $type)), 'brand' => $type, 'last4' => '', 'expires' => null);
 	}
 
     private function createStripeToken($card)
